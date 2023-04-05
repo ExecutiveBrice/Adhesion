@@ -1,0 +1,117 @@
+<div class="container">
+  <header class="jumbotron">
+    <p>{{ content }}</p>
+  </header>
+</div>
+
+<div class="col-md-12">
+  <form *ngIf="!isSuccessful" name="form" (ngSubmit)="f.form.valid && onSubmit()" #f="ngForm" novalidate>
+    <div class="form-group">
+      <label for="prenom">Prenom</label>
+      <input type="text" class="form-control" name="prenom" [(ngModel)]="form.prenom" required minlength="10"
+        maxlength="50" #prenom="ngModel" />
+      <div class="alert-danger" *ngIf="prenom.errors && f.submitted">
+        <div *ngIf="prenom.errors.required">Prenom is required</div>
+        <div *ngIf="prenom.errors.minlength">
+          Prenom must be at least 1 characters
+        </div>
+        <div *ngIf="prenom.errors.maxlength">
+          Prenom must be at most 50 characters
+        </div>
+
+      </div>
+    </div>
+
+
+
+    <div class="form-group">
+      <label for="nom">Nom</label>
+      <input type="text" class="form-control" name="nom" [(ngModel)]="form.nom" required minlength="10" maxlength="50"
+        #nom="ngModel" />
+      <div class="alert-danger" *ngIf="nom.errors && f.submitted">
+        <div *ngIf="nom.errors.required">Nom is required</div>
+        <div *ngIf="nom.errors.minlength">
+          Nom must be at least 1 characters
+        </div>
+        <div *ngIf="nom.errors.maxlength">
+          Nom must be at most 50 characters
+        </div>
+
+      </div>
+    </div>
+
+
+    <div class="form-group">
+      <label for="codepostal">CodePostal</label>
+      <input type="text" class="form-control" name="codepostal" [(ngModel)]="form.codepostal" required minlength="10"
+        maxlength="50" #codepostal="ngModel" />
+      <div class="alert-danger" *ngIf="codepostal.errors && f.submitted">
+        <div *ngIf="codepostal.errors.required">codepostal is required</div>
+        <div *ngIf="codepostal.errors.minlength">
+          codepostal must be at least 1 characters
+        </div>
+        <div *ngIf="codepostal.errors.maxlength">
+          codepostal must be at most 50 characters
+        </div>
+
+      </div>
+    </div>
+
+
+    <div class="form-group">
+      <label for="adresse">Adresse</label>
+      <input type="text" class="form-control" name="prenom" [(ngModel)]="form.adresse" required minlength="10"
+        maxlength="50" #adresse="ngModel" />
+      <div class="alert-danger" *ngIf="adresse.errors && f.submitted">
+        <div *ngIf="adresse.errors.required">adresse is required</div>
+        <div *ngIf="adresse.errors.minlength">
+          adresse must be at least 1 characters
+        </div>
+        <div *ngIf="adresse.errors.maxlength">
+          adresse must be at most 50 characters
+        </div>
+
+      </div>
+    </div>
+
+
+    <div class="form-group">
+      <label for="telephone">Telephone</label>
+      <input type="text" class="form-control" name="telephone" [(ngModel)]="form.telephone" required minlength="10"
+        maxlength="50" #telephone="ngModel" />
+      <div class="alert-danger" *ngIf="telephone.errors && f.submitted">
+        <div *ngIf="telephone.errors.required">telephone is required</div>
+        <div *ngIf="telephone.errors.minlength">
+          telephone must be at least 1 characters
+        </div>
+        <div *ngIf="telephone.errors.maxlength">
+          telephone must be at most 50 characters
+        </div>
+
+      </div>
+    </div>
+
+
+    <div class="form-group">
+      <label for="rgpd">RGPD</label>
+      <input type="checkbox" class="form-control" name="rgpd" [(ngModel)]="form.rgpd" required #rgpd="ngModel" />
+      <div class="alert-danger" *ngIf="rgpd.errors && f.submitted">
+        <div *ngIf="rgpd.errors.required">rgpd is required</div>
+
+      </div>
+    </div>
+
+
+    <div class="form-group">
+      <button class="btn btn-primary btn-block">Validation</button>
+    </div>
+
+    <div class="alert alert-warning" *ngIf="f.submitted && isSignUpFailed">
+      Validation failed!<br />{{ errorMessage }}
+    </div>
+  </form>
+
+  <div class="alert alert-success" *ngIf="isSuccessful">
+    Validation is successful!
+  </div>
+</div>

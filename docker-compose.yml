@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  client:
+    image: nginx
+    container_name: client_asso
+    depends_on:
+      - app_asso
+    ports:
+      - "127.0.0.1:8090:80"
+    volumes:
+      - ./Front/dist:/usr/share/nginx/html
+  app_asso:
+    image: 'docker-spring-boot-postgres:latest'
+    build:
+      context: ./Back
+    container_name: app_asso
+    networks:
+      - spring_net_asso
+    depends_on:
+      - db_asso
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db_asso:5432/asso
+      - SPRING_DATASOURCE_USERNAME=asso
+      - SPRING_DATASOURCE_PASSWORD=assopass
+      - SERVER_PORT=8000
+    ports:
+      - "127.0.0.1:8002:8000"
+  db_asso:
+    image: postgres:14.1-alpine
+    container_name: db_asso
+    networks:
+      - spring_net_asso
+    environment:
+      - POSTGRES_USER=asso
+      - POSTGRES_DB=asso
+      - POSTGRES_PASSWORD=assopass
+networks:
+  spring_net_asso:
