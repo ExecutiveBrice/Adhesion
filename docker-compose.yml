@@ -22,7 +22,7 @@ services:
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db_asso:5432/asso
       - SPRING_DATASOURCE_USERNAME=asso
-      - SPRING_DATASOURCE_PASSWORD=assopass
+      - SPRING_DATASOURCE_PASSWORD=password
       - SERVER_PORT=8000
     ports:
       - "127.0.0.1:8002:8000"
@@ -34,6 +34,6 @@ services:
     environment:
       - POSTGRES_USER=asso
       - POSTGRES_DB=asso
-      - POSTGRES_PASSWORD=assopass
+      - POSTGRES_PASSWORD=password
 networks:
   spring_net_asso:
