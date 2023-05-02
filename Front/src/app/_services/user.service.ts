@@ -1,8 +1,14 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from 'src/environments/environment';
+import { User, UserLite } from '../models';
 
-const API_URL = 'http://localhost:8002/api/test/';
+const API_URL = environment.server+'/api_adhesion/user/';
+
+const httpOptions = {
+  headers: new HttpHeaders({ 'Content-Type': 'application/json' })
+};
 
 @Injectable({
   providedIn: 'root'
@@ -10,19 +16,35 @@ const API_URL = 'http://localhost:8002/api/test/';
 export class UserService {
   constructor(private http: HttpClient) { }
 
-  getPublicContent(): Observable<any> {
-    return this.http.get(API_URL + 'all', { responseType: 'text' });
+  getConnectedUser(): Observable<User> {
+    return this.http.get<User>(API_URL + 'connecteduser', { responseType: 'json' });
   }
 
-  getUserBoard(): Observable<any> {
-    return this.http.get(API_URL + 'user', { responseType: 'text' });
+  updateUser(user: User): Observable<any> {
+    let params = new HttpParams().set('eventId', '' + user.adherent.tribu + '');
+    return this.http.put(API_URL + 'user', user, {params, responseType: 'json' });
   }
 
-  getModeratorBoard(): Observable<any> {
-    return this.http.get(API_URL + 'mod', { responseType: 'text' });
+  grantUser(role: String, userEmail: String): Observable<User> {
+    let params = new HttpParams().set('userEmail', '' + userEmail + '');
+    return this.http.post<User>(API_URL + 'grantUser', role, {params, responseType: 'json' });
   }
 
-  getAdminBoard(): Observable<any> {
-    return this.http.get(API_URL + 'admin', { responseType: 'text' });
+  unGrantUser(role: String, userEmail: String): Observable<User> {
+    let params = new HttpParams().set('userEmail', '' + userEmail + '');
+    return this.http.post<User>(API_URL + 'unGrantUser', role, {params, responseType: 'json' });
   }
+
+  getAllLite(): Observable<UserLite[]> {
+    return this.http.get<UserLite[]>(API_URL + 'allLite', { responseType: 'json' });
+  }
+
+  getUserByRole(role: String): Observable<UserLite[]> {
+    let params = new HttpParams().set('role', '' + role + '');
+    return this.http.get<UserLite[]>(API_URL + 'getUserByRole', {params, responseType: 'json' });
+  }
+
+
+
 }
+

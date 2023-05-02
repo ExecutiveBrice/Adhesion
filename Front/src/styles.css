@@ -1,1 +1,110 @@
 /* You can add global styles to this file, and also import other style files */
+label {
+  display: block;
+  margin-top: 10px;
+}
+.container-xxxl{
+  max-width:100%!important;
+}
+body {
+  font-size: small;
+}
+
+.center {
+  text-align: center;
+}
+
+.btn {
+  margin-top: 0px !important;
+}
+
+.btn-independent {
+  margin: 2px;
+}
+
+table.table tbody tr td,
+table.table thead tr th,
+table.table thead {
+  border-left: 1px solid black;
+}
+
+.card {
+  background-color: #f7f7f7;
+  padding: 5px 5px 5px;
+  min-height: 100px;
+  margin-top: 20px;
+  -moz-border-radius: 2px;
+  -webkit-border-radius: 2px;
+  border-radius: 2px;
+  -moz-box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
+  -webkit-box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
+}
+
+.profile-img-card {
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 10px;
+  display: block;
+  -moz-border-radius: 50%;
+  -webkit-border-radius: 50%;
+  border-radius: 50%;
+}
+
+.btn-primary {
+  border-color: rgba(92, 187, 174, 255);
+  background-color: rgba(92, 187, 174, 255);
+}
+.btn-pomme {
+  border-color:  rgba(188, 219, 205, 255);
+  background-color:  rgba(188, 219, 205, 255);
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active,
+.btn-primary.active,
+.open>.dropdown-toggle.btn-primary {
+  color: black;
+  background-color: rgba(188, 219, 205, 255);
+  border-color: rgba(188, 219, 205, 255);
+  /*set the color you want here*/
+}
+
+.btn-primary:disabled,
+.open>.dropdown-toggle.btn-primary {
+  color: black;
+  background-color: transparent;
+  border-color: gray;
+  /*set the color you want here*/
+}
+
+.orange {
+  color: rgba(237, 101, 103, 255);
+}
+
+.green {
+  color: rgba(92, 187, 174, 255);
+}
+
+.jaune {
+  color: rgba(253, 218, 77, 255);
+}
+
+.pomme {
+  color: rgba(188, 219, 205, 255);
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+.blanc {
+  color: aliceblue!important;
+  font-size: large;
+  font-weight: bold;
+}
+
+tr:hover {
+  background-color: rgba(253, 218, 77, 255)!important;
+}

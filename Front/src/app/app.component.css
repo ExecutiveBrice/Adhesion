@@ -1,0 +1,15 @@
+img {
+    background-color: rgb(255, 255, 255);
+    border-radius: 4px;
+    padding: 5px;
+    margin-left: 10px;
+    width: 100px;
+  }
+
+.navbar-light{
+  background-color: rgba(188,219,205,255);
+}  
+
+.navbar-toggler{
+  margin-right: 10px;
+}

@@ -2,9 +2,8 @@ package com.gestion.auth.payload.request;
 
 import lombok.*;
 
-import java.util.Set;
-
-import javax.validation.constraints.*;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 
 @Getter
 @Setter

@@ -1,5 +1,6 @@
 package com.gestion.user.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import javax.persistence.*;
@@ -13,7 +14,7 @@ import static javax.persistence.GenerationType.SEQUENCE;
 @Setter
 @ToString
 @RequiredArgsConstructor
-@EqualsAndHashCode
+@EqualsAndHashCode(of = {"id"})
 @Entity
 public class ConfirmationToken {
 
@@ -30,11 +31,15 @@ public class ConfirmationToken {
     @Column(name = "id", updatable = false)
     private Long id;
 
+    private String type;
+
     private UUID confirmationToken;
 
     private LocalDate createdDate;
 
-    @OneToOne
+    @ManyToOne
+    @ToString.Exclude
+    @JsonIgnore
     private User user;
 
 

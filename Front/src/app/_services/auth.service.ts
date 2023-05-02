@@ -1,12 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from 'src/environments/environment';
 
-const AUTH_API = 'http://localhost:8002/api/auth/';
-
-const httpOptions = {
-  headers: new HttpHeaders({ 'Content-Type': 'application/json' })
-};
+const AUTH_API = environment.server+'/api_adhesion/auth/';
 
 @Injectable({
   providedIn: 'root'
@@ -18,14 +15,25 @@ export class AuthService {
     return this.http.post(AUTH_API + 'signin', {
       username,
       password
-    }, httpOptions);
+    },{ responseType: 'json' });
   }
 
-  register(username: string, email: string, password: string): Observable<any> {
+  changePassword(token: string, password: string): Observable<any> {
+    let params = new HttpParams().set('token', '' + token + '');
+    return this.http.post(AUTH_API + 'changePassword', {password},{params,  responseType: 'text' });
+  }
+
+  reinitPassword(username: string): Observable<any> {
+    return this.http.post(AUTH_API + 'reinitPassword', {
+      username
+    },{ responseType: 'json' });
+  
+  }
+
+  register(username: string, password: string): Observable<any> {
     return this.http.post(AUTH_API + 'signup', {
       username,
-      email,
       password
-    }, httpOptions);
+    },{ responseType: 'json' });
   }
 }

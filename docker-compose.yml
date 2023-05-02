@@ -1,39 +1,41 @@
 version: '3.8'
 
 services:
-  client:
+  adhesion_client:
     image: nginx
-    container_name: client_asso
+    container_name: adhesion_client
     depends_on:
-      - app_asso
+      - adhesion_app
     ports:
-      - "127.0.0.1:8090:80"
+      - "127.0.0.1:8095:80"
     volumes:
       - ./Front/dist:/usr/share/nginx/html
-  app_asso:
-    image: 'docker-spring-boot-postgres:latest'
+  adhesion_app:
+    image: 'docker-spring-boot-adhesion:latest'
     build:
       context: ./Back
-    container_name: app_asso
+    container_name: adhesion_app
     networks:
-      - spring_net_asso
+      - spring_network_adhesion
     depends_on:
-      - db_asso
+      - adhesion_db
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://db_asso:5432/asso
-      - SPRING_DATASOURCE_USERNAME=asso
-      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://adhesion_db:5432/adhesion
+      - SPRING_DATASOURCE_USERNAME=adhesion
+      - SPRING_DATASOURCE_PASSWORD=adhesionpass
       - SERVER_PORT=8000
     ports:
-      - "127.0.0.1:8002:8000"
-  db_asso:
+      - "127.0.0.1:8005:8000"
+  adhesion_db:
     image: postgres:14.1-alpine
-    container_name: db_asso
+    container_name: adhesion_db
     networks:
-      - spring_net_asso
+      - spring_network_adhesion
     environment:
-      - POSTGRES_USER=asso
-      - POSTGRES_DB=asso
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=adhesion
+      - POSTGRES_DB=adhesion
+      - POSTGRES_PASSWORD=adhesionpass
+    ports:
+        - "127.0.0.1:8105:5432"
 networks:
-  spring_net_asso:
+  spring_network_adhesion:

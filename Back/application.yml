@@ -1,15 +1,17 @@
 spring:
+  main:
+    allow-circular-references: true
   mail:
     host: smtp.gmail.com
     port: 587
-    username: <gmail_login>@gmail.com
-    password: <gmail_password>
+    username: adress_de_gmail@gmail.com
+    password: le_password_de_gmail
     properties.mail.smtp:
       ssl.trust: smtp.gmail.com
       auth: true
       starttls.enable: true
   logging:
-    file: /var/java_benevoles.log
+    file: /var/java_asso.log
     level:
       com.wild.corp: WARN
       root: WARN
@@ -21,13 +23,17 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
         globally_quoted_identifiers: true
-bezkoder:
+        enable_lazy_load_no_trans: true
+server:
   app:
-    jwtSecret: bezKoderSecretKey
+    jwtSecret: pouetPOUETcamion
     jwtExpirationMs: 86400000
+    fill_adherents: true
+    fill_activites: true
+  name: bmoexperience.fr
