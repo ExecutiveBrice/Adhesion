@@ -9,27 +9,30 @@
 
     <div class="collapse navbar-collapse" [ngbCollapse]="isCollapsed" id="navbarToggler">
       <ul class="navbar-nav mr-auto" routerLinkActive="active">
-        <li class="nav-item" *ngIf="showAdminBoard">
+        <li class="nav-item" *ngIf="showAdmin">
           <a href="/admin" class="nav-link blanc" routerLink="admin">Administration</a>
         </li>
-        <li class="nav-item" *ngIf="showAdminBoard || showSecretaireBoard">
+        <li class="nav-item" *ngIf="showAdmin || showSecretaire">
           <a href="/activites" class="nav-link blanc" routerLink="activites">Activites</a>
         </li>
-        <li class="nav-item" *ngIf="showAdminBoard || showSecretaireBoard">
+        <li class="nav-item" *ngIf="showAdmin || showSecretaire">
           <a href="/adherents" class="nav-link blanc" routerLink="adherents">Adhérents</a>
         </li>
-        <li class="nav-item" *ngIf="showAdminBoard || showSecretaireBoard">
+        <li class="nav-item" *ngIf="showAdmin || showSecretaire">
           <a href="/adhesions" class="nav-link blanc" routerLink="adhesions">Adhésions</a>
         </li>
-        <li class="nav-item" *ngIf="showAdminBoard || showSecretaireBoard">
-          <a href="/mail" class="nav-link blanc" *ngIf="isLoggedIn" [routerLink]="['/mail', '']">Mailling</a>
+        <li class="nav-item" *ngIf="showAdmin || showSecretaire">
+          <a href="/mail" class="nav-link blanc" *ngIf="isLoggedIn" [routerLink]="['/mail', 'listing']">Mailling</a>
         </li>
         <li class="nav-item">
-          <a href="/inscription" class="nav-link blanc" *ngIf="isLoggedIn" routerLink="inscription">{{showSecretaireBoard?"Inscriptions Manuelles":"Adhésions"}}</a>
+          <a href="/inscription" class="nav-link blanc" *ngIf="isLoggedIn" [routerLink]="['/inscription', '0']">{{showSecretaire?"Inscriptions Manuelles":"Mes adhésions"}}</a>
         </li>
       </ul>
 
       <ul class="navbar-nav ml-auto" *ngIf="!isLoggedIn">
+        <li class="nav-item" >
+          <a href="/contact" class="nav-link blanc" routerLink="contact">Contact</a>
+        </li>
         <li class="nav-item" *ngIf="inscriptionOpen">
           <a href="/register" class="nav-link blanc" routerLink="register">Inscription</a>
         </li>
@@ -39,7 +42,9 @@
       </ul>
 
       <ul class="navbar-nav ml-auto" *ngIf="isLoggedIn">
-
+        <li class="nav-item" >
+          <a href="/contact" class="nav-link blanc" routerLink="contact">Contact</a>
+        </li>
         <li class="nav-item">
           <a href class="nav-link blanc" (click)="logout()">Deconnexion</a>
         </li>

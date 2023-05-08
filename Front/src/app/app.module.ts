@@ -14,7 +14,8 @@ import { AdherentsComponent } from './page/adherents/adherents.component';
 import { ActivitesComponent } from './page/activites/activites.component';
 import { BoardUserComponent } from './page/board-user/board-user.component';
 import { AdhesionsComponent } from './page/adhesions/adhesions.component';
-
+import { ContactComponent } from './page/contact/contact.component';
+import { PdfViewerModule } from 'ng2-pdf-viewer';
 
 import { OrderByPipe} from "./_helpers/sort.pipe";
 import { FilterByPipe} from "./_helpers/filter.pipe";
@@ -24,6 +25,7 @@ import { NgxEditorModule } from 'ngx-editor';
 import { MaillingComponent } from './page/mailling/mailling.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { MaintenanceComponent } from './page/maintenance/maintenance.component';
+import { ParamTransmissionService } from './_helpers/transmission.service';
 
 
 @NgModule({
@@ -39,6 +41,7 @@ import { MaintenanceComponent } from './page/maintenance/maintenance.component';
     MaillingComponent,
     AdhesionsComponent,
     MaintenanceComponent,
+    ContactComponent,
     OrderByPipe,
     FilterByPipe
   ],
@@ -52,9 +55,15 @@ import { MaintenanceComponent } from './page/maintenance/maintenance.component';
     NgbTooltipModule,
     HttpClientModule,
     NgxEditorModule,
+    
+    PdfViewerModule,
     FontAwesomeModule
   ],
-  providers: [authInterceptorProviders, NgbModalConfig, NgbModal ],
+  providers: [authInterceptorProviders,
+    NgbModalConfig,
+    NgbModal,
+    ParamTransmissionService  
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

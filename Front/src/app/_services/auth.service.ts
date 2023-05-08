@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { User } from '../models';
 
 const AUTH_API = environment.server+'/api_adhesion/auth/';
 
@@ -29,7 +30,11 @@ export class AuthService {
     },{ responseType: 'json' });
   
   }
-
+  registerAnonymous(username: string): Observable<User> {
+    return this.http.post<User>(AUTH_API + 'signupAnonymous', {
+      username
+    },{ responseType: 'json' });
+  }
   register(username: string, password: string): Observable<any> {
     return this.http.post(AUTH_API + 'signup', {
       username,

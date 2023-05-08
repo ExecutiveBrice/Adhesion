@@ -22,6 +22,10 @@ body {
   margin: 2px;
 }
 
+.right{
+  text-align: right;
+}
+
 table.table tbody tr td,
 table.table thead tr th,
 table.table thead {
@@ -60,6 +64,20 @@ table.table thead {
   background-color:  rgba(188, 219, 205, 255);
 }
 
+.btn-orange {
+  border-color:  rgba(237, 101, 103, 255);
+  background-color:  rgba(237, 101, 103, 255);
+}
+.btn-orange:hover,
+.btn-orange:focus,
+.btn-orange:active,
+.btn-orange.active,
+.open>.dropdown-toggle.btn-orange {
+  color: black;
+  border-color:  rgba(237, 101, 103, 255);
+  background-color:  rgba(237, 101, 103, 255);
+  /*set the color you want here*/
+}
 .btn-primary:hover,
 .btn-primary:focus,
 .btn-primary:active,
@@ -80,7 +98,7 @@ table.table thead {
 }
 
 .orange {
-  color: rgba(237, 101, 103, 255);
+  color: rgba(237, 101, 103, 255)!important;
 }
 
 .green {
@@ -106,5 +124,9 @@ table.table thead {
 }
 
 tr:hover {
-  background-color: rgba(253, 218, 77, 255)!important;
+  background-color: rgba(188, 219, 205, 255)!important;
 }
+
+.dropdown-menu { max-height: 200px; overflow-y: auto; min-width: 100% !important; background-attachment: local, local, scroll, scroll; }
+
+.dropdown-item { white-space: normal; }

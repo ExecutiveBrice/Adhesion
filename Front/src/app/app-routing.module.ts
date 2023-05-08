@@ -15,12 +15,14 @@ import { BoardAdminComponent } from './page/board-admin/board-admin.component';
 import { MaillingComponent } from './page/mailling/mailling.component';
 import { AdhesionsComponent } from './page/adhesions/adhesions.component';
 import { MaintenanceComponent } from './page/maintenance/maintenance.component';
+import { ContactComponent } from './page/contact/contact.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
+  { path: 'contact', component: ContactComponent },
   { path: 'resetPassword/:token', component: ResetPasswordComponent },
   { path: 'register', component: RegisterComponent },
-  { path: 'inscription', component: BoardUserComponent },
+  { path: 'inscription/:userEmail', component: BoardUserComponent },
   { path: 'adhesions', component: AdhesionsComponent },
   { path: 'adherents', component: AdherentsComponent },
   { path: 'activites', component: ActivitesComponent },

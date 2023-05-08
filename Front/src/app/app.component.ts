@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
 import { TokenStorageService } from './_services/token-storage.service';
-import { NgbCollapseModule } from '@ng-bootstrap/ng-bootstrap';
 import { ParamService } from './_services/param.service';
-import { Param } from './models/param';
-import { ParamStorageService } from './_services/param-storage.service';
+import { Subscription } from 'rxjs';
+import { ParamTransmissionService } from './_helpers/transmission.service';
+
 
 @Component({
   selector: 'app-root',
@@ -14,17 +14,20 @@ export class AppComponent {
   isCollapsed = true
   private roles: string[] = [];
   isLoggedIn = false;
-  showAdminBoard = false;
+  showAdmin = false;
   shoBureauBoard = false;
   showAdminstrateurBoard = false;
-  showSecretaireBoard = false;
+  showSecretaire = false;
   username?: string;
-  params: Param[] = []
-  maintenance: boolean = false
-  inscriptionOpen: boolean = true
+  maintenance: Boolean = false
+  inscriptionOpen: boolean | null = true
+  subscription = new Subscription()
 
-
-  constructor(private paramService: ParamService, private tokenStorageService: TokenStorageService, public paramStorageService: ParamStorageService) { }
+  constructor(
+    public transmissionService: ParamTransmissionService,
+    private paramService: ParamService,
+    private tokenStorageService: TokenStorageService
+    ) { }
 
   ngOnInit(): void {
     this.isLoggedIn = !!this.tokenStorageService.getToken();
@@ -33,28 +36,32 @@ export class AppComponent {
       const user = this.tokenStorageService.getUser();
       this.roles = user.roles;
 
-      this.showAdminBoard = this.roles.includes('ROLE_ADMIN');
+      this.showAdmin = this.roles.includes('ROLE_ADMIN');
       this.shoBureauBoard = this.roles.includes('ROLE_BUREAU');
       this.showAdminstrateurBoard = this.roles.includes('ROLE_ADMINISTRATEUR');
-      this.showSecretaireBoard = this.roles.includes('ROLE_SECRETAIRE');
-
+      this.showSecretaire = this.roles.includes('ROLE_SECRETAIRE');
       this.username = user.username;
     }
 
+        this.paramService.isClose()
+        .subscribe({
+          next: (data) => {
+            this.maintenance = data;
+          },
+          error: (error) => {
 
-    this.paramService.getAll().subscribe(
-      data => {
-        console.log(data)
-        this.params = data;
-        window.sessionStorage.setItem("PARAMS", JSON.stringify(data));
-        this.maintenance = this.paramStorageService.isOpen();
+            this.maintenance =  true;
+          }
+        });
 
-        this.inscriptionOpen = this.params.filter(param => param.paramName == "Inscription" && param.paramValue == "True").length > 0;
-      },
-      err => {
-        JSON.parse(err.error).message;
-      }
-    );
+          this.paramService.getAllBoolean().subscribe({
+          next: (data) => {
+            this.inscriptionOpen = data.filter(param => param.paramName == "Inscription")[0].paramValue;
+          },
+          error: (error) => {
+
+          }
+        });
   }
 
 

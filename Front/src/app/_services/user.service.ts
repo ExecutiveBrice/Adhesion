@@ -19,7 +19,10 @@ export class UserService {
   getConnectedUser(): Observable<User> {
     return this.http.get<User>(API_URL + 'connecteduser', { responseType: 'json' });
   }
-
+  getUserByMail(userEmail: String): Observable<User> {
+    let params = new HttpParams().set('userEmail', '' + userEmail + '');
+    return this.http.get<User>(API_URL + 'getUserByMail', {params, responseType: 'json' });
+  }
   updateUser(user: User): Observable<any> {
     let params = new HttpParams().set('eventId', '' + user.adherent.tribu + '');
     return this.http.put(API_URL + 'user', user, {params, responseType: 'json' });
