@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.gestion</groupId>
-	<artifactId>Adhesion</artifactId>
+	<artifactId>Asso</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>Adhesion</name>
 	<description>Spring Boot, Spring Security, PostgreSQL: JWT Authentication &amp; Authorization example</description>
@@ -75,7 +75,7 @@
 	</dependencies>
 
 	<build>
-		<finalName>adhesion</finalName>
+		<finalName>asso</finalName>
 		<resources>
 			<resource>
 				<directory>src/main/resources</directory>

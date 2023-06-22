@@ -1,11 +1,9 @@
 package com.gestion.adhesion.controllers;
 
 
-
-
 import com.gestion.adhesion.models.Email;
-import com.gestion.adhesion.services.EmailService;
 import com.gestion.adhesion.services.AdherentServices;
+import com.gestion.adhesion.services.EmailService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

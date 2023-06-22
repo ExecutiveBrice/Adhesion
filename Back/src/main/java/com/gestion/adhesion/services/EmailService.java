@@ -1,6 +1,7 @@
 package com.gestion.adhesion.services;
 
 
+import com.gestion.adhesion.models.Adherent;
 import com.gestion.adhesion.models.Adhesion;
 import com.gestion.adhesion.models.Email;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -83,7 +85,7 @@ import java.util.List;
 
     public void sendAutoMail(Adhesion adhesion, String sujetName, String corpsName){
         Email mail = new Email();
-        mail.setDiffusion(adhesion.getAdherent().getEmail());
+        mail.setDiffusion(adhesion.getAdherent().isEmailReferent()? adhesion.getAdherent().getTribu().getAdherents().stream().filter(Adherent::isReferent).findFirst().get().getEmail():adhesion.getAdherent().getEmail());
         String sujet = paramTextServices.getParamValue(sujetName);
         sujet = sujet.replaceAll("#activite#",adhesion.getActivite().getNom());
         mail.setSubject(sujet);
@@ -117,9 +119,10 @@ import java.util.List;
     }
     public void mailling(Email mail){
         MimeMessage message = emailSender.createMimeMessage();
-        String[][] listDiffusionByPack = sliceByPack(adherentServices.findByGroup(mail.getDiffusion()));
+        String[][] listDiffusionByPack = sliceByPack(adherentServices.findByGroup(mail.getDiffusion()).stream().toList());
 
         for (int i = 0; i < listDiffusionByPack.length; i++) {
+            System.out.println(Arrays.toString(listDiffusionByPack[i]));
 
             MimeMessageHelper helper = null;
             restant++;

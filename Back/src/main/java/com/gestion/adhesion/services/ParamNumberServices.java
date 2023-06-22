@@ -1,10 +1,7 @@
 package com.gestion.adhesion.services;
 
-import com.gestion.adhesion.models.ParamBoolean;
 import com.gestion.adhesion.models.ParamNumber;
-import com.gestion.adhesion.repository.ParamBooleanRepository;
 import com.gestion.adhesion.repository.ParamNumberRepository;
-import com.gestion.adhesion.repository.ParamTextRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -50,7 +47,16 @@ public class ParamNumberServices {
                     .paramName("Jours_Avant_Annulation")
                     .paramValue(5).build());
         }
-
+        if(!paramNumberRepository.existsByParamName("Jour_Debut_Plage_Compta")) {
+            paramNumberRepository.save(ParamNumber.builder()
+                    .paramName("Jour_Debut_Plage_Compta")
+                    .paramValue(3).build());
+        }
+        if(!paramNumberRepository.existsByParamName("Jour_Fin_Plage_Compta")) {
+            paramNumberRepository.save(ParamNumber.builder()
+                    .paramName("Jour_Fin_Plage_Compta")
+                    .paramValue(4).build());
+        }
     }
 
 

@@ -8,6 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.websocket.server.PathParam;
+import java.time.LocalDate;
 import java.util.List;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -26,6 +27,26 @@ AdhesionServices adhesionServices;
 	}
 
 
+	@GetMapping("/addAccord")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<?> addAccord(@PathParam("inscriptionId") Long adhesionId, @PathParam("nomAccord") String nomAccord) {
+		return ResponseEntity.ok(adhesionServices.addAccord(adhesionId, nomAccord));
+	}
+
+	@GetMapping("/removeAccord")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<?> removeAccord(@PathParam("inscriptionId") Long adhesionId, @PathParam("nomAccord") String nomAccord) {
+		return ResponseEntity.ok(adhesionServices.removeAccord(adhesionId, nomAccord));
+	}
+
+	@GetMapping("/changeActivite")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<?> changeActivite(@PathParam("inscriptionId") Long adhesionId, @PathParam("activiteId") Long activiteId) {
+		return ResponseEntity.ok(adhesionServices.changeActivite(adhesionId, activiteId));
+	}
+
+
+
 	@DeleteMapping("/deleteAdhesion")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<?> deleteAdhesion(@PathParam("adhesionId") Long adhesionId) {
@@ -41,8 +62,12 @@ AdhesionServices adhesionServices;
 
 	@GetMapping("/updatePaiementSecretariat")
 	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
-	public ResponseEntity<?> updatePaiementSecretariat(@PathParam("inscriptionId") Long adhesionId, @PathParam("tarif") Integer tarif, @PathParam("statut") Boolean statut) {
-		return ResponseEntity.ok(adhesionServices.updatePaiementSecretariat(adhesionId, tarif, statut));
+	public ResponseEntity<?> updatePaiementSecretariat(@PathParam("inscriptionId") Long adhesionId, @PathParam("tarif") Integer tarif, @PathParam("dateReglement") String dateReglement, @PathParam("statut") Boolean statut) {
+		String[] date = dateReglement.split("-");
+		System.out.println(date);
+		LocalDate dateCalculee = LocalDate.of(Integer.parseInt(date[0]),Integer.parseInt(date[1]),Integer.parseInt(date[2]));
+
+		return ResponseEntity.ok(adhesionServices.updatePaiementSecretariat(adhesionId, tarif, dateCalculee, statut));
 	}
 
 	@GetMapping("/updateFlag")

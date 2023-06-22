@@ -1,7 +1,6 @@
 package com.gestion.adhesion.services;
 
 import com.gestion.adhesion.models.ParamBoolean;
-import com.gestion.adhesion.models.ParamText;
 import com.gestion.adhesion.repository.ParamBooleanRepository;
 import com.gestion.adhesion.repository.ParamTextRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,7 +70,11 @@ public class ParamBooleanServices {
                     .paramName("Mail_Annulation")
                     .paramValue(false).build());
         }
-
+        if(!paramBooleanRepository.existsByParamName("Show_HelloAsso")) {
+            paramBooleanRepository.save(ParamBoolean.builder()
+                    .paramName("Show_HelloAsso")
+                    .paramValue(false).build());
+        }
     }
 
 

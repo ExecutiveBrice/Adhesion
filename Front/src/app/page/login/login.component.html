@@ -1,0 +1,248 @@
+<div class="container">
+  <div class="row">
+    <div *ngIf="maintenance" class="col-md-12">
+      <div class="card card-container">
+        <div *ngIf="maintenance && textMaintenance.length > 1" >
+          <div [innerHTML]="textMaintenance"></div>
+        </div>
+        <div *ngIf="maintenance && textMaintenance.length < 1">
+          <strong>Site en maintenance</strong><br>
+          Veuillez nous excuser pour la gène occasionnée
+        </div>
+
+      </div>
+    </div>
+
+
+    <div class="col-md-6">
+      <div *ngIf="messageConnexion" class="card card-container right">
+        <div [innerHTML]="messageConnexion"></div>
+      </div>
+      <div *ngIf="!userExist && messageInscription && inscriptionOpen" class="card card-container right">
+        <div [innerHTML]="messageInscription"></div>
+        <button class="btn btn-danger btn-block" (click)="newInscription = true">
+          Formulaire d'inscription
+        </button>
+        <button class="btn btn-primary btn-block" (click)="newInscription = false">
+          Formulaire de connexion
+        </button>
+      </div>
+      <div *ngIf="!userExist && !inscriptionOpen" class="card card-container right">
+        <div>
+          <font color="red"><b>Les inscirptions ne sont pas ouvertes</b><br />
+            Veuillez réessayer avec une adresse e-mail valide.<br />
+            Si votre adresse e-mail devrait être connue,<br />veuillez contacter l'administrateur via le formulaire de
+            contact
+          </font>
+        </div>
+      </div>
+
+    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div *ngIf="!newInscription" class="col-md-6">
+      <div *ngIf="!oublieMDP" class="card card-container">
+        <h1 class="center">Page de connexion</h1>
+        <form *ngIf="!isLoggedIn" name="form" (ngSubmit)="f.form.valid && onSubmit()" #f="ngForm" novalidate>
+          <div class="form-group">
+            <label for="username">Email</label>
+            <input type="text" class="form-control" name="username" [(ngModel)]="form.username" required
+              #username="ngModel" (blur)="verifMailExist()" />
+            <div class="alert alert-danger" role="alert" *ngIf="username.errors && f.submitted">
+              Email obligatoire
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="password">Mot de passe</label>
+            <input type="password" class="form-control" name="password" [(ngModel)]="form.password" required
+              minlength="6" #password="ngModel" />
+            <div class="alert alert-danger" role="alert" *ngIf="password.errors && f.submitted">
+              <div *ngIf="password.errors.required">Le mot de passe est obligatoire</div>
+              <div *ngIf="password.errors.minlength">
+                Le mot de passe doit au moins avoir 6 lettres
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <button class="btn btn-primary btn-block">
+              Connexion
+            </button>
+          </div>
+          <div class="form-group">
+            <div class="alert alert-danger" role="alert" *ngIf="f.submitted && isLoginFailed">
+              Le connexion a échouée: {{ errorMessage }}
+            </div>
+          </div>
+        </form>
+        <div *ngIf="!isLoggedIn" class="form-group">
+          <button (click)="oublieMDP = !oublieMDP" class="btn btn-outline-primary btn-block">
+            Récupération de mot de passe
+          </button>
+        </div>
+        <div class="alert alert-success" *ngIf="isLoggedIn">
+          Votre connexion a réussie !
+          Vous allez être redirigé sur la page de vos adhésions
+        </div>
+      </div>
+
+
+      <div *ngIf="!isLoggedIn && oublieMDP" class="card card-container">
+        <button (click)="oublieMDP = !oublieMDP" class="btn btn-outline-primary btn-block">
+          Connexion
+        </button>
+
+
+        <form name="form" (ngSubmit)="f.form.valid && forgotMdp()" #f="ngForm" novalidate>
+          <div class="form-group">
+            <label for="username">Email de récupération de mot de passe:</label>
+            <input type="text" class="form-control" name="username" [(ngModel)]="form.username" required
+              #username="ngModel" />
+            <div class="alert alert-danger" role="alert" *ngIf="username.errors && f.submitted">
+              L'e-mail est obligatoire
+            </div>
+          </div>
+
+          <div class="form-group">
+            <button class="btn btn-primary btn-block">
+              Envoyer la demande
+            </button>
+          </div>
+          <div class="form-group">
+            <div class="alert alert-danger" role="alert" *ngIf="f.submitted && isresetFailed">
+              Une erreur s'est produite : {{ errorMessage }}
+            </div>
+          </div>
+        </form>
+
+        <div class="alert alert-success" *ngIf="reinitMDPDone">
+          Votre demande à bien été prise en compte!
+          Vous avez recu un lien de reactivation sur votre boite mail.
+        </div>
+      </div>
+
+
+
+
+
+    </div>
+
+
+
+
+
+
+
+
+    <div *ngIf="newInscription" class="col-md-6">
+
+
+      <div class="card card-container">
+        <h1 class="center">Page d'inscription</h1>
+        <form *ngIf="!isSuccessful" name="form" (ngSubmit)="f.form.valid && onSubmit()" #f="ngForm" novalidate>
+          <div class="form-group">
+            <label for="username">Email</label>
+            <input type="email" class="form-control" name="username" [(ngModel)]="form.username" required minlength="10"
+              maxlength="50" #username="ngModel" (blur)="verifMailExist()" />
+            <div class="alert-danger" *ngIf="username.errors && f.submitted">
+              <div *ngIf="username.errors.required">Email obligatoire</div>
+              <div *ngIf="username.errors.minlength">
+                L'email doit avoir au moins 10 caractères
+              </div>
+              <div *ngIf="username.errors.maxlength">
+                L'email doit avoir au plus 50 caractères
+              </div>
+              <div *ngIf="username.errors.email">
+                L'email doit avoir un format d'email valide
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="password">Mot de passe</label>
+            <input type="password" class="form-control" name="password" [(ngModel)]="form.password" required
+              minlength="6" #password="ngModel" />
+            <div class="alert-danger" *ngIf="password.errors && f.submitted">
+              <div *ngIf="password.errors.required">Le mot de passe est obigatoire</div>
+              <div *ngIf="password.errors.minlength">
+                Le mot de passe doit avoir au moins 6 caractères
+              </div>
+            </div>
+          </div>
+
+
+
+          <div *ngIf="!validRgpd" type='button' class="btn btn-primary btn-block alod btn-independent"
+            (click)="testRgpd = !testRgpd">Usage des données
+            personnelles
+          </div>
+          <div *ngIf="validRgpd" type='button' class="btn btn-outline-secondary btn-block btn-independent">
+            Utilisation
+            des données personnelles acceptée <fa-icon class="green" [icon]="faCircleCheck"></fa-icon></div>
+
+
+          <div *ngIf="testRgpd"><b>UTILISATION DES DONNEES PERSONNELLES:</b><br />
+            Les informations recueillies sur ce formulaire sont enregistrées dans un fichier informatisé par le
+            secrétariat de l'ALOD pour permettre le fonctionnement des activités. La base légale du traitement est le
+            contrat entre l'ALOD et le futur adhérent/liciencié.<br />
+            Les données collectées seront communiquées aux seuls destinataires suivants : secrétariat de l'ALOD et
+            UFOLEP.<br />
+
+            Les données sont conservées pendant toute la durée des activitées aux quelles l'adhérent/licencié à souscrit
+            au
+            sein de l'ALOD suivi d'une année d'historisation.<br />
+
+            Vous pouvez accéder aux données vous concernant, les rectifier, demander leur effacement ou exercer votre
+            droit à la limitation du traitement de vos données.<br />
+
+            Consultez le site <a href="https://www.cnil.fr" target="_blank">www.cnil.fr</a> pour plus d’informations sur
+            vos
+            droits.<br />
+
+            Pour exercer ces droits ou pour toute question sur le traitement de vos données dans ce dispositif, vous
+            pouvez contacter (le cas échéant, notre délégué à la protection des données ou le service chargé de
+            l’exercice de ces droits) : alod.amicale@gmail.com <br />
+            Si vous estimez, après nous avoir contactés, que vos droits « Informatique et Libertés » ne sont pas
+            respectés, vous pouvez adresser une réclamation à la CNIL.<br />
+            <div type='button' class="btn btn-primary alod btn-block btn-independent"
+              (click)="testRgpd = false; validRgpd=true">J’autorise
+              l’ALOD à conserver les données personnelles inscrites sur cette fiche
+            </div>
+          </div>
+
+
+          <br /><br />
+          <div *ngIf="!validRgpd && afficheAlerte">
+            Validation de l'utilisation des données personnelles indispensable pour pouvoir continuer
+          </div>
+          <div class="form-group" (click)="afficheAlerteDonneesPerso()">
+            <button [disabled]="!validRgpd" [ngClass]="validRgpd ? '' : ' btn-secondary'"
+              class="btn btn-primary btn-block alod">Inscription</button>
+          </div>
+
+          <div class="alert alert-warning" *ngIf="f.submitted && isSignUpFailed">
+            Votre inscription a échouée <br />{{ errorMessage }}
+          </div>
+        </form>
+
+        <div class="alert alert-success" *ngIf="isSuccessful">
+          Inscription réussie!
+          Vous allez être redirigé sur la page de vos adhésions.
+        </div>
+      </div>
+    </div>
+  </div>

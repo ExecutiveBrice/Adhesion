@@ -4,8 +4,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: adress_de_gmail@gmail.com
-    password: le_password_de_gmail
+    username: alod.section.fete@gmail.com
+    password: wqshdryblzispmbq
     properties.mail.smtp:
       ssl.trust: smtp.gmail.com
       auth: true
@@ -26,14 +26,14 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        dialect: org.hibernate.dialect.PostgreSQL81Dialect
         format_sql: true
         globally_quoted_identifiers: true
         enable_lazy_load_no_trans: true
 server:
   app:
-    jwtSecret: pouetPOUETcamion
+    jwtSecret: seCretForEVER5558
     jwtExpirationMs: 86400000
     fill_adherents: true
     fill_activites: true
-  name: bmoexperience.fr
+  name: localhost:4200

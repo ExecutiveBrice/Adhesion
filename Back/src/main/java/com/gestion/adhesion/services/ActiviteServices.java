@@ -21,14 +21,30 @@ public class ActiviteServices {
     @Autowired
     AdherentServices adherentServices;
 
+    public static final List<String> list_G_valid = List.of("Validée", "Validée, en attente du certificat médical");
+    public static final List<String> list_G_encours = List.of("Attente validation adhérent", "Attente validation secrétariat");
+
+    public static final List<String> list_B_valid = List.of("Validée", "Validée, en attente du certificat médical", "Licence T", "Retour Comité", "Licence générée", "Validée groupement sportif");
+    public static final List<String> list_B_encours = List.of("Attente validation adhérent", "Attente validation secrétariat");
     public List<Activite> getAll (){
         List<Activite> activites = activiteRepository.findAll();
-        activites.stream().forEach(activite -> {activite.setNbAdherentTotal(activite.getAdhesions().size());});
+        activites.stream().forEach(activite -> {
+            if("ALOD_G".equals(activite.getGroupe())){
+                activite.setNbAdhesionsCompletes(activite.getAdhesions().stream().filter(adh -> list_G_valid.contains(adh.getStatutActuel())).count());
+                activite.setNbAdhesionsEnCours(activite.getAdhesions().stream().filter(adh -> list_G_encours.contains(adh.getStatutActuel())).count());
+                activite.setMontantCollecte(0L);
+                activite.getAdhesions().stream().filter(adh -> list_B_valid.contains(adh.getStatutActuel()))
+                        .forEach(adh -> activite.setMontantCollecte(activite.getMontantCollecte()+adh.getTarif()));
+            }
+            if("ALOD_B".equals(activite.getGroupe())){
+                activite.setNbAdhesionsCompletes(activite.getAdhesions().stream().filter(adh -> list_B_valid.contains(adh.getStatutActuel())).count());
+                activite.setNbAdhesionsEnCours(activite.getAdhesions().stream().filter(adh -> list_B_encours.contains(adh.getStatutActuel())).count());
+                activite.setMontantCollecte(0L);
+                activite.getAdhesions().stream().filter(adh -> list_B_valid.contains(adh.getStatutActuel()))
+                        .forEach(adh -> activite.setMontantCollecte(activite.getMontantCollecte()+adh.getTarif()));
+            }
+        });
         return activites;
-    }
-
-    public Activite getById(Long id){
-        return activiteRepository.findById(id).get();
     }
 
     public Activite save(Activite activite){
@@ -40,8 +56,12 @@ public class ActiviteServices {
         return activiteRepository.save(activite);
     }
 
-    public Activite findByNom(String nom){
-        return activiteRepository.findByNom(nom).get();
+    public List<Activite> findByNom(String nom){
+        return activiteRepository.findByNom(nom);
+    }
+
+    public Activite getById(Long activiteId){
+        return activiteRepository.findById(activiteId).get();
     }
 
     public boolean existsByNom(String nom){

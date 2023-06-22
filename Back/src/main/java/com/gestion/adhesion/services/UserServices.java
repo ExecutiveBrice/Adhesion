@@ -162,6 +162,11 @@ public class UserServices {
     }
 
 
+    public void isUserExist(String email) {
+        findByEmail(email);
+    }
+
+
     public ConfirmationToken reinitPassword(String email) {
         User user = findByEmail(email);
 

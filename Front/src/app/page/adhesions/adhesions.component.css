@@ -1,0 +1,10 @@
+.truncate{
+    word-wrap: break-word;
+    max-width: 150px;
+}
+
+
+  
+  .ligne:hover{
+    background-color: rgba(188, 219, 205, 255)!important;
+  }

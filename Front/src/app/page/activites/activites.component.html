@@ -1,0 +1,297 @@
+<div *ngIf="isFailed" class="card card-container">
+  {{errorMessage}}
+</div>
+
+
+<ng-template #editProfileModal let-c="close" let-d="dismiss">
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Activité</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="dismiss()"></button>
+  </div>
+  <div class="modal-body">
+
+    <form name="form" (ngSubmit)="f.form.valid && onSubmit()" #f="ngForm" novalidate>
+
+      <div class="form-group">
+        <label for="nom">Nom</label>
+        <input type="text" class="form-control" name="nom" [(ngModel)]="newActivite.nom" />
+      </div>
+
+      <div ngbDropdown class="d-inline-block">
+        <button type="button" class="btn btn-primary"
+          id="dropdownBasic1" ngbDropdownToggle>
+          {{newActivite.groupe?newActivite.groupe:'Groupe'}}
+        </button>
+
+
+        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+          <div ngbDropdownItem (click)="newActivite.groupe = 'ALOD_B'">ALOD_B</div>
+          <div ngbDropdownItem (click)="newActivite.groupe = 'ALOD_G'">ALOD_G</div>
+        </div>
+      </div>
+
+      
+      <div class="form-group">
+        <label for="groupeFiltre">Goupe Filtre</label>
+        <input type="text" class="form-control" name="groupeFiltre" [(ngModel)]="newActivite.groupeFiltre" />
+      </div>
+
+
+      <div class="form-group">
+        <label for="tarif">Tarif</label>
+        <input type="number" class="form-control" name="tarif" [(ngModel)]="newActivite.tarif" />
+      </div>
+
+      <div class="form-group">
+        <label for="horaire">Horaire</label>
+        <input type="text" class="form-control" name="horaire" [(ngModel)]="newActivite.horaire" />
+      </div>
+
+      <div class="form-group">
+        <label for="lien">Lien</label>
+        <input type="text" class="form-control" name="lien" [(ngModel)]="newActivite.lien" />
+      </div>
+
+      <div class="form-group">
+        <label for="salle">Salle</label>
+        <input type="text" class="form-control" name="salle" [(ngModel)]="newActivite.salle" />
+      </div>
+
+      <div class="form-group">
+        <label for="prof">Prof</label>
+        <div *ngFor="let prof of newActivite.profs | orderBy:'id':true ">
+          {{prof.prenom}} {{prof.nom}}
+        </div>
+
+
+        <div ngbDropdown class="d-inline-block col-md-12 ">
+          <button type="button" class="btn btn-block btn-primary" id="dropdownBasic1" ngbDropdownToggle>
+            Ajouter un prof
+          </button>
+
+
+          <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+
+            <div ngbDropdownItem *ngFor="let adherent of adherents  | orderBy:'ordre':false"
+              (click)="ajouterProf(newActivite,adherent)">{{adherent.prenom}} {{adherent.nom}}</div>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="nbPlaces">Nombre de Place Maximale</label>
+        <input type="number" class="form-control" name="nbPlaces" [(ngModel)]="newActivite.nbPlaces" />
+      </div>
+
+      <div class="form-group">
+        <label for="complete">Complete <fa-icon
+            *ngIf="newActivite.complete" class="green" [icon]="faCircleCheck"></fa-icon><fa-icon
+            *ngIf="!newActivite.complete" class="orange" [icon]="faCircleXmark"></fa-icon></label>
+
+        <div class="btn-group btn-group-sm" role="group" aria-label="complete">
+          <div type='button' class="btn btn-block"
+            [ngClass]="newActivite.complete ? 'btn-primary alod' : ' btn-outline-secondary'"
+            (click)="newActivite.complete = true">Oui</div>
+          <div type='button' class="btn btn-block"
+            [ngClass]="!newActivite.complete ? 'btn-primary alod' : ' btn-outline-secondary'"
+            (click)="newActivite.complete = false">Non</div>
+        </div>
+      </div>
+
+
+      <div class="form-group">
+        <label for="pourEnfant">Activité pour Enfant ? <fa-icon *ngIf="newActivite.pourEnfant" class="green"
+            [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="newActivite.pourEnfant == false" class="orange"
+            [icon]="faCircleXmark"></fa-icon><fa-icon *ngIf="newActivite.pourEnfant == null"
+            [icon]="faCircleQuestion"></fa-icon></label>
+
+        <div class="btn-group btn-group-sm" role="group" aria-label="pourEnfant">
+          <div type='button' class="btn btn-block"
+            [ngClass]="newActivite.pourEnfant ? 'btn-primary alod' : ' btn-outline-secondary'"
+            (click)="newActivite.pourEnfant = true">Oui</div>
+          <div type='button' class="btn btn-block"
+            [ngClass]="newActivite.pourEnfant == false ? 'btn-primary alod' : ' btn-outline-secondary'"
+            (click)="newActivite.pourEnfant = false">Non</div>
+          <div type='button' class="btn btn-block"
+            [ngClass]="newActivite.pourEnfant == null ? 'btn-primary alod' : ' btn-outline-secondary'"
+            (click)="newActivite.pourEnfant = null">Non spécifié</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="certificatMedical">Document Certificat Médical ? <fa-icon *ngIf="newActivite.certificatMedical"
+            class="green" [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!newActivite.certificatMedical"
+            class="orange" [icon]="faCircleXmark"></fa-icon></label>
+
+        <div class="btn-group btn-group-sm" role="group" aria-label="certificatMedical">
+          <div type='button' class="btn btn-block"
+            [ngClass]="newActivite.certificatMedical ? 'btn-primary alod' : ' btn-outline-secondary'"
+            (click)="newActivite.certificatMedical = true">Oui</div>
+          <div type='button' class="btn btn-block"
+            [ngClass]="!newActivite.certificatMedical ? 'btn-primary alod' : ' btn-outline-secondary'"
+            (click)="newActivite.certificatMedical = false">Non</div>
+        </div>
+      </div>
+      <div *ngIf="newActivite.certificatMedical" class="form-group">
+        <label for="dureeVieCertif">Nb année validité max</label>
+        <input type="number" class="form-control" name="dureeVieCertif" [(ngModel)]="newActivite.dureeVieCertif" />
+      </div>
+
+      <div class="form-group">
+        <label for="priseEnCharge">Accord de Prise en Charge ? <fa-icon *ngIf="newActivite.priseEnCharge" class="green"
+            [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!newActivite.priseEnCharge" class="orange"
+            [icon]="faCircleXmark"></fa-icon></label>
+
+        <div class="btn-group btn-group-sm" role="group" aria-label="priseEnCharge">
+          <div type='button' class="btn btn-block"
+            [ngClass]="newActivite.priseEnCharge ? 'btn-primary alod' : ' btn-outline-secondary'"
+            (click)="newActivite.priseEnCharge = true">Oui</div>
+          <div type='button' class="btn btn-block"
+            [ngClass]="!newActivite.priseEnCharge ? 'btn-primary alod' : ' btn-outline-secondary'"
+            (click)="newActivite.priseEnCharge = false">Non</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="autorisationParentale">Accord Autorisation Parentale ? <fa-icon
+            *ngIf="newActivite.autorisationParentale" class="green" [icon]="faCircleCheck"></fa-icon><fa-icon
+            *ngIf="!newActivite.autorisationParentale" class="orange" [icon]="faCircleXmark"></fa-icon></label>
+
+        <div class="btn-group btn-group-sm" role="group" aria-label="autorisationParentale">
+          <div type='button' class="btn btn-block"
+            [ngClass]="newActivite.autorisationParentale ? 'btn-primary alod' : ' btn-outline-secondary'"
+            (click)="newActivite.autorisationParentale = true">Oui</div>
+          <div type='button' class="btn btn-block"
+            [ngClass]="!newActivite.autorisationParentale ? 'btn-primary alod' : ' btn-outline-secondary'"
+            (click)="newActivite.autorisationParentale = false">Non</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="vieClub">Accord Vie du Club ? <fa-icon *ngIf="newActivite.vieClub" class="green"
+            [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!newActivite.vieClub" class="orange"
+            [icon]="faCircleXmark"></fa-icon></label>
+
+        <div class="btn-group btn-group-sm" role="group" aria-label="vieClub">
+          <div type='button' class="btn btn-block"
+            [ngClass]="newActivite.vieClub ? 'btn-primary alod' : ' btn-outline-secondary'"
+            (click)="newActivite.vieClub = true">Oui</div>
+          <div type='button' class="btn btn-block"
+            [ngClass]="!newActivite.vieClub ? 'btn-primary alod' : ' btn-outline-secondary'"
+            (click)="newActivite.vieClub = false">Non</div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Save changes</button>
+      </div>
+
+    </form>
+  </div>
+</ng-template>
+
+
+<div class="row">
+
+  <div class="col-md-4 center">
+
+    <button class="btn btn-sm btn-primary" (click)="openModal(editProfileModal, newActivite)">Nouvelle
+      activitée</button>
+
+  </div>
+  <div class="col-md-4 center">
+    <div class="btn-group btn-group-sm col-3" role="group">
+      <div type='button' [ngClass]="filtres.get('basket')==true? 'btn-primary' : 'btn-pomme'" class="btn btn-block"
+        (click)="filtre('basket', true)">Basket</div>
+      <div type='button' [ngClass]="filtres.get('basket')==false? 'btn-primary' : 'btn-pomme'" class="btn btn-block"
+        (click)="filtre('basket', false)">Autres</div>
+
+    </div>
+
+  </div>
+  <div class="col-md-4 center">
+    <input class="form-control" type="text" name="search" [(ngModel)]="search" placeholder="Recherche..." />
+  </div>
+
+</div>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th class="center" scope="col">Edit</th>
+      <th class="center" scope="col" (click)="ordre='nom'; sens = !sens">Nom</th>
+      <th class="center" scope="col" (click)="ordre='tarif'; sens = !sens">Tarif</th>
+      <th class="center" scope="col" (click)="ordre='horaire'; sens = !sens">Horaire</th>
+      <th class="center" scope="col" (click)="ordre='lien'; sens = !sens">Lien</th>
+      <th class="center" scope="col" (click)="ordre='salle'; sens = !sens">Salle</th>
+      <th class="center" scope="col" (click)="ordre='prof'; sens = !sens">Prof</th>
+      <th class="center" scope="col" (click)="ordre='nbPlaces'; sens = !sens">Places</th>
+      <th class="center" scope="col" (click)="ordre='montantCollecte'; sens = !sens">Adhesions</th>
+      <th class="center" scope="col" (click)="ordre='complete'; sens = !sens">Complete</th>
+      <th class="center" scope="col" (click)="ordre='pourEnfant'; sens = !sens">Pour mineur</th>
+      <th class="center" scope="col" (click)="ordre='priseEnCharge'; sens = !sens">prise en charge</th>
+      <th class="center" scope="col" (click)="ordre='autorisationParentale'; sens = !sens">autorisation Parentale</th>
+      <th class="center" scope="col" (click)="ordre='certificatMedical'; sens = !sens">Certificat Médical</th>
+      <th class="center" scope="col" (click)="ordre='dureeVieCertif'; sens = !sens">Durée max certif</th>
+      <th class="center" scope="col" (click)="ordre='vieclub'; sens = !sens">Vie du Club</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let activite of activites | filterBy:search  | orderBy:ordre:sens ">
+      <td class="center" (click)="openModal(editProfileModal, activite)">
+
+        <fa-icon class="pointer fa-2xl" [icon]="faPencilSquare"></fa-icon>
+      </td>
+      <td>{{activite.nom}}</td>
+      <td class="center">{{activite.tarif}}</td>
+      <td>{{activite.horaire}}</td>
+      <td>{{activite.lien}}</td>
+      <td>{{activite.salle}}</td>
+      <td>
+        <div *ngFor="let prof of activite.profs | orderBy:'id':true ">
+          {{prof.prenom}} {{prof.nom}} <fa-icon [routerLink]="['/mail', prof.id]" class="pointer green"
+            [icon]="faEnvelope"></fa-icon>
+        </div>
+      </td>
+      <td class="center">{{activite.nbPlaces}}</td>
+      <td class="center">{{activite.nbAdhesionsEnCours}}/<font color="green">{{activite.nbAdhesionsCompletes}}</font>/<font color="red">{{activite.montantCollecte}}</font>
+      </td>
+      <td class="center">
+        <fa-icon *ngIf="activite.complete" [ngClass]="activite.complete ? 'green' : ''" [icon]="faCircleCheck"></fa-icon>
+        <fa-icon *ngIf="!activite.complete" [ngClass]="!activite.complete ? 'orange' : ''"
+          [icon]="faCircleXmark"></fa-icon>
+      </td>
+      <td class="center">
+        <fa-icon *ngIf="activite.pourEnfant" class="green" [icon]="faCircleCheck"></fa-icon>
+        <fa-icon *ngIf="activite.pourEnfant == false" class="orange" [icon]="faCircleXmark"></fa-icon>
+        <fa-icon *ngIf="activite.pourEnfant == null" [icon]="faCircleQuestion"></fa-icon>
+      </td>
+      <td class="center">
+        <fa-icon *ngIf="activite.priseEnCharge" [ngClass]="activite.priseEnCharge ? 'green' : ''"
+          [icon]="faCircleCheck"></fa-icon>
+        <fa-icon *ngIf="!activite.priseEnCharge" [ngClass]="!activite.priseEnCharge ? 'orange' : ''"
+          [icon]="faCircleXmark"></fa-icon>
+      </td>
+      <td class="center">
+        <fa-icon *ngIf="activite.autorisationParentale" [ngClass]="activite.autorisationParentale ? 'green' : ''"
+          [icon]="faCircleCheck"></fa-icon>
+        <fa-icon *ngIf="!activite.autorisationParentale" [ngClass]="!activite.autorisationParentale ? 'orange' : ''"
+          [icon]="faCircleXmark"></fa-icon>
+      </td>
+      <td class="center">
+        <fa-icon *ngIf="activite.certificatMedical" [ngClass]="activite.certificatMedical ? 'green' : ''"
+          [icon]="faCircleCheck"></fa-icon>
+        <fa-icon *ngIf="!activite.certificatMedical" [ngClass]="!activite.certificatMedical ? 'orange' : ''"
+          [icon]="faCircleXmark"></fa-icon>
+      </td>
+      <td class="center">{{activite.dureeVieCertif}}an{{activite.dureeVieCertif>1?"s":""}}</td>
+      
+      <td class="center">
+        <fa-icon *ngIf="activite.vieClub" [ngClass]="activite.vieClub ? 'green' : ''" [icon]="faCircleCheck"></fa-icon>
+        <fa-icon *ngIf="!activite.vieClub" [ngClass]="!activite.vieClub ? 'orange' : ''"
+          [icon]="faCircleXmark"></fa-icon>
+      </td>
+    </tr>
+  </tbody>
+</table>

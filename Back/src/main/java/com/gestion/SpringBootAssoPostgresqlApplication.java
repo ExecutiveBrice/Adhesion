@@ -1,10 +1,7 @@
 package com.gestion;
 
 import com.gestion.adhesion.models.ERole;
-import com.gestion.adhesion.models.ParamBoolean;
-import com.gestion.adhesion.models.ParamText;
 import com.gestion.adhesion.models.Role;
-import com.gestion.adhesion.repository.ParamTextRepository;
 import com.gestion.adhesion.repository.RoleRepository;
 import com.gestion.adhesion.services.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +43,9 @@ public class SpringBootAssoPostgresqlApplication {
 		}
 		if(!roleRepository.findByName(ERole.ROLE_PROF).isPresent()){
 			roleRepository.save(new Role(ERole.ROLE_PROF));
+		}
+		if(!roleRepository.findByName(ERole.ROLE_COMPTABLE).isPresent()){
+			roleRepository.save(new Role(ERole.ROLE_COMPTABLE));
 		}
 		if(!roleRepository.findByName(ERole.ROLE_BUREAU).isPresent()){
 			roleRepository.save(new Role(ERole.ROLE_BUREAU));

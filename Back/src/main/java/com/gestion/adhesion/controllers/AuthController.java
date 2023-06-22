@@ -1,14 +1,13 @@
 package com.gestion.adhesion.controllers;
 
+import com.gestion.adhesion.models.UserDetails;
+import com.gestion.adhesion.services.UserDetailsService;
+import com.gestion.adhesion.services.UserServices;
+import com.gestion.security.jwt.JwtUtils;
 import com.gestion.security.payload.request.LoginRequest;
 import com.gestion.security.payload.request.SignupRequest;
 import com.gestion.security.payload.response.JwtResponse;
 import com.gestion.security.payload.response.MessageResponse;
-import com.gestion.security.jwt.JwtUtils;
-import com.gestion.adhesion.models.UserDetails;
-import com.gestion.adhesion.services.UserDetailsService;
-import com.gestion.adhesion.models.User;
-import com.gestion.adhesion.services.UserServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -64,7 +63,7 @@ public class AuthController {
 
 
 	@PostMapping("/signupAnonymous")
-	public ResponseEntity<?> signupAnonymous(@Valid @RequestBody SignupRequest signUpRequest) {
+	public ResponseEntity<?> signupAnonymous(@RequestBody SignupRequest signUpRequest) {
 		signUpRequest.setUsername(signUpRequest.getUsername().toLowerCase());
 		if (userServices.existsByEmail(signUpRequest.getUsername())) {
 			return ResponseEntity
@@ -74,6 +73,22 @@ public class AuthController {
 		userServices.createNewUserAnonymous(signUpRequest.getUsername());
 		return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
 	}
+	@PostMapping("/reinitPassword")
+	public ResponseEntity<?> reinitPassword(@RequestBody SignupRequest signUpRequest) {
+		signUpRequest.setUsername(signUpRequest.getUsername().toLowerCase());
+		return ResponseEntity.ok(userServices.reinitPassword(signUpRequest.getUsername()));
+	}
+
+	@PostMapping("/userExist")
+	public ResponseEntity<?> userExist(@RequestBody SignupRequest signUpRequest) {
+		signUpRequest.setUsername(signUpRequest.getUsername().toLowerCase());
+		userServices.isUserExist(signUpRequest.getUsername());
+		return ResponseEntity.ok("ok");
+	}
+
+
+
+
 
 	@PostMapping("/signup")
 	public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
@@ -94,11 +109,7 @@ public class AuthController {
 		return ResponseEntity.ok("Votre e-mail à bien été confirmée");
 	}
 
-	@PostMapping("/reinitPassword")
-	public ResponseEntity<?> reinitPassword(@RequestBody SignupRequest signUpRequest) {
-		signUpRequest.setUsername(signUpRequest.getUsername().toLowerCase());
-		return ResponseEntity.ok(userServices.reinitPassword(signUpRequest.getUsername()));
-	}
+
 
 	@PostMapping("/changePassword")
 	public ResponseEntity<?> changePassword(@PathParam("token") String token, @RequestBody SignupRequest signUpRequest) {

@@ -1,0 +1,220 @@
+<div *ngIf="isFailed" class="card card-container">
+  {{errorMessage}}
+</div>
+
+<ng-template #editProfileModal let-c="close" let-d="dismiss">
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Changement de groupe</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="dismiss()"></button>
+  </div>
+  <div class="modal-body">
+    Vous souhaitez que l'{{selectedAdherent.genre=="Masculin"?"adhérent":"adhérente"}} {{selectedAdherent.prenom}}
+    {{selectedAdherent.nom}} soit {{selectedAdherent.genre=="Masculin"?"associé":"associée"}} au groupe de :
+    {{referentAdherent.prenom}} {{referentAdherent.nom}}
+    <form name="form" (ngSubmit)="f.form.valid && onSubmitChangeTribu()" #f="ngForm" novalidate>
+      <div class="form-group">
+        <div ngbDropdown class="d-inline-block col-md-12 ">
+          <button type="button" class="btn btn-block btn-primary" id="dropdownBasic1" ngbDropdownToggle>
+            Changer de groupe
+          </button>
+          <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+            <div ngbDropdownItem *ngFor="let adherent of adherentsReferent | orderBy:'nom':false"
+              (click)="referentAdherent=adherent">{{adherent.nom}} {{adherent.prenom}}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Effectuer ce changement</button>
+      </div>
+
+    </form>
+  </div>
+</ng-template>
+
+
+<ng-template #newAdherentModal let-c="close" let-d="dismiss">
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Ajouter un nouvel adherent</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="dismiss()"></button>
+  </div>
+  <form name="form" (ngSubmit)="f.form.valid && onSubmitAddUser(newUser)" #f="ngForm" novalidate>
+    <div class="modal-body">
+      Veuillez saisir l'adresse email de référence (qui servira de connexion)
+
+      <div class="form-group">
+
+        <label for="email">Email</label>
+        <input type="email" class="form-control" name="email" [(ngModel)]="newUser" />
+
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="submit" class="btn btn-primary">Ajouter ce nouvel adherent</button>
+    </div>
+  </form>
+
+</ng-template>
+
+<div class="row">
+
+  <div class="col-md-6 center">
+    <div class="btn-group btn-group-sm col-4" role="group">
+      <button class="btn btn-sm btn-primary" (click)="openModalAddUser(newAdherentModal)">Nouvel
+        adherent</button>
+    </div>
+    <div class="btn-group btn-group-sm col-8" role="group">
+      <button class="btn btn-sm btn-primary" (click)="exportAsXLSX()">Extraction des adherents</button>
+    </div>
+  </div>
+  <div class="col-6 center">
+
+    <div class="btn-group btn-group-sm col-6" role="group">
+      <div type='button' *ngIf="filtres.get('mineur')!=true" class="btn btn-block btn-pomme"
+        (click)="addFiltre('mineur', true)">Mineur</div>
+      <div type='button' *ngIf="filtres.get('mineur')==true" class="btn btn-block btn-primary"
+        (click)="removeFiltre('mineur')">Mineur</div>
+
+      <div type='button' *ngIf="filtres.get('mineur')!=false" class="btn btn-block btn-pomme"
+        (click)="addFiltre('mineur', false)">Majeur</div>
+      <div type='button' *ngIf="filtres.get('mineur')==false" class="btn btn-block btn-primary"
+        (click)="removeFiltre('mineur')">Majeur</div>
+
+    </div>
+    <div class="btn-group btn-group-sm col-6" role="group">
+      <div type='button' *ngIf="filtres.get('referent')!=true" class="btn btn-block btn-pomme"
+        (click)="addFiltre('referent', true)">Référent</div>
+      <div type='button' *ngIf="filtres.get('referent')==true" class="btn btn-block btn-primary"
+        (click)="removeFiltre('referent')">Référent</div>
+
+      <div type='button' *ngIf="filtres.get('referent')!=false" class="btn btn-block btn-pomme"
+        (click)="addFiltre('referent', false)">Pas référent</div>
+      <div type='button' *ngIf="filtres.get('referent')==false" class="btn btn-block btn-primary"
+        (click)="removeFiltre('referent')">Pas référent</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="row">
+
+  <div class="col-12 center">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th class="center pointer" scope="col">Groupe</th>
+          <th class="center pointer" scope="col">
+            <input class="form-control xs" type="text" name="search" [(ngModel)]="search"
+              (ngModelChange)="addSearch(search)" placeholder="Nom Prénom" />
+          </th>
+          <th class="center pointer" scope="col">Email</th>
+          <th class="center pointer" scope="col">Telephone</th>
+          <th class="center pointer" scope="col">Adresse</th>
+          <th class="center pointer" scope="col">Naissance / Lieu</th>
+          <th class="center pointer" scope="col">Activitées</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let adherent of adherents | filterBy:search  | orderBy:ordre:sens ">
+          <ng-template #tipsAdherentDelete><b>Deletion</b><br />
+            <fa-icon [icon]="faSkull"> </fa-icon>Détruit l'adhérent et ses adhésions, si il est référent, destruction
+            du groupe complet
+          </ng-template>
+          <ng-template #tipsAdherentFocus><b>icons</b><br />
+            <fa-icon class="orange" [icon]="faUsersRays"></fa-icon> focalise sur un groupe
+          </ng-template>
+          <ng-template #tipsAdherentRegroupe><b>icons</b><br />
+            <fa-icon class="green" [icon]="faUsers"></fa-icon> permet de regrouper des adherents dans une meme groupe
+          </ng-template>
+          <td class="center pointer">
+            <fa-icon *ngIf="showAdmin || showSecretaire" class="fa-lg pointer"
+              (click)="openModal(confirmModal, adherent)" [ngbTooltip]="tipsAdherentDelete" [icon]="faSkull"></fa-icon>
+            <fa-icon class="fa-lg pointer orange" (click)="addFiltre('tribuId', adherent.tribuId)"
+              [ngbTooltip]="tipsAdherentFocus" [icon]="faUsersRays"></fa-icon>
+            <fa-icon class="fa-lg pointer green" (click)="openModal(editProfileModal, adherent)"
+              [ngbTooltip]="tipsAdherentRegroupe" [icon]="faUsers"></fa-icon>
+            <fa-icon class="fa-lg pointer" [routerLink]="['/inscription', adherent.email]"
+              [ngbTooltip]="tipsAdherentRegroupe" target="_blank" [icon]="faPen"></fa-icon>
+
+            {{adherent.tribu.adherents.length}} membre{{adherent.tribu.adherents.length>1?"s":""}}
+          </td>
+
+          <td>
+            {{adherent.nom}} {{adherent.prenom}}
+          </td>
+          <td *ngIf="!adherent.editMail">
+            <ng-template #tipsAdherentEditMail><b>icons</b><br />
+              <fa-icon [icon]="faPencilSquare"></fa-icon> permet la modification de l'adresse mail de contact ainsi
+              que le login de connexion
+            </ng-template>
+            <ng-template #tipsAdherentSendMail><b>icons</b><br />
+              <fa-icon class="fa-lg green" [icon]="faEnvelope"></fa-icon> permet d'envoyer un mail pour cet adhérent
+            </ng-template>
+            <fa-icon class="fa-lg pointer" [icon]="faPencilSquare" (click)="adherent.editMail=!adherent.editMail"
+              [ngbTooltip]="tipsAdherentEditMail"></fa-icon>
+            {{adherent.email}} <fa-icon *ngIf="adherent.email != null" [routerLink]="['/mail', adherent.id]"
+              class="fa-lg pointer green" [icon]="faEnvelope" [ngbTooltip]="tipsAdherentSendMail"></fa-icon>
+          </td>
+          <td *ngIf="adherent.editMail">
+            <form name="adherent" (ngSubmit)="f.form.valid && onSubmit(adherent.email, adherent.id)" #f="ngForm"
+              novalidate>
+              <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" class="form-control" name="email" [(ngModel)]="adherent.email" required
+                  minlength="10" maxlength="100" #email="ngModel" ngModel email />
+                <div class="alert-danger" *ngIf="email.errors && f.submitted">
+                  <div *ngIf="email.errors.required">l'e-mail est obligatoire</div>
+                  <div *ngIf="email.errors.minlength">
+                    L'e-mail doit avoir au moins 10 caractères
+                  </div>
+                  <div *ngIf="email.errors.maxlength">
+                    L'e-mail doit avoir au maximum 100 caractères
+                  </div>
+                  <div *ngIf="email.errors.email">
+                    l'e-mail doit avoir un format valide
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <button class="btn btn-primary btn-block">Enregistrer</button>
+              </div>
+            </form>
+          </td>
+          <td>
+            {{adherent.telephone}}
+          </td>
+          <td>{{adherent.adresse}}</td>
+          <td>
+            {{adherent.naissance}} {{adherent.lieuNaissance}}
+          </td>
+          <td>
+            <div *ngFor="let adhesion of adherent.adhesions">
+              {{adhesion.activite.nom}} {{adhesion.activite.horaire}}
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+
+</div>
+
+
+
+
+
+<ng-template #confirmModal let-c="close" let-d="dismiss">
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Suppression</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="dismissSupress()"></button>
+  </div>
+  <div class="modal-body">
+    Vous êtes sur le point de supprimer l'adhesion de {{selectedAdherent.prenom}}
+
+  </div>
+  <div class="modal-footer">
+    <button type="submit" class="btn btn-primary" (click)="acceptSupress(selectedAdherent)">Valider</button>
+  </div>
+</ng-template>

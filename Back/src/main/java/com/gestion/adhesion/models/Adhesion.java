@@ -24,7 +24,11 @@ public class Adhesion {
 
     private Integer tarif;
 
+    private Integer position;
+
     private LocalDate saison;
+
+    private LocalDate dateReglement;
 
     private String typeReglement;
 
@@ -58,4 +62,18 @@ public class Adhesion {
     @ToString.Exclude
     private Adherent adherent;
 
+    private static final List<String> list_valid = List.of("Validée", "Validée, en attente du certificat médical");
+    private static final List<String> list_G_encours = List.of("Attente validation adhérent", "Attente validation secrétariat");
+
+    private static final List<String> list_B_valid = List.of("Validée", "Validée, en attente du certificat médical", "Licence T", "Retour Comité", "Licence générée", "Validée groupement sportif");
+    private static final List<String> list_B_encours = List.of("Attente validation adhérent", "Attente validation secrétariat");
+
+
+    public boolean isValide(){
+        return list_valid.contains(getStatutActuel());
+    }
+
+    public boolean isEnCours(){
+        return list_G_encours.contains(getStatutActuel());
+    }
 }

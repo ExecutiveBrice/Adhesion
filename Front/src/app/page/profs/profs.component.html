@@ -1,0 +1,52 @@
+<div *ngIf="isFailed" class="card card-container">
+  {{errorMessage}}
+</div>
+
+<div class="row">
+
+  <div class="col-12 center" *ngFor="let activite of activiteLite | orderBy:'nom':false ">
+    {{activite.nom}} {{activite.horaire}}
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th class="center pointer" scope="col" (click)="ordre='nom'; sens = !sens">Nom</th>
+          <th class="center pointer" scope="col" (click)="ordre='email'; sens = !sens">Email</th>
+          <th class="center pointer" scope="col" (click)="ordre='telephone'; sens = !sens">Telephone</th>
+          <th class="center pointer" scope="col" (click)="ordre='telephone'; sens = !sens">Referent</th>
+          <th class="center pointer" scope="col" (click)="ordre='telephone'; sens = !sens">Accord</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let adherent of activite.adherents | orderBy:ordre:sens ">
+
+          <td>
+            {{adherent.nom}} {{adherent.prenom}}
+          </td>
+          <td>
+            <ng-template #tipsAdherentSendMail><b>icons</b><br />
+              <fa-icon class="fa-lg green" [icon]="faEnvelope"></fa-icon> permet d'envoyer un mail pour cet adhérent
+            </ng-template>
+            {{adherent.email}} <fa-icon *ngIf="adherent.email != null" [routerLink]="['/mail', adherent.id]"
+              class="fa-lg pointer green" [icon]="faEnvelope"></fa-icon>
+          </td>
+          <td>
+            {{adherent.telephone}}
+          </td>
+          <td>
+            {{adherent.telephone}}
+          </td>
+          <td>
+            <div *ngFor="let accord of adherent.accords | orderBy:ordre:sens ">
+              {{accord.nom}}<fa-icon *ngIf="accord.etat" class="green"
+              [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!accord.etat" class="orange"
+              [icon]="faCircleXmark"></fa-icon>
+            </div>
+
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+
+</div>

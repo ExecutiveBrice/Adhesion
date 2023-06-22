@@ -1,6 +1,5 @@
 package com.gestion.adhesion.repository;
 
-import com.gestion.adhesion.models.ParamBoolean;
 import com.gestion.adhesion.models.ParamNumber;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

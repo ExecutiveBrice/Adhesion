@@ -34,6 +34,8 @@ public class Activite {
 
     private String groupe;
 
+    private String groupeFiltre;
+
     private String nom;
     private String lien;
     private Integer tarif;
@@ -53,11 +55,17 @@ public class Activite {
     private boolean vieClub;
 
     private boolean certificatMedical;
-
+    private boolean complete;
     private Integer dureeVieCertif;
 
     @Transient
-    private int nbAdherentTotal;
+    private Long nbAdhesionsEnCours;
+
+    @Transient
+    private Long nbAdhesionsCompletes;
+
+    @Transient
+    private Long montantCollecte;
 
     @OneToMany(mappedBy="activite", cascade = CascadeType.ALL)
     @JsonIgnore

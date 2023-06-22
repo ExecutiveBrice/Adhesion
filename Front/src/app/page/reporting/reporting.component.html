@@ -1,0 +1,93 @@
+<div class="container">
+
+  <div class="row">
+    
+
+
+    <div class="col-6">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th class="center" scope="col">Nom</th>
+            <th class="center" scope="col">nbEC</th>
+            <th class="center" scope="col">nbV</th>
+            <th class="center" scope="col">nbF</th>
+            <th class="center" scope="col">nbM</th>
+            <th class="center" scope="col">Répartition</th>
+            <th class="center" scope="col">cotisations</th>
+
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let activite of dataGeneral  | orderBy:'nomActivite':false ">
+            <td>{{activite.nomActivite}}</td>
+            <td>{{activite.nbEC}}</td>
+            <td>{{activite.nbV}}</td>
+            <td>{{activite.nbF}} / {{(activite.nbF/activite.nbV)*100 | number : '1.0-0'}}%</td>
+            <td>{{activite.nbM}} / {{(activite.nbM/activite.nbV)*100 | number : '1.0-0'}}%</td>
+            <td>{{(activite.nbV / totalVG)*100 | number : '1.0-0'}}%</td>
+            <td>{{activite.cotisations}}€</td>
+
+
+          </tr>
+          <tr>
+            <td><b>Totaux</b></td>
+            <td><b>{{totalECG}}</b></td>
+            <td><b>{{totalVG}}</b></td>
+            <td><b>{{totalFG}} / {{(totalFG/totalVG)*100 | number : '1.0-0'}}%</b></td>
+            <td><b>{{totalMG}} / {{(totalMG/totalVG)*100 | number : '1.0-0'}}%</b></td>
+
+            <td></td>
+            <td><b>{{totalCotisG}}€</b></td>
+
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col-6">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th class="center" scope="col">Nom</th>
+            <th class="center" scope="col">EnCours</th>
+            <th class="center" scope="col">Validées</th>
+            <th class="center" scope="col">Féminin</th>
+            <th class="center" scope="col">Masculin</th>
+            <th class="center" scope="col">Répartition</th>
+            <th class="center" scope="col">Cotisations</th>
+
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let activite of dataBasket">
+            <td>{{activite.nomActivite}}</td>
+            <td>{{activite.nbEC}}</td>
+            <td>{{activite.nbV}}</td>
+            <td>{{activite.nbF}} / {{(activite.nbF/activite.nbV)*100 | number : '1.0-0'}}%</td>
+            <td>{{activite.nbM}} / {{(activite.nbM/activite.nbV)*100 | number : '1.0-0'}}%</td>
+            <td>{{(activite.nbV / totalVB)*100 | number : '1.0-0'}}%</td>
+            <td>{{activite.cotisations}}€</td>
+
+
+          </tr>
+          <tr>
+            <td><b>Totaux</b></td>
+            <td><b>{{totalECB}}</b></td>
+            <td><b>{{totalVB}}</b></td>
+            <td><b>{{totalFB}} / {{(totalFB/totalVB)*100 | number : '1.0-0'}}%</b></td>
+            <td><b>{{totalMB}} / {{(totalMB/totalVB)*100 | number : '1.0-0'}}%</b></td>
+
+            <td></td>
+            <td><b>{{totalCotisB}}€</b></td>
+
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div>
+    <canvas id="canvas">{{chart}}</canvas>
+  </div>
+
+</div>

@@ -27,14 +27,21 @@
         <li class="nav-item">
           <a href="/inscription" class="nav-link blanc" *ngIf="isLoggedIn" [routerLink]="['/inscription', '0']">{{showSecretaire?"Inscriptions Manuelles":"Mes adhésions"}}</a>
         </li>
+        <li class="nav-item" *ngIf="showAdmin || showSecretaire || showAdminstrateur || showBureau">
+          <a href="/reporting" class="nav-link blanc" routerLink="reporting">Reporting</a>
+        </li>
+        <li class="nav-item" *ngIf="showProf">
+          <a href="/profs" class="nav-link blanc" routerLink="profs">Mes Cours</a>
+        </li>
+        <li class="nav-item" *ngIf="showAdmin || showComptable">
+          <a href="/compta" class="nav-link blanc" routerLink="compta">Compta</a>
+        </li>
+        
       </ul>
 
       <ul class="navbar-nav ml-auto" *ngIf="!isLoggedIn">
         <li class="nav-item" >
           <a href="/contact" class="nav-link blanc" routerLink="contact">Contact</a>
-        </li>
-        <li class="nav-item" *ngIf="inscriptionOpen">
-          <a href="/register" class="nav-link blanc" routerLink="register">Inscription</a>
         </li>
         <li class="nav-item">
           <a href="/login" class="nav-link blanc" routerLink="login">Connexion</a>

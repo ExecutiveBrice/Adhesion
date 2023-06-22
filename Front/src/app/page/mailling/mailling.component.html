@@ -1,0 +1,116 @@
+<div class="container">
+
+  <div class="form-group" *ngIf="isFailed">
+    <div class="alert alert-danger" role="alert">
+      Il y a eu un problème lors de l'envoie du message: {{ errorMessage }}
+    </div>
+  </div>
+
+
+  <div class="form-group" *ngIf="mailIncomplet">
+    <div class="alert alert-danger" role="alert">
+      Le mail n'est pas complet l'objet doit avoir au moins 5 lettres et le corps du message au moins 20 lettres
+    </div>
+  </div>
+  <div class="form-group" *ngIf="inProgress">
+    <div class="alert alert-danger" role="alert">
+      Envoi de mail en cours, veuillez patienter
+    </div>
+  </div>
+
+
+  <div *ngIf="selectedAdherent.id == 0" class="larger">
+
+
+
+    <div ngbDropdown class="d-inline-block larger">
+      <button type="button" class="btn btn-primary larger" id="dropdownBasic1" ngbDropdownToggle>
+        {{choixMailing.length >0?choixMailing:'Mailing liste'}}
+      </button>
+
+      <div  *ngIf="activites.length > 0" ngbDropdownMenu aria-labelledby="dropdownBasic1">
+
+        <a ngbDropdownItem (click)="choixMailing = 'groupe#Tous les adhérents'">
+          Tous les adhérents</a>
+        <a ngbDropdownItem (click)="choixMailing = 'groupe#Les administrateurs'">
+          Les administrateurs</a>
+        <a ngbDropdownItem (click)="choixMailing = 'groupe#Les membres du bureau'">
+          Les membres du bureau</a>
+        <a ngbDropdownItem (click)="choixMailing = 'groupe#Sans certificat médical'">
+          Sans certificat médical</a>
+        <div class="dropdown-divider"></div>
+
+
+
+
+        <div *ngFor="let activite of activites  | orderBy:'nom':false" class="ligne pointer">
+          <a ngbDropdownItem (click)="choixMailing = 'activite#'+activite.nom">
+            <b>{{activite.nom}}</b></a>
+          <div *ngFor="let horaire of activite.horaires">
+            <a ngbDropdownItem (click)="choixMailing = 'horaire#'+horaire.id">
+              {{horaire.nom}}</a>
+      
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <div *ngIf="selectedAdherent.id != 0">
+    <h3>Le mail sera envoyé à : {{selectedAdherent.prenom}} {{selectedAdherent.nom}} - {{selectedAdherent.email}}
+    </h3>
+  </div>
+
+
+</div>
+
+
+
+
+
+<div class="row">
+  <div class="col-sm-12 ">
+    <div class="input-group mb-3 input-group-lg">
+      <div class="input-group-prepend">
+        <span class="input-group-text">Objet : </span>
+      </div>
+      <input type="text" [(ngModel)]="subject" class="form-control">
+    </div>
+  </div>
+  <div class="col-sm-12 ">
+
+    <div class="NgxEditor__Wrapper mb-3">
+      <ngx-editor-menu [editor]="editor" [toolbar]="toolbar"> </ngx-editor-menu>
+      <ngx-editor [editor]="editor" [(ngModel)]="html" [disabled]="false"
+        [placeholder]="'Votre message ici...'"></ngx-editor>
+    </div>
+  </div>
+  <div class="col-sm-12 ">
+    <button [disabled]="inProgress" class="btn btn-block btn-primary" (click)="envoiMail(subject)">
+      Envoyer ce message</button>
+
+  </div>
+</div>
+
+</div>

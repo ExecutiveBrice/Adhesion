@@ -1,0 +1,174 @@
+<div class="row">
+
+  <div class="col-md-6">
+    <div class="card card-container">
+      <h2>Paramètres Booleens</h2>
+      <div class="row">
+
+        <div *ngFor="let param of paramBooleans  | orderBy:'id':false" class="center col-3">
+          <label for="emailReferent">{{param.paramName}} <fa-icon *ngIf="param.paramValue == true" class="green"
+              [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="param.paramValue != true" class="orange"
+              [icon]="faCircleXmark"></fa-icon></label>
+          <div class="btn-group btn-group-sm" role="group" aria-label="emailReferent">
+            <div type='button' class="btn btn-block"
+              [ngClass]="param.paramValue == true ? 'btn-primary' : ' btn-outline-secondary'"
+              (click)="param.paramValue = true; updateParamBoolean(param)">Oui</div>
+            <div type='button' class="btn btn-block"
+              [ngClass]="param.paramValue != true ? 'btn-primary' : ' btn-outline-secondary'"
+              (click)="param.paramValue = false; updateParamBoolean(param)">Non</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card card-container">
+      <h2>Paramètres Nombres</h2>
+      <div class="row">
+        <div *ngFor="let param of paramNumbers  | orderBy:'id':false" class="center col-3">
+          <label for="paramValue">{{param.paramName}}</label>
+          <input type="number" class="form-control" name="paramValue" [(ngModel)]="param.paramValue" />
+          <div type='button' class="btn btn-block btn-primary" (click)="updateParamNumber(param)">MAJ</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card card-container">
+      <h2>Paramètres Textuels</h2>
+      <div class="row">
+        <div *ngFor="let param of paramTexts  | orderBy:'id':false" class="col-6">
+          <div>
+            <h5>{{param.paramName}}</h5>
+          </div>
+          <div>
+            <textarea id="message" name="message" rows="4" cols="50" [(ngModel)]="param.paramValue">
+            </textarea>
+          </div>
+          <div>
+            <div type='button' class="btn btn-block btn-primary" (click)="updateParamText(param)">MAJ</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card card-container">
+      <h2>Roles des utilisateurs</h2>
+      <div ngbDropdown class="col-md-12 ">
+        <button type="button" class="btn btn-block btn-primary" id="dropdownBasic1" ngbDropdownToggle>
+          Ajouter en tant qu'Admin du site
+        </button>
+        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+          <div ngbDropdownItem *ngFor="let user of usersLite  | orderBy:'nom':false"
+            (click)="grantUser(user.email,'ROLE_ADMIN')"> {{user.nom}}
+            {{user.prenom}}</div>
+        </div>
+
+
+
+
+
+
+      </div>
+      <div *ngFor="let user of adminsLite | orderBy:'nom':false ">
+        <fa-icon class="pointer orange" [icon]="faSquareMinus"
+          (click)="unGrantUser(user.email, 'ROLE_ADMIN')"></fa-icon>
+        {{user.nom}} {{user.prenom}} {{user.email}} <fa-icon *ngIf="user.email != null"
+          [routerLink]="['/mail', user.id]" class="pointer green" [icon]="faEnvelope"></fa-icon>
+      </div>
+
+      <div ngbDropdown class="d-inline-block col-md-12 ">
+        <button type="button" class="btn btn-block btn-primary" id="dropdownBasic1" ngbDropdownToggle>
+          Ajouter en tant qu'Administrateur de l'ALOD
+        </button>
+        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+          <div ngbDropdownItem *ngFor="let user of usersLite  | orderBy:'nom':false"
+            (click)="grantUser(user.email,'ROLE_ADMINISTRATEUR')">{{user.nom}}
+            {{user.prenom}} </div>
+        </div>
+      </div>
+
+      <div *ngFor="let user of administrateursLite | orderBy:'nom':false ">
+        <fa-icon class="pointer orange" [icon]="faSquareMinus"
+          (click)="unGrantUser(user.email, 'ROLE_ADMINISTRATEUR')"></fa-icon>
+        {{user.nom}} {{user.prenom}} {{user.email}} <fa-icon *ngIf="user.email != null"
+          [routerLink]="['/mail', user.id]" class="pointer green" [icon]="faEnvelope"></fa-icon>
+      </div>
+
+      <div ngbDropdown class="d-inline-block col-md-12 ">
+        <button type="button" class="btn btn-block btn-primary" id="dropdownBasic1" ngbDropdownToggle>
+          Ajouter en tant que membre du bureau de l'ALOD
+        </button>
+        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+          <div ngbDropdownItem *ngFor="let user of usersLite  | orderBy:'nom':false"
+            (click)="grantUser(user.email,'ROLE_BUREAU')">{{user.nom}}
+            {{user.prenom}} </div>
+        </div>
+      </div>
+
+      <div *ngFor="let user of bureauxLite | orderBy:'nom':false ">
+        <fa-icon class="pointer orange" [icon]="faSquareMinus"
+          (click)="unGrantUser(user.email, 'ROLE_BUREAU')"></fa-icon>
+        {{user.nom}} {{user.prenom}} {{user.email}} <fa-icon *ngIf="user.email != null"
+          [routerLink]="['/mail', user.id]" class="pointer green" [icon]="faEnvelope"></fa-icon>
+      </div>
+
+      <div ngbDropdown class="d-inline-block col-md-12 ">
+        <button type="button" class="btn btn-block btn-primary" id="dropdownBasic1" ngbDropdownToggle>
+          Ajouter en tant que Secretaire de l'ALOD
+        </button>
+        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+          <div ngbDropdownItem *ngFor="let user of usersLite  | orderBy:'nom':false"
+            (click)="grantUser(user.email,'ROLE_SECRETAIRE')">{{user.nom}} {{user.prenom}} </div>
+        </div>
+      </div>
+
+      <div *ngFor="let user of secretairesLite | orderBy:'nom':false ">
+        <fa-icon class="pointer orange" [icon]="faSquareMinus"
+          (click)="unGrantUser(user.email, 'ROLE_SECRETAIRE')"></fa-icon>
+        {{user.nom}} {{user.prenom}} {{user.email}} <fa-icon *ngIf="user.email != null"
+          [routerLink]="['/mail', user.id]" class="pointer green" [icon]="faEnvelope"></fa-icon>
+      </div>
+
+
+
+      <div ngbDropdown class="d-inline-block col-md-12 ">
+        <button type="button" class="btn btn-block btn-primary" id="dropdownBasic1" ngbDropdownToggle>
+          Ajouter en tant que Comptable de l'ALOD
+        </button>
+        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+          <div ngbDropdownItem *ngFor="let user of usersLite  | orderBy:'nom':false"
+            (click)="grantUser(user.email,'ROLE_COMPTABLE')">{{user.nom}} {{user.prenom}} </div>
+        </div>
+      </div>
+
+      <div *ngFor="let user of comptablesLite | orderBy:'nom':false ">
+        <fa-icon class="pointer orange" [icon]="faSquareMinus"
+          (click)="unGrantUser(user.email, 'ROLE_PROF')"></fa-icon>
+        {{user.nom}} {{user.prenom}} {{user.email}} <fa-icon *ngIf="user.email != null"
+          [routerLink]="['/mail', user.id]" class="pointer green" [icon]="faEnvelope"></fa-icon>
+      </div>
+
+
+      
+      <div ngbDropdown class="d-inline-block col-md-12 ">
+        <button type="button" class="btn btn-block btn-primary" id="dropdownBasic1" ngbDropdownToggle>
+          Ajouter en tant que Prof de l'ALOD
+        </button>
+        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+          <div ngbDropdownItem *ngFor="let user of usersLite  | orderBy:'nom':false"
+            (click)="grantUser(user.email,'ROLE_PROF')">{{user.nom}} {{user.prenom}} </div>
+        </div>
+      </div>
+
+      <div *ngFor="let user of profsLite | orderBy:'nom':false ">
+        <fa-icon class="pointer orange" [icon]="faSquareMinus"
+          (click)="unGrantUser(user.email, 'ROLE_PROF')"></fa-icon>
+        {{user.nom}} {{user.prenom}} {{user.email}} <fa-icon *ngIf="user.email != null"
+          [routerLink]="['/mail', user.id]" class="pointer green" [icon]="faEnvelope"></fa-icon>
+      </div>
+    </div>
+  </div>
+</div>

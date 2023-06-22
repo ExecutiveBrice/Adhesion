@@ -15,12 +15,13 @@ export class AppComponent {
   private roles: string[] = [];
   isLoggedIn = false;
   showAdmin = false;
-  shoBureauBoard = false;
-  showAdminstrateurBoard = false;
+  showBureau = false;
+  showAdminstrateur = false;
   showSecretaire = false;
+  showProf=false;
+  showComptable=false;
   username?: string;
   maintenance: Boolean = false
-  inscriptionOpen: boolean | null = true
   subscription = new Subscription()
 
   constructor(
@@ -37,9 +38,12 @@ export class AppComponent {
       this.roles = user.roles;
 
       this.showAdmin = this.roles.includes('ROLE_ADMIN');
-      this.shoBureauBoard = this.roles.includes('ROLE_BUREAU');
-      this.showAdminstrateurBoard = this.roles.includes('ROLE_ADMINISTRATEUR');
+      this.showBureau = this.roles.includes('ROLE_BUREAU');
+      this.showAdminstrateur = this.roles.includes('ROLE_ADMINISTRATEUR');
       this.showSecretaire = this.roles.includes('ROLE_SECRETAIRE');
+      this.showProf = this.roles.includes('ROLE_PROF');
+      this.showComptable = this.roles.includes('ROLE_COMPTABLE');
+      
       this.username = user.username;
     }
 
@@ -54,14 +58,7 @@ export class AppComponent {
           }
         });
 
-          this.paramService.getAllBoolean().subscribe({
-          next: (data) => {
-            this.inscriptionOpen = data.filter(param => param.paramName == "Inscription")[0].paramValue;
-          },
-          error: (error) => {
 
-          }
-        });
   }
 
 

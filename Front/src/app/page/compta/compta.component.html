@@ -1,0 +1,65 @@
+<div class="container">
+
+  <div class="row">
+    
+    <div class="col-6">
+      <label for="debutPlage">Début plage</label>
+      <input type="date" (change)="updateDate(debutPlage, finPlage)" class="form-control" name="debutPlage" [(ngModel)]="debutPlage"
+        required />
+    </div>
+
+    <div class="col-6">
+      <label for="finPlage">Fin plage</label>
+      <input type="date" (change)="updateDate(debutPlage, finPlage)" class="form-control" name="finPlage" [(ngModel)]="finPlage"
+       required />
+    </div>
+
+    <div class="col-12">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th class="center" scope="col">Activite</th>
+            <th class="center" scope="col">HelloAsso</th>
+            <th class="center" scope="col">HelloAsso 3X</th>
+            <th class="center" scope="col">Cheque</th>
+            <th class="center" scope="col">Cheque 3X</th>
+            <th class="center" scope="col">Espece</th>
+            <th class="center" scope="col">PassSport</th>
+            <th class="center" scope="col">Autre</th>
+            <th class="center" scope="col">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let comtpa of dataCompta  | orderBy:'nomActivite':false ">
+            <td>{{comtpa.nomActivite}}</td>
+            <td>{{comtpa.helloAsso}}</td>
+            <td>{{comtpa.helloAsso3x}}</td>
+            <td>{{comtpa.cheque}}</td>
+            <td>{{comtpa.cheque3x}}</td>
+            <td>{{comtpa.passport}}</td>
+            <td>{{comtpa.espece}}</td>
+            <td>{{comtpa.autre}}</td>
+            <td>{{comtpa.helloAsso + comtpa.helloAsso3x + comtpa.cheque + comtpa.cheque3x + comtpa.passport + comtpa.espece + comtpa.autre}}</td>
+          </tr>
+
+
+          <tr>
+            <td><b>Totaux</b></td>
+            <td><b>{{totalHA}}</b></td>
+            <td><b>{{totalHA3X}}</b></td>
+            <td><b>{{totalC}}</b></td>
+            <td><b>{{totalC3X}}</b></td>
+            <td><b>{{totalPS}}</b></td>
+            <td><b>{{totalE}}</b></td>
+            <td><b>{{totalA}}</b></td>
+            <td><b>{{totalHA + totalHA3X + totalC + totalC3X + totalPS + totalE + totalA}}</b></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+
+ 
+  </div>
+ 
+</div>

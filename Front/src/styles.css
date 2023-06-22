@@ -35,7 +35,7 @@ table.table thead {
 .card {
   background-color: #f7f7f7;
   padding: 5px 5px 5px;
-  min-height: 100px;
+
   margin-top: 20px;
   -moz-border-radius: 2px;
   -webkit-border-radius: 2px;
@@ -113,6 +113,11 @@ table.table thead {
   color: rgba(188, 219, 205, 255);
 }
 
+.alod{
+  border-color: rgba(237, 101, 103, 255);
+  background-color: rgba(237, 101, 103, 255)!important;
+}
+
 .pointer {
   cursor: pointer;
 }
@@ -127,6 +132,10 @@ tr:hover {
   background-color: rgba(188, 219, 205, 255)!important;
 }
 
-.dropdown-menu { max-height: 200px; overflow-y: auto; min-width: 100% !important; background-attachment: local, local, scroll, scroll; }
+.dropdown-menu { max-height: 300px; overflow-y: auto; min-width: 100% !important; background-attachment: local, local, scroll, scroll; }
 
-.dropdown-item { white-space: normal; }
+.modalFullHeight{
+  height: 90vh;
+}
+
+.dropdown-item { white-space: nowrap; }

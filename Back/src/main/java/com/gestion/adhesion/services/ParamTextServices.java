@@ -1,8 +1,6 @@
 package com.gestion.adhesion.services;
 
-import com.gestion.adhesion.models.ParamBoolean;
 import com.gestion.adhesion.models.ParamText;
-import com.gestion.adhesion.repository.ParamBooleanRepository;
 import com.gestion.adhesion.repository.ParamTextRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -42,6 +40,13 @@ public class ParamTextServices {
 
     public void fillParamText(){
 
+        if(!paramTextRepository.existsByParamName("Text_Maintenance")) {
+            paramTextRepository.save(ParamText.builder()
+                    .paramName("Text_Maintenance")
+                    .paramValue("<strong>Site en maintenance</strong><br />" +
+                            "Veuillez nous excuser pour la gène occasionnée").build());
+        }
+
         if(!paramTextRepository.existsByParamName("Text_Accueil")) {
             paramTextRepository.save(ParamText.builder()
                     .paramName("Text_Accueil")
@@ -68,7 +73,7 @@ public class ParamTextServices {
                             "Vous avez une remarque ou une idée d'amélioration ? <br />&nbsp;<br /><br />&nbsp;<br />" +
                             "<b>N'hésitez pas à nous envoyer un mail:</b><br />" +
                             "Donnez nous le maximum d'informations pour nous aider à vous aider<br />" +
-                            "<i>Surtout n'oubliez pas votre contact pour que nous puissions vous répondre!<br />(e-mail, téléphone, adresse, pigeon... ;)</i>").build());
+                            "<i></b><font color=\"red\">Surtout n'oubliez pas votre contact pour que nous puissions vous répondre!</font></b><br />(e-mail, téléphone, adresse, pigeon... ;)</i>").build());
         }
         if(!paramTextRepository.existsByParamName("Text_MonAdhesion")) {
             paramTextRepository.save(ParamText.builder()
@@ -76,12 +81,33 @@ public class ParamTextServices {
                     .paramValue("").build());
         }
 
+        if(!paramTextRepository.existsByParamName("Sujet_Mail_Liste_Attente")) {
+            paramTextRepository.save(ParamText.builder()
+                    .paramName("Sujet_Mail_Liste_Attente")
+                    .paramValue("Demande d'adhésion #activite# incomplète").build());
+        }
+        if(!paramTextRepository.existsByParamName("Corp_Mail_Liste_Attente")) {
+            paramTextRepository.save(ParamText.builder()
+                    .paramName("Corp_Mail_Liste_Attente")
+                    .paramValue("Bonjour #prenom# #nom#,<br />" +
+                            "l'activité #activite# est complète pour le moment.<br />" +
+                            "<br />" +
+                            "Et effectuer le paiement, soit en ligne sur HelloAsso, soit au secrétariat.<br />" +
+                            "Le certificat médicale, si il est nécéssaire pour cette activitée, ne vous sera demandé qu'au démarrage de l'activité.<br /><br />" +
+                            "Compte tenu du nombre important de demandes d'adhésions, nous nous réservons le droit d'annuler votre demande si elle n'est pas completée dans les 5 jours.<br /><br />" +
+
+                            "Cordialement,<br />" +
+                            "Le secretariat de l'ALOD<br />" +
+                            "<a href='alod.fr'>alod.fr</a>").build());
+        }
+
+
+
         if(!paramTextRepository.existsByParamName("Sujet_Mail_Rappel")) {
             paramTextRepository.save(ParamText.builder()
                     .paramName("Sujet_Mail_Rappel")
                     .paramValue("Demande d'adhésion #activite# incomplète").build());
         }
-
         if(!paramTextRepository.existsByParamName("Corp_Mail_Rappel")) {
             paramTextRepository.save(ParamText.builder()
                     .paramName("Corp_Mail_Rappel")
@@ -97,12 +123,29 @@ public class ParamTextServices {
                             "<a href='alod.fr'>alod.fr</a>").build());
         }
 
+
+        if(!paramTextRepository.existsByParamName("Sujet_Mail_Annulation_Manuelle")) {
+            paramTextRepository.save(ParamText.builder()
+                    .paramName("Sujet_Mail_Annulation_Manuelle")
+                    .paramValue("Annulation de votre demande d'adhésion #activite#").build());
+        }
+        if(!paramTextRepository.existsByParamName("Corp_Mail_Annulation_Manuelle")) {
+            paramTextRepository.save(ParamText.builder()
+                    .paramName("Corp_Mail_Annulation_Manuelle")
+                    .paramValue("Bonjour #prenom# #nom#,<br />" +
+                            "Votre demande d'adhésion a été annulée par le secrétariat.<br />" +
+                            "Vous pouvez demander des informations supplémentaires au secrétariat sur les raisons de cette annulation.<br /><br />" +
+                            "Cordialement,<br />" +
+                            "Secretariat de l'ALOD<br />" +
+                            "<a href='alod.fr'>alod.fr</a>").build());
+        }
+
+
         if(!paramTextRepository.existsByParamName("Sujet_Mail_Annulation")) {
             paramTextRepository.save(ParamText.builder()
                     .paramName("Sujet_Mail_Annulation")
                     .paramValue("Annulation de votre demande d'adhésion #activite#").build());
         }
-
         if(!paramTextRepository.existsByParamName("Corp_Mail_Annulation")) {
             paramTextRepository.save(ParamText.builder()
                     .paramName("Corp_Mail_Annulation")
@@ -116,12 +159,12 @@ public class ParamTextServices {
                             "<a href='alod.fr'>alod.fr</a>").build());
         }
 
+
         if(!paramTextRepository.existsByParamName("Sujet_Mail_Reactivation")) {
             paramTextRepository.save(ParamText.builder()
                     .paramName("Sujet_Mail_Reactivation")
                     .paramValue("Votre demande d'adhésion #activite# a changé de statut").build());
         }
-
         if(!paramTextRepository.existsByParamName("Corp_Mail_Reactivation")) {
             paramTextRepository.save(ParamText.builder()
                     .paramName("Corp_Mail_Reactivation")
@@ -134,22 +177,22 @@ public class ParamTextServices {
                             "<a href='alod.fr'>alod.fr</a>").build());
         }
 
+
         if(!paramTextRepository.existsByParamName("Sujet_Mail_Validation")) {
             paramTextRepository.save(ParamText.builder()
                     .paramName("Sujet_Mail_Validation")
                     .paramValue("Votre demande d'adhésion #activite# est maintenant validée").build());
         }
-
         if(!paramTextRepository.existsByParamName("Corp_Mail_Validation")) {
             paramTextRepository.save(ParamText.builder()
                     .paramName("Corp_Mail_Validation")
                     .paramValue("Bonjour #prenom# #nom#,<br />" +
                             "Votre adhésion #activite# est maintenant validée,<br /><br />" +
-
                             "Cordialement,<br />" +
                             "Secretariat de l'ALOD<br />" +
                             "<a href='alod.fr'>alod.fr</a>").build());
         }
+
     }
 
 }

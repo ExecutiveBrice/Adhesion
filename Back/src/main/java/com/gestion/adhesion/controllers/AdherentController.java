@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.websocket.server.PathParam;
 import java.io.IOException;
+import java.security.Principal;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -27,19 +28,26 @@ AdherentServices adherentServices;
 		adherentServices.deleteAdherent(adherentId);
 		return ResponseEntity.ok(adherentId+" deleted");
 	}
+
+	@DeleteMapping("/deleteDoc")
+	@PreAuthorize("hasRole('SECRETAIRE')")
+	public ResponseEntity<?> deleteDoc(@PathParam("docId") Long docId, @PathParam("adherentId") Long adherentId) {
+		adherentServices.deleteDoc(docId, adherentId);
+		return ResponseEntity.ok(docId+" deleted");
+	}
+
 	@PostMapping("/changeTribu")
 	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
 	public ResponseEntity<?> changeTribu(@RequestBody Long referentId, @PathParam("adherentId") Long adherentId) {
 
 		return ResponseEntity.ok(adherentServices.changeTribu(referentId, adherentId));
 	}
+
 	@PostMapping("/update")
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<?> update(@RequestBody Adherent adherent) {
 		return ResponseEntity.ok(adherentServices.update(adherent));
 	}
-
-
 
 	@PostMapping("/addDocument")
 	@PreAuthorize("hasRole('USER')")
@@ -49,6 +57,7 @@ AdherentServices adherentServices;
 		return ResponseEntity.status(HttpStatus.OK)
 				.body(response);
 	}
+
 	@PostMapping("/save")
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<?> save(@RequestBody Adherent adherent, @PathParam("tribuId") Long tribuId) {
@@ -60,10 +69,25 @@ AdherentServices adherentServices;
 	public ResponseEntity<?> updateEmail(@RequestBody String email, @PathParam("adherentId") Long adherentId) {
 		return ResponseEntity.ok(adherentServices.updateEmail(email, adherentId));
 	}
+
 	@GetMapping("/all")
 	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
 	public ResponseEntity<?> getAll() {
 		return ResponseEntity.ok(adherentServices.getAll());
+	}
+
+	@GetMapping("/allId")
+	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+	public ResponseEntity<?> getAllId() {
+		return ResponseEntity.ok(adherentServices.getAllId());
+	}
+
+
+	@GetMapping("/getAllCours")
+	@PreAuthorize("hasRole('USER')")
+	public ResponseEntity<?> getAllCours(Principal principal) {
+
+		return ResponseEntity.ok(adherentServices.getAllCours(principal.getName()));
 	}
 
 	@GetMapping("/getById")

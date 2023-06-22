@@ -1,8 +1,8 @@
 package com.gestion.security;
 
+import com.gestion.adhesion.services.UserDetailsService;
 import com.gestion.security.jwt.AuthEntryPointJwt;
 import com.gestion.security.jwt.AuthTokenFilter;
-import com.gestion.adhesion.services.UserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
