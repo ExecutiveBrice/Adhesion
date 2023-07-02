@@ -58,8 +58,7 @@
       <th class="center" scope="col">
 
         <input class="form-control xs" type="text" name="search" [(ngModel)]="search"
-          (ngModelChange)="addSearch(search)"
-          placeholder="Adhérent" />
+          (ngModelChange)="addSearch(search)" placeholder="Adhérent" />
 
       </th>
       <th class="center" scope="col">
@@ -81,7 +80,19 @@
 
 
 
-      <th class="center" scope="col">Accords</th>
+      <th class="center" scope="col">
+
+
+        <div *ngIf="!filtres.has('validDocumentSecretariat') " ngbDropdown id="icon">
+          <div id="dropdownBasic1" ngbDropdownToggle>
+            Accord <fa-icon [icon]="faFilter" container="body"></fa-icon>
+          </div>
+          <div ngbDropdownMenu aria-labelledby="dropdownBasic1" style="float:right;">
+            <button ngbDropdownItem (click)="addFiltre('validDocumentSecretariat', true)">Docs Validés</button>
+            <button ngbDropdownItem (click)="addFiltre('validDocumentSecretariat', false)">Docs Manquants</button>
+          </div>
+        </div>
+      </th>
 
       <th class="center" scope="col">
 
@@ -143,25 +154,7 @@
         </div>
 
       </th>
-      <th class="center" colspan="2" scope="col">
 
-
-        <div *ngIf="!filtres.has('validDocumentSecretariat') " ngbDropdown id="icon">
-          <div id="dropdownBasic1" ngbDropdownToggle>
-            Docs <fa-icon [icon]="faFilter" container="body"></fa-icon>
-          </div>
-          <div ngbDropdownMenu aria-labelledby="dropdownBasic1" style="float:right;">
-            <button ngbDropdownItem (click)="addFiltre('validDocumentSecretariat', true)">Effectué</button>
-            <button ngbDropdownItem (click)="addFiltre('validDocumentSecretariat', false)">Manquant</button>
-          </div>
-        </div>
-
-        <div *ngIf="filtres.has('validDocumentSecretariat')" (click)="removeFiltre('validDocumentSecretariat')">
-          Docs <fa-icon [icon]="faFilterCircleXmark" container="body"></fa-icon>
-        </div>
-
-
-      </th>
     </tr>
   </thead>
   <tbody>
@@ -212,50 +205,70 @@
 
 
       <td class="center">
-        <fa-icon (click)="adhesion.validPaiementSecretariat = true; openModal(editProfileModal, adhesion);"
-          [ngClass]="adhesion.validPaiementSecretariat ? 'pointer green fa-2xl' : 'pointer fa-2xl'"
-          [icon]="faCircleCheck"></fa-icon>
-        <fa-icon (click)="updatePaiementSecretariat(adhesion, null, undefined, false)"
-          [ngClass]="!adhesion.validPaiementSecretariat ? 'pointer orange fa-2xl' : 'pointer fa-2xl'"
-          [icon]="faCircleXmark"></fa-icon>
-        <div *ngIf="adhesion.validPaiementSecretariat">
-          {{adhesion.tarif}} € en {{adhesion.typeReglement.length>0?adhesion.typeReglement:"non renseigné"}}<br />
-          le {{adhesion.dateReglement | date: 'dd/MM/YYYY'}}
+        <div class="row">
+          <div class="col-8">
+            <div *ngFor="let paiement of adhesion.paiements | orderBy:'id':false">
+              {{paiement.montant}} € en {{paiement.typeReglement}} le {{paiement.dateReglement | date: 'dd/MM/YYYY'}}
+            </div>
+          </div>
+          <div class="col-4">
+            <fa-icon (click)="updatePaiementSecretariat(adhesion, true); openModal(editProfileModal, adhesion);"
+              [ngClass]="adhesion.validPaiementSecretariat ? 'pointer green fa-2xl' : 'pointer fa-2xl'"
+              [icon]="faCircleCheck"></fa-icon>
+            <fa-icon (click)="updatePaiementSecretariat(adhesion, false); openModal(editProfileModal, adhesion);"
+              [ngClass]="!adhesion.validPaiementSecretariat ? 'pointer orange fa-2xl' : 'pointer fa-2xl'"
+              [icon]="faCircleXmark"></fa-icon>
+            <br />Total de {{ calculSomme(adhesion) }}€
+          </div>
         </div>
-
-
-
-
 
       </td>
 
-
-
       <td>
-        <div *ngFor="let accord of adhesion.accords | orderBy:'id':false ">
-          {{accord.nom}}
-          <fa-icon *ngIf="accord.etat == true" class="green" [icon]="faCircleCheck"></fa-icon>
-          <fa-icon *ngIf="accord.etat != true" class="orange" [icon]="faCircleXmark"></fa-icon>
-          <fa-icon *ngIf="showAdmin || showSecretaire" (click)="retraitAccord(adhesion,accord.nom)"
-            [icon]="faSquareMinus"></fa-icon>
 
+        <div class="row">
+          <div class="col-8">
+
+
+            <div *ngFor="let accord of adhesion.accords | orderBy:'id':false ">
+              {{accord.nom}}
+              <fa-icon *ngIf="accord.etat == true" class="green" [icon]="faCircleCheck"></fa-icon>
+              <fa-icon *ngIf="accord.etat != true" class="orange" [icon]="faCircleXmark"></fa-icon>
+              <fa-icon *ngIf="showAdmin || showSecretaire" (click)="retraitAccord(adhesion,accord.nom)"
+                [icon]="faSquareMinus"></fa-icon>
+
+            </div>
+
+
+            <div *ngIf="showAdmin || showSecretaire" ngbDropdown id="icon">
+              <div id="dropdownBasic1" ngbDropdownToggle>
+                <fa-icon [icon]="faSquarePlus" container="body"></fa-icon>
+              </div>
+
+              <div ngbDropdownMenu aria-labelledby="dropdownBasic1" style="float:right;">
+                <button ngbDropdownItem (click)="ajoutAccord(adhesion,'Reglement Interieur')">Reglement
+                  Interieur</button>
+                <button ngbDropdownItem (click)="ajoutAccord(adhesion,'Attestation Sante')">Attestation Sante</button>
+                <button ngbDropdownItem (click)="ajoutAccord(adhesion,'Vie du Club')">Vie du Club</button>
+                <button ngbDropdownItem (click)="ajoutAccord(adhesion,'Autorisation Parentale')">Autorisation
+                  Parentale</button>
+                <button ngbDropdownItem (click)="ajoutAccord(adhesion,'Prise en Charge')">Prise en Charge</button>
+              </div>
+            </div>
+
+          </div>
+          <div class="col-4">
+
+            <fa-icon (click)="adhesion.validDocumentSecretariat = true; updateDocumentsSecretariat(adhesion, true)"
+              [ngClass]="adhesion.validDocumentSecretariat ? 'pointer green fa-2xl' : 'pointer fa-2xl'"
+              [icon]="faCircleCheck"></fa-icon>
+            <fa-icon (click)="adhesion.validDocumentSecretariat = false; updateDocumentsSecretariat(adhesion, false)"
+              [ngClass]="!adhesion.validDocumentSecretariat ? 'pointer orange fa-2xl' : 'pointer fa-2xl'"
+              [icon]="faCircleXmark"></fa-icon>
+
+          </div>
         </div>
 
-
-        <div *ngIf="showAdmin || showSecretaire" ngbDropdown id="icon">
-          <div id="dropdownBasic1" ngbDropdownToggle>
-            <fa-icon [icon]="faSquarePlus" container="body"></fa-icon>
-          </div>
-
-          <div ngbDropdownMenu aria-labelledby="dropdownBasic1" style="float:right;">
-            <button ngbDropdownItem (click)="ajoutAccord(adhesion,'Reglement Interieur')">Reglement Interieur</button>
-            <button ngbDropdownItem (click)="ajoutAccord(adhesion,'Attestation Sante')">Attestation Sante</button>
-            <button ngbDropdownItem (click)="ajoutAccord(adhesion,'Vie du Club')">Vie du Club</button>
-            <button ngbDropdownItem (click)="ajoutAccord(adhesion,'Autorisation Parentale')">Autorisation
-              Parentale</button>
-            <button ngbDropdownItem (click)="ajoutAccord(adhesion,'Prise en Charge')">Prise en Charge</button>
-          </div>
-        </div>
 
       </td>
       <td class="center">
@@ -330,21 +343,7 @@
 
       </td>
 
-      <td>
-        <div *ngFor="let document of adhesion.adherent.documents | orderBy:'id':false " class="ligne pointer"
-          (click)="openEditModal(editPDFModal, document)">
-          <fa-icon class="green" [icon]="faEye"></fa-icon>
-        </div>
-      </td>
 
-      <td class="center">
-        <fa-icon (click)="adhesion.validDocumentSecretariat = true; updateDocumentsSecretariat(adhesion, true)"
-          [ngClass]="adhesion.validDocumentSecretariat ? 'pointer green fa-2xl' : 'pointer fa-2xl'"
-          [icon]="faCircleCheck"></fa-icon>
-        <fa-icon (click)="adhesion.validDocumentSecretariat = false; updateDocumentsSecretariat(adhesion, false)"
-          [ngClass]="!adhesion.validDocumentSecretariat ? 'pointer orange fa-2xl' : 'pointer fa-2xl'"
-          [icon]="faCircleXmark"></fa-icon>
-      </td>
     </tr>
   </tbody>
 </table>
@@ -373,7 +372,7 @@
 
 <ng-template #editProfileModal let-c="close" let-d="dismiss">
   <div class="modal-header">
-    <h4 class="modal-title" id="modal-basic-title">Montant payé</h4>
+    <h4 class="modal-title" id="modal-basic-title">Facturation</h4>
     <button type="button" class="btn-close" aria-label="Close" (click)="dismiss(selectedAdhesion)"></button>
   </div>
   <div class="modal-body">
@@ -387,53 +386,87 @@
           {{selectedAdhesion.adherent?selectedAdhesion.adherent.prenom:''}}
           {{selectedAdhesion.adherent?selectedAdhesion.adherent.nom:''}}
         </div>
-        <div class="col-12">
-          <div class="form-group">
-            <label for="tarif">Montant du reglement</label>
-            <input type="number" class="form-control" name="tarif" [(ngModel)]="selectedAdhesion.tarif"
-              #tarif="ngModel" />
-          </div>
+        <div *ngIf="selectedAdhesion.paiements.length > 0">
+
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th class="center" scope="col truncate">Montant</th>
+                <th class="center" scope="col truncate">Date</th>
+                <th class="center" scope="col truncate">Type</th>
+                <th class="center" scope="col truncate"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let paiement of selectedAdhesion.paiements | orderBy:'id':false ">
+
+                <td class="truncate">
+
+                  <div class="form-group">
+                    <input type="number" class="form-control" name="{{'montant'+paiement.id}}"
+                      [(ngModel)]="paiement.montant" (blur)="updatePaiement(selectedAdhesion,paiement)"
+                      #montant="ngModel" />
+                  </div>
+                </td>
+                <td class="truncate">
+                  <div class="form-group">
+                    <input type="date" class="form-control" name="{{'dateReglement'+paiement.id}}"
+                      [ngModel]="paiement.dateReglement" (ngModelChange)="paiement.dateReglement = $event"
+                      #dateReglement="ngModel" required (blur)="updatePaiement(selectedAdhesion,paiement)" />
+                    <div class="alert-danger" *ngIf="dateReglement.errors && f.submitted">
+                      <div *ngIf="dateReglement.errors.required">Date de reglement obligatoire</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="truncate">
+                  <div ngbDropdown class="d-inline-block">
+                    <div type="button"
+                      [ngClass]="paiement.typeReglement.length>0 ? 'btn-outline-secondary' : 'btn-primary'" class="btn"
+                      id="dropdownBasic1" ngbDropdownToggle>
+                      {{paiement.typeReglement.length>0?paiement.typeReglement:"Aucun"}}
+                    </div>
+
+                    <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+                      <div ngbDropdownItem
+                        (click)="paiement.typeReglement ='HelloAsso'; updatePaiement(selectedAdhesion,paiement)">
+                        HelloAsso</div>
+                      <div ngbDropdownItem
+                        (click)="paiement.typeReglement='HelloAsso 3X'; updatePaiement(selectedAdhesion,paiement)">
+                        HelloAsso 3X</div>
+                      <div ngbDropdownItem
+                        (click)="paiement.typeReglement='Chèque'; updatePaiement(selectedAdhesion,paiement)">Chèque
+                      </div>
+                      <div ngbDropdownItem
+                        (click)="paiement.typeReglement = 'Chèque 3X'; updatePaiement(selectedAdhesion,paiement)">Chèque
+                        3X</div>
+                      <div ngbDropdownItem
+                        (click)="paiement.typeReglement ='Pass sport'; updatePaiement(selectedAdhesion,paiement)">Pass
+                        sport</div>
+                      <div ngbDropdownItem
+                        (click)="paiement.typeReglement = 'Espèces'; updatePaiement(selectedAdhesion,paiement)">Espèces
+                      </div>
+                      <div ngbDropdownItem
+                        (click)="paiement.typeReglement = 'CB'; updatePaiement(selectedAdhesion,paiement)">CB</div>
+                      <div ngbDropdownItem
+                        (click)="paiement.typeReglement = 'Autre'; updatePaiement(selectedAdhesion,paiement)">Autre
+                        paiement</div>
+                    </div>
+
+                  </div>
+                </td>
+                <td class="truncate">
+                  <fa-icon class="fa-2xl" *ngIf="showAdmin || showSecretaire"
+                    (click)="retraitPaiement(selectedAdhesion,paiement.id)" [icon]="faSquareMinus"></fa-icon>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
         </div>
-        <div class="col-12">
-
-          <div class="form-group">
-            <label for="dateReglement">Date du reglement</label>
-            <input type="date" class="form-control" name="dateReglement"
-              [ngModel]="selectedAdhesion.dateReglement | date:'yyyy-MM-dd'"
-              (ngModelChange)="selectedAdhesion.dateReglement = $event" #dateReglement="ngModel" required />
-            <div class="alert-danger" *ngIf="dateReglement.errors && f.submitted">
-              <div *ngIf="dateReglement.errors.required">Date de reglement obligatoire</div>
-
-            </div>
-          </div>
-        </div>
-        <div class="col-12">
-          <div ngbDropdown class="d-inline-block">
-            <div type="button"
-              [ngClass]="selectedAdhesion.typeReglement.length>0 ? 'btn-outline-secondary' : 'btn-primary'" class="btn"
-              id="dropdownBasic1" ngbDropdownToggle>
-              {{selectedAdhesion.typeReglement.length>0?selectedAdhesion.typeReglement:"Type de paiement ?"}}
-            </div>
-
-
-
-
-
-            <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-              <div ngbDropdownItem (click)="choisirPaiement(selectedAdhesion,'HelloAsso')">HelloAsso</div>
-              <div ngbDropdownItem (click)="choisirPaiement(selectedAdhesion,'HelloAsso 3X')">HelloAsso 3X</div>
-              <div ngbDropdownItem (click)="choisirPaiement(selectedAdhesion,'Chèque')">Chèque</div>
-              <div ngbDropdownItem (click)="choisirPaiement(selectedAdhesion,'Chèque 3X')">Chèque 3X</div>
-              <div ngbDropdownItem (click)="choisirPaiement(selectedAdhesion,'Pass sport')">Pass sport</div>
-              <div ngbDropdownItem (click)="choisirPaiement(selectedAdhesion,'Espèces')">Espèces</div>
-              <div ngbDropdownItem (click)="choisirPaiement(selectedAdhesion,'CB')">CB</div>
-              <div ngbDropdownItem (click)="choisirPaiement(selectedAdhesion,'Autre')">Autre paiement</div>
-            </div>
-          </div>
-        </div>
+        <div type="button" (click)="addNewPaiement(selectedAdhesion)" class="btn btn-primary">Ajouter un paiement</div>
       </div>
       <div class="modal-footer">
-        <button type="submit" class="btn btn-primary">Enregistrer ce montant</button>
+
       </div>
 
     </form>

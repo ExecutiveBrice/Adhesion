@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActiviteDropDown, Adhesion, AdhesionExcel, Document, HoraireDropDown } from 'src/app/models';
+import { ActiviteDropDown, Adhesion, AdhesionExcel, Document, HoraireDropDown, Paiement } from 'src/app/models';
 import { AdhesionService } from 'src/app/_services/adhesion.service';
 import { faEarth, faBasketball, faFilterCircleXmark, faFilter, faPen, faEye, faEnvelope, faSkull, faFlag, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -9,6 +9,7 @@ import { ParamService } from 'src/app/_services/param.service';
 import { ActiviteService } from 'src/app/_services/activite.service';
 import { ExcelService } from 'src/app/_services/excel.service';
 import { FilterAdhesionByPipe } from 'src/app/_helpers/filterAdhesion.pipe';
+import { DatePipe } from '@angular/common';
 const ADHESIONS = 'ADHESIONS';
 
 @Component({
@@ -41,6 +42,7 @@ export class AdhesionsComponent implements OnInit {
   showSecretaire: boolean = false;
 
   constructor(
+    private datePipe: DatePipe,
     private filterAdhesionBy: FilterAdhesionByPipe,
     private excelService: ExcelService,
     private activiteService: ActiviteService,
@@ -65,11 +67,10 @@ export class AdhesionsComponent implements OnInit {
 
     this.adhesionService.getAll().subscribe(
       data => {
-
+        console.log(data)
         this.cloned = data.map(x => Object.assign({}, x));
-
         this.adhesions = data;
-        if (this.tokenStorageService.getUser().username == "master_yoda@hotmail.com") {
+        if (this.tokenStorageService.getUser().username == "alodbasket@free.fr" || this.tokenStorageService.getUser().username == "xlcharonnat@yahoo.fr") {
           this.addFiltre('activite.groupe', 'ALOD_B')
         }
 
@@ -158,8 +159,8 @@ export class AdhesionsComponent implements OnInit {
   }
 
 
-  updatePaiementSecretariat(adhesion: Adhesion, tarif: number | null, dateReglement: Date | undefined, statut: boolean) {
-    this.adhesionService.updatePaiementSecretariat(adhesion.id, tarif, dateReglement, statut).subscribe(
+  updatePaiementSecretariat(adhesion: Adhesion, statut: boolean) {
+    this.adhesionService.updatePaiementSecretariat(adhesion.id, statut).subscribe(
       data => {
         adhesion.validPaiementSecretariat = data.validPaiementSecretariat;
       },
@@ -237,16 +238,12 @@ export class AdhesionsComponent implements OnInit {
     );
   }
 
-  
+
   addSearch(search: string) {
-    if (search.length > 3) {
-      this.addFiltre('adherent.prenom', search)
-      this.addFiltre('adherent.nom', search)
-
-
+    if (search.length > 2) {
+      this.addFiltre('adherent.prenomNom', search)
     } else {
-      this.removeFiltre('adherent.nom')
-      this.removeFiltre('adherent.prenom')
+      this.removeFiltre('adherent.prenomNom')
     }
   }
 
@@ -274,7 +271,7 @@ export class AdhesionsComponent implements OnInit {
 
   filtrage() {
 
-    this.adhesions = this.filterAdhesionBy.transform(this.cloned.map(x => Object.assign({}, x)) , this.filtres)
+    this.adhesions = this.filterAdhesionBy.transform(this.cloned.map(x => Object.assign({}, x)), this.filtres)
 
   }
 
@@ -299,14 +296,9 @@ export class AdhesionsComponent implements OnInit {
   }
 
   selectedAdhesion: Adhesion = new Adhesion;
-  
-  openModal(targetModal: any, adhesion: Adhesion) {
-    let datedebut: Date = new Date
-    datedebut.setFullYear(datedebut.getFullYear(), datedebut.getMonth(),  datedebut.getDate())
 
-    if(!adhesion.dateReglement){
-      adhesion.dateReglement = datedebut;
-    }
+  openModal(targetModal: any, adhesion: Adhesion) {
+console.log(adhesion)
     this.selectedAdhesion = adhesion;
 
     this.modalService.open(targetModal, {
@@ -319,22 +311,55 @@ export class AdhesionsComponent implements OnInit {
 
   dismiss(selectedAdhesion: Adhesion) {
     this.modalService.dismissAll();
-    selectedAdhesion.tarif = selectedAdhesion.activite ? selectedAdhesion.activite.tarif : 0;
-    selectedAdhesion.validPaiementSecretariat = false;
   }
+
   dismissDoc() {
     this.modalService.dismissAll();
-
   }
-
 
   onSubmit() {
     this.modalService.dismissAll();
-    this.updatePaiementSecretariat(this.selectedAdhesion, this.selectedAdhesion.tarif, this.selectedAdhesion.dateReglement, true)
   }
 
+  retraitPaiement(adhesion: Adhesion, paiementId : number) {
+    this.adhesionService.deletePaiement(adhesion.id, paiementId).subscribe({
+      next: (data) => {
+        adhesion.paiements = adhesion.paiements.filter(paiement => paiement.id != paiementId)
+        console.log(adhesion)
+      },
+      error: (error) => {
+      }
+    });
 
+    adhesion.paiements = adhesion.paiements.filter(paiement => paiement.id != paiementId)
+  }
 
+  updatePaiement(adhesion: Adhesion, paiement: Paiement) {
+    console.log(paiement)
+    this.adhesionService.savePaiement(adhesion.id, paiement).subscribe({
+      next: (data) => {
+        adhesion.paiements = data.paiements
+
+        console.log(adhesion)
+      },
+      error: (error) => {
+      }
+    });
+  }
+
+  addNewPaiement(adhesion: Adhesion){
+    this.adhesionService.savePaiement(adhesion.id, new Paiement).subscribe({
+      next: (data) => {
+        adhesion.paiements = data.paiements
+        console.log(adhesion)
+      },
+      error: (error) => {
+      }
+    });
+  }
+calculSomme(adhesion : Adhesion):number{
+  return adhesion.paiements.map(paiement => paiement.montant).reduce((a, b) => a + b, 0)
+}
   openEditModal(targetModal: any, doc: Document) {
     this.modalService.open(targetModal, {
       size: 'xl',

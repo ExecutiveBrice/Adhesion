@@ -1,23 +1,29 @@
 package com.gestion.adhesion.services;
 
-import com.gestion.adhesion.models.Accord;
-import com.gestion.adhesion.models.Activite;
-import com.gestion.adhesion.models.Adherent;
-import com.gestion.adhesion.models.Adhesion;
+import com.gestion.adhesion.models.*;
 import com.gestion.adhesion.repository.AdhesionRepository;
+import com.gestion.adhesion.repository.PaiementRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.xml.crypto.Data;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+
+import static java.time.LocalDate.now;
 
 @Service
 public class AdhesionServices {
 
     @Autowired
     AdhesionRepository adhesionRepository;
+
+    @Autowired
+    PaiementRepository paiementRepository;
     @Autowired
     TribuServices tribuServices;
     @Autowired
@@ -27,6 +33,83 @@ public class AdhesionServices {
 
     @Autowired
     EmailService emailService;
+
+
+    public List<AdhesionLite> getAllLite(){
+        List<Adhesion> adhesions =adhesionRepository.findAll();
+
+        return adhesions.stream().map(adhesion -> AdhesionLite.builder().id(adhesion.getId())
+                .adherent(AdherentLite.builder()
+                        .id(adhesion.getAdherent().getId())
+                        .prenomNom(adhesion.getAdherent().getPrenom()+adhesion.getAdherent().getNom())
+                        .nom(adhesion.getAdherent().getNom())
+                        .prenom(adhesion.getAdherent().getPrenom())
+                        .email(adhesion.getAdherent().getTribu().getAdherents().stream().filter(Adherent::isReferent).findFirst().get().getEmail())
+                        .build())
+                .activite(ActiviteLite.builder()
+                        .nom(adhesion.getActivite().getNom())
+                        .id(adhesion.getActivite().getId())
+                        .horaire(adhesion.getActivite().getHoraire())
+                        .groupe(adhesion.getActivite().getGroupe())
+                        .build())
+                .accords(adhesion.getAccords())
+                .paiements(adhesion.getPaiements())
+                .dateAjoutPanier(adhesion.getDateAjoutPanier())
+                .dateChangementStatut(adhesion.getDateChangementStatut())
+                .remarqueSecretariat(adhesion.getRemarqueSecretariat())
+                .flag(adhesion.getFlag())
+                .validDocumentSecretariat(adhesion.getValidDocumentSecretariat())
+                .validPaiementSecretariat(adhesion.getValidPaiementSecretariat())
+                .statutActuel(adhesion.getStatutActuel())
+                .build()).toList();
+    }
+
+
+    public void deletePaiement(Long adhesionId, Long paiementId){
+        Adhesion adhesion =  adhesionRepository.findById(adhesionId).get();
+        adhesion.getPaiements().remove(paiementRepository.findById(paiementId).get());
+        adhesionRepository.save(adhesion);
+        paiementRepository.deleteById(paiementId);
+    }
+
+    public Adhesion savePaiement(Long adhesionId, Paiement paiement){
+         Adhesion adhesion = adhesionRepository.findById(adhesionId).get();
+
+        List<Paiement> paiements = adhesion.getPaiements();
+        if(paiements.contains(paiement)) {
+            paiements.stream().filter(paiement1 -> paiement1.getId().equals(paiement.getId()))
+                    .forEach(paiement1 -> {
+                                paiement1.setTypeReglement(paiement.getTypeReglement());
+                                paiement1.setMontant(paiement.getMontant());
+                                paiement1.setDateReglement(paiement.getDateReglement());
+                            }
+                    );
+
+        }else{
+            paiement.setDateReglement(now());
+            paiement.setTypeReglement("HelloAsso");
+            paiement.setMontant(adhesion.getActivite().getTarif());
+            paiements.add(paiement);
+        }
+
+        return adhesionRepository.save(adhesion);
+    }
+    public void transfertPaiement(){
+        List<Adhesion> adhesions =adhesionRepository.findAll();
+        System.out.println("transfertPaiement");
+        adhesions.forEach(adhesion -> {
+            if(adhesion.getDateReglement() != null && adhesion.getPaiements().size() ==0){
+                System.out.println(adhesion.getId());
+                Paiement paiement = new Paiement();
+                paiement.setDateReglement(adhesion.getDateReglement());
+                paiement.setMontant(adhesion.getTarif());
+                paiement.setTypeReglement(adhesion.getTypeReglement());
+                adhesion.getPaiements().add(paiement);
+
+                adhesionRepository.save(adhesion);
+            }
+        });
+    }
 
     public List<Adhesion> getAll(){
         List<Adhesion> adhesions =adhesionRepository.findAll();
@@ -47,7 +130,7 @@ public class AdhesionServices {
 
         });
 
-       return adhesions;
+        return adhesions;
 
     }
 
@@ -95,14 +178,15 @@ public class AdhesionServices {
     public Adhesion saveUnique(Adhesion adhesion){
         return adhesionRepository.save(adhesion);
     }
+
     public List<Adhesion> save(List<Adhesion> adhesions){
 
         adhesions.stream().forEach(adhesion -> {
 
             adhesion.setId(null);
             adhesion.setRappel(false);
-            adhesion.setDateAjoutPanier(LocalDate.now());
-            adhesion.setAdherent(adherentServices.getById(adhesion.getAdherent().getId()));
+            adhesion.setDateAjoutPanier(now());
+            adhesion.setAdherent(adherentServices.getBasicById(adhesion.getAdherent().getId()));
             adhesion.setActivite(activiteServices.getById(adhesion.getActivite().getId()));
 
             adhesion.getAccords().add(new Accord("Reglement Interieur"));
@@ -151,15 +235,8 @@ public class AdhesionServices {
         return adhesionRepository.save(adhesion);
     }
 
-    public Adhesion updatePaiementSecretariat(Long adhesionId, Integer tarif, LocalDate dateReglement, Boolean statut){
+    public Adhesion updatePaiementSecretariat(Long adhesionId, Boolean statut){
         Adhesion adhesion = adhesionRepository.findById(adhesionId).get();
-        if(!statut){
-            adhesion.setTarif(adhesion.getActivite().getTarif());
-            adhesion.setDateReglement(null);
-        }else{
-            adhesion.setDateReglement(dateReglement);
-            adhesion.setTarif(tarif);
-        }
 
         adhesion.setValidPaiementSecretariat(statut);
         return adhesionRepository.save(adhesion);
@@ -197,7 +274,7 @@ public class AdhesionServices {
         }
 
         adhesion.setStatutActuel(nouveauStatut);
-        adhesion.setDateChangementStatut(LocalDate.now());
+        adhesion.setDateChangementStatut(now());
         return adhesionRepository.save(adhesion);
     }
 

@@ -17,3 +17,4 @@ export * from './activiteDropDown';
 export * from './activiteLite';
 export * from './adherentLite';
 export * from './adhesionExcel';
+export * from './paiement';

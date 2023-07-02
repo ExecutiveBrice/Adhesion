@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders,HttpParams, HttpRequest } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { Activite } from '../models';
@@ -18,6 +18,11 @@ export class ActiviteService {
 
   getAll(): Observable<Activite[]> {
     return this.http.get<Activite[]>(API_URL + 'all', { responseType: 'json' });
+  }
+
+  addReferent(activiteId: number, adherentId: string): Observable<Activite[]> {
+    let params = new HttpParams().set('activiteId', '' + activiteId + '').set('adherentId', '' + adherentId + '');
+    return this.http.get<Activite[]>(API_URL+"addReferent", {params, responseType: 'json' });
   }
 
   save(activite: Activite): Observable<Activite> {

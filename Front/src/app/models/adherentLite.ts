@@ -1,29 +1,45 @@
 import { Accord } from "./accord";
+import { AdhesionLite } from "./adhesionLite";
 
 export class AdherentLite {
   id: number;
   prenom: string;
   nom: string;
-
+  prenomNom:string;
+  genre: string;
+  adresse: string;
   email: string;
+  editMail: boolean;
   telephone: string;
-
+  referent: boolean;
   nomLegal: string;
   prenomLegal: string;
-  telLegal: string;
   accords: Accord[];
-
-  constructor() {
-    this.id = 0;
+  adhesions: AdhesionLite[]
+  lieuNaissance:string;
+  naissance:string;
+  tribuId: number;
+  tribuSize: number;
+  constructor(id: number) {
+    this.id = id;
     this.prenom = "";
     this.nom = "";
+    this.prenomNom = "";
+    this.genre = "";
+    this.adresse = "";
     this.email = "";
+    this.editMail = false;
     this.telephone = "";
     this.nomLegal = "";
     this.prenomLegal = "";
-    this.telLegal = "";
-    this.accords = [];
+    this.lieuNaissance = ""
+    this.naissance = ""
+    this.tribuId = 0;
+    this.tribuSize = 0;
 
+    this.accords = [];
+    this.referent = false;
+    this.adhesions = []
   }
 
 

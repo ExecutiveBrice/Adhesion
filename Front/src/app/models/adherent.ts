@@ -25,6 +25,8 @@ export class Adherent {
   legalReferent: boolean;
   mineur: boolean;
   tribu: Tribu;
+  tribuId: number
+  editMail: boolean
   adhesions: Adhesion[]
   rgpdDate: Date | undefined;
   completReferent: boolean;
@@ -57,6 +59,8 @@ export class Adherent {
     this.completAdhesion = false;
     this.accords = [];
     this.tribu = new Tribu
+    this.tribuId = 0
+    this.editMail = false
     this.user = null;
     this.documents = []
   }

@@ -32,6 +32,9 @@ public class Adherent {
 
     private String nom;
 
+    @Transient
+    private String prenomNom;
+
     private String genre;
 
     private String email;

@@ -51,6 +51,9 @@ public class Adhesion {
     private LocalDate dateChangementStatut;
 
     @OneToMany(cascade = CascadeType.ALL)
+    private List<Paiement> paiements = new ArrayList<>();
+
+    @OneToMany(cascade = CascadeType.ALL)
     private List<Accord> accords = new ArrayList<>();
 
     @ManyToOne
@@ -66,7 +69,7 @@ public class Adhesion {
     private static final List<String> list_G_encours = List.of("Attente validation adhérent", "Attente validation secrétariat");
 
     private static final List<String> list_B_valid = List.of("Validée", "Validée, en attente du certificat médical", "Licence T", "Retour Comité", "Licence générée", "Validée groupement sportif");
-    private static final List<String> list_B_encours = List.of("Attente validation adhérent", "Attente validation secrétariat");
+    private static final List<String> list_B_encours = List.of("Attente validation adhérent", "Attente validation secrétariat", "Attente licence en ligne");
 
 
     public boolean isValide(){

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AdherentService } from '../../_services/adherent.service';
-import { Adherent } from 'src/app/models';
+import { Adherent, AdherentLite } from 'src/app/models';
 import { faPen, faUsersRays, faSkull, faUsers, faEnvelope, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TokenStorageService } from 'src/app/_services/token-storage.service';
@@ -17,15 +17,19 @@ import { FilterAdhesionByPipe } from 'src/app/_helpers/filterAdhesion.pipe';
   styleUrls: ['./adherents.component.css']
 })
 export class AdherentsComponent implements OnInit {
+  faCircleCheck=faCircleCheck
+  faCircleXmark=faCircleXmark
+  faSquareMinus=faSquareMinus
+  faSquarePlus=faSquarePlus
   faPen = faPen;
   faUsersRays = faUsersRays;
   faUsers = faUsers;
   faSkull = faSkull;
   faEnvelope = faEnvelope;
   faPencilSquare = faPencilSquare;
-  adherents: Adherent[] = [];
-  cloned: Adherent[] = [];
-  adherentsReferent: Adherent[] = [];
+  adherents: AdherentLite[] = [];
+  cloned: AdherentLite[] = [];
+  adherentsReferent: AdherentLite[] = [];
   isFailed: boolean = false;
   errorMessage = '';
   ordre: string = 'nom';
@@ -53,10 +57,12 @@ export class AdherentsComponent implements OnInit {
     } else {
       this.router.navigate(['login']);
     }
-    this.adherentService.getAll().subscribe(
+    this.adherentService.getAllLite().subscribe(
       data => {
+        console.log(data)
         this.cloned = data.map(x => Object.assign({}, x));
-        this.adherentsReferent = this.adherents.filter(a => a.referent)
+        this.adherentsReferent = data.filter(a => a.referent)
+        console.log(this.adherentsReferent)
         this.filtrage()
       },
       err => {
@@ -89,12 +95,10 @@ export class AdherentsComponent implements OnInit {
 
 
   addSearch(search: string) {
-    if (search.length > 3) {
-      this.addFiltre('prenom', search)
-      this.addFiltre('nom', search)
+    if (search.length > 2) {
+      this.addFiltre('prenomNom', search)
     } else {
-      this.removeFiltre('nom')
-      this.removeFiltre('prenom')
+      this.removeFiltre('prenomNom')
     }
   }
 
@@ -134,8 +138,8 @@ export class AdherentsComponent implements OnInit {
 
   }
 
-  selectedAdherent: Adherent = new Adherent(0)
-  openModal(targetModal: any, adherent: Adherent) {
+  selectedAdherent: AdherentLite = new AdherentLite(0)
+  openModal(targetModal: any, adherent: AdherentLite) {
     this.modalService.open(targetModal, {
       centered: true,
       backdrop: 'static'
@@ -150,7 +154,7 @@ export class AdherentsComponent implements OnInit {
   }
 
 
-  referentAdherent: Adherent = new Adherent(0)
+  referentAdherent: AdherentLite = new AdherentLite(0)
   onSubmitChangeTribu() {
     this.modalService.dismissAll();
 
@@ -188,7 +192,7 @@ export class AdherentsComponent implements OnInit {
   }
 
 
-  acceptSupress(adherent: Adherent) {
+  acceptSupress(adherent: AdherentLite) {
     this.modalService.dismissAll();
     this.adherentService.deleteAdherent(adherent.id).subscribe(
       data => {
@@ -202,12 +206,38 @@ export class AdherentsComponent implements OnInit {
     )
   }
 
-
   dismissSupress() {
     this.modalService.dismissAll();
 
   }
 
+  ajoutAccord(adherent: AdherentLite, nomAccord: string) {
+    this.adherentService.addAccord(adherent.id, nomAccord).subscribe(
+      data => {
 
+        adherent.accords = data;
+      },
+      err => {
+        this.isFailed = true;
+        this.errorMessage = err.message
+
+      }
+    );
+     
+  }
+
+  retraitAccord(adherent: AdherentLite, nomAccord: string) {
+    this.adherentService.removeAccord(adherent.id, nomAccord).subscribe(
+      data => {
+
+        adherent.accords = data;
+      },
+      err => {
+        this.isFailed = true;
+        this.errorMessage = err.message
+
+      }
+    );
+  }
 
 }

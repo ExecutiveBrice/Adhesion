@@ -60,7 +60,8 @@
       <div class="form-group">
         <label for="prof">Prof</label>
         <div *ngFor="let prof of newActivite.profs | orderBy:'id':true ">
-          {{prof.prenom}} {{prof.nom}}
+          {{prof.prenom}} {{prof.nom}} <fa-icon *ngIf="showAdmin || showSecretaire" class="pointer" (click)="retirerProf(newActivite,prof)"
+          [icon]="faSquareMinus"></fa-icon>
         </div>
 
 

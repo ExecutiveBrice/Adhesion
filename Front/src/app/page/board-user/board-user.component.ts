@@ -375,7 +375,7 @@ export class BoardUserComponent implements OnInit {
 
       let age = anneeRef - anneeAdh
       if (age < 7) {
-        newAdhesionActivite = this.activites.filter(act => act.horaire == "Ecole")[0]
+        newAdhesionActivite = this.activites.filter(act => act.horaire == "U7")[0]
       } else if (age < 9) {
         if (adherent.genre == "Masculin") {
           newAdhesionActivite = this.activites.filter(act => act.horaire == "U9M")[0]

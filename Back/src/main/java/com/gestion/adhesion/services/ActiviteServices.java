@@ -1,6 +1,7 @@
 package com.gestion.adhesion.services;
 
 import com.gestion.adhesion.models.Activite;
+import com.gestion.adhesion.models.Adherent;
 import com.gestion.adhesion.repository.ActiviteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -47,14 +48,25 @@ public class ActiviteServices {
         return activites;
     }
 
+
+
     public Activite save(Activite activite){
 
-        activite.setProfs(activite.getProfs().stream().map(adherent -> adherentServices.getById(adherent.getId())).collect(Collectors.toSet()));
+        activite.setProfs(activite.getProfs().stream().map(adherent -> adherentServices.getBasicById(adherent.getId())).collect(Collectors.toSet()));
 
         activite.getProfs().stream().forEach(adherent -> adherent.getCours().add(activite));
 
         return activiteRepository.save(activite);
     }
+
+    public Activite addReferent(Long activiteId, Long adherentId){
+        Activite activiteDB = activiteRepository.findById(activiteId).get();
+        Adherent adherent = adherentServices.getById(adherentId);
+        activiteDB.getProfs().add(adherent);
+
+        return activiteRepository.save(activiteDB);
+    }
+
 
     public List<Activite> findByNom(String nom){
         return activiteRepository.findByNom(nom);

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams} from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { Accord, Activite, Adhesion } from '../models';
+import { Accord, Activite, Adhesion, Paiement } from '../models';
 
 
 const API_URL = environment.server+'/api_adhesion/adhesion/';
@@ -12,7 +12,6 @@ const API_URL = environment.server+'/api_adhesion/adhesion/';
 })
 export class AdhesionService {
   constructor(private http: HttpClient) { }
-
   
   deleteAdhesion(adhesionId: number): Observable<any> {
     let params = new HttpParams().set('adhesionId', '' + adhesionId + '');
@@ -44,8 +43,8 @@ export class AdhesionService {
     return this.http.get<Adhesion>(API_URL+"updateDocumentsSecretariat", {params, responseType: 'json' });
   }
   
-  updatePaiementSecretariat(adhesionId: number,tarif:number|null,dateReglement : Date| undefined, statut: boolean): Observable<Adhesion> {
-    let params = new HttpParams().set('adhesionId', '' + adhesionId + '').set('tarif', '' + tarif + '').set('dateReglement', '' + dateReglement + '').set('statut', '' + statut + '');
+  updatePaiementSecretariat(adhesionId: number, statut: boolean): Observable<Adhesion> {
+    let params = new HttpParams().set('adhesionId', '' + adhesionId + '').set('statut', '' + statut + '');
     return this.http.get<Adhesion>(API_URL+"updatePaiementSecretariat", {params, responseType: 'json' });
   }
 
@@ -74,6 +73,16 @@ export class AdhesionService {
 
   update(adhesion: Adhesion): Observable<any> {
     return this.http.post(API_URL+"update", adhesion, { responseType: 'json' });
+  }
+
+  deletePaiement(adhesionId: number,paiementId: number): Observable<any> {
+    let params = new HttpParams().set('adhesionId', '' + adhesionId + '').set('paiementId', '' + paiementId + '');
+    return this.http.delete(API_URL+"deletePaiement", {params, responseType: 'text' });
+  }
+
+  savePaiement(adhesionId: number,paiement: Paiement): Observable<Adhesion> {
+    let params = new HttpParams().set('adhesionId', '' + adhesionId + '');
+    return this.http.post<Adhesion>(API_URL+"savePaiement", paiement, {params, responseType: 'json' });
   }
 }
 

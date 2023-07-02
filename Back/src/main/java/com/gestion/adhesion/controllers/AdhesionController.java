@@ -1,6 +1,7 @@
 package com.gestion.adhesion.controllers;
 
 import com.gestion.adhesion.models.Adhesion;
+import com.gestion.adhesion.models.Paiement;
 import com.gestion.adhesion.services.AdhesionServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -62,12 +63,9 @@ AdhesionServices adhesionServices;
 
 	@GetMapping("/updatePaiementSecretariat")
 	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
-	public ResponseEntity<?> updatePaiementSecretariat(@PathParam("inscriptionId") Long adhesionId, @PathParam("tarif") Integer tarif, @PathParam("dateReglement") String dateReglement, @PathParam("statut") Boolean statut) {
-		String[] date = dateReglement.split("-");
-		System.out.println(date);
-		LocalDate dateCalculee = LocalDate.of(Integer.parseInt(date[0]),Integer.parseInt(date[1]),Integer.parseInt(date[2]));
+	public ResponseEntity<?> updatePaiementSecretariat(@PathParam("inscriptionId") Long adhesionId, @PathParam("statut") Boolean statut) {
 
-		return ResponseEntity.ok(adhesionServices.updatePaiementSecretariat(adhesionId, tarif, dateCalculee, statut));
+		return ResponseEntity.ok(adhesionServices.updatePaiementSecretariat(adhesionId, statut));
 	}
 
 	@GetMapping("/updateFlag")
@@ -89,10 +87,20 @@ AdhesionServices adhesionServices;
 		return ResponseEntity.ok(adhesionServices.choisirStatut(adhesionId, statutActuel));
 	}
 
+
+
+	@GetMapping("/transfertPaiement")
+	public ResponseEntity<?> transfertPaiement() {
+		adhesionServices.transfertPaiement();
+		return ResponseEntity.ok("ok");
+	}
+
+
+
 	@GetMapping("/all")
 	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
-	public ResponseEntity<?> getAll() {
-		return ResponseEntity.ok(adhesionServices.getAll());
+	public ResponseEntity<?> getAllLite() {
+		return ResponseEntity.ok(adhesionServices.getAllLite());
 	}
 
 
@@ -100,6 +108,19 @@ AdhesionServices adhesionServices;
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<?> save(@RequestBody List<Adhesion> adhesions) {
 		return ResponseEntity.ok(adhesionServices.save(adhesions));
+	}
+
+	@PostMapping("/savePaiement")
+	@PreAuthorize("hasRole('USER')")
+	public ResponseEntity<?> savePaiement(@PathParam("adhesionId") Long adhesionId, @RequestBody Paiement paiement) {
+		return ResponseEntity.ok(adhesionServices.savePaiement(adhesionId, paiement));
+	}
+
+	@DeleteMapping("/deletePaiement")
+	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+	public ResponseEntity<?> deletePaiement(@PathParam("adhesionId") Long adhesionId, @PathParam("paiementId") Long paiementId) {
+		adhesionServices.deletePaiement(adhesionId, paiementId);
+		return ResponseEntity.ok(paiementId+" deleted");
 	}
 
 	@PostMapping("/update")

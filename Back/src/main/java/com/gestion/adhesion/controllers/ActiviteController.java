@@ -25,4 +25,10 @@ ActiviteServices activiteServices;
 	public ResponseEntity<?> save(@RequestBody Activite activite) {
 		return ResponseEntity.ok(activiteServices.save(activite));
 	}
+
+	@PostMapping("/addReferent")
+	@PreAuthorize("hasRole('USER')")
+	public ResponseEntity<?> save( @RequestParam(value="activiteId") Long activiteId, @RequestParam(value="adherentId") Long adherentId ) {
+		return ResponseEntity.ok(activiteServices.addReferent(activiteId, adherentId));
+	}
 }

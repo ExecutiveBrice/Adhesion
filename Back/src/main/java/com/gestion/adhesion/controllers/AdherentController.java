@@ -76,6 +76,12 @@ AdherentServices adherentServices;
 		return ResponseEntity.ok(adherentServices.getAll());
 	}
 
+	@GetMapping("/allLite")
+	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+	public ResponseEntity<?> getAllLite() {
+		return ResponseEntity.ok(adherentServices.getAllLite());
+	}
+
 	@GetMapping("/allId")
 	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
 	public ResponseEntity<?> getAllId() {
@@ -96,4 +102,16 @@ AdherentServices adherentServices;
 		return ResponseEntity.ok(adherentServices.getById(adherentId));
 	}
 
+
+	@GetMapping("/addAccord")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<?> addAccord(@PathParam("adherentId") Long adherentId, @PathParam("nomAccord") String nomAccord) {
+		return ResponseEntity.ok(adherentServices.addAccord(adherentId, nomAccord));
+	}
+
+	@GetMapping("/removeAccord")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<?> removeAccord(@PathParam("adherentId") Long adherentId, @PathParam("nomAccord") String nomAccord) {
+		return ResponseEntity.ok(adherentServices.removeAccord(adherentId, nomAccord));
+	}
 }

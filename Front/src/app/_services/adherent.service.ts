@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { ActiviteLite, Adherent, Document } from '../models';
+import { Accord, ActiviteLite, Adherent, AdherentLite, Document } from '../models';
 
 const API_URL = environment.server+'/api_adhesion/adherent/';
 
@@ -19,6 +19,16 @@ export class AdherentService {
     return this.http.delete(API_URL + 'deleteAdherent', {params, responseType: 'text' });
   }
 
+  addAccord(adherentId: number, nomAccord: string): Observable<Accord[]> {
+    let params = new HttpParams().set('adherentId', '' + adherentId + '').set('nomAccord', '' + nomAccord + '');
+    return this.http.get<Accord[]>(API_URL+"addAccord", {params, responseType: 'json' });
+  }
+
+  removeAccord(adherentId: number, nomAccord: string): Observable<Accord[]> {
+    let params = new HttpParams().set('adherentId', '' + adherentId + '').set('nomAccord', '' + nomAccord + '');
+    return this.http.get<Accord[]>(API_URL+"removeAccord", {params, responseType: 'json' });
+  }
+  
   addDocument(document:File, adherentId : number): Observable<Document> {
     let params = new HttpParams().set('adherentId', '' + adherentId + '');
     const formData: FormData = new FormData();
@@ -39,6 +49,10 @@ export class AdherentService {
 
   getAll(): Observable<Adherent[]> {
     return this.http.get<Adherent[]>(API_URL + 'all', { responseType: 'json' });
+  }
+
+  getAllLite(): Observable<AdherentLite[]> {
+    return this.http.get<AdherentLite[]>(API_URL + 'allLite', { responseType: 'json' });
   }
 
   getAllCours(): Observable<ActiviteLite[]> {
@@ -66,9 +80,9 @@ export class AdherentService {
     return this.http.post<Adherent>(API_URL+"save", adherent, {params, responseType: 'json' });
   }
 
-  changeTribu(referentId: number, adherentId: number): Observable<Adherent> {
+  changeTribu(referentId: number, adherentId: number): Observable<AdherentLite> {
     let params = new HttpParams().set('adherentId', '' + adherentId + '');
-    return this.http.post<Adherent>(API_URL + 'changeTribu', referentId, {params, responseType: 'json' });
+    return this.http.post<AdherentLite>(API_URL + 'changeTribu', referentId, {params, responseType: 'json' });
   }
 }
 

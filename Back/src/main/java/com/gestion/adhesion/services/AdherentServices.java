@@ -117,9 +117,9 @@ public class AdherentServices {
         return null;
     }
 
-    public Adherent changeTribu( Long referentId, Long adherentId) {
-        Adherent adherentReferent = getById(referentId);
-        Adherent adherentCible = getById(adherentId);
+    public AdherentLite changeTribu( Long referentId, Long adherentId) {
+        Adherent adherentReferent = adherentRepository.findById(referentId).get();
+        Adherent adherentCible = adherentRepository.findById(adherentId).get();
 
         if(adherentCible.isReferent()){
             adherentCible.setReferent(false);
@@ -127,21 +127,22 @@ public class AdherentServices {
         }else{
             adherentCible.setTribu(adherentReferent.getTribu());
         }
-
-        return adherentRepository.save(adherentCible);
+        adherentRepository.save(adherentCible);
+        return reduceAdherent(adherentCible);
 
     }
 
 
 
-    public Adherent updateEmail(String email, Long adherentId){
+    public AdherentLite updateEmail(String email, Long adherentId){
         Optional<Adherent> indbAdherent = adherentRepository.findById(adherentId);
         if(indbAdherent.isPresent()) {
             if (indbAdherent.get().isReferent()) {
                 userServices.updateUsername(email.toLowerCase(), indbAdherent.get().getEmail().toLowerCase());
             }
             indbAdherent.get().setEmail(email.toLowerCase());
-            return adherentRepository.save(indbAdherent.get());
+            adherentRepository.save(indbAdherent.get());
+            return reduceAdherent(indbAdherent.get());
         }else{
             return null;
         }
@@ -183,14 +184,14 @@ public class AdherentServices {
 
 
     public void deleteDoc(Long docId, Long adherentId){
-        Adherent adh = getById(adherentId);
+        Adherent adh = adherentRepository.findById(adherentId).get();
         Document doc = documentRepository.findById(docId).get();
         adh.getDocuments().remove(doc);
         adherentRepository.save(adh);
     }
 
     public void deleteAdherent(Long adherentId){
-        Adherent adherent = getById(adherentId);
+        Adherent adherent = adherentRepository.findById(adherentId).get();
         if(adherent.isReferent()){
             adherent.getTribu().getAdherents().stream().forEach(subAdherent -> {
                 adherentRepository.deleteById(subAdherent.getId());
@@ -320,13 +321,35 @@ public class AdherentServices {
         return adherentRepository.getAllIds();
     }
 
-
+    public Adherent getBasicById(Long adherentId){
+        Adherent indbAdherent = adherentRepository.findById(adherentId).get();
+        return indbAdherent;
+    }
     public Adherent getById(Long adherentId){
         Adherent indbAdherent = adherentRepository.findById(adherentId).get();
         sanitizeAdherent(indbAdherent);
         return indbAdherent;
     }
 
+    public List<Accord> addAccord(Long adherentId, String nomAccord){
+        Adherent indbAdherent = adherentRepository.findById(adherentId).get();
+
+        if(indbAdherent.getAccords().stream().noneMatch(accord -> nomAccord.equals(accord.getNom()))) {
+            Accord newAccord = new Accord(nomAccord);
+            indbAdherent.getAccords().add(newAccord);
+        }
+
+        return adherentRepository.save(indbAdherent).getAccords();
+    }
+
+    public List<Accord> removeAccord(Long adherentId, String nomAccord){
+        Adherent indbAdherent = adherentRepository.findById(adherentId).get();
+        if(indbAdherent.getAccords().stream().anyMatch(accord -> nomAccord.equals(accord.getNom()))) {
+            indbAdherent.getAccords().remove(indbAdherent.getAccords().stream().filter(accord -> nomAccord.equals(accord.getNom())).findFirst().get());
+        }
+
+        return adherentRepository.save(indbAdherent).getAccords();
+    }
 
     public List<Adherent> getAll(){
         List<Adherent> adherents = adherentRepository.findAll();
@@ -336,9 +359,59 @@ public class AdherentServices {
         return adherents;
     }
 
+    public List<AdherentLite> getAllLite(){
+        List<Adherent> adherents = adherentRepository.findAll();
+
+        return  adherents.stream().map(this::reduceAdherent).toList();
+    }
+
+    private AdherentLite reduceAdherent(Adherent adherent){
+        Adherent adherentRef =  adherent.getTribu().getAdherents().stream().filter(Adherent::isReferent).findFirst().get();
+        AdherentLite adherentLite = AdherentLite.builder()
+                .id(adherent.getId())
+                .prenom(adherent.getPrenom())
+                .nom(adherent.getNom())
+                .prenomNom(adherent.getPrenom()+adherent.getNom())
+                .adresse(adherent.getAdresse())
+                .email(adherent.getEmail())
+                .telephone(adherent.getTelephone())
+                .mineur(adherent.isMineur())
+                .referent(adherent.isReferent())
+                .nomLegal(adherentRef.getNom())
+                .prenomLegal(adherentRef.getPrenom())
+                .telLegal(adherentRef.getTelephone())
+                .lieuNaissance(adherent.getLieuNaissance())
+                .naissance(adherent.getNaissance())
+                .tribuId(adherent.getTribu().getId())
+                .tribuSize(adherent.getTribu().getAdherents().size())
+                .accords(adherent.getAccords())
+                .adhesions(adherent.getAdhesions().stream().map(adhesion -> {
+                    return AdhesionLite.builder()
+                            .id(adhesion.getId())
+                            .activite(ActiviteLite.builder()
+                                    .horaire(adhesion.getActivite().getHoraire())
+                                    .nom(adhesion.getActivite().getNom())
+                                    .build())
+                            .build();
+                }).collect(Collectors.toSet()))
+                .build();
+
+        if(adherent.isEmailReferent()){
+            adherentLite.setEmail(adherentRef.getEmail());
+        }
+        if(adherent.isAdresseReferent()){
+            adherentLite.setAdresse(adherentRef.getAdresse());
+        }
+        if(adherent.isTelephoneReferent()){
+            adherentLite.setTelephone(adherentRef.getTelephone());
+        }
+        adherentLite.setPrenomNom(adherent.getPrenom()+adherent.getNom());
+        return adherentLite;
+    }
 
     private void sanitizeAdherent(Adherent adherent){
         Adherent adherentRef =  adherent.getTribu().getAdherents().stream().filter(Adherent::isReferent).findFirst().get();
+
         if(adherent.isEmailReferent()){
             adherent.setEmail(adherentRef.getEmail());
         }
@@ -348,9 +421,7 @@ public class AdherentServices {
         if(adherent.isTelephoneReferent()){
             adherent.setTelephone(adherentRef.getTelephone());
         }
-
-        adherent.setAccords(null);
-        adherent.setDocuments(null);
+        adherent.setPrenomNom(adherent.getPrenom()+adherent.getNom());
     }
 
 }

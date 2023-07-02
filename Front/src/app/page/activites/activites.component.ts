@@ -6,6 +6,8 @@ import { FormGroup, FormBuilder } from '@angular/forms';
 import { faCircleQuestion,faEnvelope, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { AdherentService } from 'src/app/_services/adherent.service';
 import { ParamService } from 'src/app/_services/param.service';
+import { TokenStorageService } from 'src/app/_services/token-storage.service';
+import { Route, Router } from '@angular/router';
 
 
 
@@ -37,14 +39,26 @@ export class ActivitesComponent implements OnInit {
   filtres: Map<string, boolean> = new Map<string, boolean>();
   editProfileForm!: FormGroup;
   adherents: Adherent[] = []
+  showAdmin: boolean = false;
+  showSecretaire: boolean = false;
+
   constructor(
     private adherentService: AdherentService,
     public activiteService: ActiviteService,
     private modalService: NgbModal, 
-    public paramService: ParamService
+    public paramService: ParamService,
+    private tokenStorageService: TokenStorageService,
+    public router: Router
     ) { }
 
   ngOnInit(): void {
+    if (this.tokenStorageService.getUser().roles) {
+      this.showAdmin = this.tokenStorageService.getUser().roles.includes('ROLE_ADMIN');
+      this.showSecretaire = this.tokenStorageService.getUser().roles.includes('ROLE_SECRETAIRE');
+    } else {
+      this.router.navigate(['login']);
+    }
+
     this.getActivites();
     this.getAdherents();
   }
@@ -70,6 +84,12 @@ export class ActivitesComponent implements OnInit {
   ajouterProf(newActivite: Activite, adherent: Adherent) {
     newActivite.profs.push(adherent);
   }
+
+  retirerProf(newActivite: Activite, adherent: Adherent) {
+    newActivite.profs= newActivite.profs.filter(prof => prof.id != adherent.id);
+  }
+  
+
 
   getAdherents() {
     this.adherentService.getAll().subscribe(

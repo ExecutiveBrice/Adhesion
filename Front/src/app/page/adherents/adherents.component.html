@@ -70,26 +70,26 @@
   <div class="col-6 center">
 
     <div class="btn-group btn-group-sm col-6" role="group">
-      <div type='button' *ngIf="filtres.get('mineur')!=true" class="btn btn-block btn-pomme"
+      <div type='button' *ngIf="filtres.get('mineur')!=true" class="btn btn-block btn-secondary"
         (click)="addFiltre('mineur', true)">Mineur</div>
-      <div type='button' *ngIf="filtres.get('mineur')==true" class="btn btn-block btn-primary"
+      <div type='button' *ngIf="filtres.get('mineur')==true" class="btn btn-block btn-danger"
         (click)="removeFiltre('mineur')">Mineur</div>
 
-      <div type='button' *ngIf="filtres.get('mineur')!=false" class="btn btn-block btn-pomme"
+      <div type='button' *ngIf="filtres.get('mineur')!=false" class="btn btn-block btn-secondary"
         (click)="addFiltre('mineur', false)">Majeur</div>
-      <div type='button' *ngIf="filtres.get('mineur')==false" class="btn btn-block btn-primary"
+      <div type='button' *ngIf="filtres.get('mineur')==false" class="btn btn-block btn-danger"
         (click)="removeFiltre('mineur')">Majeur</div>
 
     </div>
     <div class="btn-group btn-group-sm col-6" role="group">
-      <div type='button' *ngIf="filtres.get('referent')!=true" class="btn btn-block btn-pomme"
+      <div type='button' *ngIf="filtres.get('referent')!=true" class="btn btn-block btn-secondary"
         (click)="addFiltre('referent', true)">Référent</div>
-      <div type='button' *ngIf="filtres.get('referent')==true" class="btn btn-block btn-primary"
+      <div type='button' *ngIf="filtres.get('referent')==true" class="btn btn-block btn-danger"
         (click)="removeFiltre('referent')">Référent</div>
 
-      <div type='button' *ngIf="filtres.get('referent')!=false" class="btn btn-block btn-pomme"
+      <div type='button' *ngIf="filtres.get('referent')!=false" class="btn btn-block btn-secondary"
         (click)="addFiltre('referent', false)">Pas référent</div>
-      <div type='button' *ngIf="filtres.get('referent')==false" class="btn btn-block btn-primary"
+      <div type='button' *ngIf="filtres.get('referent')==false" class="btn btn-block btn-danger"
         (click)="removeFiltre('referent')">Pas référent</div>
     </div>
 
@@ -111,11 +111,12 @@
           <th class="center pointer" scope="col">Telephone</th>
           <th class="center pointer" scope="col">Adresse</th>
           <th class="center pointer" scope="col">Naissance / Lieu</th>
+          <th class="center pointer" scope="col">Accords</th>
           <th class="center pointer" scope="col">Activitées</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let adherent of adherents | filterBy:search  | orderBy:ordre:sens ">
+        <tr *ngFor="let adherent of adherents">
           <ng-template #tipsAdherentDelete><b>Deletion</b><br />
             <fa-icon [icon]="faSkull"> </fa-icon>Détruit l'adhérent et ses adhésions, si il est référent, destruction
             du groupe complet
@@ -136,7 +137,7 @@
             <fa-icon class="fa-lg pointer" [routerLink]="['/inscription', adherent.email]"
               [ngbTooltip]="tipsAdherentRegroupe" target="_blank" [icon]="faPen"></fa-icon>
 
-            {{adherent.tribu.adherents.length}} membre{{adherent.tribu.adherents.length>1?"s":""}}
+            {{adherent.tribuSize}} membre{{adherent.tribuSize>1?"s":""}}
           </td>
 
           <td>
@@ -188,9 +189,35 @@
           <td>
             {{adherent.naissance}} {{adherent.lieuNaissance}}
           </td>
+
+
+          <td>
+            <div *ngFor="let accord of adherent.accords | orderBy:'id':false ">
+              {{accord.nom}}
+              <fa-icon *ngIf="accord.etat == true" class="green" [icon]="faCircleCheck"></fa-icon>
+              <fa-icon *ngIf="accord.etat == false" class="orange" [icon]="faCircleXmark"></fa-icon>
+              <fa-icon *ngIf="showAdmin || showSecretaire" (click)="retraitAccord(adherent,accord.nom)"
+                [icon]="faSquareMinus"></fa-icon>
+
+            </div>
+
+
+            <div *ngIf="showAdmin || showSecretaire" ngbDropdown id="icon">
+              <div id="dropdownBasic1" ngbDropdownToggle>
+                <fa-icon [icon]="faSquarePlus" container="body"></fa-icon>
+              </div>
+
+              <div ngbDropdownMenu aria-labelledby="dropdownBasic1" style="float:right;">
+                <button ngbDropdownItem (click)="ajoutAccord(adherent,'RGPD')">RGPD</button>
+                <button ngbDropdownItem (click)="ajoutAccord(adherent,'Droit Image')">Droit Image</button>
+              </div>
+            </div>
+
+          </td>
+
           <td>
             <div *ngFor="let adhesion of adherent.adhesions">
-              {{adhesion.activite.nom}} {{adhesion.activite.horaire}}
+              {{adhesion.activite?adhesion.activite.nom:""}} {{adhesion.activite?adhesion.activite.horaire:""}}
             </div>
           </td>
         </tr>

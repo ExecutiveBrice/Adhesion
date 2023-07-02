@@ -27,7 +27,7 @@ public class ReportingService {
     public static final List<String> list_G_encours = List.of("Attente validation adhérent", "Attente validation secrétariat");
 
     public static final List<String> list_B_valid = List.of("Validée", "Validée, en attente du certificat médical", "Licence T", "Retour Comité", "Licence générée", "Validée groupement sportif");
-    public static final List<String> list_B_encours = List.of("Attente validation adhérent", "Attente validation secrétariat");
+    public static final List<String> list_B_encours = List.of("Attente validation adhérent", "Attente validation secrétariat", "Attente licence en ligne");
 
 
     public List<ReportingActivite> getAllActiviteBasket(){

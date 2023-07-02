@@ -2,7 +2,7 @@
 import { Accord } from "./accord";
 import { Activite } from "./activite";
 import { Adherent } from "./adherent";
-import { Tribu } from "./tribu";
+import { Paiement } from "./paiement";
 
 export class Adhesion {
 
@@ -10,8 +10,9 @@ export class Adhesion {
   tarif: number;
   activite: Activite | undefined
   adherent: Adherent | undefined
+  paiements: Paiement[];
   typeReglement: String;
-  dateReglement: Date | undefined;
+  dateReglement: String;
   statutActuel: String;
   remarqueSecretariat: String;
   inscrit: boolean;
@@ -20,10 +21,13 @@ export class Adhesion {
   validDocumentSecretariat: boolean;
   blocage: boolean;
   accords: Accord[];
+  
   constructor() {
     this.id = 0;
     this.tarif = 0;
+    this.paiements = [];
     this.typeReglement = "";
+    this.dateReglement = "";
     this.statutActuel = "";
     this.remarqueSecretariat = "";
     this.inscrit = false;
