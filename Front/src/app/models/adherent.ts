@@ -2,6 +2,7 @@ import { Accord } from "./accord";
 import { Activite } from "./activite";
 import { Adhesion } from "./adhesion";
 import { Document } from "./document";
+import { Notification } from "./notification";
 import { Tribu } from "./tribu";
 import { User } from "./user";
 
@@ -36,6 +37,10 @@ export class Adherent {
   user: User | null;
   documents: Document[];
 
+  derniereModifs : Notification[];
+  derniereVisites : Notification[];
+  edit:boolean
+
   constructor(id:number) {
     this.id = id;
     this.prenom = "";
@@ -63,6 +68,9 @@ export class Adherent {
     this.editMail = false
     this.user = null;
     this.documents = []
+    this.edit = false
+    this.derniereVisites = []
+    this.derniereModifs = []
   }
 
 

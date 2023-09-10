@@ -8,11 +8,10 @@ import org.springframework.stereotype.Service;
 
 import javax.xml.crypto.Data;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.time.LocalDate.now;
 
@@ -26,6 +25,9 @@ public class AdhesionServices {
     PaiementRepository paiementRepository;
     @Autowired
     TribuServices tribuServices;
+
+    @Autowired
+    UserServices userServices;
     @Autowired
     AdherentServices adherentServices;
     @Autowired
@@ -34,17 +36,34 @@ public class AdhesionServices {
     @Autowired
     EmailService emailService;
 
+    public List<AdhesionLite> getLiteBySection(String section){
+        String[] sections = section.split("#");
 
-    public List<AdhesionLite> getAllLite(){
-        List<Adhesion> adhesions =adhesionRepository.findAll();
+        if(sections[0].equals("activite")) {
+            return adhesionRepository.findAll().stream()
+                    .filter(adhesion -> activiteServices.findByNom(sections[1]).contains(adhesion.getActivite()))
+                    .map(this::reduceAdhesion).filter(Objects::nonNull).toList();
+        }else if(sections[0].equals("horaire")) {
+            return adhesionRepository.findAll().stream()
+                    .filter(adhesion -> adhesion.getActivite().getId().equals(Long.parseLong(sections[1])))
+                    .map(this::reduceAdhesion).filter(Objects::nonNull).toList();
+        }else {
+            List<Adhesion> adhesions = adhesionRepository.findAll();
+            return adhesions.stream().map(this::reduceAdhesion).toList();
+        }
+    }
 
-        return adhesions.stream().map(adhesion -> AdhesionLite.builder().id(adhesion.getId())
+    private AdhesionLite reduceAdhesion (Adhesion adhesion){
+        return AdhesionLite.builder().id(adhesion.getId())
                 .adherent(AdherentLite.builder()
                         .id(adhesion.getAdherent().getId())
-                        .prenomNom(adhesion.getAdherent().getPrenom()+adhesion.getAdherent().getNom())
+                        .nomPrenom((adhesion.getAdherent().getNom()==null?"zzzz":adhesion.getAdherent().getNom())+(adhesion.getAdherent().getPrenom()==null?"zzzz":adhesion.getAdherent().getPrenom()))
                         .nom(adhesion.getAdherent().getNom())
                         .prenom(adhesion.getAdherent().getPrenom())
-                        .email(adhesion.getAdherent().getTribu().getAdherents().stream().filter(Adherent::isReferent).findFirst().get().getEmail())
+                        .email(adhesion.getAdherent().getEmail(adhesion.getAdherent()))
+                        .adresse(adhesion.getAdherent().getAdresse(adhesion.getAdherent()))
+                        .derniereVisites(adhesion.getAdherent().getDerniereVisites())
+                        .derniereModifs(adhesion.getAdherent().getDerniereModifs())
                         .build())
                 .activite(ActiviteLite.builder()
                         .nom(adhesion.getActivite().getNom())
@@ -61,14 +80,22 @@ public class AdhesionServices {
                 .validDocumentSecretariat(adhesion.getValidDocumentSecretariat())
                 .validPaiementSecretariat(adhesion.getValidPaiementSecretariat())
                 .statutActuel(adhesion.getStatutActuel())
-                .build()).toList();
+                .derniereVisites(adhesion.getDerniereVisites())
+                .derniereModifs(adhesion.getDerniereModifs())
+                .build();
+    }
+
+    public List<AdhesionLite> getAllLite(){
+        List<Adhesion> adhesions =adhesionRepository.findAll();
+
+        return adhesions.stream().map(adhesion -> reduceAdhesion(adhesion)).toList();
     }
 
 
     public void deletePaiement(Long adhesionId, Long paiementId){
         Adhesion adhesion =  adhesionRepository.findById(adhesionId).get();
         adhesion.getPaiements().remove(paiementRepository.findById(paiementId).get());
-        adhesionRepository.save(adhesion);
+
         paiementRepository.deleteById(paiementId);
     }
 
@@ -94,41 +121,12 @@ public class AdhesionServices {
 
         return adhesionRepository.save(adhesion);
     }
-    public void transfertPaiement(){
-        List<Adhesion> adhesions =adhesionRepository.findAll();
-        System.out.println("transfertPaiement");
-        adhesions.forEach(adhesion -> {
-            if(adhesion.getDateReglement() != null && adhesion.getPaiements().size() ==0){
-                System.out.println(adhesion.getId());
-                Paiement paiement = new Paiement();
-                paiement.setDateReglement(adhesion.getDateReglement());
-                paiement.setMontant(adhesion.getTarif());
-                paiement.setTypeReglement(adhesion.getTypeReglement());
-                adhesion.getPaiements().add(paiement);
 
-                adhesionRepository.save(adhesion);
-            }
-        });
-    }
 
     public List<Adhesion> getAll(){
         List<Adhesion> adhesions =adhesionRepository.findAll();
 
 
-        adhesions.forEach(adhesion -> {
-
-            Adherent adherentRef =   adhesion.getAdherent().getTribu().getAdherents().stream().filter(Adherent::isReferent).findFirst().get();
-            if(adhesion.getAdherent().isEmailReferent()){
-                adhesion.getAdherent().setEmail(adherentRef.getEmail());
-            }
-            if(adhesion.getAdherent().isAdresseReferent()){
-                adhesion.getAdherent().setAdresse(adherentRef.getAdresse());
-            }
-            if(adhesion.getAdherent().isTelephoneReferent()){
-                adhesion.getAdherent().setTelephone(adherentRef.getTelephone());
-            }
-
-        });
 
         return adhesions;
 
@@ -317,5 +315,32 @@ public class AdhesionServices {
     }
 
 
+    public Adhesion addModification(String userEmail, Long adhesionId){
 
+        User user = userServices.findByEmail(userEmail);
+        Adhesion adhesion = adhesionRepository.findById(adhesionId).get();
+        List<Notification> modifications = new java.util.ArrayList<>(adhesion.getDerniereModifs().stream().filter(visite -> !visite.getUser().equals(user)).toList());
+        Notification nouvelleModif = new Notification();
+        nouvelleModif.setDate(LocalDateTime.now());
+        nouvelleModif.setUser(user);
+        modifications.add(nouvelleModif);
+        adhesion.setDerniereModifs(modifications);
+        adhesionRepository.save(adhesion);
+
+       return addVisite(userEmail, adhesionId);
+    }
+
+    public Adhesion addVisite(String userEmail, Long adhesionId){
+        User user = userServices.findByEmail(userEmail);
+        Adhesion adhesion = adhesionRepository.findById(adhesionId).get();
+        List<Notification> visites = new java.util.ArrayList<>(adhesion.getDerniereVisites().stream().filter(visite -> !visite.getUser().equals(user)).toList());
+        Notification nouvelleVisite = new Notification();
+        nouvelleVisite.setDate(LocalDateTime.now());
+        nouvelleVisite.setUser(user);
+        visites.add(nouvelleVisite);
+        adhesion.setDerniereVisites(visites);
+
+        return adhesionRepository.save(adhesion);
+
+    }
 }

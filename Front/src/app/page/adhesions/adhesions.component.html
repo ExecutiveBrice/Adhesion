@@ -18,41 +18,29 @@
     <tr>
 
       <th class="center" scope="col truncate">
-        <fa-icon *ngIf="filtres.get('activite.groupe')!='ALOD_B'" (click)="addFiltre('activite.groupe','ALOD_B')"
-          class="fa-2xl" [icon]="faBasketball" container="body"></fa-icon>
-
-        <fa-icon *ngIf="filtres.get('activite.groupe')=='ALOD_B'" (click)="removeFiltre('activite.groupe')"
-          class="orange fa-2xl" [icon]="faBasketball" container="body"></fa-icon>
-
-        <fa-icon *ngIf="filtres.get('activite.groupe')!='ALOD_G'" (click)="addFiltre('activite.groupe','ALOD_G')"
-          class="fa-2xl" [icon]="faSeedling" container="body"></fa-icon>
-
-        <fa-icon *ngIf="filtres.get('activite.groupe')=='ALOD_G'" (click)="removeFiltre('activite.groupe')"
-          class="orange fa-2xl" [icon]="faSeedling" container="body"></fa-icon>
-
-
-
-        <div *ngIf="!filtres.has('activite.nom') && !filtres.has('activite.horaire')" ngbDropdown>
-          <div id="dropdownBasic1" ngbDropdownToggle>
-            Activité <fa-icon [icon]="faFilter" container="body"></fa-icon>
-          </div>
+ 
+        <div ngbDropdown class="d-inline-block larger">
+          <button type="button" class="btn btn-primary larger" id="dropdownBasic1" ngbDropdownToggle>
+            {{choixSection.length >0?choixSection:'Activité'}}
+          </button>
 
           <div *ngIf="activites.length > 0" ngbDropdownMenu aria-labelledby="dropdownBasic1">
+
+            <a ngbDropdownItem (click)="choixSection = 'Toutes';  getAdhesion()">
+              Toutes</a>
+
+
             <div *ngFor="let activite of activites  | orderBy:'nom':false" class="ligne pointer">
-              <b (click)="addFiltre('activite.nom',activite.nom)">{{activite.nom}}</b>
+              <a ngbDropdownItem (click)="choixSection = 'activite#'+activite.nom;  getAdhesion()">
+                <b>{{activite.nom}}</b></a>
               <div *ngFor="let horaire of activite.horaires">
-                <a ngbDropdownItem (click)="addFiltre('activite.horaire',horaire.nom)">
+                <a ngbDropdownItem (click)="choixSection = 'horaire#'+horaire.id; getAdhesion()">
                   {{horaire.nom}}</a>
+
               </div>
             </div>
           </div>
         </div>
-
-        <div *ngIf="filtres.has('activite.nom') || filtres.has('activite.horaire')"
-          (click)="removeFiltre('activite.nom'); removeFiltre('activite.horaire')">
-          Activité <fa-icon [icon]="faFilterCircleXmark" container="body"></fa-icon>
-        </div>
-
 
       </th>
       <th class="center" scope="col">
@@ -91,6 +79,10 @@
             <button ngbDropdownItem (click)="addFiltre('validDocumentSecretariat', true)">Docs Validés</button>
             <button ngbDropdownItem (click)="addFiltre('validDocumentSecretariat', false)">Docs Manquants</button>
           </div>
+        </div>
+
+        <div *ngIf="filtres.has('validDocumentSecretariat')" (click)="removeFiltre('validDocumentSecretariat')">
+          Accord <fa-icon [icon]="faFilterCircleXmark" container="body"></fa-icon>
         </div>
       </th>
 
@@ -158,7 +150,7 @@
     </tr>
   </thead>
   <tbody>
-    <tr *ngFor="let adhesion of adhesions  | orderBy:'id':true ">
+    <tr *ngFor="let adhesion of adhesions  | orderBy:'adherent.nomPrenom':false ">
       <td class="truncate">
         <ng-template #tipsAdhesionDelete><b>icons</b><br />
           <fa-icon [icon]="faSquareMinus"></fa-icon> supprime l'adhésion quel que soit son statut
@@ -167,14 +159,10 @@
           [ngbTooltip]="tipsAdhesionDelete" [icon]="faSquareMinus"></fa-icon>
         {{adhesion.activite.nom}}<br />{{adhesion.activite.horaire}}
 
-
-
-
         <div *ngIf="showAdmin || showSecretaire" ngbDropdown>
           <div id="dropdownBasic1" ngbDropdownToggle>
             <fa-icon [icon]="faSquarePlus" container="body"></fa-icon>
           </div>
-
           <div *ngIf="activites.length > 0" ngbDropdownMenu aria-labelledby="dropdownBasic1">
             <div *ngFor="let activite of activites  | orderBy:'nom':false" class="ligne pointer">
               <b>{{activite.nom}}</b>
@@ -185,8 +173,6 @@
             </div>
           </div>
         </div>
-
-
       </td>
 
       <td>
@@ -195,9 +181,9 @@
         <ng-template #tipsAdherentSendMail><b>icons</b><br />
           <fa-icon class="fa-lg green" [icon]="faEnvelope"></fa-icon> permet d'envoyer un mail pour cet adhérent
         </ng-template>
-        <fa-icon *ngIf="adhesion.adherent.email != null" [routerLink]="['/mail', adhesion.adherent.id]"
+        <fa-icon *ngIf="adhesion.adherent.email != null" (click)="opennewTab('#/mail/'+adhesion.adherent.id)"
           class="fa-lg pointer green" [icon]="faEnvelope" [ngbTooltip]="tipsAdherentSendMail"></fa-icon>
-        <fa-icon class="fa-lg pointer" target="_blank" [routerLink]="['/inscription', adhesion.adherent.email]"
+        <fa-icon class="fa-lg pointer" (click)="opennewTab('#/inscription/'+adhesion.adherent.email)"
           [icon]="faPen"></fa-icon>
       </td>
 
@@ -234,26 +220,8 @@
               {{accord.nom}}
               <fa-icon *ngIf="accord.etat == true" class="green" [icon]="faCircleCheck"></fa-icon>
               <fa-icon *ngIf="accord.etat != true" class="orange" [icon]="faCircleXmark"></fa-icon>
-              <fa-icon *ngIf="showAdmin || showSecretaire" (click)="retraitAccord(adhesion,accord.nom)"
-                [icon]="faSquareMinus"></fa-icon>
-
-            </div>
 
 
-            <div *ngIf="showAdmin || showSecretaire" ngbDropdown id="icon">
-              <div id="dropdownBasic1" ngbDropdownToggle>
-                <fa-icon [icon]="faSquarePlus" container="body"></fa-icon>
-              </div>
-
-              <div ngbDropdownMenu aria-labelledby="dropdownBasic1" style="float:right;">
-                <button ngbDropdownItem (click)="ajoutAccord(adhesion,'Reglement Interieur')">Reglement
-                  Interieur</button>
-                <button ngbDropdownItem (click)="ajoutAccord(adhesion,'Attestation Sante')">Attestation Sante</button>
-                <button ngbDropdownItem (click)="ajoutAccord(adhesion,'Vie du Club')">Vie du Club</button>
-                <button ngbDropdownItem (click)="ajoutAccord(adhesion,'Autorisation Parentale')">Autorisation
-                  Parentale</button>
-                <button ngbDropdownItem (click)="ajoutAccord(adhesion,'Prise en Charge')">Prise en Charge</button>
-              </div>
             </div>
 
           </div>
@@ -284,10 +252,11 @@
               adhérent</button>
             <button ngbDropdownItem (click)="choisirStatut(adhesion,'Attente validation secrétariat')">Attente
               validation secrétariat</button>
+            <button ngbDropdownItem (click)="choisirStatut(adhesion,'Attente validation secrétariat')">Attente
+              paiement</button>
             <button ngbDropdownItem
               (click)="choisirStatut(adhesion,'Validée, en attente du certificat médical')">Validée, en attente du
-              certificat
-              médical</button>
+              certificat médical</button>
             <button ngbDropdownItem (click)="choisirStatut(adhesion,'Sur liste d\'attente')">Sur liste
               d'attente</button>
             <button ngbDropdownItem (click)="choisirStatut(adhesion,'Validée')">Validée</button>
@@ -322,23 +291,33 @@
           </div>
         </div>
 
-
-
+<br/>depuis le {{adhesion.dateChangementStatut!=null?adhesion.dateChangementStatut:adhesion.dateAjoutPanier}}
 
 
       </td>
       <td>
-        <textarea [(ngModel)]="adhesion.remarqueSecretariat" id="story" name="story" rows="1" cols="10"
+        <textarea [(ngModel)]="adhesion.remarqueSecretariat" id="story" name="story" rows="2" cols="20"
           placeholder="Note..." (blur)='enregistrerRemarque(adhesion)'>
 
           </textarea>
 
       </td>
 
-      <td class="center" (click)="updateFlag(adhesion, !adhesion.flag)">
-        <fa-icon *ngIf="!adhesion.flag" class="pointer fa-2xl" [icon]="faFlag "></fa-icon>
-        <fa-icon *ngIf="adhesion.flag" class="pointer orange fa-2xl" [icon]="faFlag"></fa-icon>
+      <td class="center">
+        <fa-icon (click)="updateFlag(adhesion, !adhesion.flag)" *ngIf="!adhesion.flag" class="pointer fa-2xl"
+          [icon]="faFlag "></fa-icon>
+        <fa-icon (click)="updateFlag(adhesion, !adhesion.flag)" *ngIf="adhesion.flag" class="pointer orange fa-2xl"
+          [icon]="faFlag"></fa-icon>
 
+        <fa-icon *ngIf="!verifyAdhesion(adhesion)" class="pointer fa-2xl"
+          [icon]="faCircleExclamation "></fa-icon>
+        <fa-icon (click)="updateVisiteAdhesion(adhesion)" *ngIf="verifyAdhesion(adhesion)" class="pointer orange fa-2xl"
+          [icon]="faCircleExclamation "></fa-icon>
+
+        <fa-icon *ngIf="!verifyAdherent(adhesion)" class="pointer fa-2xl"
+          [icon]="faCircleUser"></fa-icon>
+        <fa-icon (click)="updateVisiteAdherent(adhesion)" *ngIf="verifyAdherent(adhesion)" class="pointer orange fa-2xl"
+          [icon]="faCircleUser"></fa-icon>
 
 
       </td>
@@ -484,7 +463,7 @@
     <button type="button" class="btn-close" aria-label="Close" (click)="dismissSupress()"></button>
   </div>
   <div class="modal-body">
-    Vous êtes sur le point de supprimer l'adhesion de {{selectedAdhesion.adherent?.prenom}} au
+    Vous êtes sur le point de supprimer l'adhesion de {{selectedAdhesion.adherent.prenom}} au
     {{selectedAdhesion.activite?.nom}} {{selectedAdhesion.activite?.horaire}}
 
   </div>

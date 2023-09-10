@@ -9,10 +9,11 @@
         <thead>
           <tr>
             <th class="center" scope="col">Nom</th>
-            <th class="center" scope="col">nbEC</th>
-            <th class="center" scope="col">nbV</th>
-            <th class="center" scope="col">nbF</th>
-            <th class="center" scope="col">nbM</th>
+            <th class="center" scope="col">Initiées</th>
+            <th class="center" scope="col">Payées</th>
+            <th class="center" scope="col">Validées</th>
+            <th class="center" scope="col">Féminin</th>
+            <th class="center" scope="col">Masculin</th>
             <th class="center" scope="col">Répartition</th>
             <th class="center" scope="col">cotisations</th>
 
@@ -21,21 +22,23 @@
         <tbody>
           <tr *ngFor="let activite of dataGeneral  | orderBy:'nomActivite':false ">
             <td>{{activite.nomActivite}}</td>
-            <td>{{activite.nbEC}}</td>
-            <td>{{activite.nbV}}</td>
-            <td>{{activite.nbF}} / {{(activite.nbF/activite.nbV)*100 | number : '1.0-0'}}%</td>
-            <td>{{activite.nbM}} / {{(activite.nbM/activite.nbV)*100 | number : '1.0-0'}}%</td>
-            <td>{{(activite.nbV / totalVG)*100 | number : '1.0-0'}}%</td>
+            <td>{{activite.nbInitee}}</td>
+            <td>{{activite.nbPayee}}</td>
+            <td>{{activite.nbValidee}}</td>
+            <td>{{activite.nbF}} / {{(activite.nbF/activite.nbValidee)*100 | number : '1.0-0'}}%</td>
+            <td>{{activite.nbM}} / {{(activite.nbM/activite.nbValidee)*100 | number : '1.0-0'}}%</td>
+            <td>{{(activite.nbValidee / totalValideeG)*100 | number : '1.0-0'}}%</td>
             <td>{{activite.cotisations}}€</td>
 
 
           </tr>
           <tr>
             <td><b>Totaux</b></td>
-            <td><b>{{totalECG}}</b></td>
-            <td><b>{{totalVG}}</b></td>
-            <td><b>{{totalFG}} / {{(totalFG/totalVG)*100 | number : '1.0-0'}}%</b></td>
-            <td><b>{{totalMG}} / {{(totalMG/totalVG)*100 | number : '1.0-0'}}%</b></td>
+            <td><b>{{totalIniteeG}}</b></td>
+            <td><b>{{totalPayeeG}}</b></td>
+            <td><b>{{totalValideeG}}</b></td>
+            <td><b>{{totalFG}} / {{(totalFG/totalValideeG)*100 | number : '1.0-0'}}%</b></td>
+            <td><b>{{totalMG}} / {{(totalMG/totalValideeG)*100 | number : '1.0-0'}}%</b></td>
 
             <td></td>
             <td><b>{{totalCotisG}}€</b></td>
@@ -49,7 +52,8 @@
         <thead>
           <tr>
             <th class="center" scope="col">Nom</th>
-            <th class="center" scope="col">EnCours</th>
+            <th class="center" scope="col">Initiées</th>
+            <th class="center" scope="col">Payées</th>
             <th class="center" scope="col">Validées</th>
             <th class="center" scope="col">Féminin</th>
             <th class="center" scope="col">Masculin</th>
@@ -61,21 +65,23 @@
         <tbody>
           <tr *ngFor="let activite of dataBasket">
             <td>{{activite.nomActivite}}</td>
-            <td>{{activite.nbEC}}</td>
-            <td>{{activite.nbV}}</td>
-            <td>{{activite.nbF}} / {{(activite.nbF/activite.nbV)*100 | number : '1.0-0'}}%</td>
-            <td>{{activite.nbM}} / {{(activite.nbM/activite.nbV)*100 | number : '1.0-0'}}%</td>
-            <td>{{(activite.nbV / totalVB)*100 | number : '1.0-0'}}%</td>
+            <td>{{activite.nbInitee}}</td>
+            <td>{{activite.nbPayee}}</td>
+            <td>{{activite.nbValidee}}</td>
+            <td>{{activite.nbF}} / {{(activite.nbF/activite.nbValidee)*100 | number : '1.0-0'}}%</td>
+            <td>{{activite.nbM}} / {{(activite.nbM/activite.nbValidee)*100 | number : '1.0-0'}}%</td>
+            <td>{{(activite.nbValidee / totalValideeB)*100 | number : '1.0-0'}}%</td>
             <td>{{activite.cotisations}}€</td>
 
 
           </tr>
           <tr>
             <td><b>Totaux</b></td>
-            <td><b>{{totalECB}}</b></td>
-            <td><b>{{totalVB}}</b></td>
-            <td><b>{{totalFB}} / {{(totalFB/totalVB)*100 | number : '1.0-0'}}%</b></td>
-            <td><b>{{totalMB}} / {{(totalMB/totalVB)*100 | number : '1.0-0'}}%</b></td>
+            <td><b>{{totalIniteeB}}</b></td>
+            <td><b>{{totalPayeeB}}</b></td>
+            <td><b>{{totalValideeB}}</b></td>
+            <td><b>{{totalFB}} / {{(totalFB/totalValideeB)*100 | number : '1.0-0'}}%</b></td>
+            <td><b>{{totalMB}} / {{(totalMB/totalValideeB)*100 | number : '1.0-0'}}%</b></td>
 
             <td></td>
             <td><b>{{totalCotisB}}€</b></td>

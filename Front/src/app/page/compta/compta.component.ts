@@ -91,7 +91,6 @@ export class ComptaComponent implements OnInit {
     this.comptaService.getAll(debutPlage, finPlage)
       .subscribe({
         next: (data) => {
-          console.log(data)
           this.dataCompta = data
 
           data.forEach(report => {

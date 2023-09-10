@@ -3,16 +3,16 @@ export class ReportingAdhesion {
 
 
   x: string;
-  nbEC: number;
-  nbV: number;
-
-
+  nbInitiee: number;
+  nbPayee: number;
+  nbValidee: number;
 
   constructor() {
 
     this.x = "";
-    this.nbEC = 0;
-    this.nbV = 0;
+    this.nbInitiee = 0;
+    this.nbPayee = 0;
+    this.nbValidee = 0;
 
   }
 }

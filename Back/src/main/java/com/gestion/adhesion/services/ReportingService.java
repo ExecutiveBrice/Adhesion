@@ -1,6 +1,7 @@
 package com.gestion.adhesion.services;
 
 import com.gestion.adhesion.models.Activite;
+import com.gestion.adhesion.models.Paiement;
 import com.gestion.adhesion.models.ReportingActivite;
 import com.gestion.adhesion.models.ReportingAdhesion;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.gestion.adhesion.utils.Constantes.*;
 import static java.util.stream.Collectors.groupingBy;
 
 @Service
@@ -23,11 +25,7 @@ public class ReportingService {
     @Autowired
     AdhesionServices adhesionServices;
 
-    public static final List<String> list_G_valid = List.of("Validée", "Validée, en attente du certificat médical");
-    public static final List<String> list_G_encours = List.of("Attente validation adhérent", "Attente validation secrétariat");
 
-    public static final List<String> list_B_valid = List.of("Validée", "Validée, en attente du certificat médical", "Licence T", "Retour Comité", "Licence générée", "Validée groupement sportif");
-    public static final List<String> list_B_encours = List.of("Attente validation adhérent", "Attente validation secrétariat", "Attente licence en ligne");
 
 
     public List<ReportingActivite> getAllActiviteBasket(){
@@ -40,11 +38,12 @@ public class ReportingService {
                   ra.setNomActivite(integers);
 
                   activites.forEach(activite -> {
-                      ra.setNbF(ra.getNbF() + getByStatutGenre(activite, list_B_valid, "Féminin"));
-                      ra.setNbM(ra.getNbM() + getByStatutGenre(activite, list_B_valid, "Masculin"));
-                      ra.setNbEC(ra.getNbEC() + getByStatuts(activite, list_B_encours));
-                      ra.setNbV(ra.getNbV() + getByStatuts(activite, list_B_valid));
-                      ra.setCotisations(ra.getCotisations() + getCotisationByStatut(activite, list_B_valid));
+                      ra.setNbF(ra.getNbF() + getByValidByGenre(activite, "Féminin"));
+                      ra.setNbM(ra.getNbM() + getByValidByGenre(activite, "Masculin"));
+                      ra.setNbInitee(ra.getNbInitee() + getByInitieeNonPayee(activite));
+                      ra.setNbPayee(ra.getNbPayee() + getByInitieePayee(activite));
+                      ra.setNbValidee(ra.getNbValidee() + getByValid(activite));
+                      ra.setCotisations(ra.getCotisations() + getCotisationByStatut(activite));
                   });
                   listRA.add(ra);
               });
@@ -61,20 +60,26 @@ public class ReportingService {
         for (int i = 0; i < nbJours; i++) {
             ReportingAdhesion reportingAdhesion = new ReportingAdhesion();
             reportingAdhesion.setX(debut.plusDays(i).format(formatter));
-            reportingAdhesion.setNbEC(getECnbByDate(debut.plusDays(i)));
-            reportingAdhesion.setNbV(getVnbByDate(debut.plusDays(i)));
+            reportingAdhesion.setNbInitiee(getInitnbByDate(debut.plusDays(i)));
+            reportingAdhesion.setNbPayee(getPayenbByDate(debut.plusDays(i)));
+            reportingAdhesion.setNbValidee(getVnbByDate(debut.plusDays(i)));
 
             reporting.add(reportingAdhesion);
         }
         return reporting;
     }
 
-    public Long getECnbByDate(LocalDate jourJ){
-     return adhesionServices.getAll().stream().filter(adh -> list_G_encours.contains(adh.getStatutActuel()) && adh.getDateAjoutPanier().isBefore(jourJ.plusDays(1))).count();
+    public Long getInitnbByDate(LocalDate jourJ){
+     return adhesionServices.getAll().stream().filter(adh -> STATUTS_ENCOURS.contains(adh.getStatutActuel())  && !adh.getValidPaiementSecretariat() && adh.getDateAjoutPanier().isBefore(jourJ.plusDays(1))).count();
     }
 
+    public Long getPayenbByDate(LocalDate jourJ){
+        return adhesionServices.getAll().stream().filter(adh -> STATUTS_ENCOURS.contains(adh.getStatutActuel())  && adh.getValidPaiementSecretariat() && adh.getDateAjoutPanier().isBefore(jourJ.plusDays(1))).count();
+    }
+
+
     public Long getVnbByDate(LocalDate jourJ){
-        return adhesionServices.getAll().stream().filter(adh -> list_G_valid.contains(adh.getStatutActuel()) && adh.getDateChangementStatut().isBefore(jourJ.plusDays(1))).count();
+        return adhesionServices.getAll().stream().filter(adh -> STATUTS_VALIDES.contains(adh.getStatutActuel()) && adh.getDateChangementStatut().isBefore(jourJ.plusDays(1))).count();
     }
 
 
@@ -88,29 +93,44 @@ public class ReportingService {
             ra.setNomActivite(integers);
 
             activites.forEach(activite -> {
-                ra.setNbF(ra.getNbF() + getByStatutGenre(activite, list_G_valid, "Féminin"));
-                ra.setNbM(ra.getNbM() + getByStatutGenre(activite, list_G_valid, "Masculin"));
-                ra.setNbEC(ra.getNbEC() + getByStatuts(activite, list_G_encours));
-                ra.setNbV(ra.getNbV() + getByStatuts(activite, list_G_valid));
-                ra.setCotisations(ra.getCotisations() + getCotisationByStatut(activite, list_G_valid));
+                ra.setNbF(ra.getNbF() + getByValidByGenre(activite, "Féminin"));
+                ra.setNbM(ra.getNbM() + getByValidByGenre(activite, "Masculin"));
+                ra.setNbInitee(ra.getNbInitee() + getByInitieeNonPayee(activite));
+                ra.setNbPayee(ra.getNbPayee() + getByInitieePayee(activite));
+                ra.setNbValidee(ra.getNbValidee() + getByValid(activite));
+                ra.setCotisations(ra.getCotisations() + getCotisationByStatut(activite));
             });
             listRA.add(ra);
         });
         return listRA;
     }
 
-    private Long getByStatutGenre(Activite activite, List<String> statuts_list, String genre){
-        return activite.getAdhesions().stream().filter(adhesion -> statuts_list.contains(adhesion.getStatutActuel()) && adhesion.getAdherent().getGenre().equals(genre)).count();
+    private Long getByValidByGenre(Activite activite, String genre){
+        return activite.getAdhesions().stream().filter(adh -> STATUTS_VALIDES.contains(adh.getStatutActuel()) && adh.getAdherent().getGenre().equals(genre)).count();
     }
 
-    private Long getByStatuts(Activite activite, List<String> statuts_list){
-        return activite.getAdhesions().stream().filter(adh -> statuts_list.contains(adh.getStatutActuel())).count();
+    private Long getByValid(Activite activite){
+        return activite.getAdhesions().stream().filter(adh -> STATUTS_VALIDES.contains(adh.getStatutActuel())).count();
     }
 
-    private Long getCotisationByStatut(Activite activite, List<String> statuts_list){
+    private Long getByInitieePayee(Activite activite){
+        return activite.getAdhesions().stream().filter(adh -> STATUTS_ENCOURS.contains(adh.getStatutActuel()) && adh.getValidPaiementSecretariat()).count();
+    }
+
+    private Long getByInitieeNonPayee(Activite activite){
+        return activite.getAdhesions().stream().filter(adh -> STATUTS_ENCOURS.contains(adh.getStatutActuel()) && !adh.getValidPaiementSecretariat()).count();
+    }
+
+
+
+    private Long getCotisationByStatut(Activite activite){
         activite.setMontantCollecte(0L);
-        activite.getAdhesions().stream().filter(adh -> statuts_list.contains(adh.getStatutActuel()))
-                .forEach(adh -> activite.setMontantCollecte(activite.getMontantCollecte()+adh.getTarif()));
+        activite.getAdhesions()
+                .forEach(adh -> activite.setMontantCollecte(activite.getMontantCollecte()+
+                                adh.getPaiements().stream()
+                                .map(Paiement::getMontant)
+                                .reduce(0, (t, t2) -> t + t2)
+                        ));
         return activite.getMontantCollecte();
     }
 }

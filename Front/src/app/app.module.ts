@@ -15,7 +15,10 @@ import { BoardUserComponent } from './page/board-user/board-user.component';
 import { AdhesionsComponent } from './page/adhesions/adhesions.component';
 import { ComptaComponent } from './page/compta/compta.component';
 import { ContactComponent } from './page/contact/contact.component';
+import { ModalComponent } from './page/modal/modal.component';
 import { PdfViewerModule } from 'ng2-pdf-viewer';
+
+
 
 import { OrderByPipe} from "./_helpers/sort.pipe";
 import { FilterByPipe} from "./_helpers/filter.pipe";
@@ -49,6 +52,7 @@ import { ExcelService } from './_services/excel.service';
     ReportingComponent,
     ProfsComponent,
     ComptaComponent,
+    ModalComponent,
     OrderByPipe,
     FilterByPipe
   ],
@@ -72,7 +76,9 @@ import { ExcelService } from './_services/excel.service';
     ParamTransmissionService,
     FilterAdhesionByPipe,
     ExcelService,
-    DatePipe 
+    DatePipe,
+    FilterByPipe
+    
   ],
   bootstrap: [AppComponent]
 })

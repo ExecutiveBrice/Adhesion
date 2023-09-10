@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { Accord, ActiviteLite, Adherent, AdherentLite, Document } from '../models';
+import { Accord, ActiviteLite, Adherent, AdherentLite, Document, Notification } from '../models';
 
 const API_URL = environment.server+'/api_adhesion/adherent/';
 
@@ -59,16 +59,26 @@ export class AdherentService {
     return this.http.get<ActiviteLite[]>(API_URL + 'getAllCours', { responseType: 'json' });
   }
 
-
-  
   getById(adherentId : number): Observable<Adherent> {
     let params = new HttpParams().set('adherentId', '' + adherentId + '');
     return this.http.get<Adherent>(API_URL + 'getById', {params, responseType: 'json' });
   }
   
+
+  getByRole(roleId : number): Observable<AdherentLite[]> {
+    let params = new HttpParams().set('roleId', '' + roleId + '');
+    return this.http.get<AdherentLite[]>(API_URL + 'getByRole', {params, responseType: 'json' });
+  }
+  
+
   updateEmail(email: string, adherentId : number): Observable<Adherent> {
     let params = new HttpParams().set('adherentId', '' + adherentId + '');
     return this.http.post<Adherent>(API_URL+"updateEmail", email, {params, responseType: 'json' });
+  }
+
+  addVisite(adherentId : number): Observable<Adherent> {
+    let params = new HttpParams().set('adherentId', '' + adherentId + '');
+    return this.http.post<Adherent>(API_URL+"addVisite", null,  {params, responseType: 'json' });
   }
 
   update(adherent: Adherent): Observable<Adherent> {

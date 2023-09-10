@@ -5,6 +5,7 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,6 +53,12 @@ public class Adhesion {
 
     @OneToMany(cascade = CascadeType.ALL)
     private List<Paiement> paiements = new ArrayList<>();
+
+    @OneToMany(cascade = CascadeType.ALL)
+    private List<Notification> derniereModifs = new ArrayList<>();
+
+    @OneToMany(cascade = CascadeType.ALL)
+    private List<Notification> derniereVisites = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL)
     private List<Accord> accords = new ArrayList<>();

@@ -12,9 +12,11 @@ public class ReportingActivite {
 
     private String nomActivite;
 
-    private Long nbEC =0L;
+    private Long nbInitee =0L;
 
-    private Long nbV =0L;
+    private Long nbPayee =0L;
+
+    private Long nbValidee =0L;
 
     private Long nbF =0L;
 

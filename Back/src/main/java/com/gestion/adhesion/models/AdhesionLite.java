@@ -5,6 +5,7 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,5 +56,7 @@ public class AdhesionLite {
 
     private AdherentLite adherent;
 
+    private List<Notification> derniereModifs = new ArrayList<>();
 
+    private List<Notification> derniereVisites = new ArrayList<>();
 }

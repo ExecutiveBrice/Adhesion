@@ -3,6 +3,7 @@ package com.gestion.adhesion.models;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import java.time.LocalDate;
@@ -35,6 +36,7 @@ public class ConfirmationToken {
 
     private String type;
 
+    @Type(type="org.hibernate.type.PostgresUUIDType")
     private UUID confirmationToken;
 
     private LocalDate createdDate;

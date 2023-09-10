@@ -67,6 +67,9 @@ public class Activite {
     @Transient
     private Long montantCollecte;
 
+    @Transient
+    private Long nbAdhesionsAttente;
+
     @OneToMany(mappedBy="activite", cascade = CascadeType.ALL)
     @JsonIgnore
     @ToString.Exclude

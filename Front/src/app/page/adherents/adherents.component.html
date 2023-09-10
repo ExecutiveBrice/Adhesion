@@ -102,92 +102,42 @@
     <table class="table table-striped">
       <thead>
         <tr>
-          <th class="center pointer" scope="col">Groupe</th>
-          <th class="center pointer" scope="col">
+          <th class="center col-1" scope="col">Edit</th>
+          <th class="center col-2" scope="col">
             <input class="form-control xs" type="text" name="search" [(ngModel)]="search"
               (ngModelChange)="addSearch(search)" placeholder="Nom Prénom" />
           </th>
-          <th class="center pointer" scope="col">Email</th>
-          <th class="center pointer" scope="col">Telephone</th>
-          <th class="center pointer" scope="col">Adresse</th>
-          <th class="center pointer" scope="col">Naissance / Lieu</th>
-          <th class="center pointer" scope="col">Accords</th>
-          <th class="center pointer" scope="col">Activitées</th>
+
+          <th class="center col-1" scope="col">Telephone</th>
+          <th class="center col-2" scope="col">Adresse</th>
+          <th class="center col-1" scope="col">Naissance / Lieu</th>
+          <th class="center col-1" scope="col">Accords</th>
+          <th class="center col-2" scope="col">Activitées</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let adherent of adherents">
-          <ng-template #tipsAdherentDelete><b>Deletion</b><br />
-            <fa-icon [icon]="faSkull"> </fa-icon>Détruit l'adhérent et ses adhésions, si il est référent, destruction
-            du groupe complet
-          </ng-template>
-          <ng-template #tipsAdherentFocus><b>icons</b><br />
-            <fa-icon class="orange" [icon]="faUsersRays"></fa-icon> focalise sur un groupe
-          </ng-template>
-          <ng-template #tipsAdherentRegroupe><b>icons</b><br />
-            <fa-icon class="green" [icon]="faUsers"></fa-icon> permet de regrouper des adherents dans une meme groupe
-          </ng-template>
-          <td class="center pointer">
-            <fa-icon *ngIf="showAdmin || showSecretaire" class="fa-lg pointer"
-              (click)="openModal(confirmModal, adherent)" [ngbTooltip]="tipsAdherentDelete" [icon]="faSkull"></fa-icon>
-            <fa-icon class="fa-lg pointer orange" (click)="addFiltre('tribuId', adherent.tribuId)"
-              [ngbTooltip]="tipsAdherentFocus" [icon]="faUsersRays"></fa-icon>
-            <fa-icon class="fa-lg pointer green" (click)="openModal(editProfileModal, adherent)"
-              [ngbTooltip]="tipsAdherentRegroupe" [icon]="faUsers"></fa-icon>
-            <fa-icon class="fa-lg pointer" [routerLink]="['/inscription', adherent.email]"
-              [ngbTooltip]="tipsAdherentRegroupe" target="_blank" [icon]="faPen"></fa-icon>
+        <tr *ngFor="let adherent of adherents  | orderBy:'nomPrenom':false">
 
-            {{adherent.tribuSize}} membre{{adherent.tribuSize>1?"s":""}}
+          <td class="center">
+            <fa-icon class="fa-2xl pointer" (click)="opennewTab('#/inscription/'+adherent.email)" [icon]="faUsersRays"></fa-icon>
+
           </td>
 
           <td>
-            {{adherent.nom}} {{adherent.prenom}}
+            {{adherent.nom}} {{adherent.prenom}}<br />
+            {{adherent.email}}
           </td>
-          <td *ngIf="!adherent.editMail">
-            <ng-template #tipsAdherentEditMail><b>icons</b><br />
-              <fa-icon [icon]="faPencilSquare"></fa-icon> permet la modification de l'adresse mail de contact ainsi
-              que le login de connexion
-            </ng-template>
-            <ng-template #tipsAdherentSendMail><b>icons</b><br />
-              <fa-icon class="fa-lg green" [icon]="faEnvelope"></fa-icon> permet d'envoyer un mail pour cet adhérent
-            </ng-template>
-            <fa-icon class="fa-lg pointer" [icon]="faPencilSquare" (click)="adherent.editMail=!adherent.editMail"
-              [ngbTooltip]="tipsAdherentEditMail"></fa-icon>
-            {{adherent.email}} <fa-icon *ngIf="adherent.email != null" [routerLink]="['/mail', adherent.id]"
-              class="fa-lg pointer green" [icon]="faEnvelope" [ngbTooltip]="tipsAdherentSendMail"></fa-icon>
-          </td>
-          <td *ngIf="adherent.editMail">
-            <form name="adherent" (ngSubmit)="f.form.valid && onSubmit(adherent.email, adherent.id)" #f="ngForm"
-              novalidate>
-              <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" class="form-control" name="email" [(ngModel)]="adherent.email" required
-                  minlength="10" maxlength="100" #email="ngModel" ngModel email />
-                <div class="alert-danger" *ngIf="email.errors && f.submitted">
-                  <div *ngIf="email.errors.required">l'e-mail est obligatoire</div>
-                  <div *ngIf="email.errors.minlength">
-                    L'e-mail doit avoir au moins 10 caractères
-                  </div>
-                  <div *ngIf="email.errors.maxlength">
-                    L'e-mail doit avoir au maximum 100 caractères
-                  </div>
-                  <div *ngIf="email.errors.email">
-                    l'e-mail doit avoir un format valide
-                  </div>
-                </div>
-              </div>
 
-              <div class="form-group">
-                <button class="btn btn-primary btn-block">Enregistrer</button>
-              </div>
-            </form>
-          </td>
+
           <td>
             {{adherent.telephone}}
           </td>
-          <td>{{adherent.adresse}}</td>
           <td>
-            {{adherent.naissance}} {{adherent.lieuNaissance}}
+            {{adherent.adresse}}
+          </td>
+          <td>
+            {{adherent.naissance}}<br />
+            {{adherent.lieuNaissance}}
           </td>
 
 
@@ -196,29 +146,13 @@
               {{accord.nom}}
               <fa-icon *ngIf="accord.etat == true" class="green" [icon]="faCircleCheck"></fa-icon>
               <fa-icon *ngIf="accord.etat == false" class="orange" [icon]="faCircleXmark"></fa-icon>
-              <fa-icon *ngIf="showAdmin || showSecretaire" (click)="retraitAccord(adherent,accord.nom)"
-                [icon]="faSquareMinus"></fa-icon>
-
             </div>
-
-
-            <div *ngIf="showAdmin || showSecretaire" ngbDropdown id="icon">
-              <div id="dropdownBasic1" ngbDropdownToggle>
-                <fa-icon [icon]="faSquarePlus" container="body"></fa-icon>
-              </div>
-
-              <div ngbDropdownMenu aria-labelledby="dropdownBasic1" style="float:right;">
-                <button ngbDropdownItem (click)="ajoutAccord(adherent,'RGPD')">RGPD</button>
-                <button ngbDropdownItem (click)="ajoutAccord(adherent,'Droit Image')">Droit Image</button>
-              </div>
-            </div>
-
           </td>
 
           <td>
-            <div *ngFor="let adhesion of adherent.adhesions">
-              {{adhesion.activite?adhesion.activite.nom:""}} {{adhesion.activite?adhesion.activite.horaire:""}}
-            </div>
+
+            {{adherent.activites}}
+
           </td>
         </tr>
       </tbody>
@@ -232,16 +166,5 @@
 
 
 
-<ng-template #confirmModal let-c="close" let-d="dismiss">
-  <div class="modal-header">
-    <h4 class="modal-title" id="modal-basic-title">Suppression</h4>
-    <button type="button" class="btn-close" aria-label="Close" (click)="dismissSupress()"></button>
-  </div>
-  <div class="modal-body">
-    Vous êtes sur le point de supprimer l'adhesion de {{selectedAdherent.prenom}}
 
-  </div>
-  <div class="modal-footer">
-    <button type="submit" class="btn btn-primary" (click)="acceptSupress(selectedAdherent)">Valider</button>
-  </div>
-</ng-template>
+

@@ -54,21 +54,48 @@ public class UserServices {
                 .orElseThrow(() -> new UsernameNotFoundException("User Not Found with email: " + email));
         return user;
     }
+
+    public void addUserForAll(){
+        List<Adherent> adherents = adherentServices.getAll();
+
+        adherents.forEach(adherent -> {
+            if(adherent.getUser() == null){
+                addUserToAdherent(adherent);
+            }
+        });
+    }
+
+    public User addUserToAdherent(Adherent adherent) {
+        Random random = new Random();
+        String password = random.toString();
+        User user;
+        String username= adherent.getPrenom() + adherent.getNom();
+        int compteur = 1;
+        while (userRepository.findByUsername(username).isPresent()){
+            username=adherent.getPrenom() + adherent.getNom()+"_"+compteur;
+            compteur++;
+        }
+
+        user = new User(username, encoder.encode(password));
+        Role userRole = roleRepository.findByName(ERole.ROLE_USER)
+                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+        user.getRoles().add(userRole);
+        user = userRepository.save(user);
+        adherent.setUser(user);
+        adherentServices.save(adherent);
+        return user;
+    }
+
     public User findById(Long userId){
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("User Not Found with id: " + userId));
         return user;
     }
-    public User updateUsername(String newEmail, String oldEmail){
-        User user = userRepository.findByUsername(oldEmail)
-                .orElseThrow(() -> new UsernameNotFoundException("User Not Found with email: " + oldEmail));
+    public User updateUsername(String newEmail, User user){
         user.setUsername(newEmail);
         userRepository.save(user);
         return user;
     }
-
-
-
 
     public User createNewUserAnonymous(String email){
         Random random = new Random();
@@ -121,18 +148,6 @@ public class UserServices {
         user.getRoles().remove(userRole);
         return userRepository.save(user);
     }
-
-    public List<UserLite> getUserByRole(ERole role){
-        List<User> users = userRepository.findAll();
-        Role userRole = roleRepository.findByName(role)
-                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-
-        List<UserLite> userLites = users.stream().filter(user -> user.getRoles().contains(userRole))
-                .map(user -> new UserLite(user)).collect(Collectors.toList());
-        return userLites;
-    }
-
-
 
     public void confirmEmailAnswer(String token) throws Exception {
         ConfirmationToken confirmationToken= confirmationTokenService.findByToken(token);

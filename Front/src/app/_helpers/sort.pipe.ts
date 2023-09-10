@@ -20,11 +20,10 @@ export class OrderByPipe implements PipeTransform {
     }
 
     const array: any[] = value.sort((a: any, b: any): number => {
-      if (!key) {
-        return a > b ? 1 : -1;
-      }
 
-      if (!isInside) {
+      if (!isInside && typeof a[key] == 'string' && typeof b[key] == 'string') {
+        return a[key].toLowerCase() > b[key].toLowerCase() ? 1 : -1;
+      }else if (!isInside && typeof a[key] != 'string'){
         return a[key] > b[key] ? 1 : -1;
       }
 
@@ -48,7 +47,7 @@ export class OrderByPipe implements PipeTransform {
       object = object[k];
     }
 
-    return object;
+    return typeof object == 'string'?object.toLowerCase():object;
   }
 
 }

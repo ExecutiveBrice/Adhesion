@@ -10,11 +10,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static java.time.LocalDateTime.now;
 
 @Service
 public class AdherentServices {
@@ -129,23 +129,6 @@ public class AdherentServices {
         }
         adherentRepository.save(adherentCible);
         return reduceAdherent(adherentCible);
-
-    }
-
-
-
-    public AdherentLite updateEmail(String email, Long adherentId){
-        Optional<Adherent> indbAdherent = adherentRepository.findById(adherentId);
-        if(indbAdherent.isPresent()) {
-            if (indbAdherent.get().isReferent()) {
-                userServices.updateUsername(email.toLowerCase(), indbAdherent.get().getEmail().toLowerCase());
-            }
-            indbAdherent.get().setEmail(email.toLowerCase());
-            adherentRepository.save(indbAdherent.get());
-            return reduceAdherent(indbAdherent.get());
-        }else{
-            return null;
-        }
     }
 
     public Document addDocument(MultipartFile file, Long adherentId) throws IOException {
@@ -172,8 +155,8 @@ public class AdherentServices {
          if (adherent.getId() != null && adherent.getId() > 0) {
              Optional<Adherent> indbAdherent = adherentRepository.findById(adherent.getId());
              if (indbAdherent.isPresent()) {
-                 if (adherent.isReferent() && !adherent.getEmail().equals(indbAdherent.get().getEmail())) {
-                     userServices.updateUsername(adherent.getEmail().toLowerCase(), indbAdherent.get().getEmail().toLowerCase());
+                 if (adherent.getEmail() != null && !adherent.getEmail().isBlank() && !adherent.getEmail().equals(indbAdherent.get().getEmail())) {
+                     userServices.updateUsername(adherent.getEmail().toLowerCase(), indbAdherent.get().getUser());
                  }
                  fillAdherent(adherent, indbAdherent.get());
                  return adherentRepository.save(indbAdherent.get());
@@ -194,19 +177,26 @@ public class AdherentServices {
         Adherent adherent = adherentRepository.findById(adherentId).get();
         if(adherent.isReferent()){
             adherent.getTribu().getAdherents().stream().forEach(subAdherent -> {
+
                 adherentRepository.deleteById(subAdherent.getId());
                 if(subAdherent.getUser() != null){
+
                     userServices.deleteById(subAdherent.getUser().getId());
                 }
             });
         }else{
+
             adherentRepository.deleteById(adherentId);
             if(adherent.getUser() != null){
                 userServices.deleteById(adherent.getUser().getId());
             }
         }
-
     }
+
+    public Adherent save(Adherent adherent){
+        return adherentRepository.save(adherent);
+    }
+
     public Adherent save(Adherent adherent, Long tribuId){
         Tribu tribu;
         if(tribuId == null){
@@ -217,8 +207,18 @@ public class AdherentServices {
         }
         adherent.setTribu(tribu);
         isComplet(adherent);
-        return adherentRepository.save(adherent);
+        Adherent adherentBDD = adherentRepository.save(adherent);
+
+        if(adherent.getUser() == null) {
+            userServices.addUserToAdherent(adherentBDD);
+        }
+
+
+
+
+        return adherentBDD;
     }
+
     private void isComplet(Adherent adherent){
         if(adherent.getNom() == null || adherent.getNom().length() < 3 ||
                 adherent.getPrenom() == null || adherent.getPrenom().length() < 3 ||
@@ -242,6 +242,7 @@ public class AdherentServices {
             }
         }
     }
+
     public Adherent fillAdherent(Adherent frontAdherent, Adherent dataAdherent){
         dataAdherent.setNom(frontAdherent.getNom().toUpperCase());
         dataAdherent.setPrenom(frontAdherent.getPrenom().substring(0, 1).toUpperCase() + frontAdherent.getPrenom()
@@ -252,14 +253,15 @@ public class AdherentServices {
         dataAdherent.setLieuNaissance(frontAdherent.getLieuNaissance());
 
         dataAdherent.setEmailReferent(frontAdherent.isEmailReferent());
-        dataAdherent.setEmail(frontAdherent.getEmail());
+
+        dataAdherent.setEmail(frontAdherent.getEmail(dataAdherent).toLowerCase());
 
 
         dataAdherent.setTelephoneReferent(frontAdherent.isTelephoneReferent());
-        dataAdherent.setTelephone(frontAdherent.getTelephone());
+        dataAdherent.setTelephone(frontAdherent.getTelephone(dataAdherent));
 
         dataAdherent.setAdresseReferent(frontAdherent.isAdresseReferent());
-        dataAdherent.setAdresse(frontAdherent.getAdresse());
+        dataAdherent.setAdresse(frontAdherent.getAdresse(dataAdherent));
 
 
         dataAdherent.setMineur(frontAdherent.isMineur());
@@ -294,14 +296,21 @@ public class AdherentServices {
                    .prenom(adhesion.getAdherent().getPrenom())
                    .nom(adhesion.getAdherent().getNom())
                    .accords(adhesion.getAccords())
-                   .telephone(adhesion.getAdherent().getTelephone())
-                   .email(adhesion.getAdherent().getEmail())
+                   .telephone(adhesion.getAdherent().getTelephone(adhesionRef))
+                   .email(adhesion.getAdherent().getEmail(adhesionRef))
+                   .mineur(adhesion.getAdherent().isMineur())
                    .prenomLegal(adhesion.getAdherent().isLegalReferent()?adhesionRef.getPrenom():adhesion.getAdherent().getPrenomLegal())
                    .nomLegal(adhesion.getAdherent().isLegalReferent()?adhesionRef.getNom():adhesion.getAdherent().getNomLegal())
-                   .telLegal(adhesion.getAdherent().isTelephoneReferent()?adhesionRef.getNom():adhesion.getAdherent().getTelephone())
+                   .telLegal(adhesion.getAdherent().isTelephoneReferent()?adhesionRef.getTelephone():adhesion.getAdherent().getTelephone())
+                   .statut(adhesion.getStatutActuel())
+                   .commentaire(adhesion.getRemarqueSecretariat())
+                   .flag(adhesion.getFlag())
+                   .paiement(adhesion.getValidPaiementSecretariat())
                    .build();
-
-               adhLite.getAccords().add(adhesion.getAdherent().getAccords().stream().filter(accord -> accord.getNom().equals("Droit Image")).findFirst().get());
+                Optional<Accord> accordimage = adhesion.getAdherent().getAccords().stream().filter(accord -> accord.getNom().equals("Droit Image")).findFirst();
+                if(accordimage.isPresent()) {
+                    adhLite.getAccords().add(accordimage.get());
+                }
                return adhLite;
            }).collect(Collectors.toSet());
 
@@ -327,9 +336,10 @@ public class AdherentServices {
     }
     public Adherent getById(Long adherentId){
         Adherent indbAdherent = adherentRepository.findById(adherentId).get();
-        sanitizeAdherent(indbAdherent);
         return indbAdherent;
     }
+
+
 
     public List<Accord> addAccord(Long adherentId, String nomAccord){
         Adherent indbAdherent = adherentRepository.findById(adherentId).get();
@@ -354,27 +364,32 @@ public class AdherentServices {
     public List<Adherent> getAll(){
         List<Adherent> adherents = adherentRepository.findAll();
 
-        adherents.forEach(this::sanitizeAdherent);
-
         return adherents;
     }
 
     public List<AdherentLite> getAllLite(){
-        List<Adherent> adherents = adherentRepository.findAll();
 
-        return  adherents.stream().map(this::reduceAdherent).toList();
+        return adherentRepository.findAll().stream().map(this::reduceAdherent).collect(Collectors.toList());
+    }
+
+    public List<AdherentLite> getByRole(Integer roleId){
+
+        return adherentRepository.findByUserRoleId(roleId).stream().map(this::reduceAdherent).collect(Collectors.toList());
     }
 
     private AdherentLite reduceAdherent(Adherent adherent){
+        StringBuilder activites = new StringBuilder();
+        adherent.getAdhesions().forEach(adhesion -> activites.append(adhesion.getActivite().getNom()+ " " +adhesion.getActivite().getHoraire()+ "\n\r"));
+
         Adherent adherentRef =  adherent.getTribu().getAdherents().stream().filter(Adherent::isReferent).findFirst().get();
         AdherentLite adherentLite = AdherentLite.builder()
                 .id(adherent.getId())
                 .prenom(adherent.getPrenom())
                 .nom(adherent.getNom())
-                .prenomNom(adherent.getPrenom()+adherent.getNom())
-                .adresse(adherent.getAdresse())
-                .email(adherent.getEmail())
-                .telephone(adherent.getTelephone())
+                .nomPrenom((adherent.getNom()==null?"zzzz":adherent.getNom())+(adherent.getPrenom()==null?"zzzz":adherent.getPrenom()))
+                .adresse(adherent.getAdresse(adherentRef))
+                .email(adherent.getEmail(adherentRef))
+                .telephone(adherent.getTelephone(adherentRef))
                 .mineur(adherent.isMineur())
                 .referent(adherent.isReferent())
                 .nomLegal(adherentRef.getNom())
@@ -385,43 +400,38 @@ public class AdherentServices {
                 .tribuId(adherent.getTribu().getId())
                 .tribuSize(adherent.getTribu().getAdherents().size())
                 .accords(adherent.getAccords())
-                .adhesions(adherent.getAdhesions().stream().map(adhesion -> {
-                    return AdhesionLite.builder()
-                            .id(adhesion.getId())
-                            .activite(ActiviteLite.builder()
-                                    .horaire(adhesion.getActivite().getHoraire())
-                                    .nom(adhesion.getActivite().getNom())
-                                    .build())
-                            .build();
-                }).collect(Collectors.toSet()))
+                .activites(activites.toString())
                 .build();
 
-        if(adherent.isEmailReferent()){
-            adherentLite.setEmail(adherentRef.getEmail());
-        }
-        if(adherent.isAdresseReferent()){
-            adherentLite.setAdresse(adherentRef.getAdresse());
-        }
-        if(adherent.isTelephoneReferent()){
-            adherentLite.setTelephone(adherentRef.getTelephone());
-        }
-        adherentLite.setPrenomNom(adherent.getPrenom()+adherent.getNom());
         return adherentLite;
     }
 
-    private void sanitizeAdherent(Adherent adherent){
-        Adherent adherentRef =  adherent.getTribu().getAdherents().stream().filter(Adherent::isReferent).findFirst().get();
 
-        if(adherent.isEmailReferent()){
-            adherent.setEmail(adherentRef.getEmail());
-        }
-        if(adherent.isAdresseReferent()){
-            adherent.setAdresse(adherentRef.getAdresse());
-        }
-        if(adherent.isTelephoneReferent()){
-            adherent.setTelephone(adherentRef.getTelephone());
-        }
-        adherent.setPrenomNom(adherent.getPrenom()+adherent.getNom());
+    public Adherent addModification(String userEmail, Long adherentId){
+        User user = userServices.findByEmail(userEmail);
+        Adherent adherent = getById(adherentId);
+        List<Notification> modifications = new java.util.ArrayList<>(adherent.getDerniereModifs().stream().filter(visite -> !visite.getUser().equals(user)).toList());
+        Notification nouvelleModif = new Notification();
+        nouvelleModif.setDate(LocalDateTime.now());
+        nouvelleModif.setUser(user);
+        modifications.add(nouvelleModif);
+        adherent.setDerniereModifs(modifications);
+        adherentRepository.save(adherent);
+
+        return addVisite(userEmail, adherentId);
     }
 
+    public Adherent addVisite(String userEmail, Long adherentId){
+        User user = userServices.findByEmail(userEmail);
+        Adherent adherent = getById(adherentId);
+        List<Notification> visites = new ArrayList<>(adherent.getDerniereVisites().stream().filter(visite -> !visite.getUser().equals(user)).toList());
+        Notification nouvelleVisite = new Notification();
+
+        nouvelleVisite.setDate(now());
+        nouvelleVisite.setUser(user);
+        visites.add(nouvelleVisite);
+        adherent.setDerniereVisites(visites);
+        return adherentRepository.save(adherent);
+
+    }
 }

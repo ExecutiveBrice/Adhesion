@@ -1,10 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { UserService } from '../../_services/user.service';
 import { Accord, Activite, ActiviteDropDown, Adherent, Adhesion, Document, HoraireDropDown, Tribu, User } from '../../models';
 import { NgbDateStruct, NgbCalendar, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ActiviteService } from '../../_services/activite.service';
 import { AdherentService } from 'src/app/_services/adherent.service';
-import { faSquareCaretLeft, faSquareCaretDown, faEye, faCircleQuestion, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { faSkull, faSquareCaretLeft, faSquareCaretDown, faEye, faCircleQuestion, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { AdhesionService } from 'src/app/_services/adhesion.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TokenStorageService } from 'src/app/_services/token-storage.service';
@@ -12,6 +12,8 @@ import { Subscription } from 'rxjs';
 import { ParamService } from 'src/app/_services/param.service';
 import { jsPDF } from "jspdf";
 import { DatePipe } from '@angular/common';
+import { ModalConfig } from '../modal/modal.config'
+import { ModalComponent } from '../modal/modal.component';
 
 @Component({
   selector: 'app-board-user',
@@ -19,6 +21,8 @@ import { DatePipe } from '@angular/common';
   styleUrls: ['./board-user.component.css']
 })
 export class BoardUserComponent implements OnInit {
+  
+  faSkull=faSkull;
   faSquareCaretLeft = faSquareCaretLeft
   faSquareCaretDown = faSquareCaretDown
   faEye = faEye
@@ -59,13 +63,13 @@ export class BoardUserComponent implements OnInit {
   errorMessage = "Une erreur est survenue, recharger la page et recommencez. si le problème persiste contactez l'administrateur<br />";
   subscription = new Subscription()
   message: string = ""
-  showSecretaire:boolean=false
+  showAdmin: boolean = false;
+  showSecretaire: boolean = false;
 
   showHelloAsso:boolean|null = false;
 
   // Default export is a4 paper, portrait, using millimeters for units
   doc: jsPDF = new jsPDF('p', 'mm', 'a4', true);
-
 
 
   constructor(
@@ -83,9 +87,6 @@ export class BoardUserComponent implements OnInit {
 
 
   ngOnInit(): void {
-
-
-    
     this.paramService.getAllBoolean().subscribe({
       next: (data) => {
         this.showHelloAsso = data.filter(param => param.paramName == "Show_HelloAsso")[0].paramValue;
@@ -125,10 +126,13 @@ export class BoardUserComponent implements OnInit {
     }
     let userEmail = this.route.snapshot.paramMap.get('userEmail');
 
+
+
     if (this.tokenStorageService.getUser().roles) {
+      this.showAdmin = this.tokenStorageService.getUser().roles.includes('ROLE_ADMIN');
       this.showSecretaire = this.tokenStorageService.getUser().roles.includes('ROLE_SECRETAIRE');
-      if (this.tokenStorageService.getUser().roles.includes('ROLE_SECRETAIRE') && userEmail && Number.parseInt(userEmail) != 0) {
-       
+
+      if (this.showSecretaire && userEmail && Number.parseInt(userEmail) != 0) {
         this.userService.getUserByMail(userEmail).subscribe(
           data => {
             this.fillUser(data)
@@ -167,6 +171,7 @@ export class BoardUserComponent implements OnInit {
       adh.adhesions.forEach(adhesion => this.adhesions.push(adhesion))
       this.sanitize(adh);
     });
+
     this.fillObjects();
 
   }
@@ -466,25 +471,18 @@ export class BoardUserComponent implements OnInit {
     );
   }
 
-  testAccord(accords: Accord[], nomAccord: string): Accord {
-    return accords.filter(acc => acc.nom == nomAccord)[0]
-  }
 
 
-  updateAccord(accords: Accord[], nomAccord: string, etat: boolean | undefined) {
+  updateAccord(accord: Accord, etat: boolean | undefined) {
 
-    if (nomAccord == 'Reglement Interieur') {
+    if (accord.nom == 'Reglement Interieur') {
       this.adhesions.forEach(adhesion => {
-        let accord = this.testAccord(adhesion.accords, nomAccord);
         accord.etat = etat;
         accord.datePassage = new Date
-        accords.push(accord);
       })
     } else {
-      let accord = this.testAccord(accords, nomAccord);
       accord.etat = etat;
       accord.datePassage = new Date
-      accords.push(accord);
     }
   }
 
@@ -668,7 +666,10 @@ export class BoardUserComponent implements OnInit {
 
 
   openPDF(adhesion: Adhesion) {
+
     if (adhesion.adherent && adhesion.activite) {
+      let prix = 0 
+      adhesion.paiements.forEach(paiement => prix += paiement.montant)
       this.doc.setFontSize(7)
       this.doc.addImage("assets/logo.png", "JPEG", 15, 10, 52, 33);
       this.doc.text("Agrément à «Jeunesse et Sports» : le 27/08/1967 n° 44 S 42", 42, 50, { align: "center" });
@@ -686,9 +687,9 @@ export class BoardUserComponent implements OnInit {
       this.doc.setFontSize(12)
       this.doc.text("Je soussigné MAURY Morgane en qualité de présidente de l'ALOD,", 10, 120);
       this.doc.text("atteste que " + adhesion.adherent.prenom + " " + adhesion.adherent.nom + " né le " + this.datePipe.transform(adhesion.adherent.naissance, 'dd/MM/yyyy'), 10, 130);
-      this.doc.text("résident au " + adhesion.adherent.adresse, 10, 140);
+      this.doc.text("résident au " + adhesion.adherent.adresseReferent?this.user.adherent.adresse:adhesion.adherent.adresse, 10, 140);
       this.doc.text("est inscrit à l'activité " + adhesion.activite.nom + " pour l'année scolaire 2023/2024", 10, 150);
-      this.doc.text("et est à jour de sa cotisation de " + adhesion.tarif + "€ payée en " + adhesion.typeReglement, 10, 160);
+      this.doc.text("et est à jour de sa cotisation de " + prix + "€ payée en " + adhesion.paiements[0].typeReglement, 10, 160);
 
       this.doc.addImage("assets/signature.png", "JPEG", 100, 200, 77, 43);
 
@@ -696,10 +697,178 @@ export class BoardUserComponent implements OnInit {
 
       this.doc.save("Attestation_" + adhesion.adherent.prenom + "_" + adhesion.adherent.nom + "_20232024.pdf");
     }
+    this.doc = new jsPDF('p', 'mm', 'a4', true);
   }
 
 
   adhesionValide(adh: Adhesion): boolean {
-    return adh.statutActuel.startsWith("Validée");
+    return adh.statutActuel.startsWith("Attente licence en ligne")
+    || adh.statutActuel.startsWith("Validée")
+    || adh.statutActuel.startsWith("Licence générée")
+    || adh.statutActuel.startsWith("Retour Comité")
+    || adh.statutActuel.startsWith("Licence T");
+  }
+
+  @ViewChild('modal')
+  private modalComponent!: ModalComponent;
+  public modalConfig: ModalConfig = {
+    modalTitle: "titre",
+    modalBody: "contenu",
+    dismissButtonLabel: "X",
+    closeButtonLabel: "Close",
+    acceptButtonLabel:"Accepte"
+  };
+
+  async openModal2(titre:string,body:string,refus:boolean,backClick:boolean) {
+    this.modalConfig.modalTitle=titre
+    this.modalConfig.modalBody=body
+
+
+    return await this.modalComponent.open()
+  }
+  
+  selectedAdherent: Adherent = new Adherent(0)
+  openConfirmModal(targetModal: any, adherent: Adherent) {
+    this.modalService.open(targetModal, {
+      centered: true,
+      backdrop: 'static'
+    });
+    this.selectedAdherent = adherent;
+
+  }
+
+  acceptSupress(adherent: Adherent) {
+    this.modalService.dismissAll();
+    this.adherentService.deleteAdherent(adherent.id).subscribe(
+      data => {
+        window.location.reload();
+      },
+      err => {
+        this.isFailed = true;
+        this.errorMessage = err.message
+
+      }
+    )
+  }
+
+  adherentEdit(adherent: Adherent){
+    adherent.edit = !adherent.edit
+
+    if(adherent.edit){
+
+      this.adherentService.addVisite(adherent.id).subscribe({
+        next: (response) => {
+          console.log("adherent.edit") 
+        },
+        error: (error) => {
+          this.isFailed = true;
+          this.errorMessage = error.message
+        }
+      });
+    }
+  }
+
+  openConfirmModalAccordAdherent(targetModal: any, adherent: Adherent, accord:Accord) {
+    this.modalService.open(targetModal, {
+      centered: true,
+      backdrop: 'static'
+    });
+    this.selectedAdherent = adherent;
+    this.selectedAccord = accord;
+  }
+
+  selectedAdhesion: Adhesion = new Adhesion
+  openConfirmModalAccordAdhesion(targetModal: any, adhesion: Adhesion, accord:Accord) {
+    this.modalService.open(targetModal, {
+      centered: true,
+      backdrop: 'static'
+    });
+    this.selectedAdhesion = adhesion;
+    this.selectedAccord = accord;
+  }
+
+  dismissSupress() {
+    this.modalService.dismissAll();
+
+  }
+
+
+  consultation:boolean=true;
+  selectedAccord: Accord = new Accord
+  openAccordModal(targetModal: any, accord: Accord, consultation:boolean) {
+    this.modalService.open(targetModal, {
+      centered: true,
+      backdrop: consultation
+    });
+    this.selectedAccord = accord;
+  this.consultation=consultation
+  }
+
+  reponseAccord(accord:Accord, response:boolean){
+    this.updateAccord(accord,response)
+    this.modalService.dismissAll();
+  }
+
+
+  
+  ajoutAccord(adherent: Adherent, nomAccord: string) {
+    this.adherentService.addAccord(adherent.id, nomAccord).subscribe(
+      data => {
+        adherent.accords = data;
+      },
+      err => {
+        this.isFailed = true;
+        this.errorMessage = err.message
+
+      }
+    );
+     
+  }
+
+
+
+  retraitAccord(adherent: Adherent, accord: Accord) {
+    this.modalService.dismissAll();
+    this.adherentService.removeAccord(adherent.id, accord.nom).subscribe(
+      data => {
+        adherent.accords = data;
+      },
+      err => {
+        this.isFailed = true;
+        this.errorMessage = err.message
+
+      }
+    );
+  }
+
+
+  ajoutAccordAdhesion(adhesion: Adhesion, nomAccord: string) {
+    this.adhesionService.addAccord(adhesion.id, nomAccord).subscribe(
+      data => {
+        adhesion.accords = data;
+      },
+      err => {
+        this.isFailed = true;
+        this.errorMessage = err.message
+
+      }
+    );
+     
+  }
+
+
+
+  retraitAccordAdhesion(adhesion: Adhesion, accord: Accord) {
+    this.modalService.dismissAll();
+    this.adhesionService.removeAccord(adhesion.id, accord.nom).subscribe(
+      data => {
+        adhesion.accords = data;
+      },
+      err => {
+        this.isFailed = true;
+        this.errorMessage = err.message
+
+      }
+    );
   }
 }

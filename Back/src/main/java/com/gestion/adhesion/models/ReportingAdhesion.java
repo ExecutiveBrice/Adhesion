@@ -12,8 +12,8 @@ public class ReportingAdhesion {
 
     private String x;
 
-    private Long nbEC =0L;
-
-    private Long nbV =0L;
+    private Long nbInitiee =0L;
+    private Long nbPayee =0L;
+    private Long nbValidee =0L;
 
 }

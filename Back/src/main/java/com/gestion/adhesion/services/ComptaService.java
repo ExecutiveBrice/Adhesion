@@ -47,8 +47,12 @@ public class ComptaService {
 
     public Integer totalTypePaiementSurPeriodeParActivite(LocalDate dateDebut, LocalDate dateFin, String nomActivite, String typePaiement){
 
-          return adhesionServices.getAll().stream().filter(adhesion -> typePaiement.equals(adhesion.getTypeReglement()) && adhesion.getValidPaiementSecretariat() && adhesion.getDateReglement() != null && adhesion.getDateReglement().isBefore(dateFin) && adhesion.getDateReglement().isAfter(dateDebut) && adhesion.getActivite().getNom().equals(nomActivite))
-                  .map(adhesion -> adhesion.getTarif())
+          return adhesionServices.getAll().stream().flatMap(adhesion -> {
+                      return adhesion.getPaiements().stream().filter(paiement ->
+                      typePaiement.equals(paiement.getTypeReglement()) && adhesion.getValidPaiementSecretariat() && paiement.getDateReglement() != null && paiement.getDateReglement().isBefore(dateFin.plusDays(1L)) && paiement.getDateReglement().isAfter(dateDebut.minusDays(1L)) && adhesion.getActivite().getNom().equals(nomActivite)
+                      );
+                  })
+                  .map(Paiement::getMontant)
                   .reduce(0, (t, t2) -> t + t2);
         }
     }

@@ -15,6 +15,7 @@ export class Activite {
   nbPlaces: number;
   nbAdhesionsEnCours:number;
   nbAdhesionsCompletes:number;
+  nbAdhesionsAttente:number;
   montantCollecte:number;
   adhesions: Adhesion[];
   priseEnCharge: boolean;
@@ -37,6 +38,7 @@ export class Activite {
     this.nbPlaces = 0;
     this.nbAdhesionsEnCours = 0;
     this.nbAdhesionsCompletes = 0;
+    this.nbAdhesionsAttente = 0;
     this.montantCollecte = 0; 
     this.adhesions = [];
     this.priseEnCharge= false;

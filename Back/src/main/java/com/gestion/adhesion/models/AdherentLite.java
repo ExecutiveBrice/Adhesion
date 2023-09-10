@@ -2,7 +2,10 @@ package com.gestion.adhesion.models;
 
 import lombok.*;
 
+import javax.persistence.CascadeType;
+import javax.persistence.OneToMany;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -23,7 +26,7 @@ public class AdherentLite {
 
     private String nom;
 
-    private String prenomNom;
+    private String nomPrenom;
 
     private String email;
 
@@ -37,6 +40,12 @@ public class AdherentLite {
 
     private String telLegal;
 
+    private String statut;
+
+    private String commentaire;
+
+    private boolean flag;
+    private boolean paiement;
     private boolean mineur = false;
 
     private String lieuNaissance;
@@ -51,6 +60,10 @@ public class AdherentLite {
 
     private List<Accord> accords = new ArrayList<>();
 
-    private Set<AdhesionLite> adhesions = new HashSet<>();
+    private String activites;
+
+    private List<Notification> derniereModifs = new ArrayList<>();
+
+    private List<Notification> derniereVisites = new ArrayList<>();
 
 }

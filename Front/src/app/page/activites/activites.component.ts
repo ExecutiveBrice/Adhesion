@@ -1,7 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { NgbModalConfig, NgbModal, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ActiviteService } from 'src/app/_services/activite.service';
-import { Activite, Adherent } from 'src/app/models';
+import { Activite, Adherent, AdherentLite } from 'src/app/models';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { faCircleQuestion,faEnvelope, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { AdherentService } from 'src/app/_services/adherent.service';
@@ -38,7 +38,7 @@ export class ActivitesComponent implements OnInit {
   sens: boolean = false;
   filtres: Map<string, boolean> = new Map<string, boolean>();
   editProfileForm!: FormGroup;
-  adherents: Adherent[] = []
+  adherents: AdherentLite[] = []
   showAdmin: boolean = false;
   showSecretaire: boolean = false;
 
@@ -61,6 +61,12 @@ export class ActivitesComponent implements OnInit {
 
     this.getActivites();
     this.getAdherents();
+  }
+
+
+  opennewTab(page : string){
+
+    window.open(page, '_blank');
   }
 
   onSubmit() {
@@ -92,7 +98,7 @@ export class ActivitesComponent implements OnInit {
 
 
   getAdherents() {
-    this.adherentService.getAll().subscribe(
+    this.adherentService.getByRole(3).subscribe(
       data => {
         this.adherents = data;
       },

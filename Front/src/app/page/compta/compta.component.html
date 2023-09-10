@@ -2,18 +2,31 @@
 
   <div class="row">
     
-    <div class="col-6">
-      <label for="debutPlage">Début plage</label>
-      <input type="date" (change)="updateDate(debutPlage, finPlage)" class="form-control" name="debutPlage" [(ngModel)]="debutPlage"
+    <div class="col-5">
+      <div class="input-group">
+        <div class="input-group-prepend">
+          <span class="input-group-text">Début plage</span>
+        </div>
+      <input type="date" class="form-control" name="debutPlage" [(ngModel)]="debutPlage"
         required />
+      </div>
     </div>
 
-    <div class="col-6">
-      <label for="finPlage">Fin plage</label>
-      <input type="date" (change)="updateDate(debutPlage, finPlage)" class="form-control" name="finPlage" [(ngModel)]="finPlage"
+    <div class="col-5 ">
+      <div class="input-group">
+        <div class="input-group-prepend">
+          <span class="input-group-text">Fin plage</span>
+        </div>
+      <input type="date"  class="form-control" id="finPlage" [(ngModel)]="finPlage"
        required />
+      </div>
     </div>
 
+    <div class="col-2">
+
+        <div class="btn btn-primary" (click)="updateDate(debutPlage, finPlage)">MAJ</div>
+
+    </div>
     <div class="col-12">
       <table class="table table-striped">
         <thead>

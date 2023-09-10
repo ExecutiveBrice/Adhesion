@@ -7,74 +7,40 @@ import { Activite } from '../models'
 export class FilterByPipe implements PipeTransform {
 
 
-  transform(array: any[], query: string, excludeProps?: string | string[], dateFormat?: string) {
-    return array.filter(item => {
-      for (let key in item) {
 
-        if (typeof query == 'number' && typeof item[key] == 'number' && item[key] == query) {
-          return item
-        }
-        if (typeof query == 'string' && typeof item[key] == 'string' && item[key].toLowerCase().includes(query.toLowerCase())) {
-          return item
-        }
-        if (key == "adhesions" && item[key].length > 0 ) {
+  transform(array: any[], query: Map<string, string>, excludeProps?: string | string[], dateFormat?: string) {
 
-          for (let i in item[key]) {
-            if (item[key][i].activite && item[key][i].activite.nom.toLowerCase().includes(query.toLowerCase() || item[key][i].activite.horaire.toLowerCase().includes(query.toLowerCase()))) {
-              return item
-            }
-          }
-        }
+    const operation = (list1: any[], list2: any[], isUnion = false) =>
+      list1.filter(a => isUnion === list2.some(b => a.id == b.id));
+    const inPool = (list1: any[], list2: any[]) => operation(list1, list2, false)
+    const inBoth = (list1: any[], list2: any[]) => operation(list1, list2, true)
+    let returnArray: any[] = []
+    let lists: Map<string, any[]> = new Map<string, any[]>();
 
-        if (key == "activite") {
-          for (let i in item[key]) {
-            if (item[key][i] && typeof query == 'string' && typeof item[key][i] == 'string' &&  item[key][i].toLowerCase().includes(query.toLowerCase())) {
-              return item
-            }
-          }
-        }
 
-        if (key == "adherent") {
-          for (let i in item[key]) {
-            console.log(item[key][i])
-            if (item[key][i] && typeof query == 'string' && typeof item[key][i] == 'string' &&  item[key][i].toLowerCase().includes(query.toLowerCase())) {
-              return item
-            }
-          }
-        }
+    if (query.size >= 1) {
+      for (let [queryKey, value] of query) {
+        console.log(queryKey.split(".")[0])
+        let tempList = array.filter((item: any) => {
+
+          console.log(item)
+
+          return item[queryKey.split(".")[0]].toLowerCase().includes(value.toLowerCase())
+        });
+
+        returnArray = inBoth(returnArray, tempList)
       }
+
+
+
+      return returnArray
+    } else {
+      return array
     }
-    )
+
+
   }
 
 
-  getObject(theObject: any, query: string): any {
-    var result = false;
-    if (theObject instanceof Array) {
-      for (var i = 0; i < theObject.length; i++) {
-        result = this.getObject(theObject[i], query);
-        if (result) {
-          break;
-        }
-      }
-    }
-    else {
-      for (var prop in theObject) {
-
-
-        if (theObject[prop].includes(query)) {
-          return true;
-        }
-
-        if (theObject[prop] instanceof Object || theObject[prop] instanceof Array) {
-          result = this.getObject(theObject[prop], query);
-          if (result) {
-            break;
-          }
-        }
-      }
-    }
-    return result;
-  }
 
 }

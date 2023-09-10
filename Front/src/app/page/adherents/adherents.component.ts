@@ -59,10 +59,8 @@ export class AdherentsComponent implements OnInit {
     }
     this.adherentService.getAllLite().subscribe(
       data => {
-        console.log(data)
         this.cloned = data.map(x => Object.assign({}, x));
         this.adherentsReferent = data.filter(a => a.referent)
-        console.log(this.adherentsReferent)
         this.filtrage()
       },
       err => {
@@ -70,21 +68,6 @@ export class AdherentsComponent implements OnInit {
         this.errorMessage = err.message
       })
 
-
-  }
-
-  onSubmit(email: string, adherentId: number) {
-
-    this.adherentService.updateEmail(email, adherentId).subscribe(
-      data => {
-
-      },
-      err => {
-        this.isFailed = true;
-        this.errorMessage = err.message
-
-      }
-    );
 
   }
 
@@ -96,9 +79,9 @@ export class AdherentsComponent implements OnInit {
 
   addSearch(search: string) {
     if (search.length > 2) {
-      this.addFiltre('prenomNom', search)
-    } else {
-      this.removeFiltre('prenomNom')
+      this.addFiltre('nomPrenom', search)
+    } else if(this.filtres.has('nomPrenom')) {
+      this.removeFiltre('nomPrenom')
     }
   }
 
@@ -191,6 +174,9 @@ export class AdherentsComponent implements OnInit {
 
   }
 
+  opennewTab(page : string){
+    window.open(page, '_blank');
+  }
 
   acceptSupress(adherent: AdherentLite) {
     this.modalService.dismissAll();

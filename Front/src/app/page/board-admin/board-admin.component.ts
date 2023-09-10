@@ -92,7 +92,6 @@ export class BoardAdminComponent implements OnInit {
   updateParamBoolean(param: ParamBoolean) {
     this.paramService.saveBoolean(param).subscribe(
       data => {
-        console.log(data)
       },
       err => {
         ;
@@ -116,7 +115,7 @@ export class BoardAdminComponent implements OnInit {
     this.paramService.getAllBoolean().subscribe(
       data => {
         this.paramBooleans = data;
-        console.log(data)
+
       },
       err => {
         ;

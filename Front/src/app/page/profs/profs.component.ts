@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AdherentService } from '../../_services/adherent.service';
 import { ActiviteLite, Adherent, AdherentLite } from 'src/app/models';
-import { faPen, faUsersRays, faSkull, faUsers, faEnvelope, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { faSquareCaretLeft, faSquareCaretDown, faSkull, faUsers, faEnvelope, faCircleXmark, faFlag, faPiggyBank, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TokenStorageService } from 'src/app/_services/token-storage.service';
 import { Router } from '@angular/router';
@@ -15,14 +15,18 @@ import { ParamService } from 'src/app/_services/param.service';
   styleUrls: ['./profs.component.css']
 })
 export class ProfsComponent implements OnInit {
+  faSquareCaretLeft=faSquareCaretLeft;
+  faSquareCaretDown=faSquareCaretDown;
   faCircleCheck=faCircleCheck;
   faCircleXmark = faCircleXmark;
+  faPiggyBank=faPiggyBank;
+  faFlag=faFlag;
   faUsers = faUsers;
   faSkull = faSkull;
   faEnvelope = faEnvelope;
   faPencilSquare = faPencilSquare;
-  activiteLite: ActiviteLite[] = [];
-
+  activitesLite: ActiviteLite[] = [];
+  mobile:boolean = false;
   isFailed: boolean = false;
   errorMessage = '';
   ordre: string = 'nom';
@@ -48,13 +52,13 @@ export class ProfsComponent implements OnInit {
       this.router.navigate(['login']);
     }
 
-
+    if (window.innerWidth <= 1080) { // 768px portrait
+      this.mobile = true;
+    }
 
     this.adherentService.getAllCours().subscribe(
       data => {
-        
-        this.activiteLite = data
-
+        this.activitesLite = data
       },
       err => {
         this.isFailed = true;

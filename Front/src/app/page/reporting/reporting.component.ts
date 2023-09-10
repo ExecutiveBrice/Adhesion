@@ -16,14 +16,16 @@ export class ReportingComponent implements OnInit {
   dataBasket: ReportingActivite[] = []
   dataGeneral: ReportingActivite[] = []
 
-  totalECB: number = 0
-  totalVB: number = 0
+  totalIniteeB: number = 0
+  totalPayeeB: number = 0
+  totalValideeB: number = 0
   totalFB: number = 0
   totalMB: number = 0
   totalCotisB: number = 0
 
-  totalECG: number = 0
-  totalVG: number = 0
+  totalIniteeG: number = 0
+  totalPayeeG: number = 0
+  totalValideeG: number = 0
   totalFG: number = 0
   totalMG: number = 0
   totalCotisG: number = 0
@@ -40,8 +42,9 @@ export class ReportingComponent implements OnInit {
           this.dataBasket = data
           data.forEach(report => {
             this.totalCotisB += report.cotisations
-            this.totalECB += report.nbEC
-            this.totalVB += report.nbV
+            this.totalIniteeB += report.nbInitee
+            this.totalPayeeB += report.nbPayee
+            this.totalValideeB += report.nbValidee
             this.totalFB += report.nbF
             this.totalMB += report.nbM
           })
@@ -58,8 +61,9 @@ export class ReportingComponent implements OnInit {
           this.dataGeneral = data
           data.forEach(report => {
             this.totalCotisG += report.cotisations
-            this.totalECG += report.nbEC
-            this.totalVG += report.nbV
+            this.totalIniteeG += report.nbInitee
+            this.totalPayeeG += report.nbPayee
+            this.totalValideeG += report.nbValidee
             this.totalFG += report.nbF
             this.totalMG += report.nbM
           })
@@ -79,8 +83,9 @@ export class ReportingComponent implements OnInit {
         next: (data) => {
 
           data.forEach(adh => {
-            this.encours.push(adh.nbEC)
-            this.valide.push(adh.nbV)
+            this.initiee.push(adh.nbInitiee)
+            this.payee.push(adh.nbPayee)
+            this.validee.push(adh.nbValidee)
             this.label.push(adh.x)
           })
 
@@ -90,12 +95,16 @@ export class ReportingComponent implements OnInit {
               labels: this.label,
               datasets: [
                 {
-                  label: "En Cours",
-                  data: this.encours
+                  label: "Initiées",
+                  data: this.initiee
                 },
                 {
-                  label: "Validée",
-                  data: this.valide
+                  label: "Payées",
+                  data: this.payee
+                },
+                {
+                  label: "Validées",
+                  data: this.validee
                 }
               ],
             },
@@ -113,6 +122,7 @@ export class ReportingComponent implements OnInit {
 
   }
   label: string[] = []
-  encours: number[] = []
-  valide: number[] = []
+  initiee: number[] = []
+  payee: number[] = []
+  validee: number[] = []
 }

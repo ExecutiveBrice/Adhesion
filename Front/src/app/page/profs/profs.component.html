@@ -2,46 +2,103 @@
   {{errorMessage}}
 </div>
 
-<div class="row">
+<div class="row d-flex justify-content-center">
 
-  <div class="col-12 center" *ngFor="let activite of activiteLite | orderBy:'nom':false ">
-    {{activite.nom}} {{activite.horaire}}
-    <table class="table table-striped">
+  <div class="col-11 center cadrer" *ngFor="let activite of activitesLite | orderBy:'nom':false ">
+
+    <div class="row" (click)="activite.open = !activite.open">
+      <div class="col-10" id="header">
+        <h4>{{activite.nom}} {{activite.horaire}}</h4>
+      </div>
+
+      <div class="col-2" id="icon">
+        <fa-icon *ngIf="!activite.open" class="pointer green fa-2xl" [icon]="faSquareCaretLeft"
+          container="body"></fa-icon>
+        <fa-icon *ngIf="activite.open" class="pointer green fa-2xl" [icon]="faSquareCaretDown"
+          container="body"></fa-icon>
+
+      </div>
+    </div>
+
+    <div *ngIf="mobile && activite.open">
+
+      <div class="cadrePermanent petite_taille row" *ngFor="let adherent of activite.adherents | orderBy:ordre:sens ">
+
+        <div class="col-4">
+          <div>
+            <b>{{adherent.nom}} {{adherent.prenom}}</b><br />
+            {{adherent.email}}<br />
+            {{adherent.telephone}}
+          </div>
+        </div>
+
+        <div class="col-4">
+          <b>Adhésion : {{adherent.statut}}</b><br />
+
+          <fa-icon *ngIf="!adherent.flag" class="pointer fa" [icon]="faFlag "></fa-icon>
+          <fa-icon *ngIf="adherent.flag" class="pointer orange fa" [icon]="faFlag"></fa-icon>
+          <fa-icon *ngIf="adherent.paiement" class="pointer green fa" [icon]="faPiggyBank "></fa-icon>
+          <fa-icon *ngIf="!adherent.paiement" class="pointer orange fa" [icon]="faPiggyBank"></fa-icon> <br />
+          {{adherent.commentaire}}<br />
+
+        </div>
+        <div class="col-4">
+
+          <div *ngFor="let accord of adherent.accords | orderBy:ordre:sens ">
+            {{accord.nom}}<fa-icon *ngIf="accord.etat" class="green" [icon]="faCircleCheck"></fa-icon><fa-icon
+              *ngIf="!accord.etat" class="orange" [icon]="faCircleXmark"></fa-icon>
+          </div>
+
+        </div>
+        <div class="col-12" *ngIf="adherent.mineur">
+          <b>Référent :</b>{{adherent.nomLegal}} {{adherent.prenomLegal}} {{adherent.telLegal}}
+        </div>
+      </div>
+    </div>
+
+    <table *ngIf="!mobile && activite.open" class="table table-striped">
       <thead>
         <tr>
           <th class="center pointer" scope="col" (click)="ordre='nom'; sens = !sens">Nom</th>
-          <th class="center pointer" scope="col" (click)="ordre='email'; sens = !sens">Email</th>
-          <th class="center pointer" scope="col" (click)="ordre='telephone'; sens = !sens">Telephone</th>
-          <th class="center pointer" scope="col" (click)="ordre='telephone'; sens = !sens">Referent</th>
-          <th class="center pointer" scope="col" (click)="ordre='telephone'; sens = !sens">Accord</th>
+          <th class="center pointer" scope="col" (click)="ordre='email'; sens = !sens">contact</th>
+          <th class="center pointer" scope="col" (click)="ordre='telephone'; sens = !sens">Référent</th>
+          <th class="center pointer" scope="col" (click)="ordre='telephone'; sens = !sens">Secrétriat</th>
+          <th class="center pointer" scope="col" (click)="ordre='telephone'; sens = !sens">Accords</th>
+          <th class="center pointer" scope="col" (click)="ordre='telephone'; sens = !sens">Statut</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let adherent of activite.adherents | orderBy:ordre:sens ">
 
           <td>
-            {{adherent.nom}} {{adherent.prenom}}
+            {{adherent.nom}}<br />
+            {{adherent.prenom}}
           </td>
           <td>
-            <ng-template #tipsAdherentSendMail><b>icons</b><br />
-              <fa-icon class="fa-lg green" [icon]="faEnvelope"></fa-icon> permet d'envoyer un mail pour cet adhérent
-            </ng-template>
-            {{adherent.email}} <fa-icon *ngIf="adherent.email != null" [routerLink]="['/mail', adherent.id]"
-              class="fa-lg pointer green" [icon]="faEnvelope"></fa-icon>
-          </td>
-          <td>
+            {{adherent.email}}<br />
             {{adherent.telephone}}
           </td>
           <td>
-            {{adherent.telephone}}
+            {{adherent.prenomLegal}}
+            {{adherent.nomLegal}} <br />
+            {{adherent.telLegal}}
+          </td>
+          <td>
+            {{adherent.commentaire}}
+            <fa-icon *ngIf="!adherent.flag" class="pointer fa-2xl" [icon]="faFlag "></fa-icon>
+            <fa-icon *ngIf="adherent.flag" class="pointer orange fa-2xl" [icon]="faFlag"></fa-icon>
+
+            <fa-icon *ngIf="adherent.paiement" class="pointer green fa-2xl" [icon]="faPiggyBank "></fa-icon>
+            <fa-icon *ngIf="!adherent.paiement" class="pointer orange fa-2xl" [icon]="faPiggyBank"></fa-icon>
           </td>
           <td>
             <div *ngFor="let accord of adherent.accords | orderBy:ordre:sens ">
-              {{accord.nom}}<fa-icon *ngIf="accord.etat" class="green"
-              [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!accord.etat" class="orange"
-              [icon]="faCircleXmark"></fa-icon>
+              {{accord.nom}}<fa-icon *ngIf="accord.etat" class="green" [icon]="faCircleCheck"></fa-icon><fa-icon
+                *ngIf="!accord.etat" class="orange" [icon]="faCircleXmark"></fa-icon>
             </div>
-
+          </td>
+          <td>
+            {{adherent.statut}}
           </td>
         </tr>
       </tbody>

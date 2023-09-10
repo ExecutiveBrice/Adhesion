@@ -18,8 +18,7 @@
       </div>
 
       <div ngbDropdown class="d-inline-block">
-        <button type="button" class="btn btn-primary"
-          id="dropdownBasic1" ngbDropdownToggle>
+        <button type="button" class="btn btn-primary" id="dropdownBasic1" ngbDropdownToggle>
           {{newActivite.groupe?newActivite.groupe:'Groupe'}}
         </button>
 
@@ -30,7 +29,7 @@
         </div>
       </div>
 
-      
+
       <div class="form-group">
         <label for="groupeFiltre">Goupe Filtre</label>
         <input type="text" class="form-control" name="groupeFiltre" [(ngModel)]="newActivite.groupeFiltre" />
@@ -59,11 +58,12 @@
 
       <div class="form-group">
         <label for="prof">Prof</label>
-        <div *ngFor="let prof of newActivite.profs | orderBy:'id':true ">
-          {{prof.prenom}} {{prof.nom}} <fa-icon *ngIf="showAdmin || showSecretaire" class="pointer" (click)="retirerProf(newActivite,prof)"
-          [icon]="faSquareMinus"></fa-icon>
+        <div *ngIf="newActivite.profs.length > 0">
+          <div *ngFor="let prof of newActivite.profs | orderBy:'id':true ">
+            {{prof.prenom}} {{prof.nom}} <fa-icon *ngIf="showAdmin || showSecretaire" class="pointer"
+              (click)="retirerProf(newActivite,prof)" [icon]="faSquareMinus"></fa-icon>
+          </div>
         </div>
-
 
         <div ngbDropdown class="d-inline-block col-md-12 ">
           <button type="button" class="btn btn-block btn-primary" id="dropdownBasic1" ngbDropdownToggle>
@@ -86,9 +86,9 @@
       </div>
 
       <div class="form-group">
-        <label for="complete">Complete <fa-icon
-            *ngIf="newActivite.complete" class="green" [icon]="faCircleCheck"></fa-icon><fa-icon
-            *ngIf="!newActivite.complete" class="orange" [icon]="faCircleXmark"></fa-icon></label>
+        <label for="complete">Complete <fa-icon *ngIf="newActivite.complete" class="green"
+            [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!newActivite.complete" class="orange"
+            [icon]="faCircleXmark"></fa-icon></label>
 
         <div class="btn-group btn-group-sm" role="group" aria-label="complete">
           <div type='button' class="btn btn-block"
@@ -226,9 +226,8 @@
       <th class="center" scope="col" (click)="ordre='horaire'; sens = !sens">Horaire</th>
       <th class="center" scope="col" (click)="ordre='lien'; sens = !sens">Lien</th>
       <th class="center" scope="col" (click)="ordre='salle'; sens = !sens">Salle</th>
-      <th class="center" scope="col" (click)="ordre='prof'; sens = !sens">Prof</th>
+      <th class="center" scope="col" (click)="ordre='prof'; sens = !sens">Référents</th>
       <th class="center" scope="col" (click)="ordre='nbPlaces'; sens = !sens">Places</th>
-      <th class="center" scope="col" (click)="ordre='montantCollecte'; sens = !sens">Adhesions</th>
       <th class="center" scope="col" (click)="ordre='complete'; sens = !sens">Complete</th>
       <th class="center" scope="col" (click)="ordre='pourEnfant'; sens = !sens">Pour mineur</th>
       <th class="center" scope="col" (click)="ordre='priseEnCharge'; sens = !sens">prise en charge</th>
@@ -239,7 +238,7 @@
     </tr>
   </thead>
   <tbody>
-    <tr *ngFor="let activite of activites | filterBy:search  | orderBy:ordre:sens ">
+    <tr *ngFor="let activite of activites | orderBy:'nom':false ">
       <td class="center" (click)="openModal(editProfileModal, activite)">
 
         <fa-icon class="pointer fa-2xl" [icon]="faPencilSquare"></fa-icon>
@@ -251,15 +250,17 @@
       <td>{{activite.salle}}</td>
       <td>
         <div *ngFor="let prof of activite.profs | orderBy:'id':true ">
-          {{prof.prenom}} {{prof.nom}} <fa-icon [routerLink]="['/mail', prof.id]" class="pointer green"
+          {{prof.prenom}} {{prof.nom}} <fa-icon (click)="opennewTab('#/mail/'+prof.id)" class="pointer green"
             [icon]="faEnvelope"></fa-icon>
         </div>
       </td>
-      <td class="center">{{activite.nbPlaces}}</td>
-      <td class="center">{{activite.nbAdhesionsEnCours}}/<font color="green">{{activite.nbAdhesionsCompletes}}</font>/<font color="red">{{activite.montantCollecte}}</font>
+      <td class="center">
+        {{activite.nbPlaces}}<br />
+        <font color="red">{{activite.nbAdhesionsAttente}}</font>/{{activite.nbAdhesionsEnCours}}/<font color="green">{{activite.nbAdhesionsCompletes}}</font>
       </td>
       <td class="center">
-        <fa-icon *ngIf="activite.complete" [ngClass]="activite.complete ? 'green' : ''" [icon]="faCircleCheck"></fa-icon>
+        <fa-icon *ngIf="activite.complete" [ngClass]="activite.complete ? 'green' : ''"
+          [icon]="faCircleCheck"></fa-icon>
         <fa-icon *ngIf="!activite.complete" [ngClass]="!activite.complete ? 'orange' : ''"
           [icon]="faCircleXmark"></fa-icon>
       </td>
@@ -287,7 +288,7 @@
           [icon]="faCircleXmark"></fa-icon>
       </td>
       <td class="center">{{activite.dureeVieCertif}}an{{activite.dureeVieCertif>1?"s":""}}</td>
-      
+
       <td class="center">
         <fa-icon *ngIf="activite.vieClub" [ngClass]="activite.vieClub ? 'green' : ''" [icon]="faCircleCheck"></fa-icon>
         <fa-icon *ngIf="!activite.vieClub" [ngClass]="!activite.vieClub ? 'orange' : ''"

@@ -66,12 +66,13 @@
           <div class="row">
             <div class="col-10" id="header">{{adherent.referent?"Référent(e)
               légal(e) et/ou licencié(e) majeur(e)":"Licencié(e)"}}</div>
-            <div class="col-2" id="icon" (click)="adherent.edit = !adherent.edit">
+            <div class="col-2" id="icon" (click)="adherentEdit(adherent)">
               <fa-icon *ngIf="adherent.id != 0 " class="pointer orange" [icon]="faPencilSquare" container="body"
                 [ngbTooltip]="tipEditAdherent"></fa-icon>
               <fa-icon *ngIf="adherent.id == 0 " (click)="removeAdherent(adherent)" class="pointer"
                 [icon]="faSquareMinus" container="body"></fa-icon>
-
+              <fa-icon *ngIf="showAdmin || showSecretaire" class="fa-lg pointer"
+                (click)="openConfirmModal(confirmModal, adherent)" [icon]="faSkull"></fa-icon>
             </div>
           </div>
           <div *ngIf="!adherent.completReferent || adherent.edit" id="header">Informations personnelles</div>
@@ -150,98 +151,71 @@
             </div>
 
 
-            <div *ngIf="testAccord(adherent.accords, 'RGPD').etat == null" class="form-group">
-              <label for="rgpd">Données personnelles <span class="orange" container="body">*</span><fa-icon
-                  (click)="adherent.testRgpd = !adherent.testRgpd" class="pointer orange"
-                  [icon]="faCircleQuestion"></fa-icon></label>
+            <div *ngIf="showAdmin || showSecretaire" ngbDropdown id="icon">
+              <div id="dropdownBasic1" ngbDropdownToggle>
+                Ajouter un accord <fa-icon [icon]="faSquarePlus" container="body"></fa-icon>
+              </div>
 
-              <div class="btn-group btn-group-sm" role="group" aria-label="rgpd">
-                <div type='button' class="btn btn-block btn-primary alod"
-                  (click)="updateAccord(adherent.accords, 'RGPD',true)">
-                  Merci d'accepter l'utilisation de vos données personnelles</div>
+              <div ngbDropdownMenu aria-labelledby="dropdownBasic1" style="float:right;">
+                <div type='button' ngbDropdownItem (click)="ajoutAccord(adherent,'RGPD')">RGPD</div>
+                <div type='button' ngbDropdownItem (click)="ajoutAccord(adherent,'Droit Image')">Droit Image</div>
               </div>
             </div>
 
 
-
-            <div *ngIf="testAccord(adherent.accords, 'RGPD').etat != null">
-              Vous avez accepté l'utilisation de vos données personnelles par l'ALOD le {{testAccord(adherent.accords,
-              'RGPD').datePassage | date: 'dd/MM/YYYY'}} <fa-icon (click)="adherent.testRgpd = !adherent.testRgpd"
-                class="pointer orange" [icon]="faCircleQuestion"></fa-icon>
-            </div>
-            <div *ngIf="adherent.testRgpd"><b>UTILISATION DES DONNEES PERSONNELLES:</b><br />
-              Les informations recueillies sur ce formulaire sont enregistrées dans un fichier informatisé par le
-              secrétariat de l'ALOD pour permettre le fonctionnement des activités. La base légale du traitement est le
-              contrat entre l'ALOD et le futur adhérent/liciencié.<br />
-              Les données collectées seront communiquées aux seuls destinataires suivants : secrétariat de l'ALOD de
-              l'UFOLEP et de la FAL.<br />
-
-              Les données sont conservées pendant toute la durée des activitées aux quelles l'adhérent/licencié à
-              souscrit
-              au sein de l'ALOD suivi d'une année d'historisation.<br />
-
-              Vous pouvez accéder aux données vous concernant, les rectifier, demander leur effacement ou exercer votre
-              droit à la limitation du traitement de vos données.<br />
-
-              Consultez le site <a href="https://www.cnil.fr" target="_blank">www.cnil.fr</a> pour plus d’informations
-              sur vos
-              droits.<br />
-
-              Pour exercer ces droits ou pour toute question sur le traitement de vos données dans ce dispositif, vous
-              pouvez contacter (le cas échéant, notre délégué à la protection des données ou le service chargé de
-              l’exercice de ces droits) : alod.amicale@gmail.com <br />
-              Si vous estimez, après nous avoir contactés, que vos droits « Informatique et Libertés » ne sont pas
-              respectés, vous pouvez adresser une réclamation à la CNIL.<br />
-            </div>
+            <div *ngFor="let accord of adherent.accords | orderBy:'id':false ">
 
 
 
 
 
+              <div *ngIf="accord.nom=='RGPD' && accord.etat == null" class="form-group">
+                <label for="rgpd">Données personnelles <span class="orange" container="body">*</span> <fa-icon
+                    *ngIf="showAdmin || showSecretaire" (click)="openConfirmModalAccordAdherent(confirmAccordAdherentModal,adherent,accord)"
+                    [icon]="faSquareMinus"></fa-icon></label>
 
-
-
-            <div *ngIf="testAccord(adherent.accords, 'Droit Image').etat == null" class="form-group cadre">
-              <label for="rgpd">Droit à l'image <span class="orange" container="body">*</span></label>
-
-              <div type='button' class="btn btn-block btn-primary alod"
-                (click)="adherent.testDroitImage = !adherent.testDroitImage">
-                Merci de confirmer l'usage de votre droit à l'image<span class="orange" container="body">*</span></div>
-
-              <div *ngIf="adherent.testDroitImage">
-                J'autorise l'ALOD à utiliser les photographies, films, travaux et productions réalisés dans le
-                cadre de l'activité sportive.
-                Nous utiliserons les photos et autres médias pris durant
-                les cours pour la promotion de l'ALOD (site internet, affiches, flyer, forum des associations)<br />
-                <b>Pour les adhérents du Basket, l'acceptation du droit à l'image est compris dans l'adhésion à la
-                  FFBB.</b>
-                <div class="btn-group btn-group-sm col-12" role="group" aria-label="image">
+                <div class="btn-group btn-group-sm" role="group" aria-label="rgpd">
                   <div type='button' class="btn btn-block btn-primary alod"
-                    (click)="updateAccord(adherent.accords, 'Droit Image', true)">
-                    J'accepte</div>
-                  <div type='button' class="btn btn-block btn-primary alod"
-                    (click)="updateAccord(adherent.accords, 'Droit Image',false)">
-                    Je refuse</div>
+                    (click)="openAccordModal(RGPDModal, accord, false)">
+                    Merci d'accepter l'utilisation de vos données personnelles</div>
                 </div>
               </div>
+              <div *ngIf="accord.nom=='RGPD' && accord.etat != null">
+                Vous avez accepté l'utilisation de vos données personnelles par l'ALOD le {{accord.datePassage | date:
+                'dd/MM/YYYY'}} <fa-icon (click)="openAccordModal(RGPDModal, accord, true)" class="pointer orange"
+                  [icon]="faCircleQuestion"></fa-icon> <fa-icon *ngIf="showAdmin || showSecretaire"
+                  (click)="openConfirmModalAccordAdherent(confirmAccordAdherentModal,adherent,accord)" [icon]="faSquareMinus"></fa-icon>
+              </div>
 
+
+
+
+
+
+
+
+
+              <div *ngIf="accord.nom=='Droit Image' && accord.etat == null" class="form-group">
+                <label for="image">Droit à l'image <span class="orange" container="body">*</span> <fa-icon
+                    *ngIf="showAdmin || showSecretaire" (click)="openConfirmModalAccordAdherent(confirmAccordAdherentModal,adherent,accord)"
+                    [icon]="faSquareMinus"></fa-icon></label>
+
+                <div type='button' class="btn btn-block btn-primary alod"
+                  (click)="openAccordModal(ImageModal, accord, false)">
+                  Merci de confirmer l'usage de votre droit à l'image<span class="orange" container="body">*</span>
+                </div>
+              </div>
+              <div *ngIf="accord.nom=='Droit Image' && accord.etat != null">
+                Vous avez {{accord.etat?"accepté":"refusé"}} l'utilisation de votre
+                image par l'ALOD le {{accord.datePassage | date: 'dd/MM/YYYY'}} <fa-icon
+                  (click)="openAccordModal(ImageModal, accord, true)" class="pointer orange"
+                  [icon]="faCircleQuestion"></fa-icon> <fa-icon *ngIf="showAdmin || showSecretaire"
+                  (click)="openConfirmModalAccordAdherent(confirmAccordAdherentModal,adherent,accord)" [icon]="faSquareMinus"></fa-icon>
+              </div>
             </div>
 
-            <div *ngIf="testAccord(adherent.accords, 'Droit Image').etat != null">
-              Vous avez {{testAccord(adherent.accords, 'Droit Image').etat?"accepté":"refusé"}} l'utilisation de votre
-              image par l'ALOD le {{testAccord(adherent.accords, 'Droit
-              Image').datePassage | date: 'dd/MM/YYYY'}} <fa-icon
-                (click)="adherent.testDroitImage2 = !adherent.testDroitImage2" class="pointer orange"
-                [icon]="faCircleQuestion"></fa-icon>
-            </div>
-            <div *ngIf="adherent.testDroitImage2"><b>Droit à l'image</b><br />
-              J'autorise l'ALOD à utiliser les photographies, films, travaux et productions réalisés dans le
-              cadre de l'activité sportive.
-              Nous utiliserons les photos et autres médias pris durant
-              les cours pour la promotion de l'ALOD (site internet, affiches, flyer, forum des associations)<br />
-              <b>Pour les adhérents du Basket, l'acceptation du droit à l'image est compris dans l'adhésion à la
-                FFBB.</b>
-            </div>
+
+
 
             <div *ngIf="!adherent.referent" class="form-group cadre">
               <label for="mineur">{{adherent.prenom}} est mineur ? <fa-icon *ngIf="adherent.mineur" class="green"
@@ -481,7 +455,7 @@
           </div>
 
 
-          <div class="row" *ngIf="adherent.completAdhesion"> 
+          <div class="row" *ngIf="adherent.completAdhesion">
             <div id="header" class=" col-8 ">Documents de {{adherent.prenom}}</div>
             <div ngbDropdown class=" col-4 orange" id="icon">
               <div>
@@ -570,12 +544,11 @@
         <h5>{{adhesion.activite.nom}} {{ adhesion.activite.horaire }} pour {{adhesion.adherent.prenom}}</h5>
 
         <i>Statut : {{ adhesion.statutActuel}}</i>
-        <ng-template #tipAttestation><b>Attestation</b><br />
-          Cliquez pour télécharger votre attestation de paiement
-        </ng-template>
 
+
+        <h5>Attestation de paiement</h5>
         <fa-icon *ngIf="adhesionValide(adhesion)" class="orange fa-2xl" (click)="openPDF(adhesion)"
-          [ngbTooltip]="tipAttestation" [icon]="faCloudDownloadAlt"></fa-icon>
+          [icon]="faCloudDownloadAlt"></fa-icon>
 
         <h5>Paiement :</h5>
 
@@ -599,9 +572,8 @@
         <ng-template #tipDocSecretariat>Le certificat médical n'est obligatoire<br />
           que dans le cas d'une réponse positive au questionnaire de santé
         </ng-template>
-        <div
-          *ngIf="testAccord(adhesion.accords, 'Attestation Sante') != undefined && adhesion.activite.certificatMedical"
-          container="body" [ngbTooltip]="tipDocSecretariat" class="row align-items-center fullSize">
+        <div *ngIf="adhesion.activite.certificatMedical" container="body" [ngbTooltip]="tipDocSecretariat"
+          class="row align-items-center fullSize">
           <div class="col-10">Questionnaire de santé</div>
           <div class="col-2" (click)="openAttestationSante()"><fa-icon class="pointer orange fa-2xl"
               *ngIf="adhesion.activite.certificatMedical" [icon]="faCloudDownloadAlt"></fa-icon>
@@ -626,280 +598,130 @@
 
 
         <h5>Accords :</h5>
-
-        <div *ngIf="testAccord(adhesion.accords, 'Attestation Sante') != undefined"
-          class="row align-items-center fullSize">
-          <div
-            *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || testAccord(adhesion.accords, 'Attestation Sante').datePassage != null"
-            class="col-6">
-            <b>Attestation de santé</b>
-          </div>
-          <div class="col-4" *ngIf="testAccord(adhesion.accords, 'Attestation Sante').datePassage != null">
-            {{testAccord(adhesion.accords, 'Attestation Sante').datePassage | date:
-            'dd/MM/YYYY'}}
-          </div>
-          <div
-            *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || testAccord(adhesion.accords, 'Attestation Sante').datePassage != null"
-            class="col-2">
-            <fa-icon *ngIf="testAccord(adhesion.accords, 'Attestation Sante').etat == true" class="green fa-2xl"
-              [icon]="faCircleCheck"></fa-icon><fa-icon
-              *ngIf="testAccord(adhesion.accords, 'Attestation Sante').etat == false" class="orange fa-2xl"
-              [icon]="faCircleXmark"></fa-icon>
-          </div>
-          <div
-            *ngIf="adhesion.statutActuel == 'Attente validation adhérent' && testAccord(adhesion.accords, 'Attestation Sante').datePassage == null"
-            type='button' class="btn btn-block btn-primary col-12 alod"
-            (click)="adhesion.testAtestationSante = !adhesion.testAtestationSante">Merci de confirmer votre
-            accord<br />d'attestation de
-            santé
-          </div>
-
-
-        </div>
-
-        <div *ngIf="adhesion.testAtestationSante"><b>Attestation de santé</b><br />
-          Le certificat médical n'est obligatoire<br />
-          que dans le cas d'une réponse positive au questionnaire de santé<br />
-
-          <a href="https://www.alod.fr/wp-content/uploads/2022/04/INSCRIPTION-Questionnaire_de_sante.pdf"
-            target="_blank">questionnaire de santé</a><br>
-          Si vous avez répondu Non à toutes les questions du questionnaire,<br>
-          vous pouvez valider cet accord d'attestation de votre bonne santé.<br>
-          Sinon refusez le pour signifier au secrétariat que vous devrez fournir un certificat
-          médical<br>
-          <div class="btn-group btn-group-sm" role="group" aria-label="rgpd">
-            <div type='button' class="btn btn-primary btn-independent"
-              (click)="updateAccord(adhesion.accords, 'Attestation Sante',true); adhesion.testAtestationSante = false;">
-              Accepter
+        <div *ngFor="let accord of adhesion.accords | orderBy:'id':false ">
+          <div *ngIf="accord.nom == 'Attestation Sante'" class="row align-items-center fullSize">
+            <div *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || accord.datePassage != null"
+              class="col-6">
+              <b>Attestation de santé</b>
             </div>
-            <div type='button' class="btn btn-primary btn-independent"
-              (click)="updateAccord(adhesion.accords, 'Attestation Sante',false); adhesion.testAtestationSante = false;">
-              Refuser
+            <div class="col-4" *ngIf="accord.datePassage != null">
+              {{accord.datePassage | date: 'dd/MM/YYYY'}} <fa-icon
+                (click)="openAccordModal(AttestSanteModal, accord, true)" class="pointer orange"
+                [icon]="faCircleQuestion"></fa-icon>
+            </div>
+            <div *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || accord.datePassage != null"
+              class="col-2">
+              <fa-icon *ngIf="accord.etat == true" class="green fa-2xl" [icon]="faCircleCheck"></fa-icon><fa-icon
+                *ngIf="accord.etat == false" class="orange fa-2xl" [icon]="faCircleXmark"></fa-icon>
+            </div>
+            <div *ngIf="adhesion.statutActuel == 'Attente validation adhérent' && accord.datePassage == null"
+              type='button' class="btn btn-block btn-primary col-12 alod"
+              (click)="openAccordModal(AttestSanteModal, accord, false)">Merci de confirmer votre
+              accord<br />d'attestation de
+              santé
+            </div>
+          </div>
+
+          <div *ngIf="accord.nom == 'Autorisation Parentale'" class="row align-items-center fullSize">
+            <div *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || accord.etat != null" class="col-6">
+              <b>Autorisation parentale</b>
+            </div>
+            <div class="col-4" *ngIf="accord.etat != null">
+              {{accord.datePassage | date: 'dd/MM/YYYY'}}<fa-icon
+                (click)="openAccordModal(AutParentModal, accord, true)" class="pointer orange"
+                [icon]="faCircleQuestion"></fa-icon>
+            </div>
+            <div *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || accord.datePassage != null"
+              class="col-2">
+              <fa-icon *ngIf="accord.etat == true" class="green fa-2xl" [icon]="faCircleCheck"></fa-icon><fa-icon
+                *ngIf="accord.etat == false" class="orange fa-2xl" [icon]="faCircleXmark"></fa-icon>
+            </div>
+            <div *ngIf="adhesion.statutActuel == 'Attente validation adhérent' && accord.etat == null" type='button'
+              class="btn btn-block btn-primary col-12 alod" (click)="openAccordModal(AutParentModal, accord, false)">
+              Merci de
+              confirmer votre accord<br />
+              d'autorisation parentale
+            </div>
+          </div>
+
+
+          <div *ngIf="accord.nom == 'Prise en Charge'" class="row align-items-center fullSize">
+            <div *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || accord.etat != null" class="col-6">
+              <b>Attestation de prise en charge</b>
+            </div>
+            <div class="col-4" *ngIf="accord.etat != null">
+              {{accord.datePassage | date: 'dd/MM/YYYY'}}<fa-icon (click)="openAccordModal(AutPriseModal, accord, true)"
+                class="pointer orange" [icon]="faCircleQuestion"></fa-icon>
+            </div>
+            <div *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || accord.etat != null" class="col-2">
+              <fa-icon *ngIf="accord.etat == true" class="green fa-2xl" [icon]="faCircleCheck"></fa-icon><fa-icon
+                *ngIf="accord.etat == false" class="orange fa-2xl" [icon]="faCircleXmark"></fa-icon>
+            </div>
+            <div *ngIf="adhesion.statutActuel == 'Attente validation adhérent' && accord.etat == null" type='button'
+              class="btn btn-block btn-primary col-12 alod" (click)="openAccordModal(AutPriseModal, accord, false)">
+              Merci de confirmer votre accord<br />d'attestation de prise en charge
+            </div>
+          </div>
+
+
+          <div *ngIf="accord.nom == 'Vie du Club'" class="row align-items-center fullSize">
+            <div *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || accord.etat != null" class="col-6">
+              <b>Vie du club</b>
+            </div>
+            <div class="col-4" *ngIf="accord.etat != null">
+              {{accord.datePassage | date: 'dd/MM/YYYY'}}<fa-icon (click)="openAccordModal(VieClubModal, accord, true)"
+                class="pointer orange" [icon]="faCircleQuestion"></fa-icon>
+            </div>
+            <div *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || accord.etat != null" class="col-2">
+              <fa-icon *ngIf="accord.etat == true" class="green fa-2xl" [icon]="faCircleCheck"></fa-icon><fa-icon
+                *ngIf="accord.etat == false" class="orange fa-2xl" [icon]="faCircleXmark"></fa-icon>
+            </div>
+            <div *ngIf="adhesion.statutActuel == 'Attente validation adhérent' && accord.etat == null" type='button'
+              class="btn btn-block btn-primary col-12 alod" (click)="openAccordModal(VieClubModal, accord, false)">Merci
+              de confirmer votre accord<br />à la
+              vie du club
             </div>
 
-          </div>
-        </div>
 
-
-        <div *ngIf="testAccord(adhesion.accords, 'Autorisation Parentale') != undefined"
-          class="row align-items-center fullSize">
-
-          <div
-            *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || testAccord(adhesion.accords, 'Autorisation Parentale').etat != null"
-            class="col-6">
-            <b>Autorisation parentale</b>
-          </div>
-          <div class="col-4" *ngIf="testAccord(adhesion.accords, 'Autorisation Parentale').etat != null">
-            {{testAccord(adhesion.accords, 'Autorisation Parentale').datePassage | date: 'dd/MM/YYYY'}}
-          </div>
-          <div
-            *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || testAccord(adhesion.accords, 'Autorisation Parentale').datePassage != null"
-            class="col-2">
-            <fa-icon *ngIf="testAccord(adhesion.accords, 'Autorisation Parentale').etat == true" class="green fa-2xl"
-              [icon]="faCircleCheck"></fa-icon><fa-icon
-              *ngIf="testAccord(adhesion.accords, 'Autorisation Parentale').etat == false" class="orange fa-2xl"
-              [icon]="faCircleXmark"></fa-icon>
-          </div>
-          <div
-            *ngIf="adhesion.statutActuel == 'Attente validation adhérent' && testAccord(adhesion.accords, 'Autorisation Parentale').etat == null"
-            type='button' class="btn btn-block btn-primary col-12 alod"
-            (click)="adhesion.testautorisationParentale = !adhesion.testautorisationParentale">Merci de
-            confirmer votre accord<br />
-            d'autorisation parentale
           </div>
 
 
-        </div>
 
-        <div *ngIf="adhesion.testautorisationParentale"><b>Autorisation parentale</b><br />
-          Vous venez d'inscrire votre enfant à une activité de l'ALOD.<br />
-          Les parents doivent s'assurer de la présence de l'animateur avant de laisser leurs enfants devant
-          ou
-          dans la salle<br />
-          et venir les reprendre à l'heure à l'issue de l'activité.<br />
-          En dehors des heures d'activités, la responsabilité de l'ALOD n'est plus engagée.<br />
-          Les animateurs de l'ALOD sont autorisés à faire pratiquer des soins d'urgence en cas de
-          besoin<br />
-          <div type='button' class="btn btn-primary btn-independent"
-            (click)="updateAccord(adhesion.accords, 'Autorisation Parentale',true); adhesion.testautorisationParentale = false;">
-            Accepter
+          <div *ngIf="accord.nom == 'Reglement Interieur' " class="row align-items-center fullSize">
+
+            <div *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || accord.etat != null" class="col-6">
+              <b>Règlement intérieur</b>
+            </div>
+            <div class="col-4" *ngIf="accord.etat != null">
+              {{accord.datePassage | date: 'dd/MM/YYYY'}}<fa-icon (click)="openAccordModal(RegIntModal, accord, true)"
+                class="pointer orange" [icon]="faCircleQuestion"></fa-icon>
+            </div>
+            <div *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || accord.etat != null" class="col-2">
+              <fa-icon *ngIf="accord.etat == true" class="green fa-2xl" [icon]="faCircleCheck"></fa-icon><fa-icon
+                *ngIf="accord.etat != true" class="orange fa-2xl" [icon]="faCircleXmark"></fa-icon>
+            </div>
+            <div *ngIf="adhesion.statutActuel == 'Attente validation adhérent' && accord.etat == null" type='button'
+              class="btn btn-block btn-primary alod" (click)="openAccordModal(RegIntModal, accord, false)">
+              Merci de confirmer votre accord<br />au règlement intérieur</div>
+
           </div>
-        </div>
 
 
-        <div *ngIf="testAccord(adhesion.accords, 'Prise en Charge') != undefined"
-          class="row align-items-center fullSize">
 
-          <div
-            *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || testAccord(adhesion.accords, 'Prise en Charge').etat != null"
-            class="col-6"><b>Attestation de prise en charge</b></div>
-          <div class="col-4" *ngIf="testAccord(adhesion.accords, 'Prise en Charge').etat != null">
-            {{testAccord(adhesion.accords, 'Prise en Charge').datePassage | date: 'dd/MM/YYYY'}}
-          </div>
-          <div
-            *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || testAccord(adhesion.accords, 'Prise en Charge').etat != null"
-            class="col-2">
-            <fa-icon *ngIf="testAccord(adhesion.accords, 'Prise en Charge').etat == true" class="green fa-2xl"
-              [icon]="faCircleCheck"></fa-icon><fa-icon
-              *ngIf="testAccord(adhesion.accords, 'Prise en Charge').etat == false" class="orange fa-2xl"
-              [icon]="faCircleXmark"></fa-icon>
-          </div>
-          <div
-            *ngIf="adhesion.statutActuel == 'Attente validation adhérent' && testAccord(adhesion.accords, 'Prise en Charge').etat == null"
-            type='button' class="btn btn-block btn-primary col-12 alod"
-            (click)="adhesion.testPriseEnCharge = !adhesion.testPriseEnCharge">
-            Merci de confirmer votre accord<br />d'attestation de prise en charge
-          </div>
+
+          <button *ngIf="adhesion.statutActuel == 'Attente validation adhérent' && !isAllAccordsDone(adhesion.accords)"
+            type='button' class="btn btn-independent btn-outline-danger" disabled>
+            Valider mon adhésion
+          </button>
+          <button *ngIf="adhesion.statutActuel == 'Attente validation adhérent' && isAllAccordsDone(adhesion.accords)"
+            type='button' class="btn btn-primary btn-independent" (click)="updateAdhesion(adhesion)">
+            Valider mon adhésion
+          </button>
 
 
         </div>
-
-
-        <div *ngIf="adhesion.testPriseEnCharge"><b>Attestation de prise en charge</b><br />
-          J'autorise l'animateur, entraineur ou administrateur de l'ALOD<br />
-          à venir chercher {{ adhesion.adherent.prenom }} {{ adhesion.adherent.nom }}<br />
-          à l'école ou au périscolaire de l'école OucheDinier afin de l'emmener à son cours<br />
-          <div type='button' class="btn btn-primary btn-independent"
-            (click)="updateAccord(adhesion.accords, 'Prise en Charge',true); adhesion.testPriseEnCharge = false;">
-            Accepter
-          </div>
-        </div>
-
-
-
-        <div *ngIf="testAccord(adhesion.accords, 'Vie du Club') != undefined" class="row align-items-center fullSize">
-
-          <div
-            *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || testAccord(adhesion.accords, 'Vie du Club').etat != null"
-            class="col-6"><b>Vie du club</b>
-          </div>
-          <div class="col-4" *ngIf="testAccord(adhesion.accords, 'Vie du Club').etat != null">
-            {{testAccord(adhesion.accords, 'Vie du
-            Club').datePassage | date: 'dd/MM/YYYY'}}
-          </div>
-          <div
-            *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || testAccord(adhesion.accords, 'Vie du Club').etat != null"
-            class="col-2">
-            <fa-icon *ngIf="testAccord(adhesion.accords, 'Vie du Club').etat == true" class="green fa-2xl"
-              [icon]="faCircleCheck"></fa-icon><fa-icon
-              *ngIf="testAccord(adhesion.accords, 'Vie du Club').etat == false" class="orange fa-2xl"
-              [icon]="faCircleXmark"></fa-icon>
-          </div>
-          <div
-            *ngIf="adhesion.statutActuel == 'Attente validation adhérent' && testAccord(adhesion.accords, 'Vie du Club').etat == null"
-            type='button' class="btn btn-block btn-primary col-12 alod"
-            (click)="adhesion.testVieClub = !adhesion.testVieClub">Merci de confirmer votre accord<br />à la
-            vie du club
-          </div>
-
-
-
-
-        </div>
-        <div *ngIf="adhesion.testVieClub"><b>Adhésion à la vie du club</b><br />
-          J'accepte également de participer,<br />
-          dans la limite de mes possibilités et de manière collective,<br />
-          aux déplacements de l'équipe,<br />
-          aux responsabilités d'arbitre ou de marqueur/chronométreur<br />
-          et de tenir le bar à tour de rôle<br />
-          pendant les matchs de mon enfant ou de mon équipe.<br />
-          <div type='button' class="btn btn-primary btn-independent"
-            (click)="updateAccord(adhesion.accords, 'Vie du Club',true); adhesion.testVieClub = false;">
-            Accepter
-          </div>
-        </div>
-
-
-
-        <div class="row align-items-center fullSize">
-
-          <div
-            *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || testAccord(adhesion.accords, 'Reglement Interieur').etat != null"
-            class="col-6"><b>Règlement intérieur</b></div>
-          <div class="col-4" *ngIf="testAccord(adhesion.accords, 'Reglement Interieur').etat != null">
-            {{testAccord(adhesion.accords, 'Reglement
-            Interieur').datePassage | date: 'dd/MM/YYYY'}}
-          </div>
-          <div
-            *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || testAccord(adhesion.accords, 'Reglement Interieur').etat != null"
-            class="col-2">
-            <fa-icon *ngIf="testAccord(adhesion.accords, 'Reglement Interieur').etat == true" class="green fa-2xl"
-              [icon]="faCircleCheck"></fa-icon><fa-icon
-              *ngIf="testAccord(adhesion.accords, 'Reglement Interieur').etat != true" class="orange fa-2xl"
-              [icon]="faCircleXmark"></fa-icon>
-          </div>
-          <div
-            *ngIf="adhesion.statutActuel == 'Attente validation adhérent' && testAccord(adhesion.accords, 'Reglement Interieur').etat == null"
-            type='button' class="btn btn-block btn-primary alod"
-            (click)="adhesion.testReglementInt = !adhesion.testReglementInt">
-            Merci de confirmer votre accord<br />au règlement intérieur</div>
-
-        </div>
-
-
-        <div *ngIf="adhesion.testReglementInt"><b>Règlement intérieur</b><br />
-          Vous vous inscrivez à une activité au sein de l’ALOD (Amicale Laïque de L’Ouche Dinier). <br />
-          <b>Vous pouvez consulter les statuts et toutes les informations concernant cette association sur
-            le site : <a href="https://www.alod.fr" target="_blank">www.alod.fr</a></b><br /> <br />
-          Inscriptions et cours <br />
-          Les inscriptions aux activités sont valables pour la période de septembre à juin. <br />
-          1 cours d’essai est possible avant l’inscription selon les modalités de l’activité si le cours
-          n’est pas complet. <br />
-          Toute inscription est définitive<br />
-          Vous pouvez participer à l’activité quand votre dossier d’inscription est complet.<br />
-          Aucun remboursement ne pourra être demandé<br /><br />
-          Seule la présentation au cours du premier trimestre d’un certificat médical de contre-
-          indication précisant l’activité pratiquée, avec restitution de la carte de la FAL, pourra faire
-          l’objet d’un remboursement partiel déduction faite des frais engagés (carte FAL, frais
-          administratifs ALOD, cotisation 1er trimestre).<br />
-          Les cas de force majeure justifiés (mutation professionnelle, déménagement,...) survenus au
-          cours du 1er trimestre feront l’objet d’un remboursement partiel.<br />
-          L’ALOD propose 25 à 30 cours par an en fonction du calendrier
-          (jours fériés), des disponibilités des animateurs, etc. Un cours annulé sera reporté ou non
-          selon les possibilités (disponibilités de l’animateur, de salles,...). En aucun cas, un
-          remboursement ne pourra être demandé pour l’annulation de cours dans la limite des 25
-          cours/an, ni en cas de circonstance(s) exceptionnelle(s).<br /><br />
-          Fonctionnement des sections<br />
-          Chaque section est représentée par un ou des référents responsables agréé(s) par le Conseil
-          d’Administration. Ils mettent en application auprès des animateurs les décisions prises en
-          Assemblée Générale et par le Conseil d’Administration.<br />
-          En cas de litige dans une section, le Conseil d’Administration convoquera les référents et les
-          animateurs et prendra les décisions adéquates.<br />
-          A l’Assemblée Générale, l’animateur ou un responsable de la section peut présenter un
-          compte rendu de la saison écoulée.<br /><br />
-          Fonctionnement de l’Amicale<br />
-          L’Amicale laïque de l’Ouche Dinier est administrée par un Conseil d’Administration.<br />
-          Aucun membre du Conseil d’Administration ne peut se servir de ce titre s’il n’est délégué
-          officiellement à cet effet. L’administrateur assiste régulièrement aux réunions du Conseil
-          d’Administration. Des absences répétées sans excuse pourront entraîner l’exclusion après
-          entretien entre l’intéressé et le Conseil d’Administration. Les représentants de l’Amicale dans
-          différentes instances doivent être agréés par le Conseil d’Administration.<br />
-          Une section ne peut s’ouvrir que sur décision du Conseil d’Administration.<br />
-          <br />
-          <div type='button' class="btn btn-primary btn-independent"
-            (click)="updateAccord(adhesion.accords, 'Reglement Interieur',true); adhesion.testReglementInt = false;">
-            Acceptation du règlement
-            intérieur
-          </div>
-        </div>
-
-
-
-
-
-        <button *ngIf="adhesion.statutActuel == 'Attente validation adhérent' && !isAllAccordsDone(adhesion.accords)"
-          type='button' class="btn btn-independent btn-outline-danger" disabled>
-          Valider mon adhésion
-        </button>
-        <button *ngIf="adhesion.statutActuel == 'Attente validation adhérent' && isAllAccordsDone(adhesion.accords)"
-          type='button' class="btn btn-primary btn-independent" (click)="updateAdhesion(adhesion)">
-          Valider mon adhésion
-        </button>
-
 
       </div>
-
-
     </div>
 
     <table *ngIf="!mobile && adhesionsOpen" class="table table-striped">
@@ -952,9 +774,7 @@
             <ng-template #tipDocSecretariat>Le certificat médical n'est obligatoire<br />
               que dans le cas d'une réponse positive au questionnaire de santé
             </ng-template>
-            <div
-              *ngIf="testAccord(adhesion.accords, 'Attestation Sante') != undefined && adhesion.activite.certificatMedical"
-              container="body" [ngbTooltip]="tipDocSecretariat">
+            <div *ngIf="adhesion.activite.certificatMedical" container="body" [ngbTooltip]="tipDocSecretariat">
               Questionnaire de santé <fa-icon class="pointer orange" *ngIf="adhesion.activite.certificatMedical"
                 (click)="openAttestationSante()" [icon]="faCloudDownloadAlt"></fa-icon>
             </div>
@@ -988,285 +808,176 @@
 
 
           <td>
-            <div *ngIf="testAccord(adhesion.accords, 'Attestation Sante') != undefined" class="row align-items-center">
-              <div
-                *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || testAccord(adhesion.accords, 'Attestation Sante').datePassage != null"
-                class="col-8">
-                <b>Attestation de santé</b>
-              </div>
-              <div
-                *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || testAccord(adhesion.accords, 'Attestation Sante').datePassage != null"
-                class="col-4">
-                <fa-icon *ngIf="testAccord(adhesion.accords, 'Attestation Sante').etat == true" class="green fa-2xl"
-                  [icon]="faCircleCheck"></fa-icon><fa-icon
-                  *ngIf="testAccord(adhesion.accords, 'Attestation Sante').etat == false" class="orange fa-2xl"
-                  [icon]="faCircleXmark"></fa-icon>
-              </div>
-              <div
-                *ngIf="adhesion.statutActuel == 'Attente validation adhérent' && testAccord(adhesion.accords, 'Attestation Sante').datePassage == null"
-                type='button' class="btn btn-block btn-primary col-12 alod"
-                (click)="adhesion.testAtestationSante = !adhesion.testAtestationSante">Merci de confirmer votre
-                accord<br />d'attestation de
-                santé
+
+            <div *ngIf="showAdmin || showSecretaire" ngbDropdown id="icon">
+              <div id="dropdownBasic1" ngbDropdownToggle>
+                <fa-icon [icon]="faSquarePlus" container="body"></fa-icon>
               </div>
 
-              <div
-                *ngIf="testAccord(adhesion.accords, 'Attestation Sante').datePassage != null && testAccord(adhesion.accords, 'Attestation Sante').etat == true">
-                Vous avez attesté de votre bonne santé à l'ALOD pour {{adhesion.adherent.prenom}} le
-                {{testAccord(adhesion.accords, 'Attestation Sante').datePassage | date:
-                'dd/MM/YYYY'}}<br>Vous n'avez pas de certificat médical à fournir.
+              <div ngbDropdownMenu aria-labelledby="dropdownBasic1" style="float:right;">
+                <button ngbDropdownItem (click)="ajoutAccordAdhesion(adhesion,'Reglement Interieur')">Reglement
+                  Interieur</button>
+                <button ngbDropdownItem (click)="ajoutAccordAdhesion(adhesion,'Attestation Sante')">Attestation
+                  Sante</button>
+                <button ngbDropdownItem (click)="ajoutAccordAdhesion(adhesion,'Vie du Club')">Vie du Club</button>
+                <button ngbDropdownItem (click)="ajoutAccordAdhesion(adhesion,'Autorisation Parentale')">Autorisation
+                  Parentale</button>
+                <button ngbDropdownItem (click)="ajoutAccordAdhesion(adhesion,'Prise en Charge')">Prise en
+                  Charge</button>
               </div>
-              <div
-                *ngIf="testAccord(adhesion.accords, 'Attestation Sante').datePassage != null && testAccord(adhesion.accords, 'Attestation Sante').etat == false">
-                Vous n'avez pas accepté l'accord de l'attestation de santé à l'ALOD pour
-                {{adhesion.adherent.prenom}}
-                le
-                {{testAccord(adhesion.accords, 'Attestation Sante').datePassage | date:
-                'dd/MM/YYYY'}}<br>Vous devez fournir un certificat médical valide au secretariat ou
-                l'ajouter en PDF dans l'application (Ajout de documents)
-              </div>
-
             </div>
 
-            <div *ngIf="adhesion.testAtestationSante"><b>Attestation de santé</b><br />
-              Le certificat médical n'est obligatoire<br />
-              que dans le cas d'une réponse positive au questionnaire de santé<br /> <a
-                href="https://www.alod.fr/wp-content/uploads/2022/04/INSCRIPTION-Questionnaire_de_sante.pdf"
-                target="_blank">questionnaire de santé</a><br>
-              Si vous avez répondu Non à toutes les questions du questionnaire,<br>
-              vous pouvez valider cet accord d'attestation de votre bonne santé.<br>
-              Sinon refusez le pour signifier au secrétariat que vous devrez fournir un nouveau certificat
-              médical<br>
-              <div class="btn-group btn-group-sm" role="group" aria-label="rgpd">
-                <div type='button' class="btn btn-primary btn-independent"
-                  (click)="updateAccord(adhesion.accords, 'Attestation Sante',true); adhesion.testAtestationSante = false;">
-                  Accepter
+
+            <div *ngFor="let accord of adhesion.accords | orderBy:'id':false ">
+
+              <div *ngIf="accord.nom == 'Attestation Sante'" class="row align-items-center">
+                <div *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || accord.datePassage != null"
+                  class="col-8">
+                  <b>Attestation de santé</b><fa-icon *ngIf="showAdmin || showSecretaire"
+                    (click)="openConfirmModalAccordAdhesion(confirmAccordAdhesionModal,adhesion,accord)" [icon]="faSquareMinus"></fa-icon>
                 </div>
-                <div type='button' class="btn btn-primary btn-independent"
-                  (click)="updateAccord(adhesion.accords, 'Attestation Sante',false); adhesion.testAtestationSante = false;">
-                  Refuser
+                <div *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || accord.datePassage != null"
+                  class="col-4">
+                  <fa-icon *ngIf="accord.etat == true" class="green fa-2xl" [icon]="faCircleCheck"></fa-icon><fa-icon
+                    *ngIf="accord.etat == false" class="orange fa-2xl" [icon]="faCircleXmark"></fa-icon>
+                </div>
+                <div *ngIf="adhesion.statutActuel == 'Attente validation adhérent' && accord.datePassage == null"
+                  type='button' class="btn btn-block btn-primary col-12 alod"
+                  (click)="openAccordModal(AttestSanteModal, accord, false)">Merci de confirmer votre
+                  accord<br />d'attestation de
+                  santé
                 </div>
 
+                <div *ngIf="accord.datePassage != null && accord.etat == true">
+                  Vous avez attesté de votre bonne santé à l'ALOD pour {{adhesion.adherent.prenom}} le
+                  {{accord.datePassage | date:
+                  'dd/MM/YYYY'}}<br>Vous n'avez pas de certificat médical à fournir.
+                  <fa-icon (click)="openAccordModal(AttestSanteModal, accord, true)" class="pointer orange"
+                    [icon]="faCircleQuestion"></fa-icon>
+                </div>
+                <div *ngIf="accord.datePassage != null && accord.etat == false">
+                  Vous n'avez pas accepté l'accord de l'attestation de santé à l'ALOD pour
+                  {{adhesion.adherent.prenom}}
+                  le
+                  {{accord.datePassage | date:
+                  'dd/MM/YYYY'}}<br>Vous devez fournir un certificat médical valide au secretariat ou
+                  l'ajouter en PDF dans l'application (Ajout de documents)
+                  <fa-icon (click)="openAccordModal(AttestSanteModal, accord, true)" class="pointer orange"
+                    [icon]="faCircleQuestion"></fa-icon>
+                </div>
+
+              </div>
+
+
+
+              <div *ngIf="accord.nom == 'Autorisation Parentale'" class="row align-items-center">
+
+                <div *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || accord.etat != null"
+                  class="col-8">
+                  <b>Autorisation parentale</b><fa-icon *ngIf="showAdmin || showSecretaire"
+                    (click)="openConfirmModalAccordAdhesion(confirmAccordAdhesionModal,adhesion,accord)" [icon]="faSquareMinus"></fa-icon>
+                </div>
+                <div *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || accord.datePassage != null"
+                  class="col-4">
+                  <fa-icon *ngIf="accord.etat == true" class="green fa-2xl" [icon]="faCircleCheck"></fa-icon><fa-icon
+                    *ngIf="accord.etat == false" class="orange fa-2xl" [icon]="faCircleXmark"></fa-icon>
+                </div>
+                <div *ngIf="adhesion.statutActuel == 'Attente validation adhérent' && accord.etat == null" type='button'
+                  class="btn btn-block btn-primary col-12 alod"
+                  (click)="openAccordModal(AutParentModal, accord, false)">Merci de
+                  confirmer votre accord<br />
+                  d'autorisation parentale
+                </div>
+
+                <div *ngIf="accord.etat != null">
+                  Vous avez donné votre autorisation parentale à l'ALOD pour {{adhesion.adherent.prenom}} le
+                  {{accord.datePassage | date: 'dd/MM/YYYY'}}
+                  <fa-icon (click)="openAccordModal(AutParentModal, accord, true)" class="pointer orange"
+                    [icon]="faCircleQuestion"></fa-icon>
+                </div>
+              </div>
+
+
+              <div *ngIf="accord.nom == 'Prise en Charge'" class="row align-items-center">
+
+                <div *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || accord.etat != null"
+                  class="col-8"><b>Attestation de prise en charge</b><fa-icon *ngIf="showAdmin || showSecretaire"
+                    (click)="openConfirmModalAccordAdhesion(confirmAccordAdhesionModal,adhesion,accord)" [icon]="faSquareMinus"></fa-icon></div>
+                <div *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || accord.etat != null"
+                  class="col-4">
+                  <fa-icon *ngIf="accord.etat == true" class="green fa-2xl" [icon]="faCircleCheck"></fa-icon><fa-icon
+                    *ngIf="accord.etat == false" class="orange fa-2xl" [icon]="faCircleXmark"></fa-icon>
+                </div>
+                <div *ngIf="adhesion.statutActuel == 'Attente validation adhérent' && accord.etat == null" type='button'
+                  class="btn btn-block btn-primary col-12 alod" (click)="openAccordModal(AutPriseModal, accord, false)">
+                  Merci de confirmer votre accord<br />d'attestation de prise en charge
+                </div>
+
+                <div *ngIf="accord.etat != null">
+                  Vous avez donné votre autorisation de prise en charge à l'ALOD pour {{adhesion.adherent.prenom}}
+                  le
+                  {{accord.datePassage | date: 'dd/MM/YYYY'}}
+                  <fa-icon (click)="openAccordModal(AutPriseModal, accord, true)" class="pointer orange"
+                    [icon]="faCircleQuestion"></fa-icon>
+                </div>
+              </div>
+
+
+
+
+              <div *ngIf="accord.nom == 'Vie du Club'" class="row align-items-center ">
+
+                <div *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || accord.etat != null"
+                  class="col-8"><b>Vie du club</b><fa-icon *ngIf="showAdmin || showSecretaire"
+                    (click)="openConfirmModalAccordAdhesion(confirmAccordAdhesionModal,adhesion,accord)" [icon]="faSquareMinus"></fa-icon>
+                </div>
+                <div *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || accord.etat != null"
+                  class="col-4 ">
+                  <fa-icon *ngIf="accord.etat == true" class="green fa-2xl" [icon]="faCircleCheck"></fa-icon><fa-icon
+                    *ngIf="accord.etat == false" class="orange fa-2xl" [icon]="faCircleXmark"></fa-icon>
+                </div>
+                <div *ngIf="adhesion.statutActuel == 'Attente validation adhérent' && accord.etat == null" type='button'
+                  class="btn btn-block btn-primary col-12 alod" (click)="openAccordModal(VieClubModal, accord, false)">
+                  Merci de confirmer votre accord<br />à la
+                  vie du club
+                </div>
+
+                <div *ngIf="accord.etat != null">
+                  Vous avez accepté de participer à la vie du club le {{accord.datePassage | date: 'dd/MM/YYYY'}}
+                  <fa-icon (click)="openAccordModal(VieClubModal, accord, true)" class="pointer orange"
+                    [icon]="faCircleQuestion"></fa-icon>
+                </div>
+
+              </div>
+
+
+
+              <div *ngIf="accord.nom == 'Reglement Interieur'" class="row align-items-center">
+                <div *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || accord.etat != null"
+                  class="col-8"><b>Règlement intérieur</b><fa-icon *ngIf="showAdmin || showSecretaire"
+                    (click)="openConfirmModalAccordAdhesion(confirmAccordAdhesionModal,adhesion,accord)" [icon]="faSquareMinus"></fa-icon></div>
+
+                <div *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || accord.etat != null"
+                  class="col-4 ">
+                  <fa-icon *ngIf="accord.etat == true" class="green fa-2xl" [icon]="faCircleCheck"></fa-icon><fa-icon
+                    *ngIf="accord.etat != true" class="orange fa-2xl" [icon]="faCircleXmark"></fa-icon>
+                </div>
+                <div *ngIf="adhesion.statutActuel == 'Attente validation adhérent' && accord.etat == null" type='button'
+                  class="btn btn-block btn-primary col-12 alod" (click)="openAccordModal(RegIntModal, accord, false)">
+                  Merci de confirmer votre accord<br />au règlement intérieur</div>
+                <div *ngIf="accord.etat != null">
+                  Vous avez accepté le règlement intérieur de l'ALOD {{accord.datePassage | date: 'dd/MM/YYYY'}}
+                  <fa-icon (click)="openAccordModal(RegIntModal, accord, true)" class="pointer orange"
+                    [icon]="faCircleQuestion"></fa-icon>
+                </div>
               </div>
             </div>
-
-
-            <div *ngIf="testAccord(adhesion.accords, 'Autorisation Parentale') != undefined"
-              class="row align-items-center">
-
-              <div
-                *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || testAccord(adhesion.accords, 'Autorisation Parentale').etat != null"
-                class="col-8">
-                <b>Autorisation parentale</b>
-              </div>
-              <div
-                *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || testAccord(adhesion.accords, 'Autorisation Parentale').datePassage != null"
-                class="col-4">
-                <fa-icon *ngIf="testAccord(adhesion.accords, 'Autorisation Parentale').etat == true"
-                  class="green fa-2xl" [icon]="faCircleCheck"></fa-icon><fa-icon
-                  *ngIf="testAccord(adhesion.accords, 'Autorisation Parentale').etat == false" class="orange fa-2xl"
-                  [icon]="faCircleXmark"></fa-icon>
-              </div>
-              <div
-                *ngIf="adhesion.statutActuel == 'Attente validation adhérent' && testAccord(adhesion.accords, 'Autorisation Parentale').etat == null"
-                type='button' class="btn btn-block btn-primary col-12 alod"
-                (click)="adhesion.testautorisationParentale = !adhesion.testautorisationParentale">Merci de
-                confirmer votre accord<br />
-                d'autorisation parentale
-              </div>
-
-              <div *ngIf="testAccord(adhesion.accords, 'Autorisation Parentale').etat != null">
-                Vous avez donné votre autorisation parentale à l'ALOD pour {{adhesion.adherent.prenom}} le
-                {{testAccord(adhesion.accords, 'Autorisation Parentale').datePassage | date: 'dd/MM/YYYY'}}
-              </div>
-            </div>
-
-            <div *ngIf="adhesion.testautorisationParentale"><b>Autorisation parentale</b><br />
-              Vous venez d'inscrire votre enfant à une activité de l'ALOD.<br />
-              Les parents doivent s'assurer de la présence de l'animateur avant de laisser leurs enfants devant
-              ou
-              dans la salle<br />
-              et venir les reprendre à l'heure à l'issue de l'activité.<br />
-              En dehors des heures d'activités, la responsabilité de l'ALOD n'est plus engagée.<br />
-              Les animateurs de l'ALOD sont autorisés à faire pratiquer des soins d'urgence en cas de
-              besoin<br />
-              <div type='button' class="btn btn-primary btn-independent"
-                (click)="updateAccord(adhesion.accords, 'Autorisation Parentale',true); adhesion.testautorisationParentale = false;">
-                Accepter
-              </div>
-            </div>
-
-
-            <div *ngIf="testAccord(adhesion.accords, 'Prise en Charge') != undefined" class="row align-items-center">
-
-              <div
-                *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || testAccord(adhesion.accords, 'Prise en Charge').etat != null"
-                class="col-8"><b>Attestation de prise en charge</b></div>
-              <div
-                *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || testAccord(adhesion.accords, 'Prise en Charge').etat != null"
-                class="col-4">
-                <fa-icon *ngIf="testAccord(adhesion.accords, 'Prise en Charge').etat == true" class="green fa-2xl"
-                  [icon]="faCircleCheck"></fa-icon><fa-icon
-                  *ngIf="testAccord(adhesion.accords, 'Prise en Charge').etat == false" class="orange fa-2xl"
-                  [icon]="faCircleXmark"></fa-icon>
-              </div>
-              <div
-                *ngIf="adhesion.statutActuel == 'Attente validation adhérent' && testAccord(adhesion.accords, 'Prise en Charge').etat == null"
-                type='button' class="btn btn-block btn-primary col-12 alod"
-                (click)="adhesion.testPriseEnCharge = !adhesion.testPriseEnCharge">
-                Merci de confirmer votre accord<br />d'attestation de prise en charge
-              </div>
-
-              <div *ngIf="testAccord(adhesion.accords, 'Prise en Charge').etat != null">
-                Vous avez donné votre autorisation de prise en charge à l'ALOD pour {{adhesion.adherent.prenom}}
-                le
-                {{testAccord(adhesion.accords, 'Prise en Charge').datePassage | date: 'dd/MM/YYYY'}}
-              </div>
-            </div>
-
-
-            <div *ngIf="adhesion.testPriseEnCharge"><b>Attestation de prise en charge</b><br />
-              J'autorise l'animateur, entraineur ou administrateur de l'ALOD<br />
-              à venir chercher {{ adhesion.adherent.prenom }} {{ adhesion.adherent.nom }}<br />
-              à l'école ou au périscolaire de l'école OucheDinier afin de l'emmener à son cours<br />
-              <div type='button' class="btn btn-primary btn-independent"
-                (click)="updateAccord(adhesion.accords, 'Prise en Charge',true); adhesion.testPriseEnCharge = false;">
-                Accepter
-              </div>
-            </div>
-
-
-
-            <div *ngIf="testAccord(adhesion.accords, 'Vie du Club') != undefined" class="row align-items-center ">
-
-              <div
-                *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || testAccord(adhesion.accords, 'Vie du Club').etat != null"
-                class="col-8"><b>Vie du club</b>
-              </div>
-              <div
-                *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || testAccord(adhesion.accords, 'Vie du Club').etat != null"
-                class="col-4 ">
-                <fa-icon *ngIf="testAccord(adhesion.accords, 'Vie du Club').etat == true" class="green fa-2xl"
-                  [icon]="faCircleCheck"></fa-icon><fa-icon
-                  *ngIf="testAccord(adhesion.accords, 'Vie du Club').etat == false" class="orange fa-2xl"
-                  [icon]="faCircleXmark"></fa-icon>
-              </div>
-              <div
-                *ngIf="adhesion.statutActuel == 'Attente validation adhérent' && testAccord(adhesion.accords, 'Vie du Club').etat == null"
-                type='button' class="btn btn-block btn-primary col-12 alod"
-                (click)="adhesion.testVieClub = !adhesion.testVieClub">Merci de confirmer votre accord<br />à la
-                vie du club
-              </div>
-
-              <div *ngIf="testAccord(adhesion.accords, 'Vie du Club').etat != null">
-                Vous avez accepté de participer à la vie du club le {{testAccord(adhesion.accords, 'Vie du
-                Club').datePassage | date: 'dd/MM/YYYY'}}
-              </div>
-
-
-            </div>
-            <div *ngIf="adhesion.testVieClub"><b>Adhésion à la vie du club</b><br />
-              J'accepte également de participer,<br />
-              dans la limite de mes possibilités et de manière collective,<br />
-              aux déplacements de l'équipe,<br />
-              aux responsabilités d'arbitre ou de marqueur/chronométreur<br />
-              et de tenir le bar à tour de rôle<br />
-              pendant les matchs de mon enfant ou de mon équipe.<br />
-              <div type='button' class="btn btn-primary btn-independent"
-                (click)="updateAccord(adhesion.accords, 'Vie du Club',true); adhesion.testVieClub = false;">
-                Accepter
-              </div>
-            </div>
-
-
-
-            <div class="row align-items-center">
-
-              <div
-                *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || testAccord(adhesion.accords, 'Reglement Interieur').etat != null"
-                class="col-8"><b>Règlement intérieur</b></div>
-
-              <div
-                *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || testAccord(adhesion.accords, 'Reglement Interieur').etat != null"
-                class="col-4 ">
-                <fa-icon *ngIf="testAccord(adhesion.accords, 'Reglement Interieur').etat == true" class="green fa-2xl"
-                  [icon]="faCircleCheck"></fa-icon><fa-icon
-                  *ngIf="testAccord(adhesion.accords, 'Reglement Interieur').etat != true" class="orange fa-2xl"
-                  [icon]="faCircleXmark"></fa-icon>
-              </div>
-              <div
-                *ngIf="adhesion.statutActuel == 'Attente validation adhérent' && testAccord(adhesion.accords, 'Reglement Interieur').etat == null"
-                type='button' class="btn btn-block btn-primary col-12 alod"
-                (click)="adhesion.testReglementInt = !adhesion.testReglementInt">
-                Merci de confirmer votre accord<br />au règlement intérieur</div>
-              <div *ngIf="testAccord(adhesion.accords, 'Reglement Interieur').etat != null">
-                Vous avez accepté le règlement intérieur de l'ALOD {{testAccord(adhesion.accords, 'Reglement
-                Interieur').datePassage | date: 'dd/MM/YYYY'}}
-              </div>
-            </div>
-
-
-            <div *ngIf="adhesion.testReglementInt"><b>Règlement intérieur</b><br />
-              Vous vous inscrivez à une activité au sein de l’ALOD (Amicale Laïque de L’Ouche Dinier). <br />
-              <b>Vous pouvez consulter les statuts et toutes les informations concernant cette association sur
-                le site : <a href="https://www.alod.fr" target="_blank">www.alod.fr</a></b><br /> <br />
-              Inscriptions et cours <br />
-              Les inscriptions aux activités sont valables pour la période de septembre à juin. <br />
-              1 cours d’essai est possible avant l’inscription selon les modalités de l’activité si le cours
-              n’est pas complet. <br />
-              Toute inscription est définitive<br />
-              Vous pouvez participer à l’activité quand votre dossier d’inscription est complet.<br />
-              Aucun remboursement ne pourra être demandé<br /><br />
-              Seule la présentation au cours du premier trimestre d’un certificat médical de contre-
-              indication précisant l’activité pratiquée, avec restitution de la carte de la FAL, pourra faire
-              l’objet d’un remboursement partiel déduction faite des frais engagés (carte FAL, frais
-              administratifs ALOD, cotisation 1er trimestre).<br />
-              Les cas de force majeure justifiés (mutation professionnelle, déménagement,...) survenus au
-              cours du 1er trimestre feront l’objet d’un remboursement partiel.<br />
-              L’ALOD propose 25 à 30 cours par an en fonction du calendrier
-              (jours fériés), des disponibilités des animateurs, etc. Un cours annulé sera reporté ou non
-              selon les possibilités (disponibilités de l’animateur, de salles,...). En aucun cas, un
-              remboursement ne pourra être demandé pour l’annulation de cours dans la limite des 25
-              cours/an, ni en cas de circonstance(s) exceptionnelle(s).<br /><br />
-              Fonctionnement des sections<br />
-              Chaque section est représentée par un ou des référents responsables agréé(s) par le Conseil
-              d’Administration. Ils mettent en application auprès des animateurs les décisions prises en
-              Assemblée Générale et par le Conseil d’Administration.<br />
-              En cas de litige dans une section, le Conseil d’Administration convoquera les référents et les
-              animateurs et prendra les décisions adéquates.<br />
-              A l’Assemblée Générale, l’animateur ou un responsable de la section peut présenter un
-              compte rendu de la saison écoulée.<br /><br />
-              Fonctionnement de l’Amicale<br />
-              L’Amicale laïque de l’Ouche Dinier est administrée par un Conseil d’Administration.<br />
-              Aucun membre du Conseil d’Administration ne peut se servir de ce titre s’il n’est délégué
-              officiellement à cet effet. L’administrateur assiste régulièrement aux réunions du Conseil
-              d’Administration. Des absences répétées sans excuse pourront entraîner l’exclusion après
-              entretien entre l’intéressé et le Conseil d’Administration. Les représentants de l’Amicale dans
-              différentes instances doivent être agréés par le Conseil d’Administration.<br />
-              Une section ne peut s’ouvrir que sur décision du Conseil d’Administration.<br />
-              <br />
-              <div type='button' class="btn btn-primary btn-independent"
-                (click)="updateAccord(adhesion.accords, 'Reglement Interieur',true); adhesion.testReglementInt = false;">
-                Acceptation du règlement
-                intérieur
-              </div>
-            </div>
-
-
-
-
           </td>
 
-
-
           <td class="center">{{ adhesion.statutActuel}}<br />
-
-            <ng-template #tipAttestation><b>Attestation</b><br />
-              Cliquez pour télécharger votre attestation de paiement
-            </ng-template>
-
+            <h5 *ngIf="adhesionValide(adhesion)">Attestation de paiement</h5>
             <fa-icon *ngIf="adhesionValide(adhesion)" class="orange fa-2xl" (click)="openPDF(adhesion)"
-              [ngbTooltip]="tipAttestation" [icon]="faCloudDownloadAlt"></fa-icon>
+              [icon]="faCloudDownloadAlt"></fa-icon>
 
             <ng-template #tipPasValide><b>Validation demande d'adhésion</b><br />
               Vous devez d'abord répondre aux accords (colonne précédente)
@@ -1349,7 +1060,7 @@
       <div *ngIf="totalRestantDu != 0 && showHelloAsso" type='button' class="btn btn-primary alod btn-independent"
         (click)="helloassoAlod = !helloassoAlod">Paiement via HelloAsso</div>
 
-        <div *ngIf="totalRestantDu != 0 && showHelloAsso" type='button' class="btn btn-primary alod btn-independent"
+      <div *ngIf="totalRestantDu != 0 && showHelloAsso" type='button' class="btn btn-primary alod btn-independent"
         (click)="helloassoAlod3X = !helloassoAlod3X">Paiement via HelloAsso en 3X</div>
 
     </div>
@@ -1377,7 +1088,7 @@
     <h4 class="modal-title" id="modal-basic-title">{{pdfName}}</h4>
     <button type="button" class="btn-close" aria-label="Close" (click)="dismiss()"></button>
   </div>
-  <div class="modal-body modalFullHeight">
+  <div class="modal-body modal-fullsize modalFullHeight">
 
     <pdf-viewer [src]="pdfEditSrc" [render-text]="true" [original-size]="false"></pdf-viewer>
   </div>
@@ -1395,7 +1106,7 @@
     <input type="file" (change)="loadFile($event)" accept=".pdf">
     <button type="button" class="btn-close" aria-label="Close" (click)="dismiss()"></button>
   </div>
-  <div class="modal-body modalFullHeight">
+  <div class="modal-body modal-fullsize modalFullHeight">
 
     <pdf-viewer *ngIf="!isFailedPopup" [src]="pdfSrc" [render-text]="true" [original-size]="false"></pdf-viewer>
 
@@ -1415,4 +1126,255 @@
 
   </div>
 
+</ng-template>
+
+
+
+<ng-template #confirmAccordAdherentModal let-c="close" let-d="dismiss">
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Suppression Accord</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="dismissSupress()"></button>
+  </div>
+  <div class="modal-body">
+    Vous êtes sur le point de supprimer l'accord {{selectedAccord.nom}}<br />
+    de {{selectedAdherent.prenom}}
+  </div>
+  <div class="modal-footer">
+    <button type="submit" class="btn btn-primary" (click)="retraitAccord(selectedAdherent,selectedAccord)">Valider</button>
+  </div>
+</ng-template>
+
+<ng-template #confirmAccordAdhesionModal let-c="close" let-d="dismiss">
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Suppression Accord</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="dismissSupress()"></button>
+  </div>
+  <div class="modal-body">
+    Vous êtes sur le point de supprimer l'accord {{selectedAccord.nom}}<br />
+    de l'activitée {{selectedAdhesion.activite?.nom}}
+  </div>
+  <div class="modal-footer">
+    <button type="submit" class="btn btn-primary" (click)="retraitAccordAdhesion(selectedAdhesion,selectedAccord)">Valider</button>
+  </div>
+</ng-template>
+
+
+
+
+<ng-template #confirmModal let-c="close" let-d="dismiss">
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Suppression</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="dismissSupress()"></button>
+  </div>
+  <div class="modal-body">
+    Vous êtes sur le point de supprimer l'adhérent {{selectedAdherent.prenom}}<br />
+    {{selectedAdherent.adhesions.length > 0?"Toutes ses adhésions seront également supprimées":"" }}
+    <br />
+    {{selectedAdherent.referent?"C'est le référent du groupe, tous les adhérents du groupe":"" }}
+    <br />
+
+  </div>
+  <div class="modal-footer">
+    <button type="submit" class="btn btn-primary" (click)="acceptSupress(selectedAdherent)">Valider</button>
+  </div>
+</ng-template>
+
+
+
+
+
+
+<ng-template #RGPDModal let-c="close" let-d="dismiss">
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Utilisation des données personnelles:</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="dismissSupress()"></button>
+  </div>
+  <div class="modal-body">
+    Les informations recueillies sur ce formulaire sont enregistrées dans un fichier informatisé par le
+    secrétariat de l'ALOD pour permettre le fonctionnement des activités. La base légale du traitement est
+    le
+    contrat entre l'ALOD et le futur adhérent/liciencié.<br />
+    Les données collectées seront communiquées aux seuls destinataires suivants : secrétariat de l'ALOD de
+    l'UFOLEP et de la FAL.<br />
+
+    Les données sont conservées pendant toute la durée des activitées aux quelles l'adhérent/licencié à
+    souscrit
+    au sein de l'ALOD suivi d'une année d'historisation.<br />
+
+    Vous pouvez accéder aux données vous concernant, les rectifier, demander leur effacement ou exercer
+    votre
+    droit à la limitation du traitement de vos données.<br />
+
+    Consultez le site <a href="https://www.cnil.fr" target="_blank">www.cnil.fr</a> pour plus d’informations
+    sur vos
+    droits.<br />
+
+    Pour exercer ces droits ou pour toute question sur le traitement de vos données dans ce dispositif, vous
+    pouvez contacter (le cas échéant, notre délégué à la protection des données ou le service chargé de
+    l’exercice de ces droits) : alod.amicale@gmail.com <br />
+    Si vous estimez, après nous avoir contactés, que vos droits « Informatique et Libertés » ne sont pas
+    respectés, vous pouvez adresser une réclamation à la CNIL.<br />
+
+  </div>
+  <div *ngIf="!consultation" class="modal-footer">
+    <button type="submit" class="btn btn-primary" (click)="reponseAccord(selectedAccord, true)">Valider</button>
+  </div>
+</ng-template>
+
+
+<ng-template #ImageModal let-c="close" let-d="dismiss">
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Droit à l'image</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="dismissSupress()"></button>
+  </div>
+  <div class="modal-body">
+    J'autorise l'ALOD à utiliser les photographies, films, travaux et productions réalisés dans le
+    cadre de l'activité sportive.
+    Nous utiliserons les photos et autres médias pris durant
+    les cours pour la promotion de l'ALOD (site internet, affiches, flyer, forum des associations)<br />
+    <b>Pour les adhérents du Basket, l'acceptation du droit à l'image est compris dans l'adhésion à la
+      FFBB.</b>
+  </div>
+  <div *ngIf="!consultation" class="modal-footer">
+    <button type="submit" class="btn btn-primary" (click)="reponseAccord(selectedAccord, false)">Refuser</button>
+    <button type="submit" class="btn btn-primary" (click)="reponseAccord(selectedAccord, true)">Valider</button>
+  </div>
+</ng-template>
+
+
+
+
+
+
+
+
+<ng-template #AutPriseModal let-c="close" let-d="dismiss">
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Attestation de prise en charge</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="dismissSupress()"></button>
+  </div>
+  <div class="modal-body">
+    J'autorise l'animateur, entraineur ou administrateur de l'ALOD<br />
+    à venir chercher votre enfant à l'école ou<br />
+    au périscolaire de l'école OucheDinier afin de l'emmener à son cours<br />
+  </div>
+  <div *ngIf="!consultation" class="modal-footer">
+    <button type="submit" class="btn btn-primary" (click)="reponseAccord(selectedAccord, false)">Refuser</button>
+    <button type="submit" class="btn btn-primary" (click)="reponseAccord(selectedAccord, true)">Valider</button>
+  </div>
+</ng-template>
+
+<ng-template #RegIntModal let-c="close" let-d="dismiss">
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Règlement intérieur</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="dismissSupress()"></button>
+  </div>
+  <div class="modal-body">
+    Vous vous inscrivez à une activité au sein de l’ALOD (Amicale Laïque de L’Ouche Dinier). <br />
+    <b>Vous pouvez consulter les statuts et toutes les informations concernant cette association sur
+      le site : <a href="https://www.alod.fr" target="_blank">www.alod.fr</a></b><br /> <br />
+    Inscriptions et cours <br />
+    Les inscriptions aux activités sont valables pour la période de septembre à juin. <br />
+    1 cours d’essai est possible avant l’inscription selon les modalités de l’activité si le cours
+    n’est pas complet. <br />
+    Toute inscription est définitive<br />
+    Vous pouvez participer à l’activité quand votre dossier d’inscription est complet.<br />
+    Aucun remboursement ne pourra être demandé<br /><br />
+    Seule la présentation au cours du premier trimestre d’un certificat médical de contre-
+    indication précisant l’activité pratiquée, avec restitution de la carte de la FAL, pourra faire
+    l’objet d’un remboursement partiel déduction faite des frais engagés (carte FAL, frais
+    administratifs ALOD, cotisation 1er trimestre).<br />
+    Les cas de force majeure justifiés (mutation professionnelle, déménagement,...) survenus au
+    cours du 1er trimestre feront l’objet d’un remboursement partiel.<br />
+    L’ALOD propose 25 à 30 cours par an en fonction du calendrier
+    (jours fériés), des disponibilités des animateurs, etc. Un cours annulé sera reporté ou non
+    selon les possibilités (disponibilités de l’animateur, de salles,...). En aucun cas, un
+    remboursement ne pourra être demandé pour l’annulation de cours dans la limite des 25
+    cours/an, ni en cas de circonstance(s) exceptionnelle(s).<br /><br />
+    Fonctionnement des sections<br />
+    Chaque section est représentée par un ou des référents responsables agréé(s) par le Conseil
+    d’Administration. Ils mettent en application auprès des animateurs les décisions prises en
+    Assemblée Générale et par le Conseil d’Administration.<br />
+    En cas de litige dans une section, le Conseil d’Administration convoquera les référents et les
+    animateurs et prendra les décisions adéquates.<br />
+    A l’Assemblée Générale, l’animateur ou un responsable de la section peut présenter un
+    compte rendu de la saison écoulée.<br /><br />
+    Fonctionnement de l’Amicale<br />
+    L’Amicale laïque de l’Ouche Dinier est administrée par un Conseil d’Administration.<br />
+    Aucun membre du Conseil d’Administration ne peut se servir de ce titre s’il n’est délégué
+    officiellement à cet effet. L’administrateur assiste régulièrement aux réunions du Conseil
+    d’Administration. Des absences répétées sans excuse pourront entraîner l’exclusion après
+    entretien entre l’intéressé et le Conseil d’Administration. Les représentants de l’Amicale dans
+    différentes instances doivent être agréés par le Conseil d’Administration.<br />
+    Une section ne peut s’ouvrir que sur décision du Conseil d’Administration.<br />
+    <br />
+  </div>
+  <div *ngIf="!consultation" class="modal-footer">
+    <button type="submit" class="btn btn-primary" (click)="reponseAccord(selectedAccord, true)">Accepter</button>
+  </div>
+</ng-template>
+
+<ng-template #VieClubModal let-c="close" let-d="dismiss">
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Adhésion à la vie du club</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="dismissSupress()"></button>
+  </div>
+  <div class="modal-body">
+    J'accepte également de participer,<br />
+    dans la limite de mes possibilités et de manière collective,<br />
+    aux déplacements de l'équipe,<br />
+    aux responsabilités d'arbitre ou de marqueur/chronométreur<br />
+    et de tenir le bar à tour de rôle<br />
+    pendant les matchs de mon enfant ou de mon équipe.<br />
+  </div>
+  <div *ngIf="!consultation" class="modal-footer">
+    <button type="submit" class="btn btn-primary" (click)="reponseAccord(selectedAccord, true)">Accepter</button>
+  </div>
+</ng-template>
+
+
+<ng-template #AttestSanteModal let-c="close" let-d="dismiss">
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Attestation de santé</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="dismissSupress()"></button>
+  </div>
+  <div class="modal-body">
+    Le certificat médical n'est obligatoire<br />
+    que dans le cas d'une réponse positive au questionnaire de santé<br />
+
+    <a href="https://www.alod.fr/wp-content/uploads/2022/04/INSCRIPTION-Questionnaire_de_sante.pdf"
+      target="_blank">questionnaire de santé</a><br>
+    Si vous avez répondu Non à toutes les questions du questionnaire,<br>
+    vous pouvez valider cet accord d'attestation de votre bonne santé.<br>
+    Sinon refusez le pour signifier au secrétariat que vous devrez fournir un certificat
+    médical<br>
+
+  </div>
+  <div *ngIf="!consultation" class="modal-footer">
+    <button type="submit" class="btn btn-primary" (click)="reponseAccord(selectedAccord, false)">Refuser</button>
+    <button type="submit" class="btn btn-primary" (click)="reponseAccord(selectedAccord, true)">Accepter</button>
+  </div>
+</ng-template>
+
+<ng-template #AutParentModal let-c="close" let-d="dismiss">
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Autorisation Parentale</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="dismissSupress()"></button>
+  </div>
+  <div class="modal-body">
+    Vous venez d'inscrire votre enfant à une activité de l'ALOD.<br />
+    Les parents doivent s'assurer de la présence de l'animateur avant de laisser leurs enfants devant
+    ou
+    dans la salle<br />
+    et venir les reprendre à l'heure à l'issue de l'activité.<br />
+    En dehors des heures d'activités, la responsabilité de l'ALOD n'est plus engagée.<br />
+    Les animateurs de l'ALOD sont autorisés à faire pratiquer des soins d'urgence en cas de
+    besoin<br />
+
+
+  </div>
+  <div *ngIf="!consultation" class="modal-footer">
+    <button type="submit" class="btn btn-primary" (click)="reponseAccord(selectedAccord, false)">Refuser</button>
+    <button type="submit" class="btn btn-primary" (click)="reponseAccord(selectedAccord, true)">Valider</button>
+  </div>
 </ng-template>

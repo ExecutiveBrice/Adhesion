@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams} from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { Accord, Activite, Adhesion, Paiement } from '../models';
+import { Accord, Activite, Adhesion, Notification, Paiement } from '../models';
 
 
 const API_URL = environment.server+'/api_adhesion/adhesion/';
@@ -66,13 +66,23 @@ export class AdhesionService {
   add(adhesions: Adhesion[]): Observable<Adhesion[]> {
     return this.http.post<Adhesion[]>(API_URL+"save", adhesions, { responseType: 'json' });
   }
-
+  
   getAll(): Observable<Adhesion[]> {
     return this.http.get<Adhesion[]>(API_URL+"all", {responseType: 'json' });
   }
 
+  getAllLiteBysection(sections:string): Observable<Adhesion[]> {
+    let params = new HttpParams().set('sections', '' + sections + '');
+    return this.http.get<Adhesion[]>(API_URL+"liteBysection", {params, responseType: 'json' });
+  }
+  
   update(adhesion: Adhesion): Observable<any> {
     return this.http.post(API_URL+"update", adhesion, { responseType: 'json' });
+  }
+
+  addVisite(adhesionId : number): Observable<Adhesion> {
+    let params = new HttpParams().set('adhesionId', '' + adhesionId + '');
+    return this.http.post<Adhesion>(API_URL+"addVisite", null,  {params, responseType: 'json' });
   }
 
   deletePaiement(adhesionId: number,paiementId: number): Observable<any> {

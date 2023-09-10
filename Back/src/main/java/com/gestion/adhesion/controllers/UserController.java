@@ -7,10 +7,10 @@ import com.gestion.adhesion.services.UserServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import javax.websocket.server.PathParam;
-import java.security.Principal;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -23,10 +23,17 @@ public class UserController {
 	@Autowired
 	AdherentRepository adherentRepository;
 
+
+	@GetMapping("/addUserForAll")
+	public ResponseEntity<?> addUserForAll() {
+		userServices.addUserForAll();
+		return ResponseEntity.ok("in progress");
+	}
+
 	@GetMapping("/connecteduser")
 	@PreAuthorize("hasRole('USER')")
-	public ResponseEntity<?> getConnectedUser(Principal principal) {
-		User user = userServices.findByEmail(principal.getName());
+	public ResponseEntity<?> getConnectedUser(Authentication Authentication) {
+		User user = userServices.findByEmail(Authentication.getName());
 		return ResponseEntity.ok(user);
 	}
 
@@ -56,14 +63,6 @@ public class UserController {
 	public ResponseEntity<?> getAllLite() {
 		return ResponseEntity.ok(userServices.getAllLite());
 	}
-
-	@GetMapping("/getUserByRole")
-	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<?> getUserByRole(@PathParam("role")  String role) {
-
-		return ResponseEntity.ok(userServices.getUserByRole(ERole.valueOf(role)));
-	}
-
 
 
 }

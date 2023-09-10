@@ -13,7 +13,7 @@ const httpOptions = {
 @Injectable({
   providedIn: 'root'
 })
-export class AdherentService {
+export class TribuService {
   constructor(private http: HttpClient) { }
 
   update(tribu: Tribu): Observable<any> {
