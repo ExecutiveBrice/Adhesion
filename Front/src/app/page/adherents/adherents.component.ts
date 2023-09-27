@@ -67,12 +67,9 @@ export class AdherentsComponent implements OnInit {
         this.isFailed = true;
         this.errorMessage = err.message
       })
-
-
   }
 
   exportAsXLSX(): void {
-
     this.excelService.exportAsExcelFile(this.adherents, 'adherents');
   }
 

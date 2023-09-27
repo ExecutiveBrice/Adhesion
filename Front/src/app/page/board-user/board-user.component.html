@@ -295,10 +295,10 @@
               </div>
             </div>
 
-            <div *ngIf="!adherent.emailReferent && !adherent.referent" class="form-group">
+            <div class="form-group">
 
               <label for="email">Email <span class="orange">* champs obligatoires</span></label>
-              <input type="email" class="form-control" name="email" [(ngModel)]="adherent.email" required minlength="10"
+              <input type="email" class="form-control" name="email" [(ngModel)]="adherent.email" (ngModelChange)="adherent.email = cleaning(adherent.email)"  (ngModelBlur)="adherent.email = cleaning(adherent.email)"  required minlength="10"
                 maxlength="50" #email="ngModel" ngModel email />
               <div class="alert-danger" *ngIf="email.errors && f.submitted">
                 <div *ngIf="email.errors.required">l'e-mail est obligatoire</div>
@@ -314,28 +314,6 @@
               </div>
             </div>
 
-            <ng-template #tipContentEmail><b>Email = Login</b><br />
-              Vous êtes l'utilisateur référent de ce compte,<br>
-              Si vous changez votre email, le login de connexion sera également modifié
-            </ng-template>
-            <div *ngIf="adherent.referent" class="form-group" container="body" [ngbTooltip]="tipContentEmail">
-
-              <label for="email">Email <span class="orange" container="body">*</span></label>
-              <input type="email" class="form-control" name="email" [(ngModel)]="adherent.email" required minlength="10"
-                maxlength="100" #email="ngModel" ngModel email />
-              <div class="alert-danger" *ngIf="email.errors && f.submitted">
-                <div *ngIf="email.errors.required">l'e-mail est obligatoire</div>
-                <div *ngIf="email.errors.minlength">
-                  L'e-mail doit avoir au moins 10 caractères
-                </div>
-                <div *ngIf="email.errors.maxlength">
-                  L'e-mail doit avoir au maximum 100 caractères
-                </div>
-                <div *ngIf="email.errors.email">
-                  l'e-mail doit avoir un format valide
-                </div>
-              </div>
-            </div>
 
             <div *ngIf="!adherent.referent" class="form-group">
               <label for="telephoneReferent">Utiliser le tel du référent ? <fa-icon *ngIf="adherent.telephoneReferent"
@@ -355,7 +333,7 @@
 
             <div *ngIf="!adherent.telephoneReferent" class="form-group">
               <label for="telephone">Téléphone <span class="orange" container="body">*</span></label>
-              <input type="tel" class="form-control" name="telephone" [(ngModel)]="adherent.telephone"
+              <input type="tel" class="form-control" name="telephone" (ngModelChange)="adherent.telephone = cleaning(adherent.telephone)" (ngModelBlur)="adherent.telephone = cleaning(adherent.telephone)" [(ngModel)]="adherent.telephone"
                 pattern="^[0-9]{10}$" #telephone="ngModel" />
 
               <div class="alert-danger" *ngIf="telephone.errors && f.submitted">

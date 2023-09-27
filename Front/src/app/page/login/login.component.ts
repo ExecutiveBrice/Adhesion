@@ -53,8 +53,6 @@ export class LoginComponent implements OnInit {
         this.messageConnexion = data.filter(param => param.paramName == "Text_Accueil")[0].paramValue;
         this.messageInscription = data.filter(param => param.paramName == "Text_Inscription")[0].paramValue;
         this.textMaintenance = data.filter(param => param.paramName == "Text_Maintenance")[0].paramValue;
-        
-
       },
       error: (error) => {
       }

@@ -36,7 +36,7 @@ export class BoardUserComponent implements OnInit {
   faSquareMinus = faSquareMinus;
   faPencilSquare = faPencilSquare;
   faSquarePlus = faSquarePlus;
-  model: NgbDateStruct = this.calendar.getToday();
+
   date: { year: number; month: number } | undefined;
   content?: string;
   edit?: boolean
@@ -49,7 +49,6 @@ export class BoardUserComponent implements OnInit {
   tribu: Tribu = new Tribu;
   helloassoAlod: boolean = false;
   helloassoAlod3X: boolean = false;
-
   testRgpd: boolean = false
   isFailed = false;
   validSecretariat: boolean = false;
@@ -73,7 +72,6 @@ export class BoardUserComponent implements OnInit {
 
 
   constructor(
-    private calendar: NgbCalendar,
     private userService: UserService,
     private adherentService: AdherentService,
     private adhesionService: AdhesionService,
@@ -87,6 +85,8 @@ export class BoardUserComponent implements OnInit {
 
 
   ngOnInit(): void {
+
+
     this.paramService.getAllBoolean().subscribe({
       next: (data) => {
         this.showHelloAsso = data.filter(param => param.paramName == "Show_HelloAsso")[0].paramValue;
@@ -113,7 +113,6 @@ export class BoardUserComponent implements OnInit {
     this.paramService.getAllText().subscribe({
       next: (data) => {
         this.message = data.filter(param => param.paramName == "Text_MonAdhesion")[0].paramValue;
-       
       },
       error: (error) => {
         this.isFailed = true;
@@ -143,7 +142,6 @@ export class BoardUserComponent implements OnInit {
           }
         );
 
-
       } else {
         this.userService.getConnectedUser().subscribe(
           data => {
@@ -158,23 +156,18 @@ export class BoardUserComponent implements OnInit {
     } else {
       this.router.navigate(['login']);
     }
-
-
   }
-
 
   fillUser(user: User) {
     this.user = user;
     this.tribu = user.adherent.tribu;
-
     this.tribu.adherents.forEach(adh => {
       adh.adhesions.forEach(adhesion => this.adhesions.push(adhesion))
       this.sanitize(adh);
     });
-
     this.fillObjects();
-
   }
+
   sanitize(adh: Adherent) {
     adh.adhesions = adh.adhesions == null || undefined ? [] : adh.adhesions;
     adh.adresse = adh.adresse == null || undefined ? "" : adh.adresse;
@@ -320,11 +313,6 @@ export class BoardUserComponent implements OnInit {
       this.adhesionsOpen = false
     }
   }
-
-
-
-
-
 
   adhesionPaiement: Adhesion[] = []
   calculRestantDu() {
@@ -809,7 +797,9 @@ export class BoardUserComponent implements OnInit {
     this.modalService.dismissAll();
   }
 
-
+cleaning(chaine : string){
+  return  chaine.toLowerCase().replaceAll(" ","")
+}
   
   ajoutAccord(adherent: Adherent, nomAccord: string) {
     this.adherentService.addAccord(adherent.id, nomAccord).subscribe(
