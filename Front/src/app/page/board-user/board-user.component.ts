@@ -21,8 +21,8 @@ import { ModalComponent } from '../modal/modal.component';
   styleUrls: ['./board-user.component.css']
 })
 export class BoardUserComponent implements OnInit {
-  
-  faSkull=faSkull;
+
+  faSkull = faSkull;
   faSquareCaretLeft = faSquareCaretLeft
   faSquareCaretDown = faSquareCaretDown
   faEye = faEye
@@ -65,11 +65,10 @@ export class BoardUserComponent implements OnInit {
   showAdmin: boolean = false;
   showSecretaire: boolean = false;
 
-  showHelloAsso:boolean|null = false;
+  showHelloAsso: boolean | null = false;
 
   // Default export is a4 paper, portrait, using millimeters for units
   doc: jsPDF = new jsPDF('p', 'mm', 'a4', true);
-
 
   constructor(
     private userService: UserService,
@@ -86,7 +85,6 @@ export class BoardUserComponent implements OnInit {
 
   ngOnInit(): void {
 
-
     this.paramService.getAllBoolean().subscribe({
       next: (data) => {
         this.showHelloAsso = data.filter(param => param.paramName == "Show_HelloAsso")[0].paramValue;
@@ -95,7 +93,6 @@ export class BoardUserComponent implements OnInit {
         this.showHelloAsso = false;
       }
     });
-
 
     this.paramService.isClose()
       .subscribe({
@@ -124,8 +121,6 @@ export class BoardUserComponent implements OnInit {
       this.mobile = true;
     }
     let userEmail = this.route.snapshot.paramMap.get('userEmail');
-
-
 
     if (this.tokenStorageService.getUser().roles) {
       this.showAdmin = this.tokenStorageService.getUser().roles.includes('ROLE_ADMIN');
@@ -287,7 +282,7 @@ export class BoardUserComponent implements OnInit {
     this.adherentsTotaux = 0
     this.adherentsACompleter = 0
     this.user.adherent.tribu.adherents.forEach(adherent => {
-      if(this.adhesions.filter(adh => adh.adherent?.id == adherent.id).length >0){
+      if (this.adhesions.filter(adh => adh.adherent?.id == adherent.id).length > 0) {
         this.adherentsTotaux += 1
       }
       if (!adherent.completAdhesion) {
@@ -324,7 +319,6 @@ export class BoardUserComponent implements OnInit {
         this.totalRestantDu = this.totalRestantDu + adh.tarif;
         this.adhesionPaiement.push(adh)
       }
-
     })
 
     if (this.totalRestantDu > 0) {
@@ -335,6 +329,8 @@ export class BoardUserComponent implements OnInit {
 
   onSubmit(adherent: Adherent): void {
     this.infoAdherent = false;
+    adherent.telephone = this.cleaning(adherent.telephone)
+    adherent.email = this.cleaning(adherent.email)
 
     if (adherent.id != 0) {
       this.adherentService.update(adherent).subscribe(
@@ -419,8 +415,6 @@ export class BoardUserComponent implements OnInit {
     }
     let newAdhesion = new Adhesion;
 
-
-
     newAdhesion.id = this.newAdhesions.length + 1
     newAdhesion.activite = newAdhesionActivite;
     newAdhesion.adherent = adherent;
@@ -459,8 +453,6 @@ export class BoardUserComponent implements OnInit {
     );
   }
 
-
-
   updateAccord(accord: Accord, etat: boolean | undefined) {
 
     if (accord.nom == 'Reglement Interieur') {
@@ -481,7 +473,6 @@ export class BoardUserComponent implements OnInit {
   isAllAccordsDone(accords: Accord[]): boolean {
     return accords.filter(acc => acc.etat == null).length == 0
   }
-
 
   updateAdhesion(adhesion: Adhesion) {
 
@@ -527,26 +518,22 @@ export class BoardUserComponent implements OnInit {
     this.calculCompletudeAdherent()
   }
 
-
   removeAdherent(addAdherent: Adherent) {
     this.tribu.adherents = this.tribu.adherents.filter(adh => adh.id != 0)
     this.calculCompletudeAdherent()
   }
 
-
   openAttestationSante() {
     window.open('https://www.alod.fr/wp-content/uploads/2022/04/INSCRIPTION-Questionnaire_de_sante.pdf', '_blank');
   }
+
   openCertifMed(activite: Activite) {
     if (activite.groupe == "ALOD_G") {
       window.open('https://cd.ufolep.org/vienne/vienne_d/data_1/pdf/ce/certificatmdicalufolep86.pdf', '_blank');
     } else {
       window.open('https://www.alod.fr/wp-content/uploads/2023/05/certif20232024.pdf', '_blank');
     }
-
   }
-
-
 
   openSurclassement() {
     window.open('https://www.alod.fr/wp-content/uploads/2023/05/Certificat-surclassement-2023-2024.pdf', '_blank');
@@ -558,11 +545,8 @@ export class BoardUserComponent implements OnInit {
     setTimeout(() => { this.afficheAlerte = false }, 5000);
   }
 
-
   uploadFile() {
-
     this.modalService.dismissAll();
-
     this.adherentService.addDocument(this.pdfFile, this.pdfAdherent.id).subscribe(
       data => {
         if (this.pdfAdherent.documents.length > 0) {
@@ -578,13 +562,12 @@ export class BoardUserComponent implements OnInit {
         this.message = this.message + err.message + "<br />"
       }
     );
-
   }
 
-  deleteDoc(doc:Document, adherent: Adherent){
+  deleteDoc(doc: Document, adherent: Adherent) {
     this.adherentService.deleteDoc(doc.id, adherent.id).subscribe(
       data => {
-       adherent.documents = adherent.documents.filter(document => document.id != doc.id)
+        adherent.documents = adherent.documents.filter(document => document.id != doc.id)
       },
       err => {
         this.isFailed = true;
@@ -592,7 +575,6 @@ export class BoardUserComponent implements OnInit {
       }
     );
   }
-
 
   openEditModal(targetModal: any, doc: Document) {
     this.modalService.open(targetModal, {
@@ -619,7 +601,6 @@ export class BoardUserComponent implements OnInit {
       scrollable: true
     });
     this.pdfAdherent = adherent
-
   }
 
   messagePopup: string = ""
@@ -643,8 +624,6 @@ export class BoardUserComponent implements OnInit {
         }
         reader.readAsDataURL(event.target.files[0]);
       }
-
-
     }
   }
 
@@ -652,11 +631,10 @@ export class BoardUserComponent implements OnInit {
     this.modalService.dismissAll();
   }
 
-
   openPDF(adhesion: Adhesion) {
 
     if (adhesion.adherent && adhesion.activite) {
-      let prix = 0 
+      let prix = 0
       adhesion.paiements.forEach(paiement => prix += paiement.montant)
       this.doc.setFontSize(7)
       this.doc.addImage("assets/logo.png", "JPEG", 15, 10, 52, 33);
@@ -667,34 +645,29 @@ export class BoardUserComponent implements OnInit {
       this.doc.text("Fait à Rezé", 150, 15);
       this.doc.text("Le : " + this.datePipe.transform(new Date, 'dd/MM/yyyy'), 150, 20);
 
-
       this.doc.setFontSize(30)
       this.doc.text("Attestation", 105, 100, { align: "center" });
-
 
       this.doc.setFontSize(12)
       this.doc.text("Je soussigné MAURY Morgane en qualité de présidente de l'ALOD,", 10, 120);
       this.doc.text("atteste que " + adhesion.adherent.prenom + " " + adhesion.adherent.nom + " né le " + this.datePipe.transform(adhesion.adherent.naissance, 'dd/MM/yyyy'), 10, 130);
-      this.doc.text("résident au " + adhesion.adherent.adresseReferent?this.user.adherent.adresse:adhesion.adherent.adresse, 10, 140);
+      this.doc.text("résident au " + adhesion.adherent.adresseReferent ? this.user.adherent.adresse : adhesion.adherent.adresse, 10, 140);
       this.doc.text("est inscrit à l'activité " + adhesion.activite.nom + " pour l'année scolaire 2023/2024", 10, 150);
       this.doc.text("et est à jour de sa cotisation de " + prix + "€ payée en " + adhesion.paiements[0].typeReglement, 10, 160);
 
       this.doc.addImage("assets/signature.png", "JPEG", 100, 200, 77, 43);
-
-
 
       this.doc.save("Attestation_" + adhesion.adherent.prenom + "_" + adhesion.adherent.nom + "_20232024.pdf");
     }
     this.doc = new jsPDF('p', 'mm', 'a4', true);
   }
 
-
   adhesionValide(adh: Adhesion): boolean {
     return adh.statutActuel.startsWith("Attente licence en ligne")
-    || adh.statutActuel.startsWith("Validée")
-    || adh.statutActuel.startsWith("Licence générée")
-    || adh.statutActuel.startsWith("Retour Comité")
-    || adh.statutActuel.startsWith("Licence T");
+      || adh.statutActuel.startsWith("Validée")
+      || adh.statutActuel.startsWith("Licence générée")
+      || adh.statutActuel.startsWith("Retour Comité")
+      || adh.statutActuel.startsWith("Licence T");
   }
 
   @ViewChild('modal')
@@ -704,17 +677,15 @@ export class BoardUserComponent implements OnInit {
     modalBody: "contenu",
     dismissButtonLabel: "X",
     closeButtonLabel: "Close",
-    acceptButtonLabel:"Accepte"
+    acceptButtonLabel: "Accepte"
   };
 
-  async openModal2(titre:string,body:string,refus:boolean,backClick:boolean) {
-    this.modalConfig.modalTitle=titre
-    this.modalConfig.modalBody=body
-
-
+  async openModal2(titre: string, body: string, refus: boolean, backClick: boolean) {
+    this.modalConfig.modalTitle = titre
+    this.modalConfig.modalBody = body
     return await this.modalComponent.open()
   }
-  
+
   selectedAdherent: Adherent = new Adherent(0)
   openConfirmModal(targetModal: any, adherent: Adherent) {
     this.modalService.open(targetModal, {
@@ -722,7 +693,6 @@ export class BoardUserComponent implements OnInit {
       backdrop: 'static'
     });
     this.selectedAdherent = adherent;
-
   }
 
   acceptSupress(adherent: Adherent) {
@@ -734,19 +704,18 @@ export class BoardUserComponent implements OnInit {
       err => {
         this.isFailed = true;
         this.errorMessage = err.message
-
       }
     )
   }
 
-  adherentEdit(adherent: Adherent){
+  adherentEdit(adherent: Adherent) {
     adherent.edit = !adherent.edit
 
-    if(adherent.edit){
+    if (adherent.edit) {
 
       this.adherentService.addVisite(adherent.id).subscribe({
         next: (response) => {
-          console.log("adherent.edit") 
+          console.log("adherent.edit")
         },
         error: (error) => {
           this.isFailed = true;
@@ -756,7 +725,7 @@ export class BoardUserComponent implements OnInit {
     }
   }
 
-  openConfirmModalAccordAdherent(targetModal: any, adherent: Adherent, accord:Accord) {
+  openConfirmModalAccordAdherent(targetModal: any, adherent: Adherent, accord: Accord) {
     this.modalService.open(targetModal, {
       centered: true,
       backdrop: 'static'
@@ -766,7 +735,7 @@ export class BoardUserComponent implements OnInit {
   }
 
   selectedAdhesion: Adhesion = new Adhesion
-  openConfirmModalAccordAdhesion(targetModal: any, adhesion: Adhesion, accord:Accord) {
+  openConfirmModalAccordAdhesion(targetModal: any, adhesion: Adhesion, accord: Accord) {
     this.modalService.open(targetModal, {
       centered: true,
       backdrop: 'static'
@@ -777,30 +746,28 @@ export class BoardUserComponent implements OnInit {
 
   dismissSupress() {
     this.modalService.dismissAll();
-
   }
 
-
-  consultation:boolean=true;
+  consultation: boolean = true;
   selectedAccord: Accord = new Accord
-  openAccordModal(targetModal: any, accord: Accord, consultation:boolean) {
+  openAccordModal(targetModal: any, accord: Accord, consultation: boolean) {
     this.modalService.open(targetModal, {
       centered: true,
       backdrop: consultation
     });
     this.selectedAccord = accord;
-  this.consultation=consultation
+    this.consultation = consultation
   }
 
-  reponseAccord(accord:Accord, response:boolean){
-    this.updateAccord(accord,response)
+  reponseAccord(accord: Accord, response: boolean) {
+    this.updateAccord(accord, response)
     this.modalService.dismissAll();
   }
 
-cleaning(chaine : string){
-  return  chaine.toLowerCase().replaceAll(" ","")
-}
-  
+  cleaning(chaine: string) {
+    return chaine.toLowerCase().replaceAll(" ", "")
+  }
+
   ajoutAccord(adherent: Adherent, nomAccord: string) {
     this.adherentService.addAccord(adherent.id, nomAccord).subscribe(
       data => {
@@ -809,13 +776,9 @@ cleaning(chaine : string){
       err => {
         this.isFailed = true;
         this.errorMessage = err.message
-
       }
     );
-     
   }
-
-
 
   retraitAccord(adherent: Adherent, accord: Accord) {
     this.modalService.dismissAll();
@@ -826,11 +789,9 @@ cleaning(chaine : string){
       err => {
         this.isFailed = true;
         this.errorMessage = err.message
-
       }
     );
   }
-
 
   ajoutAccordAdhesion(adhesion: Adhesion, nomAccord: string) {
     this.adhesionService.addAccord(adhesion.id, nomAccord).subscribe(
@@ -840,13 +801,9 @@ cleaning(chaine : string){
       err => {
         this.isFailed = true;
         this.errorMessage = err.message
-
       }
     );
-     
   }
-
-
 
   retraitAccordAdhesion(adhesion: Adhesion, accord: Accord) {
     this.modalService.dismissAll();
@@ -857,7 +814,6 @@ cleaning(chaine : string){
       err => {
         this.isFailed = true;
         this.errorMessage = err.message
-
       }
     );
   }

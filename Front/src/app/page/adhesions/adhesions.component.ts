@@ -359,7 +359,8 @@ export class AdhesionsComponent implements OnInit {
     this.adhesions.forEach(adhesion => {
       let newAdhesionExcel = new AdhesionExcel;
       if (adhesion.adherent) {
-        newAdhesionExcel.nomAdherent = adhesion.adherent.prenom + " " + adhesion.adherent.nom
+        newAdhesionExcel.nomAdherent = adhesion.adherent.nom
+        newAdhesionExcel.prenomAdherent= adhesion.adherent.prenom
         newAdhesionExcel.emailAdherent = adhesion.adherent.email
       }
 

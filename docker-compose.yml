@@ -8,6 +8,8 @@ services:
       - app_asso
     expose:
       - "80"
+    ports:
+      - 8880:80
     volumes:
       - ./Front/dist:/usr/share/nginx/html
   app_asso:

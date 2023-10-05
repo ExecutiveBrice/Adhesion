@@ -3,6 +3,7 @@ export class AdhesionExcel {
 
     nomActivite:  string 
     nomAdherent:  string 
+    prenomAdherent:  string 
     emailAdherent:  string 
 
     statutActuel: String;
@@ -40,6 +41,7 @@ export class AdhesionExcel {
       this.remarqueSecretariat = "";
       this.nomActivite = "";
       this.nomAdherent = "";
+      this.prenomAdherent = "";      
       this.emailAdherent = "";
 
       this.flag = false;

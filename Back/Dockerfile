@@ -2,7 +2,7 @@
 FROM openjdk:17-alpine
 # copy the packaged jar file into our docker image
 COPY ./target/asso.jar /asso.jar
-COPY application.yml /resources/application.yml
+COPY src/main/resources/application.yml /resources/application.yml
 COPY listingActivites.csv /listingActivites.csv
 COPY import_adherents.csv /import_adherents.csv
 # set the startup command to execute the jar
