@@ -4,7 +4,9 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build --base-href /adhesion/ --aot",
+    "build": "ng build",
+    "build:production": "ng build --base-href /adhesion/ --aot --configuration=production",
+    "build:integration": "ng build --base-href /adhesion/ --aot --configuration=integration",    
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },

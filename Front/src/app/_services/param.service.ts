@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { ParamBoolean, ParamNumber, ParamText } from '../models';
 
-const API_URL = environment.server+'/api_adhesion/param/';
+const API_URL = environment.server+'/param/';
 
 
 @Injectable({

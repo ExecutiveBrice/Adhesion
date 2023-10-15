@@ -5,7 +5,7 @@ import { environment } from 'src/environments/environment';
 import { Accord, Activite, Adhesion, Notification, Paiement } from '../models';
 
 
-const API_URL = environment.server+'/api_adhesion/adhesion/';
+const API_URL = environment.server+'/adhesion/';
 
 @Injectable({
   providedIn: 'root'

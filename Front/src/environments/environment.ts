@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  server:'http://localhost:8000'
+  server:'http://localhost:8000/api_adhesion'
 
 };
 

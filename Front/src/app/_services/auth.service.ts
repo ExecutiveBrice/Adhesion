@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { User } from '../models';
 
-const AUTH_API = environment.server+'/api_adhesion/auth/';
+const AUTH_API = environment.server+'/auth/';
 
 @Injectable({
   providedIn: 'root'

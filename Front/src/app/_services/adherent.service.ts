@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { Accord, ActiviteLite, Adherent, AdherentLite, Document, Notification } from '../models';
 
-const API_URL = environment.server+'/api_adhesion/adherent/';
+const API_URL = environment.server+'/adherent/';
 
 
 

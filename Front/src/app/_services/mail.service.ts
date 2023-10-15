@@ -7,7 +7,7 @@ import { environment } from 'src/environments/environment';
   providedIn: 'root'
 })
 export class MailService {
-  apiUrl = environment.server+'/api_adhesion/email';
+  apiUrl = environment.server+'/email';
 
   constructor(
     private http: HttpClient

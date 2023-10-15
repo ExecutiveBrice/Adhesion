@@ -1,39 +1,68 @@
 version: '3.8'
 
 services:
-  client_asso:
+  client_adhesion:
     image: nginx:latest
-    container_name: client_asso
+    container_name: client_adhesion
     depends_on:
-      - app_asso
-    expose:
-      - "80"
-    ports:
-      - 8880:80
+      - app_adhesion
     volumes:
-      - ./Front/dist:/usr/share/nginx/html
-  app_asso:
-    image: 'docker-spring-boot-asso:latest'
-    container_name: app_asso
+      - ./client:/usr/share/nginx/html
+    networks:
+      - traefik_web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.client_adhesion.rule=Host(`bmoexperience.fr`) && PathPrefix(`/adhesion`)"
+      - "traefik.http.routers.client_adhesion.entrypoints=websecure"
+      - "traefik.http.routers.client_adhesion.middlewares=client_adhesion-replacepathregex"
+      - "traefik.http.middlewares.client_adhesion-replacepathregex.replacepathregex.regex=^/adhesion/(.*)"
+      - "traefik.http.middlewares.client_adhesion-replacepathregex.replacepathregex.replacement=/$$1"
+
+
+  app_adhesion:
+    image: 'docker-spring-boot-adhesion'
+    container_name: app_adhesion
     build:
-      context: ./Back
+      context: ./app
     depends_on:
-      - db_asso
+      - db_adhesion
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://db_asso:5432/asso
-      - SPRING_DATASOURCE_USERNAME=asso
-      - SPRING_DATASOURCE_PASSWORD=assopass
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db_adhesion:5432/${DB_NAME}
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
       - SERVER_PORT=8000
-    ports:
-      - 8000:8000
     expose:
       - "8000"
-  db_asso:
+    networks:
+      - traefik_web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app_adhesion.rule=Host(`bmoexperience.fr`) && PathPrefix(`/api_adhesion/`)"
+      - "traefik.http.routers.app_adhesion.entrypoints=websecure"
+      - "traefik.http.routers.app_adhesion.middlewares=app_adhesion-replacepathregex"
+      - "traefik.http.middlewares.app_adhesion-replacepathregex.replacepathregex.regex=^/api_adhesion/(.*)"
+      - "traefik.http.middlewares.app_adhesion-replacepathregex.replacepathregex.replacement=/$$1"
+
+
+  db_adhesion:
     image: postgres:14.1-alpine
-    container_name: db_asso
+    container_name: db_adhesion
     environment:
-      - POSTGRES_USER=asso
-      - POSTGRES_DB=asso
-      - POSTGRES_PASSWORD=assopass
-    ports:
-        - 8105:5432
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    ports:          #supprimer en remote
+      - "8105:5432" #supprimer en remote
+    networks:
+      - traefik_web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.tcp.routers.db_adhesion.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.db_adhesion.entrypoints=postgres"
+      - "traefik.tcp.services.db_adhesion.loadbalancer.server.port=5432"
+
+
+networks:
+  traefik_web:
+    external: true
