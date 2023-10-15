@@ -1,0 +1,35 @@
+spring:
+  main:
+    allow-circular-references: true
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_ADRESSE}
+    password: ${MAIL_PASSWORD}
+    properties.mail.smtp:
+      ssl.trust: smtp.gmail.com
+      auth: true
+      starttls.enable: true
+  h2.console.enabled: true
+  # default path: h2-console
+  h2.console.path: /h2-ui
+  datasource:
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    show_sql: false
+    generate-ddl: true
+    hibernate:
+      ddl-auto: update
+      show_sql: false
+      format_sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+
+server:
+  app:
+    jwtSecret: ${JWT_SECRET}
+    jwtExpirationMs: 86400000
+
