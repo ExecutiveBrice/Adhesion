@@ -42,6 +42,7 @@ public class AdherentServices {
             if ("Tous les adhérents".equals(groupes[1])) {
                 return adherentRepository.findAll().stream().map(adherent -> {
                             if (adherent.isEmailReferent()) {
+                                //TODO sécurisé les mails car saisie de
                                 return adherent.getTribu().getAdherents().stream().filter(Adherent::isReferent).findFirst().get().getEmail();
                             }
                             if (adherent.getEmail() != null) {
