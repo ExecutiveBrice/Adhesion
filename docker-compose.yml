@@ -7,17 +7,20 @@ services:
     depends_on:
       - app_adhesion
     volumes:
-      - ./client:/usr/share/nginx/html
+      - ./client:/usr/share/nginx/html/adhesion
     networks:
       - traefik_web
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.client_adhesion.rule=Host(`bmoexperience.fr`) && PathPrefix(`/adhesion`)"
-      - "traefik.http.routers.client_adhesion.entrypoints=websecure"
-      - "traefik.http.routers.client_adhesion.middlewares=client_adhesion-replacepathregex"
+      - "traefik.http.routers.client_adhesion.rule=Host(`${DNS_NAME}`) && PathPrefix(`/adhesion/`)"
+
+      - "traefik.http.routers.client_adhesion.middlewares=client_benevole-replacepathregex"
       - "traefik.http.middlewares.client_adhesion-replacepathregex.replacepathregex.regex=^/adhesion/(.*)"
       - "traefik.http.middlewares.client_adhesion-replacepathregex.replacepathregex.replacement=/$$1"
 
+      - "traefik.http.routers.client_adhesion.entrypoints=websecure"
+      - "traefik.http.routers.client_adhesion.tls=true"
+      - "traefik.http.routers.client_adhesion.tls.certresolver=myresolver"
 
   app_adhesion:
     image: 'docker-spring-boot-adhesion'
@@ -38,12 +41,15 @@ services:
       - traefik_web
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.app_adhesion.rule=Host(`bmoexperience.fr`) && PathPrefix(`/api_adhesion/`)"
-      - "traefik.http.routers.app_adhesion.entrypoints=websecure"
+      - "traefik.http.routers.app_adhesion.rule=Host(`${DNS_NAME}`) && PathPrefix(`/api_adhesion/`)"
+
       - "traefik.http.routers.app_adhesion.middlewares=app_adhesion-replacepathregex"
       - "traefik.http.middlewares.app_adhesion-replacepathregex.replacepathregex.regex=^/api_adhesion/(.*)"
       - "traefik.http.middlewares.app_adhesion-replacepathregex.replacepathregex.replacement=/$$1"
 
+      - "traefik.http.routers.app_adhesion.entrypoints=websecure"
+      - "traefik.http.routers.app_adhesion.tls=true"
+      - "traefik.http.routers.app_adhesion.tls.certresolver=myresolver"
 
   db_adhesion:
     image: postgres:14.1-alpine
@@ -54,14 +60,18 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
     ports:          #supprimer en remote
       - "8105:5432" #supprimer en remote
+    volumes:
+      - data-volume:/var/lib/postgresql
     networks:
       - traefik_web
     labels:
       - "traefik.enable=true"
       - "traefik.tcp.routers.db_adhesion.rule=HostSNI(`*`)"
-      - "traefik.tcp.routers.db_adhesion.entrypoints=postgres"
+      - "traefik.tcp.routers.db_adhesion.entrypoints=adhesion_db"
       - "traefik.tcp.services.db_adhesion.loadbalancer.server.port=5432"
 
+volumes:
+  data-volume:
 
 networks:
   traefik_web:
