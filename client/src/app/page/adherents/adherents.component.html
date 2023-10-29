@@ -119,7 +119,7 @@
         <tr *ngFor="let adherent of adherents  | orderBy:'nomPrenom':false">
 
           <td class="center">
-            <fa-icon class="fa-2xl pointer" (click)="opennewTab('#/inscription/'+adherent.email)" [icon]="faUsersRays"></fa-icon>
+            <fa-icon class="fa-2xl pointer" (click)="opennewTab('#/inscription/'+adherent.tribuId)" [icon]="faUsersRays"></fa-icon>
 
           </td>
 

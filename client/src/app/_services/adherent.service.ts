@@ -1,12 +1,10 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { Accord, ActiviteLite, Adherent, AdherentLite, Document, Notification } from '../models';
 
 const API_URL = environment.server+'/adherent/';
-
-
 
 @Injectable({
   providedIn: 'root'

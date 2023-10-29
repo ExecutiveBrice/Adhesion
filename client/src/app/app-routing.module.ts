@@ -24,7 +24,7 @@ const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'contact', component: ContactComponent },
   { path: 'resetPassword/:token', component: ResetPasswordComponent },
-  { path: 'inscription/:userEmail', component: BoardUserComponent },
+  { path: 'inscription/:tribuUuid', component: BoardUserComponent },
   { path: 'adhesions', component: AdhesionsComponent },
   { path: 'adherents', component: AdherentsComponent },
   { path: 'activites', component: ActivitesComponent },

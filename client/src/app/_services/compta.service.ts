@@ -2,14 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { ReportingActivite, ReportingAdhesion } from '../models';
 import { ComptaActivite } from '../models/comptaActivite';
 
 const API_URL = environment.server+'/compta/';
-
-const httpOptions = {
-  headers: new HttpHeaders({ 'Content-Type': 'application/json' })
-};
 
 @Injectable({
   providedIn: 'root'

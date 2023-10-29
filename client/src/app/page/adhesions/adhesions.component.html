@@ -183,7 +183,7 @@
         </ng-template>
         <fa-icon *ngIf="adhesion.adherent.email != null" (click)="opennewTab('#/mail/'+adhesion.adherent.id)"
           class="fa-lg pointer green" [icon]="faEnvelope" [ngbTooltip]="tipsAdherentSendMail"></fa-icon>
-        <fa-icon class="fa-lg pointer" (click)="opennewTab('#/inscription/'+adhesion.adherent.email)"
+        <fa-icon class="fa-lg pointer" (click)="opennewTab('#/inscription/'+adhesion.adherent.tribuId)"
           [icon]="faPen"></fa-icon>
       </td>
 

@@ -5,6 +5,7 @@ import lombok.*;
 import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -22,9 +23,14 @@ public class Tribu {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private UUID uuid;
+
     @OneToMany(mappedBy="tribu")
     @ToString.Exclude
     @JsonIgnoreProperties({"tribu","user", "cours"})
     private Set<Adherent> adherents = new HashSet<>();
 
+    public Tribu(UUID uuid){
+        this.uuid = uuid;
+    }
 }

@@ -38,7 +38,7 @@ export class ActivitesComponent implements OnInit {
   sens: boolean = false;
   filtres: Map<string, boolean> = new Map<string, boolean>();
   editProfileForm!: FormGroup;
-  adherents: AdherentLite[] = []
+  profs: AdherentLite[] = []
   showAdmin: boolean = false;
   showSecretaire: boolean = false;
 
@@ -60,7 +60,7 @@ export class ActivitesComponent implements OnInit {
     }
 
     this.getActivites();
-    this.getAdherents();
+    this.getProfs();
   }
 
 
@@ -97,10 +97,10 @@ export class ActivitesComponent implements OnInit {
   
 
 
-  getAdherents() {
+  getProfs() {
     this.adherentService.getByRole(3).subscribe(
       data => {
-        this.adherents = data;
+        this.profs = data;
       },
       err => {
         this.isFailed = true;

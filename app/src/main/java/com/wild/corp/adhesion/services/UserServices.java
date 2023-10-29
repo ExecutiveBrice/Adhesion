@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 public class UserServices {
 
 
-
     @Autowired
     UserRepository userRepository;
     @Autowired
@@ -37,24 +36,25 @@ public class UserServices {
     @Value("${server.name:localhost:8002}")
     private String serverName;
 
-    public boolean existsByEmail(String email){
+    public boolean existsByEmail(String email) {
         return userRepository.existsByUsername(email);
     }
 
-    public List<User> findAll(){
+    public List<User> findAll() {
         return userRepository.findAll();
     }
-    public User findByEmail(String email){
+
+    public User findByEmail(String email) {
         User user = userRepository.findByUsername(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User Not Found with email: " + email));
         return user;
     }
 
-    public void addUserForAll(){
+    public void addUserForAll() {
         List<Adherent> adherents = adherentServices.getAll();
 
         adherents.forEach(adherent -> {
-            if(adherent.getUser() == null){
+            if (adherent.getUser() == null) {
                 addUserToAdherent(adherent);
             }
         });
@@ -64,10 +64,10 @@ public class UserServices {
         Random random = new Random();
         String password = random.toString();
         User user;
-        String username= adherent.getPrenom() + adherent.getNom();
+        String username = adherent.getPrenom() + adherent.getNom();
         int compteur = 1;
-        while (userRepository.findByUsername(username).isPresent()){
-            username=adherent.getPrenom() + adherent.getNom()+"_"+compteur;
+        while (userRepository.findByUsername(username).isPresent()) {
+            username = adherent.getPrenom() + adherent.getNom() + "_" + compteur;
             compteur++;
         }
 
@@ -81,27 +81,28 @@ public class UserServices {
         return user;
     }
 
-    public User findById(Long userId){
+    public User findById(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("User Not Found with id: " + userId));
         return user;
     }
-    public User updateUsername(String newEmail, User user){
+
+    public User updateUsername(String newEmail, User user) {
         user.setUsername(newEmail);
         userRepository.save(user);
         return user;
     }
 
-    public User createNewUserAnonymous(String email){
+    public User createNewUserAnonymous(String email) {
         Random random = new Random();
         String password = random.toString();
         return createNewUser(email, encoder.encode(password));
     }
 
 
-    public User createNewUser(String email, String cryptedPassword){
+    public User createNewUser(String email, String cryptedPassword) {
         // Create new user's account
-        User user = new User(email.toLowerCase(),cryptedPassword);
+        User user = new User(email.toLowerCase(), cryptedPassword);
         Role userRole = roleRepository.findByName(ERole.ROLE_USER)
                 .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
         user.getRoles().add(userRole);
@@ -128,7 +129,7 @@ public class UserServices {
         return user;
     }
 
-    public User grantUser(ERole role, User user){
+    public User grantUser(ERole role, User user) {
         Role userRole = roleRepository.findByName(role)
                 .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
 
@@ -136,7 +137,7 @@ public class UserServices {
         return userRepository.save(user);
     }
 
-    public User unGrantUser(ERole role, User user){
+    public User unGrantUser(ERole role, User user) {
         Role userRole = roleRepository.findByName(role)
                 .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
 
@@ -145,14 +146,14 @@ public class UserServices {
     }
 
     public void confirmEmailAnswer(String token) throws Exception {
-        ConfirmationToken confirmationToken= confirmationTokenService.findByToken(token);
-            final User user = confirmationToken.getUser();
-            user.setEmailValid(true);
-            userRepository.save(user);
-            confirmationTokenService.deleteConfirmationToken(confirmationToken.getId());
+        ConfirmationToken confirmationToken = confirmationTokenService.findByToken(token);
+        final User user = confirmationToken.getUser();
+        user.setEmailValid(true);
+        userRepository.save(user);
+        confirmationTokenService.deleteConfirmationToken(confirmationToken.getId());
     }
 
-    public void confirmEmailAsking(User user){
+    public void confirmEmailAsking(User user) {
         ConfirmationToken cft = new ConfirmationToken();
         cft.setUser(user);
         cft.setCreatedDate(LocalDate.now());
@@ -163,7 +164,7 @@ public class UserServices {
         mess.setTo(user.getUsername());
         mess.setSubject("Confirmation Email");
         mess.setText("Bonjour,<br>" +
-                "Ceci est le <a href=https://"+serverName+"/api_adhesion/auth/confirmEmail/"+uuid+">lien de confirmation de votre adresse mail</a><br>" +
+                "Ceci est le <a href=https://" + serverName + "/api_adhesion/auth/confirmEmail/" + uuid + ">lien de confirmation de votre adresse mail</a><br>" +
                 "Cordialement,<br>" +
                 "l'équipe de l'ALOD");
         emailService.sendEmail(mess);
@@ -180,52 +181,51 @@ public class UserServices {
     public ConfirmationToken reinitPassword(String email) {
         User user = findByEmail(email);
 
-            ConfirmationToken cft = new ConfirmationToken();
-            cft.setUser(user);
-            cft.setCreatedDate(LocalDate.now());
-            UUID uuid = UUID.randomUUID();
-            cft.setConfirmationToken(uuid);
-            cft.setType("ReinitPassword");
+        ConfirmationToken cft = new ConfirmationToken();
+        cft.setUser(user);
+        cft.setCreatedDate(LocalDate.now());
+        UUID uuid = UUID.randomUUID();
+        cft.setConfirmationToken(uuid);
+        cft.setType("ReinitPassword");
 
-            confirmationTokenService.saveConfirmationToken(cft);
+        confirmationTokenService.saveConfirmationToken(cft);
 
-            SimpleMailMessage mess = new SimpleMailMessage();
-            mess.setTo(user.getUsername());
-            mess.setSubject("Réinitialisation du mot de passe");
-            mess.setText("Bonjour,<br>" +
-                    "Ceci est le <a href=https://" + serverName + "/adhesion/#/resetPassword/" + uuid + ">lien de renouvellement de votre mot de passe</a><br>" +
-                    "Cordialement,<br>" +
-                    "l'équipe de l'ALOD");
-            emailService.sendEmail(mess);
-            return cft;
+        SimpleMailMessage mess = new SimpleMailMessage();
+        mess.setTo(user.getUsername());
+        mess.setSubject("Réinitialisation du mot de passe");
+        mess.setText("Bonjour,<br>" +
+                "Ceci est le <a href=https://" + serverName + "/adhesion/#/resetPassword/" + uuid + ">lien de renouvellement de votre mot de passe</a><br>" +
+                "Cordialement,<br>" +
+                "l'équipe de l'ALOD");
+        emailService.sendEmail(mess);
+        return cft;
 
     }
 
     public void changePassword(String token, String password) {
-        ConfirmationToken confirmationToken= confirmationTokenService.findByToken(token);
+        ConfirmationToken confirmationToken = confirmationTokenService.findByToken(token);
 
-            final User user = confirmationToken.getUser();
-            user.setPassword( encoder.encode(password));
-            userRepository.save(user);
+        final User user = confirmationToken.getUser();
+        user.setPassword(encoder.encode(password));
+        userRepository.save(user);
 
-            confirmationTokenService.deleteConfirmationToken(confirmationToken.getId());
+        confirmationTokenService.deleteConfirmationToken(confirmationToken.getId());
 
     }
 
-    public void deleteById(Long userId){
+    public void deleteById(Long userId) {
         userRepository.deleteById(userId);
     }
 
-    public List<UserLite> getAllLite(){
+    public List<UserLite> getAllLite() {
         List<User> users = userRepository.findAll();
         List<UserLite> userLites = users.stream().map(user -> new UserLite(user)).collect(Collectors.toList());
         return userLites;
     }
 
-
-    public void initAdmin(){
-        User user = createNewUser("admin",encoder.encode("adminPass") );
-        grantUser(ERole.ROLE_ADMIN,user);
+    public void initAdmin() {
+        User user = createNewUser("admin", encoder.encode("adminPass"));
+        grantUser(ERole.ROLE_ADMIN, user);
 
     }
 }

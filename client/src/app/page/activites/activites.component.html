@@ -73,8 +73,8 @@
 
           <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
 
-            <div ngbDropdownItem *ngFor="let adherent of adherents  | orderBy:'ordre':false"
-              (click)="ajouterProf(newActivite,adherent)">{{adherent.prenom}} {{adherent.nom}}</div>
+            <div ngbDropdownItem *ngFor="let prof of profs  | orderBy:'ordre':false"
+              (click)="ajouterProf(newActivite,prof)">{{prof.prenom}} {{prof.nom}}</div>
 
           </div>
         </div>

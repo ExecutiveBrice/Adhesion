@@ -61,6 +61,7 @@ public class AdhesionServices {
                         .adresse(adhesion.getAdherent().getAdresse(adhesion.getAdherent()))
                         .derniereVisites(adhesion.getAdherent().getDerniereVisites())
                         .derniereModifs(adhesion.getAdherent().getDerniereModifs())
+                        .tribuId(adhesion.getAdherent().getTribu().getUuid())
                         .build())
                 .activite(ActiviteLite.builder()
                         .nom(adhesion.getActivite().getNom())

@@ -14,6 +14,7 @@ import { jsPDF } from "jspdf";
 import { DatePipe } from '@angular/common';
 import { ModalConfig } from '../modal/modal.config'
 import { ModalComponent } from '../modal/modal.component';
+import { TribuService } from 'src/app/_services/tribu.service';
 
 @Component({
   selector: 'app-board-user',
@@ -41,7 +42,7 @@ export class BoardUserComponent implements OnInit {
   content?: string;
   edit?: boolean
   editAdhRefActivite?: boolean
-  user: User = new User;
+
   activitesMajeur: ActiviteDropDown[] = [];
   activitesMineur: ActiviteDropDown[] = [];
   newAdhesions: Adhesion[] = [];
@@ -71,7 +72,7 @@ export class BoardUserComponent implements OnInit {
   doc: jsPDF = new jsPDF('p', 'mm', 'a4', true);
 
   constructor(
-    private userService: UserService,
+    private tribuService: TribuService,
     private adherentService: AdherentService,
     private adhesionService: AdhesionService,
     public activiteService: ActiviteService,
@@ -120,16 +121,16 @@ export class BoardUserComponent implements OnInit {
     if (window.innerWidth <= 1080) { // 768px portrait
       this.mobile = true;
     }
-    let userEmail = this.route.snapshot.paramMap.get('userEmail');
+    let tribuUuid = this.route.snapshot.paramMap.get('tribuUuid');
 
     if (this.tokenStorageService.getUser().roles) {
       this.showAdmin = this.tokenStorageService.getUser().roles.includes('ROLE_ADMIN');
       this.showSecretaire = this.tokenStorageService.getUser().roles.includes('ROLE_SECRETAIRE');
 
-      if (this.showSecretaire && userEmail && Number.parseInt(userEmail) != 0) {
-        this.userService.getUserByMail(userEmail).subscribe(
+      if (this.showSecretaire && tribuUuid && Number.parseInt(tribuUuid) != 0) {
+        this.tribuService.getTribuByUuid(tribuUuid).subscribe(
           data => {
-            this.fillUser(data)
+           this.fillUser(data)
           },
           err => {
             this.isFailed = true;
@@ -138,7 +139,7 @@ export class BoardUserComponent implements OnInit {
         );
 
       } else {
-        this.userService.getConnectedUser().subscribe(
+        this.tribuService.getConnected().subscribe(
           data => {
             this.fillUser(data)
           },
@@ -153,9 +154,8 @@ export class BoardUserComponent implements OnInit {
     }
   }
 
-  fillUser(user: User) {
-    this.user = user;
-    this.tribu = user.adherent.tribu;
+  fillUser(tribu: Tribu) {
+    this.tribu = tribu;
     this.tribu.adherents.forEach(adh => {
       adh.adhesions.forEach(adhesion => this.adhesions.push(adhesion))
       this.sanitize(adh);
@@ -281,7 +281,7 @@ export class BoardUserComponent implements OnInit {
   calculCompletudeAdherent() {
     this.adherentsTotaux = 0
     this.adherentsACompleter = 0
-    this.user.adherent.tribu.adherents.forEach(adherent => {
+    this.tribu.adherents.forEach(adherent => {
       if (this.adhesions.filter(adh => adh.adherent?.id == adherent.id).length > 0) {
         this.adherentsTotaux += 1
       }
@@ -651,7 +651,7 @@ export class BoardUserComponent implements OnInit {
       this.doc.setFontSize(12)
       this.doc.text("Je soussigné MAURY Morgane en qualité de présidente de l'ALOD,", 10, 120);
       this.doc.text("atteste que " + adhesion.adherent.prenom + " " + adhesion.adherent.nom + " né le " + this.datePipe.transform(adhesion.adherent.naissance, 'dd/MM/yyyy'), 10, 130);
-      this.doc.text("résident au " + adhesion.adherent.adresseReferent ? this.user.adherent.adresse : adhesion.adherent.adresse, 10, 140);
+      this.doc.text("résident au " + adhesion.adherent.adresseReferent ? adhesion.adherent.adresse : adhesion.adherent.adresse, 10, 140);
       this.doc.text("est inscrit à l'activité " + adhesion.activite.nom + " pour l'année scolaire 2023/2024", 10, 150);
       this.doc.text("et est à jour de sa cotisation de " + prix + "€ payée en " + adhesion.paiements[0].typeReglement, 10, 160);
 

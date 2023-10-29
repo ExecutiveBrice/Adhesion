@@ -1,11 +1,10 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient} from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { ParamBoolean, ParamNumber, ParamText } from '../models';
 
 const API_URL = environment.server+'/param/';
-
 
 @Injectable({
   providedIn: 'root'
