@@ -24,7 +24,7 @@ export class TribuService {
   }
 
   getConnected(): Observable<Tribu> {
-    return this.http.get<Tribu>(API_URL + 'getConnetedTribu', { responseType: 'json'});
+    return this.http.get<Tribu>(API_URL + 'getConnectedTribu', { responseType: 'json'});
   }
 }
 

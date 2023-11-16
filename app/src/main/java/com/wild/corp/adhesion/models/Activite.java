@@ -21,11 +21,6 @@ import java.util.Set;
 public class Activite {
 
     @Id
-    @SequenceGenerator(
-            name = "activite_sequence",
-            sequenceName = "activite_sequence",
-            allocationSize = 1
-    )
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 

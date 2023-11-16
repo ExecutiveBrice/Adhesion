@@ -39,10 +39,4 @@ public class TribuServices {
         return tribuRepository.findByUuid(uuid);
     }
 
-    public void fillTribuµUuid() {
-        List<Tribu> tribus = tribuRepository.findAll();
-        tribus.forEach(tribu -> tribu.setUuid(UUID.randomUUID()));
-        tribuRepository.saveAll(tribus);
-    }
-
 }

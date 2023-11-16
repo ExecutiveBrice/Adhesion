@@ -394,6 +394,8 @@ public class AdherentServices {
                 .tribuSize(adherent.getTribu().getAdherents().size())
                 .accords(adherent.getAccords())
                 .activites(activites.toString())
+                .documentPresent(!adherent.getDocuments().isEmpty())
+                .lien("www.alod.fr/adhesion/#/inscription/"+adherent.getTribu().getUuid())
                 .build();
 
         return adherentLite;

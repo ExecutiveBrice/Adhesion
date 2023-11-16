@@ -1,5 +1,7 @@
 package com.wild.corp.adhesion.controllers;
 
+import com.wild.corp.adhesion.models.Adherent;
+import com.wild.corp.adhesion.models.User;
 import com.wild.corp.adhesion.models.UserDetails;
 import com.wild.corp.adhesion.services.UserDetailsService;
 import com.wild.corp.adhesion.services.UserServices;
@@ -20,6 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -30,13 +33,8 @@ public class AuthController {
 	AuthenticationManager authenticationManager;
 	@Autowired
 	UserServices userServices;
-
-
 	@Autowired
 	JwtUtils jwtUtils;
-
-	@Autowired
-	UserDetailsService userDetailsService;
 	@Autowired
 	PasswordEncoder encoder;
 
@@ -61,18 +59,6 @@ public class AuthController {
 				roles));
 	}
 
-
-	@PostMapping("/signupAnonymous")
-	public ResponseEntity<?> signupAnonymous(@RequestBody SignupRequest signUpRequest) {
-		signUpRequest.setUsername(signUpRequest.getUsername().toLowerCase());
-		if (userServices.existsByEmail(signUpRequest.getUsername())) {
-			return ResponseEntity
-					.badRequest()
-					.body(new MessageResponse("Erreur: cet e-mail est déjà utilisé"));
-		}
-		userServices.createNewUserAnonymous(signUpRequest.getUsername());
-		return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
-	}
 	@PostMapping("/reinitPassword")
 	public ResponseEntity<?> reinitPassword(@RequestBody SignupRequest signUpRequest) {
 		signUpRequest.setUsername(signUpRequest.getUsername().toLowerCase());
@@ -86,10 +72,6 @@ public class AuthController {
 		return ResponseEntity.ok("ok");
 	}
 
-
-
-
-
 	@PostMapping("/signup")
 	public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
 		signUpRequest.setUsername(signUpRequest.getUsername().toLowerCase());
@@ -102,6 +84,18 @@ public class AuthController {
 				encoder.encode(signUpRequest.getPassword()));
 		return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
 	}
+
+	@PostMapping("/signupAnonymous")
+	public ResponseEntity<?> signupAnonymous(@PathParam("email") String email) {
+		if (userServices.existsByEmail(email.toLowerCase())) {
+			return ResponseEntity
+					.badRequest()
+					.body(new MessageResponse("Erreur: cet e-mail est déjà utilisé"));
+		}
+		Adherent uuid = userServices.createUserAnonymous(email.toLowerCase());
+		return ResponseEntity.ok(uuid);
+	}
+
 
 	@GetMapping("/confirmEmail/{confirmationToken}")
 	public ResponseEntity<?> confirmEmail(@PathVariable String confirmationToken) throws Exception {

@@ -126,8 +126,8 @@ export class BoardUserComponent implements OnInit {
     if (this.tokenStorageService.getUser().roles) {
       this.showAdmin = this.tokenStorageService.getUser().roles.includes('ROLE_ADMIN');
       this.showSecretaire = this.tokenStorageService.getUser().roles.includes('ROLE_SECRETAIRE');
-
-      if (this.showSecretaire && tribuUuid && Number.parseInt(tribuUuid) != 0) {
+console.log(tribuUuid)
+      if (this.showSecretaire && tribuUuid ) {
         this.tribuService.getTribuByUuid(tribuUuid).subscribe(
           data => {
            this.fillUser(data)

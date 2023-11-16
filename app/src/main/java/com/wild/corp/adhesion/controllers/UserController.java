@@ -23,7 +23,6 @@ UserServices userServices;
 	@Autowired
 	AdherentRepository adherentRepository;
 
-
 	@GetMapping("/addUserForAll")
 	public ResponseEntity<?> addUserForAll() {
 		userServices.addUserForAll();

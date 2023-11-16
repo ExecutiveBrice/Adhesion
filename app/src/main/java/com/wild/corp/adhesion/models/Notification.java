@@ -26,6 +26,6 @@ public class Notification {
     private LocalDateTime date;
 
     @ManyToOne
-    @JsonIgnoreProperties({"adherent","tokens" })
+    @JsonIgnoreProperties({"adherent","tokens","notifs" })
     private User user;
 }

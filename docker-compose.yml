@@ -12,11 +12,8 @@ services:
       - traefik_web
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.client_adhesion.rule=Host(`${DNS_NAME}`) && PathPrefix(`/adhesion/`)"
-
-      - "traefik.http.routers.client_adhesion.middlewares=client_benevole-replacepathregex"
-      - "traefik.http.middlewares.client_adhesion-replacepathregex.replacepathregex.regex=^/adhesion/(.*)"
-      - "traefik.http.middlewares.client_adhesion-replacepathregex.replacepathregex.replacement=/$$1"
+      - "traefik.http.routers.client_adhesion.priority=1000"
+      - "traefik.http.routers.client_adhesion.rule=(Host(`${DNS_NAME}`) || Host(`www.${DNS_NAME}`)) && PathPrefix(`/adhesion/`)"
 
       - "traefik.http.routers.client_adhesion.entrypoints=websecure"
       - "traefik.http.routers.client_adhesion.tls=true"
@@ -33,6 +30,8 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db_adhesion:5432/${DB_NAME}
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - MAIL_ADRESSE=${MAIL_ADRESSE}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
       - SERVER_PORT=8000
     expose:
@@ -41,10 +40,11 @@ services:
       - traefik_web
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.app_adhesion.rule=Host(`${DNS_NAME}`) && PathPrefix(`/api_adhesion/`)"
+      - "traefik.http.routers.app_adhesion.priority=10000"
+      - "traefik.http.routers.app_adhesion.rule=(Host(`${DNS_NAME}`) || Host(`www.${DNS_NAME}`)) && PathPrefix(`/adhesion/api/`)"
 
       - "traefik.http.routers.app_adhesion.middlewares=app_adhesion-replacepathregex"
-      - "traefik.http.middlewares.app_adhesion-replacepathregex.replacepathregex.regex=^/api_adhesion/(.*)"
+      - "traefik.http.middlewares.app_adhesion-replacepathregex.replacepathregex.regex=^/adhesion/api/(.*)"
       - "traefik.http.middlewares.app_adhesion-replacepathregex.replacepathregex.replacement=/$$1"
 
       - "traefik.http.routers.app_adhesion.entrypoints=websecure"

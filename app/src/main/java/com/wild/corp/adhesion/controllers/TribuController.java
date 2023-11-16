@@ -11,8 +11,6 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.security.Principal;
 import java.util.UUID;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -23,7 +21,7 @@ public class TribuController {
     @Autowired
     TribuServices tribuServices;
 
-    @GetMapping("/getConnetedTribu")
+    @GetMapping("/getConnectedTribu")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> getConnetedTribu(Authentication principal) {
         Tribu tribu = tribuServices.getConnetedTribu(principal.getName());
@@ -36,12 +34,6 @@ public class TribuController {
 
         Tribu tribu = tribuServices.getTribuByUuid(UUID.fromString(tribuUuid));
         return ResponseEntity.ok(tribu);
-    }
-
-    @GetMapping("/fillTribuUuid")
-    public ResponseEntity<?> fillTribuµUuid() {
-        tribuServices.fillTribuµUuid();
-        return ResponseEntity.ok("ok");
     }
 
 }

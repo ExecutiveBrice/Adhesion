@@ -42,6 +42,9 @@ public class User {
 	private Adherent adherent;
 
 	@OneToMany(mappedBy="user", cascade = CascadeType.ALL)
+	private Set<Notification> notifs = new HashSet<>();
+
+	@OneToMany(mappedBy="user", cascade = CascadeType.ALL)
 	@JsonIgnore
 	private Set<ConfirmationToken> tokens = new HashSet<>();
 

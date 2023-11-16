@@ -70,6 +70,7 @@ export class AdherentsComponent implements OnInit {
   }
 
   exportAsXLSX(): void {
+    console.log(this.adherents)
     this.excelService.exportAsExcelFile(this.adherents, 'adherents');
   }
 
@@ -156,16 +157,14 @@ export class AdherentsComponent implements OnInit {
   onSubmitAddUser(email: string) {
     this.modalService.dismissAll();
 
-
     this.authService.registerAnonymous(email).subscribe(
       data => {
 
-        this.router.navigate(['inscription', email]);
+        this.router.navigate(['inscription', data.tribu.uuid]);
       },
       err => {
         this.isFailed = true;
         this.errorMessage = err.message
-        this.router.navigate(['inscription', email]);
       }
     );
 

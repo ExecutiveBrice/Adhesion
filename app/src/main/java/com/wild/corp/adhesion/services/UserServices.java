@@ -93,12 +93,35 @@ public class UserServices {
         return user;
     }
 
-    public User createNewUserAnonymous(String email) {
+    public Adherent createUserAnonymous(String email) {
         Random random = new Random();
         String password = random.toString();
-        return createNewUser(email, encoder.encode(password));
-    }
 
+        // Create new user's account
+        User user = new User(email.toLowerCase(), encoder.encode(password));
+        Role userRole = roleRepository.findByName(ERole.ROLE_USER)
+                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+        user.getRoles().add(userRole);
+        user = userRepository.save(user);
+
+        Adherent adherent = new Adherent();
+        adherent.setEmail(user.getUsername().toLowerCase());
+        adherent.setReferent(true);
+        adherent.setAdresseReferent(false);
+        adherent.setEmailReferent(false);
+        adherent.setTelephoneReferent(false);
+        adherent.setTribu(new Tribu(UUID.randomUUID()));
+        Accord accordRgpd = new Accord("RGPD");
+        accordRgpd.setEtat(true);
+        accordRgpd.setDatePassage(LocalDate.now());
+        adherent.getAccords().add(accordRgpd);
+
+        adherent.getAccords().add(new Accord("Droit Image"));
+        adherent.setUser(user);
+        adherentServices.save(adherent, null);
+
+        return adherent;
+    }
 
     public User createNewUser(String email, String cryptedPassword) {
         // Create new user's account
@@ -108,14 +131,13 @@ public class UserServices {
         user.getRoles().add(userRole);
         user = userRepository.save(user);
 
-        Set<Adherent> adherents = new HashSet<>();
         Adherent adherent = new Adherent();
         adherent.setEmail(user.getUsername().toLowerCase());
         adherent.setReferent(true);
         adherent.setAdresseReferent(false);
         adherent.setEmailReferent(false);
         adherent.setTelephoneReferent(false);
-
+        adherent.setTribu(new Tribu(UUID.randomUUID()));
         Accord accordRgpd = new Accord("RGPD");
         accordRgpd.setEtat(true);
         accordRgpd.setDatePassage(LocalDate.now());

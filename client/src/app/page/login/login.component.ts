@@ -79,7 +79,7 @@ export class LoginComponent implements OnInit {
               this.router.navigate(['adhesions']);
             } else if (this.roles.includes('ROLE_USER')) {
               if (!this.maintenance) {
-                this.router.navigate(['inscription', '0']);
+                this.router.navigate(['inscription', '']);
               }
             }
           }

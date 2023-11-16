@@ -54,6 +54,8 @@ public class AdherentLite {
 
     private Integer tribuSize;
 
+    private boolean documentPresent = false;
+    private String lien;
     private boolean referent = false;
 
     private List<Accord> accords = new ArrayList<>();
