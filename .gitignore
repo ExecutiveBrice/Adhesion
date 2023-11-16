@@ -1,14 +1,7 @@
 .idea/
 app/target/
-app/.mvn/
-
-
 client/.angular/
 client/dist/
 client/node_modules/
 
-app/mvnw
-
-.env*mvnw
-mvnw.cmd
-.mvn\
+.env*
