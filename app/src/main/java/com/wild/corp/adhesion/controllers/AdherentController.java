@@ -1,6 +1,7 @@
 package com.wild.corp.adhesion.controllers;
 
 import com.wild.corp.adhesion.models.Adherent;
+import com.wild.corp.adhesion.models.AdherentLite;
 import com.wild.corp.adhesion.models.Document;
 import com.wild.corp.adhesion.services.AdherentServices;
 import jakarta.websocket.server.PathParam;
@@ -47,7 +48,8 @@ AdherentServices adherentServices;
 
 	@PostMapping("/update")
 	@PreAuthorize("hasRole('USER')")
-	public ResponseEntity<?> update(@RequestBody Adherent adherent, Authentication principal) {
+	public ResponseEntity<?> update(@RequestBody AdherentLite adherent, Authentication principal) {
+		System.out.println("update");
 		adherentServices.addModification(principal.getName(), adherent.getId());
 		return ResponseEntity.ok(adherentServices.update(adherent));
 	}

@@ -57,8 +57,8 @@ public class AdhesionServices {
                         .nomPrenom((adhesion.getAdherent().getNom()==null?"zzzz":adhesion.getAdherent().getNom())+(adhesion.getAdherent().getPrenom()==null?"zzzz":adhesion.getAdherent().getPrenom()))
                         .nom(adhesion.getAdherent().getNom())
                         .prenom(adhesion.getAdherent().getPrenom())
-                        .email(adhesion.getAdherent().getEmail(adhesion.getAdherent()))
-                        .adresse(adhesion.getAdherent().getAdresse(adhesion.getAdherent()))
+                        .email(adhesion.getAdherent().getEmail())
+                        .adresse(adhesion.getAdherent().getAdresse())
                         .derniereVisites(adhesion.getAdherent().getDerniereVisites())
                         .derniereModifs(adhesion.getAdherent().getDerniereModifs())
                         .tribuId(adhesion.getAdherent().getTribu().getUuid())
@@ -124,10 +124,15 @@ public class AdhesionServices {
     public List<Adhesion> getAll(){
         List<Adhesion> adhesions =adhesionRepository.findAll();
 
-
-
         return adhesions;
+    }
 
+    public Adhesion validation(List<Accord> accords, Long adhesionId){
+        Adhesion dataAdhesion = adhesionRepository.findById(adhesionId).get();
+        dataAdhesion.setAccords(accords);
+
+        adhesionRepository.save(dataAdhesion);
+        return choisirStatut(dataAdhesion.getId(), "Attente validation secrétariat");
     }
 
     public Adhesion update(Adhesion frontAdhesion){

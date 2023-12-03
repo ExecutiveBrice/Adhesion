@@ -27,7 +27,7 @@ public class Tribu {
 
     @OneToMany(mappedBy="tribu")
     @ToString.Exclude
-    @JsonIgnoreProperties({"tribu","user", "cours"})
+    @JsonIgnoreProperties({"tribu","user", "cours", "derniereModifs", "derniereVisites"})
     private Set<Adherent> adherents = new HashSet<>();
 
     public Tribu(UUID uuid){

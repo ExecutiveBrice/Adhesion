@@ -151,6 +151,22 @@ public class UserServices {
         return user;
     }
 
+    public User addNewUser(String email) {
+        Random random = new Random();
+        String password = random.toString();
+
+        // Create new user's account
+        User user = new User(email.toLowerCase(), encoder.encode(password));
+        // Create new user's account
+        Role userRole = roleRepository.findByName(ERole.ROLE_USER)
+                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+        user.getRoles().add(userRole);
+        user = userRepository.save(user);
+
+        return user;
+    }
+
+
     public User grantUser(ERole role, User user) {
         Role userRole = roleRepository.findByName(role)
                 .orElseThrow(() -> new RuntimeException("Error: Role is not found."));

@@ -2,8 +2,9 @@ package com.wild.corp.adhesion.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.*;
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -78,7 +79,7 @@ public class Adherent {
     @ManyToOne
     private Tribu tribu;
 
-    @OneToMany(mappedBy="adherent", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "adherent", cascade = CascadeType.ALL)
     private Set<Adhesion> adhesions = new HashSet<>();
 
     @ManyToMany
@@ -86,37 +87,7 @@ public class Adherent {
     private Set<Activite> cours = new HashSet<>();
 
     @OneToOne
-    @JsonIgnoreProperties({"adherent","tokens" })
+    @JsonIgnoreProperties({"adherent", "tokens"})
     private User user;
-
-    public String getEmail(Adherent dataAdherent) {
-
-       if(this.isReferent()){
-           return email;
-       } else if (this.isEmailReferent()) {
-           return dataAdherent.getTribu().getAdherents().stream().filter(Adherent::isReferent).findFirst().get().getEmail();
-       }
-       return email;
-    }
-
-    public String getAdresse(Adherent dataAdherent) {
-
-        if(this.isReferent()){
-            return adresse;
-        } else if (this.isAdresseReferent()) {
-            return dataAdherent.getTribu().getAdherents().stream().filter(Adherent::isReferent).findFirst().get().getAdresse();
-        }
-        return adresse;
-    }
-
-    public String getTelephone(Adherent dataAdherent) {
-
-        if(this.isReferent()){
-            return telephone;
-        } else if (this.isTelephoneReferent()) {
-            return dataAdherent.getTribu().getAdherents().stream().filter(Adherent::isReferent).findFirst().get().getTelephone();
-        }
-        return telephone;
-    }
 
 }

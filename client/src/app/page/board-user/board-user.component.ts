@@ -475,19 +475,7 @@ console.log(tribuUuid)
   }
 
   updateAdhesion(adhesion: Adhesion) {
-
-    if (adhesion.adherent) {
-      let newAdherent = new Adherent(0)
-      newAdherent.id = adhesion.adherent.id
-      adhesion.adherent = newAdherent
-    }
-    if (adhesion.activite) {
-      let newActivite = new Activite()
-      newActivite.id = adhesion.activite.id
-      adhesion.activite = newActivite
-    }
-
-    this.adhesionService.update(adhesion).subscribe(
+    this.adhesionService.validation(adhesion.accords, adhesion.id).subscribe(
       data => {
         adhesion.statutActuel = data.statutActuel;
         this.calculCompletudeAdhesion()

@@ -24,18 +24,43 @@ public class AdherentLite {
 
     private String nom;
 
-    private String nomPrenom;
+    private String genre;
 
     private String email;
 
+    private String telephone;
+
+    private LocalDate naissance;
+
+    private String lieuNaissance;
+
+    private boolean referent = false;
+
     private String adresse;
 
-    private String telephone;
+    private boolean adresseReferent = true;
+
+    private boolean telephoneReferent = true;
+
+    private boolean emailReferent = true;
+
+    private boolean mineur = false;
 
     private String nomLegal;
 
     private String prenomLegal;
 
+    private boolean legalReferent = true;
+
+    private boolean completReferent = false;
+
+    private boolean completAdhesion = false;
+
+
+    private String nomPrenom;
+
+    private String emailLegal;
+    private String adresseLegal;
     private String telLegal;
 
     private String statut;
@@ -44,11 +69,6 @@ public class AdherentLite {
 
     private boolean flag;
     private boolean paiement;
-    private boolean mineur = false;
-
-    private String lieuNaissance;
-
-    private LocalDate naissance;
 
     private UUID tribuId;
 
@@ -56,7 +76,7 @@ public class AdherentLite {
 
     private boolean documentPresent = false;
     private String lien;
-    private boolean referent = false;
+
 
     private List<Accord> accords = new ArrayList<>();
 

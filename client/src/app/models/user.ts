@@ -8,7 +8,7 @@ export class User {
   password: string;
   roles: Role[];
   emailValid: boolean;
-  adherent: Adherent;
+  adherent!: Adherent;
 
 
   constructor(){
@@ -17,6 +17,6 @@ export class User {
     this.password = "";
     this.roles = [];
     this.emailValid = true;
-    this.adherent = new Adherent(0)
+
   }
 }

@@ -152,7 +152,7 @@ public class AdherentServices {
                 .file(file.getBytes()).build());
     }
 
-    public Adherent update(Adherent adherent) {
+    public Adherent update(AdherentLite adherent) {
         if (adherent.getId() != null && adherent.getId() > 0) {
             Optional<Adherent> indbAdherent = adherentRepository.findById(adherent.getId());
             if (indbAdherent.isPresent()) {
@@ -204,6 +204,16 @@ public class AdherentServices {
         } else {
             tribu = tribuServices.getTribuById(tribuId);
         }
+        if(adherent.getUser().getId().equals(0L)) {
+            User user;
+            if(adherent.getEmail() != null && !adherent.getEmail().isBlank()){
+                user = userServices.addNewUser(adherent.getEmail());
+            }else{
+                user = userServices.addNewUser(adherent.getPrenom() + "_" + adherent.getNom() + "@mailfictif.com");
+            }
+            adherent.setUser(user);
+        }
+
         adherent.setTribu(tribu);
         isComplet(adherent);
         Adherent adherentBDD = adherentRepository.save(adherent);
@@ -238,7 +248,37 @@ public class AdherentServices {
         }
     }
 
-    public Adherent fillAdherent(Adherent frontAdherent, Adherent dataAdherent) {
+    public String getEmail(AdherentLite adherentLite, Adherent dataAdherent) {
+
+        if(adherentLite.isReferent()){
+            return adherentLite.getEmail();
+        } else if (adherentLite.isEmailReferent()) {
+            return dataAdherent.getTribu().getAdherents().stream().filter(Adherent::isReferent).findFirst().get().getEmail();
+        }
+        return adherentLite.getEmail();
+    }
+
+    public String getAdresse(AdherentLite adherentLite,Adherent dataAdherent) {
+
+        if(adherentLite.isReferent()){
+            return adherentLite.getAdresse();
+        } else if (adherentLite.isAdresseReferent()) {
+            return dataAdherent.getTribu().getAdherents().stream().filter(Adherent::isReferent).findFirst().get().getAdresse();
+        }
+        return adherentLite.getAdresse();
+    }
+
+    public String getTelephone(AdherentLite adherentLite,Adherent dataAdherent) {
+
+        if(adherentLite.isReferent()){
+            return adherentLite.getTelephone();
+        } else if (adherentLite.isTelephoneReferent()) {
+            return dataAdherent.getTribu().getAdherents().stream().filter(Adherent::isReferent).findFirst().get().getTelephone();
+        }
+        return adherentLite.getTelephone();
+    }
+
+    public Adherent fillAdherent(AdherentLite frontAdherent, Adherent dataAdherent) {
         dataAdherent.setNom(frontAdherent.getNom().toUpperCase());
         dataAdherent.setPrenom(frontAdherent.getPrenom().substring(0, 1).toUpperCase() + frontAdherent.getPrenom()
                 .substring(1));
@@ -249,14 +289,14 @@ public class AdherentServices {
 
         dataAdherent.setEmailReferent(frontAdherent.isEmailReferent());
 
-        dataAdherent.setEmail(frontAdherent.getEmail(dataAdherent).toLowerCase());
+        dataAdherent.setEmail(getEmail(frontAdherent,dataAdherent).toLowerCase());
 
 
         dataAdherent.setTelephoneReferent(frontAdherent.isTelephoneReferent());
-        dataAdherent.setTelephone(frontAdherent.getTelephone(dataAdherent));
+        dataAdherent.setTelephone(getTelephone(frontAdherent,dataAdherent));
 
         dataAdherent.setAdresseReferent(frontAdherent.isAdresseReferent());
-        dataAdherent.setAdresse(frontAdherent.getAdresse(dataAdherent));
+        dataAdherent.setAdresse(getAdresse(frontAdherent,dataAdherent));
 
 
         dataAdherent.setMineur(frontAdherent.isMineur());
@@ -284,17 +324,17 @@ public class AdherentServices {
 
             Set<AdherentLite> adherentsLite = activite.getAdhesions().stream().map(adhesion -> {
 
-                final Adherent adhesionRef = adhesion.getAdherent().getTribu().getAdherents().stream().filter(Adherent::isReferent).findFirst().get();
+                final Adherent adherentRef = adhesion.getAdherent().getTribu().getAdherents().stream().filter(Adherent::isReferent).findFirst().get();
                 AdherentLite adhLite = AdherentLite.builder().id(adhesion.getAdherent().getId())
                         .prenom(adhesion.getAdherent().getPrenom())
                         .nom(adhesion.getAdherent().getNom())
                         .accords(adhesion.getAccords())
-                        .telephone(adhesion.getAdherent().getTelephone(adhesionRef))
-                        .email(adhesion.getAdherent().getEmail(adhesionRef))
+                        .telephone(adhesion.getAdherent().getTelephone())
+                        .email(adhesion.getAdherent().getEmail())
                         .mineur(adhesion.getAdherent().isMineur())
-                        .prenomLegal(adhesion.getAdherent().isLegalReferent() ? adhesionRef.getPrenom() : adhesion.getAdherent().getPrenomLegal())
-                        .nomLegal(adhesion.getAdherent().isLegalReferent() ? adhesionRef.getNom() : adhesion.getAdherent().getNomLegal())
-                        .telLegal(adhesion.getAdherent().isTelephoneReferent() ? adhesionRef.getTelephone() : adhesion.getAdherent().getTelephone())
+                        .prenomLegal(adhesion.getAdherent().isLegalReferent() ? adherentRef.getPrenom() : adhesion.getAdherent().getPrenomLegal())
+                        .nomLegal(adhesion.getAdherent().isLegalReferent() ? adherentRef.getNom() : adhesion.getAdherent().getNomLegal())
+                        .telLegal(adhesion.getAdherent().isTelephoneReferent() ? adherentRef.getTelephone() : adhesion.getAdherent().getTelephone())
                         .statut(adhesion.getStatutActuel())
                         .commentaire(adhesion.getRemarqueSecretariat())
                         .flag(adhesion.getFlag())
@@ -380,13 +420,15 @@ public class AdherentServices {
                 .prenom(adherent.getPrenom())
                 .nom(adherent.getNom())
                 .nomPrenom((adherent.getNom() == null ? "zzzz" : adherent.getNom()) + (adherent.getPrenom() == null ? "zzzz" : adherent.getPrenom()))
-                .adresse(adherent.getAdresse(adherentRef))
-                .email(adherent.getEmail(adherentRef))
-                .telephone(adherent.getTelephone(adherentRef))
+                .adresse(adherent.getAdresse())
+                .email(adherent.getEmail())
+                .telephone(adherent.getTelephone())
                 .mineur(adherent.isMineur())
                 .referent(adherent.isReferent())
                 .nomLegal(adherentRef.getNom())
                 .prenomLegal(adherentRef.getPrenom())
+                .adresseLegal(adherentRef.getAdresse())
+                .emailLegal(adherentRef.getEmail())
                 .telLegal(adherentRef.getTelephone())
                 .lieuNaissance(adherent.getLieuNaissance())
                 .naissance(adherent.getNaissance())

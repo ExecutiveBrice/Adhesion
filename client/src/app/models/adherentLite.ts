@@ -19,6 +19,9 @@ export class AdherentLite {
   mineur: boolean;
   nomLegal: string;
   prenomLegal: string;
+
+  emailLegal: string;
+  adresseLegal: string;
   telLegal: string;
   accords: Accord[];
   adhesions: AdhesionLite[]
@@ -43,6 +46,8 @@ export class AdherentLite {
     this.naissance = ""
     this.tribuId = 0;
     this.tribuSize = 0;
+    this.emailLegal = ""
+    this.adresseLegal = ""
     this.telLegal = ""
     this.commentaire = "";
     this.flag = false;

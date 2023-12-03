@@ -295,7 +295,7 @@
               </div>
             </div>
 
-            <div class="form-group">
+            <div *ngIf="!adherent.emailReferent" class="form-group">
 
               <label for="email">Email <span class="orange">* champs obligatoires</span></label>
               <input type="email" class="form-control" name="email" [(ngModel)]="adherent.email" (ngModelChange)="adherent.email = cleaning(adherent.email)"  (ngModelBlur)="adherent.email = cleaning(adherent.email)"  required minlength="10"

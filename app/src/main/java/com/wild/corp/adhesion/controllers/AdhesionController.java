@@ -1,5 +1,6 @@
 package com.wild.corp.adhesion.controllers;
 
+import com.wild.corp.adhesion.models.Accord;
 import com.wild.corp.adhesion.models.Adhesion;
 import com.wild.corp.adhesion.models.Paiement;
 import com.wild.corp.adhesion.services.AdhesionServices;
@@ -140,5 +141,12 @@ AdhesionServices adhesionServices;
 	public ResponseEntity<?> update(Authentication principal, @RequestBody Adhesion adhesion) {
 		adhesionServices.addModification(principal.getName(), adhesion.getId());
 		return ResponseEntity.ok(adhesionServices.update(adhesion));
+	}
+
+	@PostMapping("/validation")
+	@PreAuthorize("hasRole('USER')")
+	public ResponseEntity<?> validation(Authentication principal, @PathParam("adhesionId") Long adhesionId, @RequestBody List<Accord> accords) {
+		adhesionServices.addModification(principal.getName(), adhesionId);
+		return ResponseEntity.ok(adhesionServices.validation(accords, adhesionId));
 	}
 }

@@ -68,6 +68,6 @@ public class Activite {
     private Set<Adhesion> adhesions = new HashSet<>();
 
     @ManyToMany(mappedBy="cours", cascade = CascadeType.ALL)
-    @JsonIgnoreProperties({"cours", "accords", "adhesions", "user", "tribu"})
+    @JsonIgnoreProperties({"cours", "accords", "adhesions", "user", "tribu", "derniereModifs", "derniereVisites"})
     private Set<Adherent> profs = new HashSet<>();
 }

@@ -75,8 +75,9 @@ export class AdhesionService {
     return this.http.get<Adhesion[]>(API_URL+"liteBysection", {params, responseType: 'json' });
   }
   
-  update(adhesion: Adhesion): Observable<any> {
-    return this.http.post(API_URL+"update", adhesion, { responseType: 'json' });
+  validation(accords: Accord[], adhesionId : number): Observable<any> {
+    let params = new HttpParams().set('adhesionId', '' + adhesionId + '');
+    return this.http.post(API_URL+"validation", accords, {params, responseType: 'json' });
   }
 
   addVisite(adhesionId : number): Observable<Adhesion> {
