@@ -29,6 +29,7 @@ spring:
 
 
 server:
+  name : ${DNS_NAME}
   app:
     jwtSecret: ${JWT_SECRET}
     jwtExpirationMs: 86400000
