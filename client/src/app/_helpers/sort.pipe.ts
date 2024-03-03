@@ -14,7 +14,6 @@ export class OrderByPipe implements PipeTransform {
 
   private sort(value: any[], key?: any, reverse?: boolean): any[] {
     const isInside = key && key.indexOf('.') !== -1;
-
     if (isInside) {
       key = key.split('.');
     }

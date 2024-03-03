@@ -2,6 +2,7 @@ package com.wild.corp.adhesion.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -11,17 +12,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Getter
-@Setter
-@ToString
-@RequiredArgsConstructor
+@Data
 @EqualsAndHashCode(of = {"id"})
 @Entity
+@NoArgsConstructor
 @Table(name = "adherents",
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = "id"),
         })
-@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonIgnoreProperties(ignoreUnknown = true,  allowSetters = true)
 public class Adherent {
 
     @Id
@@ -34,41 +33,30 @@ public class Adherent {
 
     private String genre;
 
-    private String email;
-
     private String telephone;
 
     private LocalDate naissance;
 
     private String lieuNaissance;
 
-    private boolean referent = false;
-
     private String adresse;
 
-    private boolean adresseReferent = true;
+    private Boolean adresseRepresentant;
 
-    private boolean telephoneReferent = true;
+    private Boolean telephoneRepresentant;
 
-    private boolean emailReferent = true;
+    private Boolean emailRepresentant;
 
-    private boolean mineur = false;
+    private Boolean mineur;
 
-    private String nomLegal;
-
-    private String prenomLegal;
-
-    private boolean legalReferent = true;
-
-    private boolean completReferent = false;
-
-    private boolean completAdhesion = false;
+    private Boolean completAdhesion;
 
     @OneToMany(cascade = CascadeType.ALL)
     private List<Accord> accords = new ArrayList<>();
 
-    @OneToMany
-    private List<Document> documents = new ArrayList<>();
+    @ManyToOne
+    @JsonIgnoreProperties({"cours", "accords", "adhesions", "tribu",  "documents", "derniereModifs", "derniereVisites"})
+    private Adherent representant;
 
     @OneToMany(cascade = CascadeType.ALL)
     private List<Notification> derniereModifs = new ArrayList<>();

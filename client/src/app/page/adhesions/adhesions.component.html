@@ -327,20 +327,6 @@
 </table>
 
 
-<ng-template #editPDFModal let-c="close" let-d="dismiss" let-modal>
-  <div class="modal-header">
-    <h4 class="modal-title" id="modal-basic-title">{{pdfName}}</h4>
-    <button type="button" class="btn-close" aria-label="Close" (click)="dismissDoc()"></button>
-  </div>
-  <div class="modal-body modalFullHeight">
-
-    <pdf-viewer [src]="pdfEditSrc" [render-text]="true" [original-size]="false"></pdf-viewer>
-  </div>
-  <div class="modal-footer">
-    <button type="submit" class="btn btn-primary" (click)="dismissDoc()">Fermer</button>
-  </div>
-
-</ng-template>
 
 
 

@@ -83,15 +83,18 @@ export class AdherentService {
     return this.http.post<Adherent>(API_URL+"update", adherent, { responseType: 'json' });
   }
 
-  save(adherent: Adherent, tribuId:number): Observable<Adherent> {
-    let params = new HttpParams().set('tribuId', '' + tribuId + '');
-    return this.http.post<Adherent>(API_URL+"save", adherent, {params, responseType: 'json' });
-  }
+
 
   changeTribu(referentId: number, adherentId: number): Observable<AdherentLite> {
     let params = new HttpParams().set('adherentId', '' + adherentId + '');
     return this.http.post<AdherentLite>(API_URL + 'changeTribu', referentId, {params, responseType: 'json' });
   }
+
+  newAdherentDansTribu(tribuUuid: string): Observable<Adherent> {
+    let params = new HttpParams().set('tribuUuid', '' + tribuUuid + '');
+    return this.http.post<Adherent>(API_URL+"newAdherentDansTribu", null, {params, responseType: 'json' });
+  }
+  
 }
 
 

@@ -1,6 +1,7 @@
 package com.wild.corp.adhesion.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
@@ -11,7 +12,6 @@ import java.util.Set;
 
 @Getter
 @Setter
-@ToString
 @RequiredArgsConstructor
 @EqualsAndHashCode(of = {"id"})
 @Entity
@@ -19,13 +19,14 @@ import java.util.Set;
 		uniqueConstraints = { 
 			@UniqueConstraint(columnNames = "username"),
 		})
+@JsonIgnoreProperties(ignoreUnknown = true,   allowSetters = true)
 public class User {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
 	@NotBlank
-	@Size(max = 50)
+	@Size(max = 255)
 	private String username;
 
 	@NotBlank
@@ -39,6 +40,7 @@ public class User {
 	private Boolean emailValid;
 
 	@OneToOne(mappedBy="user")
+	@ToString.Exclude
 	private Adherent adherent;
 
 	@OneToMany(mappedBy="user", cascade = CascadeType.ALL)

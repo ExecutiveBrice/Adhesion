@@ -9,7 +9,6 @@ import java.util.UUID;
 
 @Getter
 @Setter
-@ToString
 @RequiredArgsConstructor
 @EqualsAndHashCode(of = {"id"})
 @Entity
@@ -27,7 +26,7 @@ public class Tribu {
 
     @OneToMany(mappedBy="tribu")
     @ToString.Exclude
-    @JsonIgnoreProperties({"tribu","user", "cours", "derniereModifs", "derniereVisites"})
+    @JsonIgnoreProperties({"tribu", "cours", "derniereModifs", "derniereVisites"})
     private Set<Adherent> adherents = new HashSet<>();
 
     public Tribu(UUID uuid){

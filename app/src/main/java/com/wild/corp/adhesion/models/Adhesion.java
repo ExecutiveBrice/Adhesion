@@ -8,14 +8,15 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-@Getter
-@Setter
-@ToString
-@RequiredArgsConstructor
+@Data
 @EqualsAndHashCode(of = {"id"})
 @Entity
-@Table(	name = "adhesions")
-@JsonIgnoreProperties(ignoreUnknown = true)
+@NoArgsConstructor
+@Table(name = "adhesions",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = "id"),
+        })
+@JsonIgnoreProperties(ignoreUnknown = true,  allowSetters = true)
 public class Adhesion {
 
     @Id
@@ -77,11 +78,14 @@ public class Adhesion {
     private static final List<String> list_B_valid = List.of("Validée", "Validée, en attente du certificat médical", "Licence T", "Retour Comité", "Licence générée", "Validée groupement sportif");
     private static final List<String> list_B_encours = List.of("Attente validation adhérent", "Attente validation secrétariat", "Attente licence en ligne");
 
+    private static final List<String> list_attente = List.of("Sur liste d'attente");
 
     public boolean isValide(){
         return list_valid.contains(getStatutActuel());
     }
-
+    public boolean isEnAttente(){
+        return list_attente.contains(getStatutActuel());
+    }
     public boolean isEnCours(){
         return list_G_encours.contains(getStatutActuel());
     }

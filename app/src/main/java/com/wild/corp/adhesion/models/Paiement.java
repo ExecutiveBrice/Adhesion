@@ -15,7 +15,7 @@ import java.time.LocalDate;
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = "id"),
         })
-@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonIgnoreProperties(ignoreUnknown = true,   allowSetters = true)
 public class Paiement {
 
     @Id

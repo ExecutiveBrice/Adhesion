@@ -2,8 +2,11 @@
   font-weight: bold;
 }
 
-#icon {
+.cadrePermanent:hover {
+  box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+}
 
+#icon {
   display: flex;
   justify-content: flex-end;
   padding-right: 20px !important;
@@ -12,9 +15,9 @@
 .row{
   padding: 10px;
 }
+
 .bouton-sticky {
   position: fixed !important;
-
   top: 5% !important;
   right: 1% !important;
   z-index: 9999 !important;
@@ -22,27 +25,17 @@
 
 .bouton-sticky-2 {
   position: fixed !important;
-
   top: 7% !important;
   right: 1% !important;
   z-index: 9999 !important;
-
 }
 
 .taillepetite{
   width: 5%;
 }
 
-.griser:hover{
-  margin-left :0px;
-  padding-left :0px;
-  margin-right :0px;
-  padding-right :0px;
-  border-style: solid !important;
-  border: 1px;
-  border-radius: 5px;
-  border-color: black;
-}
+
+
 .cadre:hover {
   margin-top: 0px;
   border-style: solid !important;
@@ -55,28 +48,26 @@
   margin-bottom: 10px;
   border-style: solid !important;
   border: 1px;
-  border-radius: 5px;
+  border-radius: 20px;
   background-color: white;
   border-color: black;
   -moz-box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
   -webkit-box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
   box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
 }
-.border-bottom{
 
+.border-bottom{
   border-bottom: 1px;
   border-bottom-style: solid!important;
   border-bottom-color :black !important;
-
 }
+
 .bouton-sticky-3 {
   position: fixed !important;
-
   top: 9% !important;
   right: 1% !important;
   z-index: 9999 !important;
 }
-
 
 .dropdown-toggle::after {
   display: none;
@@ -110,8 +101,9 @@
   margin-left: 10px;
 }
 
-.fullSize{
-  padding: 0px;
-  margin: 5px;
+.corner{
+  margin-left: 5px;
 }
 
+.fa-fw{
+  display:inline-block }

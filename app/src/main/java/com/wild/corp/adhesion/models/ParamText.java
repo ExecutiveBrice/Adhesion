@@ -25,7 +25,7 @@ public class ParamText {
 	@NotBlank
 	private String paramName;
 
-	@Column(length = 1024)
+	@Column(columnDefinition="TEXT")
 	private String paramValue;
 
 }

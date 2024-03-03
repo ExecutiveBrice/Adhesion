@@ -2,19 +2,16 @@ package com.wild.corp.adhesion.models;
 
 import lombok.*;
 
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
-
-@Getter
-@Setter
-@ToString
+@Data
 @Builder
+@NoArgsConstructor
 @AllArgsConstructor
-@RequiredArgsConstructor
 @EqualsAndHashCode(of = {"id"})
 public class AdherentLite {
 
@@ -34,49 +31,39 @@ public class AdherentLite {
 
     private String lieuNaissance;
 
-    private boolean referent = false;
-
     private String adresse;
 
-    private boolean adresseReferent = true;
+    private List<String> documents;
 
-    private boolean telephoneReferent = true;
+    private Boolean mineur = false;
 
-    private boolean emailReferent = true;
+    private Boolean completAdhesion = false;
 
-    private boolean mineur = false;
+    private AdherentLite representant;
 
-    private String nomLegal;
+    private Boolean adresseRepresentant;
 
-    private String prenomLegal;
+    private Boolean telephoneRepresentant;
 
-    private boolean legalReferent = true;
-
-    private boolean completReferent = false;
-
-    private boolean completAdhesion = false;
-
+    private Boolean emailRepresentant;
 
     private String nomPrenom;
-
-    private String emailLegal;
-    private String adresseLegal;
-    private String telLegal;
 
     private String statut;
 
     private String commentaire;
 
-    private boolean flag;
-    private boolean paiement;
+    private Boolean flag;
+
+    private Boolean paiement;
 
     private UUID tribuId;
 
     private Integer tribuSize;
 
-    private boolean documentPresent = false;
     private String lien;
 
+    private Set<AdhesionLite> adhesions;
 
     private List<Accord> accords = new ArrayList<>();
 
@@ -86,4 +73,5 @@ public class AdherentLite {
 
     private List<Notification> derniereVisites = new ArrayList<>();
 
+    private UserLite user;
 }

@@ -1,10 +1,10 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { UserService } from '../../_services/user.service';
 import { Accord, Activite, ActiviteDropDown, Adherent, Adhesion, Document, HoraireDropDown, Tribu, User } from '../../models';
 import { NgbDateStruct, NgbCalendar, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ActiviteService } from '../../_services/activite.service';
 import { AdherentService } from 'src/app/_services/adherent.service';
-import { faSkull, faSquareCaretLeft, faSquareCaretDown, faEye, faCircleQuestion, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { faCirclePause, faClock, faSquareXmark, faFileSignature, faSquareCaretLeft, faSquareCaretDown, faEye, faCircleQuestion, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { AdhesionService } from 'src/app/_services/adhesion.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TokenStorageService } from 'src/app/_services/token-storage.service';
@@ -12,9 +12,11 @@ import { Subscription } from 'rxjs';
 import { ParamService } from 'src/app/_services/param.service';
 import { jsPDF } from "jspdf";
 import { DatePipe } from '@angular/common';
-import { ModalConfig } from '../modal/modal.config'
-import { ModalComponent } from '../modal/modal.component';
 import { TribuService } from 'src/app/_services/tribu.service';
+import { ToastrService } from 'ngx-toastr';
+import { UserComponent } from 'src/app/template/user/user.component';
+import { UtilService } from 'src/app/_services/util.service';
+import { FileService } from 'src/app/_services/file.service';
 
 @Component({
   selector: 'app-board-user',
@@ -22,8 +24,10 @@ import { TribuService } from 'src/app/_services/tribu.service';
   styleUrls: ['./board-user.component.css']
 })
 export class BoardUserComponent implements OnInit {
-
-  faSkull = faSkull;
+  faClock =faClock
+  faCirclePause=faCirclePause
+  faFileSignature = faFileSignature;
+  faSquareXmark = faSquareXmark;
   faSquareCaretLeft = faSquareCaretLeft
   faSquareCaretDown = faSquareCaretDown
   faEye = faEye
@@ -41,6 +45,7 @@ export class BoardUserComponent implements OnInit {
   date: { year: number; month: number } | undefined;
   content?: string;
   edit?: boolean
+  swticj: boolean = false
   editAdhRefActivite?: boolean
 
   activitesMajeur: ActiviteDropDown[] = [];
@@ -60,9 +65,9 @@ export class BoardUserComponent implements OnInit {
   adhesionsOpen = false
   PaiementsOpen = false
   totalRestantDu = 0;
-  errorMessage = "Une erreur est survenue, recharger la page et recommencez. si le problème persiste contactez l'administrateur<br />";
+  tribuUuid: string = "";
   subscription = new Subscription()
-  message: string = ""
+
   showAdmin: boolean = false;
   showSecretaire: boolean = false;
 
@@ -72,16 +77,33 @@ export class BoardUserComponent implements OnInit {
   doc: jsPDF = new jsPDF('p', 'mm', 'a4', true);
 
   constructor(
+    private toastr: ToastrService,
     private tribuService: TribuService,
     private adherentService: AdherentService,
-    private adhesionService: AdhesionService,
+    private utilService: UtilService,
     public activiteService: ActiviteService,
     public router: Router,
     public route: ActivatedRoute,
     private tokenStorageService: TokenStorageService,
     public paramService: ParamService,
-    private modalService: NgbModal,
+    public fileService: FileService,
     private datePipe: DatePipe) { }
+
+  showSuccess(message: string) {
+    this.toastr.success(message, 'Information');
+  }
+  showSecretariat() {
+    this.toastr.warning("Le secrétariat validera votre dossier lorsqu'il sera complet", "Secrétariat");
+  }
+
+  showWarning(message: string) {
+    this.toastr.warning('Attention', message);
+  }
+  showError(message: string) {
+    this.toastr.error('Erreur', "Une erreur est survenue, recharger la page et recommencez. si le problème persiste contactez l'administrateur<br />" + message);
+  }
+
+
 
 
   ngOnInit(): void {
@@ -104,195 +126,83 @@ export class BoardUserComponent implements OnInit {
         },
         error: (error) => {
           this.isFailed = true;
-          this.message = this.message + error.message + "<br />"
+          this.showError(error.message)
         }
       });
 
     this.paramService.getAllText().subscribe({
       next: (data) => {
-        this.message = data.filter(param => param.paramName == "Text_MonAdhesion")[0].paramValue;
+        this.showSuccess(data.filter(param => param.paramName == "Text_MonAdhesion")[0].paramValue)
       },
       error: (error) => {
         this.isFailed = true;
-        this.message = this.message + error.message + "<br />"
+        this.showError(error.message)
+
       }
     });
 
     if (window.innerWidth <= 1080) { // 768px portrait
       this.mobile = true;
     }
-    let tribuUuid = this.route.snapshot.paramMap.get('tribuUuid');
+
+    const uuid = this.route.snapshot.paramMap.get('tribuUuid');
+    this.tribuUuid = uuid != null ? uuid : "";
 
     if (this.tokenStorageService.getUser().roles) {
       this.showAdmin = this.tokenStorageService.getUser().roles.includes('ROLE_ADMIN');
       this.showSecretaire = this.tokenStorageService.getUser().roles.includes('ROLE_SECRETAIRE');
-console.log(tribuUuid)
-      if (this.showSecretaire && tribuUuid ) {
-        this.tribuService.getTribuByUuid(tribuUuid).subscribe(
-          data => {
-           this.fillUser(data)
-          },
-          err => {
-            this.isFailed = true;
-            this.message = this.message + err.message + "<br />"
-          }
-        );
-
-      } else {
-        this.tribuService.getConnected().subscribe(
-          data => {
-            this.fillUser(data)
-          },
-          err => {
-            this.isFailed = true;
-            this.message = this.message + err.message + "<br />"
-          }
-        );
-      }
+      this.getTribu()
     } else {
       this.router.navigate(['login']);
     }
   }
 
-  fillUser(tribu: Tribu) {
-    this.tribu = tribu;
-    this.tribu.adherents.forEach(adh => {
-      adh.adhesions.forEach(adhesion => this.adhesions.push(adhesion))
-      this.sanitize(adh);
-    });
-    this.fillObjects();
-  }
-
-  sanitize(adh: Adherent) {
-    adh.adhesions = adh.adhesions == null || undefined ? [] : adh.adhesions;
-    adh.adresse = adh.adresse == null || undefined ? "" : adh.adresse;
-    adh.email = adh.email == null || undefined ? "" : adh.email;
-    adh.naissance = adh.naissance == null || undefined ? undefined : adh.naissance;
-    adh.nom = adh.nom == null || undefined ? "" : adh.nom;
-    adh.prenom = adh.prenom == null || undefined ? "" : adh.prenom;
-    adh.telephone = adh.telephone == null || undefined ? "" : adh.telephone;
-    adh.referent = adh.referent == null || undefined ? false : adh.referent;
-  }
-
-  activites: Activite[] = []
-  fillObjects() {
-    let activiteBasket = new ActiviteDropDown
-    activiteBasket.nom = "Basket"
-    let horaireDropDownCompetition = new HoraireDropDown
-    horaireDropDownCompetition.id = 999
-    horaireDropDownCompetition.nom = "Compétition"
-    horaireDropDownCompetition.complete = false
-    activiteBasket.horaires.push(horaireDropDownCompetition)
-    this.activitesMineur.push(activiteBasket)
-
-    let activiteBasketMajeur = new ActiviteDropDown
-    activiteBasketMajeur.nom = "Basket"
-    let horaireDropDownMCompetition = new HoraireDropDown
-    horaireDropDownMCompetition.id = 999
-    horaireDropDownMCompetition.nom = "Compétition"
-    horaireDropDownMCompetition.complete = false
-    activiteBasketMajeur.horaires.push(horaireDropDownMCompetition)
-
-    let horaireDropDownLoisir = new HoraireDropDown
-    horaireDropDownLoisir.id = 998
-    horaireDropDownLoisir.nom = "Loisir"
-    horaireDropDownLoisir.complete = false
-    activiteBasketMajeur.horaires.push(horaireDropDownLoisir)
-
-    let horaireDropDownDirigeant = new HoraireDropDown
-    horaireDropDownDirigeant.id = 997
-    horaireDropDownDirigeant.nom = "Dirigeant Joueur"
-    horaireDropDownDirigeant.complete = false
-    activiteBasketMajeur.horaires.push(horaireDropDownDirigeant)
-
-    let horaireDropDownDirigeantNon = new HoraireDropDown
-    horaireDropDownDirigeantNon.id = 996
-    horaireDropDownDirigeantNon.nom = "Dirigeant Non Joueur"
-    horaireDropDownDirigeantNon.complete = false
-    activiteBasketMajeur.horaires.push(horaireDropDownDirigeantNon)
-
-    this.activitesMajeur.push(activiteBasketMajeur)
-
-
-
-    this.activiteService.getAll().subscribe(
-      data => {
-        this.activites = data;
-        data.forEach(act => {
-
-          if (act.groupe == "ALOD_G") {
-            if (act.pourEnfant == false || act.pourEnfant == null) {
-              if (this.activitesMajeur.filter(activiteDropDown => activiteDropDown.nom == act.nom).length > 0) {
-                let horaireDropDown = new HoraireDropDown
-                horaireDropDown.id = act.id
-                horaireDropDown.nom = act.horaire
-                horaireDropDown.complete = act.complete
-                this.activitesMajeur.filter(activiteDropDown => activiteDropDown.nom == act.nom)[0].horaires.push(horaireDropDown)
-              } else {
-                let activiteDropDown = new ActiviteDropDown()
-
-                activiteDropDown.nom = act.nom
-                let horaireDropDown = new HoraireDropDown
-                horaireDropDown.id = act.id
-                horaireDropDown.nom = act.horaire
-                horaireDropDown.complete = act.complete
-                activiteDropDown.horaires.push(horaireDropDown)
-                this.activitesMajeur.push(activiteDropDown)
-              }
-            } else if (act.pourEnfant == true || act.pourEnfant == null) {
-              if (this.activitesMineur.filter(activiteDropDown => activiteDropDown.nom == act.nom).length > 0) {
-                let horaireDropDown = new HoraireDropDown
-                horaireDropDown.id = act.id
-                horaireDropDown.nom = act.horaire
-                horaireDropDown.complete = act.complete
-                this.activitesMineur.filter(activiteDropDown => activiteDropDown.nom == act.nom)[0].horaires.push(horaireDropDown)
-              } else {
-                let activiteDropDown = new ActiviteDropDown()
-                activiteDropDown.nom = act.nom
-                let horaireDropDown = new HoraireDropDown
-                horaireDropDown.id = act.id
-                horaireDropDown.nom = act.horaire
-                horaireDropDown.complete = act.complete
-                activiteDropDown.horaires.push(horaireDropDown)
-                this.activitesMineur.push(activiteDropDown)
-              }
-            }
-          }
-        });
-        console.log(this.activitesMajeur)
-      },
-      err => {
-        this.isFailed = true;
-        this.message = this.message + err.message + "<br />"
-      }
-    );
-
-    if (this.tribu.adherents.filter(adh => adh.prenom.length < 1).length > 0) {
-      this.infoAdherent = true;
+  supprimable(adherent:Adherent):boolean{
+    if (this.tribu.adherents.filter(adh => !adh.mineur).length > 1){
+      return true
     }
-
-    this.calculCompletudeAdhesion()
-    this.calculCompletudeAdherent()
-    this.calculRestantDu()
+    if (adherent.mineur){
+      return true;
+    }
+    return false;
   }
 
-  adherentsTotaux: number = 0
-  adherentsACompleter: number = 0
-  calculCompletudeAdherent() {
-    this.adherentsTotaux = 0
-    this.adherentsACompleter = 0
-    this.tribu.adherents.forEach(adherent => {
-      if (this.adhesions.filter(adh => adh.adherent?.id == adherent.id).length > 0) {
-        this.adherentsTotaux += 1
-      }
-      if (!adherent.completAdhesion) {
-        this.adherentsACompleter += 1
-      }
-    })
-    if (this.adherentsACompleter > 0 || this.adhesions.length == 0) {
-      this.adherentsOpen = true
+  adhesionComplete(adherent:Adherent):boolean{
+    return adherent.adhesions.find(adh => adh.statutActuel == 'Validée') != undefined;
+  }
+
+  getTribu() {
+    this.adhesions = []
+    if (this.showSecretaire && this.tribuUuid) {
+      this.tribuService.getTribuByUuid(this.tribuUuid).subscribe(
+        data => {
+          console.log(data)
+          this.tribu = data
+          this.tribu.adherents.forEach(adh => {
+            adh.adhesions.forEach(adhesion => this.adhesions.push(adhesion))
+          });
+          this.calculRestantDu()
+        },
+        error => {
+          this.isFailed = true;
+          this.showError(error.message)
+        }
+      );
     } else {
-      this.adherentsOpen = false
+      this.tribuService.getConnected().subscribe(
+        data => {
+          console.log(data)
+          this.tribu = data
+          this.tribu.adherents.forEach(adh => {
+            adh.adhesions.forEach(adhesion => this.adhesions.push(adhesion))
+          });
+          this.calculRestantDu()
+        },
+        error => {
+          this.isFailed = true;
+          this.showError(error.message)
+        }
+      );
     }
   }
 
@@ -301,10 +211,9 @@ console.log(tribuUuid)
     this.adhesionsACompleter = 0;
     this.adhesionsACompleter += this.adhesions.filter(adh => adh.statutActuel == 'Attente validation adhérent').length
     if (this.adhesionsACompleter > 0) {
-      this.dossierIncomplet = true;
+      this.showSecretariat()
       this.adhesionsOpen = true
     } else {
-      this.dossierIncomplet = false;
       this.adhesionsOpen = false
     }
   }
@@ -320,211 +229,9 @@ console.log(tribuUuid)
         this.adhesionPaiement.push(adh)
       }
     })
-
     if (this.totalRestantDu > 0) {
       this.PaiementsOpen = true
     }
-
-  }
-
-  onSubmit(adherent: Adherent): void {
-    this.infoAdherent = false;
-    adherent.telephone = this.cleaning(adherent.telephone)
-    adherent.email = this.cleaning(adherent.email)
-
-    if (adherent.id != 0) {
-      this.adherentService.update(adherent).subscribe(
-        data => {
-          window.location.reload();
-        },
-        err => {
-          this.isFailed = true;
-          this.message = this.message + err.message + "<br />"
-        }
-      );
-    } else {
-      this.adherentService.save(adherent, this.tribu.id).subscribe(
-        data => {
-          window.location.reload();
-        },
-        err => {
-          this.isFailed = true;
-          this.message = this.message + err.message + "<br />"
-        }
-      );
-    }
-  }
-
-
-  choisir(adherent: Adherent, activiteId: number) {
-    let newAdhesionActivite: Activite = new Activite;
-    if (adherent.naissance && activiteId == 999) {
-      let anneeRef = new Date().getFullYear()
-      let anneeAdh = new Date(adherent.naissance).getFullYear()
-
-      let age = anneeRef - anneeAdh
-      if (age < 7) {
-        newAdhesionActivite = this.activites.filter(act => act.horaire == "U7")[0]
-      } else if (age < 9) {
-        if (adherent.genre == "Masculin") {
-          newAdhesionActivite = this.activites.filter(act => act.horaire == "U9M")[0]
-        } else {
-          newAdhesionActivite = this.activites.filter(act => act.horaire == "U9F")[0]
-        }
-      } else if (age < 11) {
-        if (adherent.genre == "Masculin") {
-          newAdhesionActivite = this.activites.filter(act => act.horaire == "U11M")[0]
-        } else {
-          newAdhesionActivite = this.activites.filter(act => act.horaire == "U11F")[0]
-        }
-      } else if (age < 13) {
-        if (adherent.genre == "Masculin") {
-          newAdhesionActivite = this.activites.filter(act => act.horaire == "U13M")[0]
-        } else {
-          newAdhesionActivite = this.activites.filter(act => act.horaire == "U13F")[0]
-        }
-      } else if (age < 15) {
-        if (adherent.genre == "Masculin") {
-          newAdhesionActivite = this.activites.filter(act => act.horaire == "U15M")[0]
-        } else {
-          newAdhesionActivite = this.activites.filter(act => act.horaire == "U15F")[0]
-        }
-      } else if (age < 17 && adherent.genre == "Masculin") {
-        newAdhesionActivite = this.activites.filter(act => act.horaire == "U17M")[0]
-      } else if (age < 18 && adherent.genre != "Masculin") {
-        newAdhesionActivite = this.activites.filter(act => act.horaire == "U18F")[0]
-      } else if (age < 20 && adherent.genre == "Masculin") {
-        newAdhesionActivite = this.activites.filter(act => act.horaire == "U20M")[0]
-      } else if (adherent.genre == "Masculin") {
-        newAdhesionActivite = this.activites.filter(act => act.horaire == "Senior M")[0]
-      } else if (adherent.genre != "Masculin") {
-        newAdhesionActivite = this.activites.filter(act => act.horaire == "Senior F")[0]
-      }
-    } else if (activiteId == 998) {
-      if (adherent.genre == "Masculin") {
-        newAdhesionActivite = this.activites.filter(act => act.horaire == "Loisir M")[0]
-      } else if (adherent.genre != "Masculin") {
-        newAdhesionActivite = this.activites.filter(act => act.horaire == "Loisir F")[0]
-      }
-    } else if (activiteId == 997) {
-      newAdhesionActivite = this.activites.filter(act => act.horaire == "Dirigeant Joueur")[0]
-    } else if (activiteId == 996) {
-      newAdhesionActivite = this.activites.filter(act => act.horaire == "Dirigeant Non Joueur")[0]
-    } else {
-      newAdhesionActivite = this.activites.filter(act => act.id == activiteId)[0]
-    }
-    let newAdhesion = new Adhesion;
-
-    newAdhesion.id = this.newAdhesions.length + 1
-    newAdhesion.activite = newAdhesionActivite;
-    newAdhesion.adherent = adherent;
-    newAdhesion.tarif = newAdhesionActivite.tarif
-    this.newAdhesions.push(newAdhesion)
-    this.calculCompletudeAdhesion()
-    this.calculRestantDu()
-  }
-
-  saveAdhesions(adhesions: Adhesion[]) {
-    adhesions.forEach(adh => {
-
-      if (adh.adherent) {
-        let newAdherent = new Adherent(0)
-        newAdherent.id = adh.adherent.id
-        adh.adherent = newAdherent
-      }
-      if (adh.activite) {
-        let newActivite = new Activite()
-        newActivite.id = adh.activite.id
-        adh.activite = newActivite
-      }
-    })
-    this.adhesionService.add(adhesions).subscribe(
-      data => {
-        this.newAdhesions = []
-        data.forEach(adh => this.adhesions.push(adh))
-        this.calculCompletudeAdhesion()
-        this.calculCompletudeAdherent()
-        this.calculRestantDu()
-      },
-      err => {
-        this.isFailed = true;
-        this.message = this.message + err.message + "<br />"
-      }
-    );
-  }
-
-  updateAccord(accord: Accord, etat: boolean | undefined) {
-
-    if (accord.nom == 'Reglement Interieur') {
-      this.adhesions.forEach(adhesion => {
-        accord.etat = etat;
-        accord.datePassage = new Date
-      })
-    } else {
-      accord.etat = etat;
-      accord.datePassage = new Date
-    }
-  }
-
-  isAccordRI(accords: Accord[]): boolean {
-    return accords.filter(acc => acc.nom == "RGPD" && acc.etat == null).length == 0
-  }
-
-  isAllAccordsDone(accords: Accord[]): boolean {
-    return accords.filter(acc => acc.etat == null).length == 0
-  }
-
-  updateAdhesion(adhesion: Adhesion) {
-    this.adhesionService.validation(adhesion.accords, adhesion.id).subscribe(
-      data => {
-        adhesion.statutActuel = data.statutActuel;
-        this.calculCompletudeAdhesion()
-        this.calculRestantDu()
-      },
-      err => {
-        this.isFailed = true;
-        this.message = this.message + err.message + "<br />"
-      }
-    );
-  }
-
-  deleteAdhesion(adhesion: Adhesion) {
-    this.newAdhesions = this.newAdhesions.filter(adh => adh.id != adhesion.id)
-  }
-
-  infoAdherent: boolean = false
-  addAdherent() {
-    let adherent = new Adherent(0);
-    let accordRGPD = new Accord
-    accordRGPD.nom = 'RGPD'
-    adherent.accords.push(accordRGPD)
-    let accordImage = new Accord
-    accordImage.nom = 'Droit Image'
-    adherent.accords.push(accordImage)
-    this.infoAdherent = true;
-    this.tribu.adherents.push(adherent);
-    this.calculCompletudeAdherent()
-  }
-
-  removeAdherent(addAdherent: Adherent) {
-    this.tribu.adherents = this.tribu.adherents.filter(adh => adh.id != 0)
-    this.calculCompletudeAdherent()
-  }
-
-  openAttestationSante() {
-    window.open('https://www.alod.fr/wp-content/uploads/2022/04/INSCRIPTION-Questionnaire_de_sante.pdf', '_blank');
-  }
-
-  openCertifMed(activite: Activite) {
-    if (activite.groupe == "ALOD_G") {
-      window.open('https://cd.ufolep.org/vienne/vienne_d/data_1/pdf/ce/certificatmdicalufolep86.pdf', '_blank');
-    } else {
-      window.open('https://www.alod.fr/wp-content/uploads/2023/05/certif20232024.pdf', '_blank');
-    }
-  }
-
-  openSurclassement() {
-    window.open('https://www.alod.fr/wp-content/uploads/2023/05/Certificat-surclassement-2023-2024.pdf', '_blank');
   }
 
   afficheAlerte: boolean = false;
@@ -533,97 +240,87 @@ console.log(tribuUuid)
     setTimeout(() => { this.afficheAlerte = false }, 5000);
   }
 
-  uploadFile() {
-    this.modalService.dismissAll();
-    this.adherentService.addDocument(this.pdfFile, this.pdfAdherent.id).subscribe(
-      data => {
-        if (this.pdfAdherent.documents.length > 0) {
-          this.pdfAdherent.documents.push(data)
-        } else {
-          let docs = []
-          docs.push(data)
-          this.pdfAdherent.documents = docs;
+  adhesionValide(adh: Adhesion): boolean {
+    return adh.statutActuel.startsWith("Attente licence en ligne")
+      || adh.statutActuel.startsWith("Validée")
+      || adh.statutActuel.startsWith("Licence générée")
+      || adh.statutActuel.startsWith("Retour Comité")
+      || adh.statutActuel.startsWith("Licence T");
+  }
+
+  supressionAdherent(adherent: Adherent) {
+    this.utilService.openModal(
+      "Vous êtes sur le point de supprimer l'adhérent " + adherent.prenom + "<br/>" +
+      (adherent.adhesions != undefined && adherent.adhesions.length > 0 ? "Toutes ses adhésions seront également supprimées" : "")
+      , "Suppression", true, true, false, "md").then((reponse) => {
+        console.log(reponse)
+        if (reponse == "accepter") {
+          this.acceptSupressAdherent(adherent);
         }
-      },
-      err => {
-        this.isFailed = true;
-        this.message = this.message + err.message + "<br />"
-      }
-    );
+        // on close
+      }, (reason) => {
+        console.log(reason)
+        // on dismiss
+      });
   }
 
-  deleteDoc(doc: Document, adherent: Adherent) {
-    this.adherentService.deleteDoc(doc.id, adherent.id).subscribe(
+  acceptSupressAdherent(adherent: Adherent) {
+    this.adherentService.deleteAdherent(adherent.id).subscribe(
       data => {
-        adherent.documents = adherent.documents.filter(document => document.id != doc.id)
+        this.tribu.adherents = this.tribu.adherents.filter(adh => adh.id != adherent.id);
       },
-      err => {
+      error => {
         this.isFailed = true;
-        this.message = this.message + err.message + "<br />"
+        this.showError(error.message)
       }
-    );
+    )
   }
 
-  openEditModal(targetModal: any, doc: Document) {
-    this.modalService.open(targetModal, {
+  addAdherent() {
+    this.adherentService.newAdherentDansTribu(this.tribu.uuid).subscribe({
+      next: (data) => {
+        this.tribu.adherents.push(data)
+        this.showSuccess("Utilisteur bien ajouté, complétez le pour lui ajouter une activité")
+      },
+      error: (error) => {
+        this.isFailed = true;
+        this.showError(error.message)
+      }
+    });
+  }
+
+  private modalService = inject(NgbModal);
+  openAdherent(adherent: Adherent) {
+
+    const modalRef = this.modalService.open(UserComponent, {
       size: 'xl',
       centered: true,
       backdrop: 'static',
       scrollable: true
     });
-    this.pdfName = doc.nom
-    this.pdfEditSrc = "data:" + doc.type + ";base64," + doc.file
-  }
+    modalRef.componentInstance.tribu = this.tribu;
+    modalRef.componentInstance.adherent = adherent;
 
-  pdfName: string = ""
-  pdfSrc: string = ""
-  pdfAdherent: Adherent = new Adherent(0)
-  pdfFile: any
-  pdfEditSrc: string = ""
 
-  openModal(targetModal: any, adherent: Adherent) {
-    this.modalService.open(targetModal, {
-      size: 'xl',
-      centered: true,
-      backdrop: 'static',
-      scrollable: true
+    modalRef.result.then((data) => {
+      console.log(data)
+      this.getTribu();
+      console.log(data)
+      // on close
+    }, (reason) => {
+      console.log(reason)
+      this.getTribu();
+      // on dismiss
     });
-    this.pdfAdherent = adherent
   }
 
-  messagePopup: string = ""
-  isFailedPopup: boolean = false
-  loadFile(event: any) {
-    if (event.target.files && event.target.files[0]) {
-      if (event.target.files[0].size > 1000000) {
-        this.isFailedPopup = true;
-        this.messagePopup = "La taille maximale du fichier est de 1Mo"
-      } else if (event.target.files[0].type != "application/pdf") {
-        this.isFailedPopup = true;
-        this.messagePopup = "Le fichier doit etre un PDF"
-      } else {
-        this.isFailedPopup = false;
-        var reader = new FileReader();
-        reader.onload = (e: any) => {
-          this.pdfFile = event.target.files[0]
-          this.pdfName = event.target.files[0].name
+  openPDF(adherent: Adherent) {
 
-          this.pdfSrc = e.target.result;
-        }
-        reader.readAsDataURL(event.target.files[0]);
-      }
-    }
-  }
+    const adhesionsValide = adherent.adhesions.filter(adh => adh.validPaiementSecretariat);
+    let prix = 0
+    adhesionsValide.forEach(adh => adh.paiements.forEach(paiement => prix += paiement.montant));
+    if (adhesionsValide.length >= 1) {
 
-  dismiss() {
-    this.modalService.dismissAll();
-  }
-
-  openPDF(adhesion: Adhesion) {
-
-    if (adhesion.adherent && adhesion.activite) {
-      let prix = 0
-      adhesion.paiements.forEach(paiement => prix += paiement.montant)
       this.doc.setFontSize(7)
       this.doc.addImage("assets/logo.png", "JPEG", 15, 10, 52, 33);
       this.doc.text("Agrément à «Jeunesse et Sports» : le 27/08/1967 n° 44 S 42", 42, 50, { align: "center" });
@@ -638,171 +335,27 @@ console.log(tribuUuid)
 
       this.doc.setFontSize(12)
       this.doc.text("Je soussigné MAURY Morgane en qualité de présidente de l'ALOD,", 10, 120);
-      this.doc.text("atteste que " + adhesion.adherent.prenom + " " + adhesion.adherent.nom + " né le " + this.datePipe.transform(adhesion.adherent.naissance, 'dd/MM/yyyy'), 10, 130);
-      this.doc.text("résident au " + adhesion.adherent.adresseReferent ? adhesion.adherent.adresse : adhesion.adherent.adresse, 10, 140);
-      this.doc.text("est inscrit à l'activité " + adhesion.activite.nom + " pour l'année scolaire 2023/2024", 10, 150);
-      this.doc.text("et est à jour de sa cotisation de " + prix + "€ payée en " + adhesion.paiements[0].typeReglement, 10, 160);
+      this.doc.text("atteste que " + adherent.prenom + " " + adherent.nom + " né le " + this.datePipe.transform(adherent.naissance, 'dd/MM/yyyy'), 10, 130);
+      this.doc.text("résident au " + adherent.representant && adherent.representant?.adresse ? adherent.representant.adresse : adherent.adresse, 10, 140);
 
-      this.doc.addImage("assets/signature.png", "JPEG", 100, 200, 77, 43);
+      if (adherent.adhesions.length == 1) {
+        this.doc.text("est inscrit(e) à l'activité suivante pour l'année scolaire 2024/2025 : ", 10, 150);
+      } else {
+        this.doc.text("est inscrit(e) aux activités suivantes pour l'année scolaire 2024/2025 :", 10, 150);
+      }
 
-      this.doc.save("Attestation_" + adhesion.adherent.prenom + "_" + adhesion.adherent.nom + "_20232024.pdf");
+      let ligneText = 160;
+      adherent.adhesions.forEach(adh => {
+        this.doc.text(" -" + adh.activite?.nom, 10, ligneText);
+        ligneText = ligneText + 10;
+      })
+      this.doc.text("et est à jour de sa cotisation de " + prix + "€", 10, ligneText);
+      this.doc.addImage("assets/signature.png", "JPEG", 100, 230, 77, 43);
+
+      this.doc.save("Attestation_" + adherent.prenom + "_" + adherent.nom + "_20232024.pdf");
     }
     this.doc = new jsPDF('p', 'mm', 'a4', true);
   }
+ 
 
-  adhesionValide(adh: Adhesion): boolean {
-    return adh.statutActuel.startsWith("Attente licence en ligne")
-      || adh.statutActuel.startsWith("Validée")
-      || adh.statutActuel.startsWith("Licence générée")
-      || adh.statutActuel.startsWith("Retour Comité")
-      || adh.statutActuel.startsWith("Licence T");
-  }
-
-  @ViewChild('modal')
-  private modalComponent!: ModalComponent;
-  public modalConfig: ModalConfig = {
-    modalTitle: "titre",
-    modalBody: "contenu",
-    dismissButtonLabel: "X",
-    closeButtonLabel: "Close",
-    acceptButtonLabel: "Accepte"
-  };
-
-  async openModal2(titre: string, body: string, refus: boolean, backClick: boolean) {
-    this.modalConfig.modalTitle = titre
-    this.modalConfig.modalBody = body
-    return await this.modalComponent.open()
-  }
-
-  selectedAdherent: Adherent = new Adherent(0)
-  openConfirmModal(targetModal: any, adherent: Adherent) {
-    this.modalService.open(targetModal, {
-      centered: true,
-      backdrop: 'static'
-    });
-    this.selectedAdherent = adherent;
-  }
-
-  acceptSupress(adherent: Adherent) {
-    this.modalService.dismissAll();
-    this.adherentService.deleteAdherent(adherent.id).subscribe(
-      data => {
-        window.location.reload();
-      },
-      err => {
-        this.isFailed = true;
-        this.errorMessage = err.message
-      }
-    )
-  }
-
-  adherentEdit(adherent: Adherent) {
-    adherent.edit = !adherent.edit
-
-    if (adherent.edit) {
-
-      this.adherentService.addVisite(adherent.id).subscribe({
-        next: (response) => {
-          console.log("adherent.edit")
-        },
-        error: (error) => {
-          this.isFailed = true;
-          this.errorMessage = error.message
-        }
-      });
-    }
-  }
-
-  openConfirmModalAccordAdherent(targetModal: any, adherent: Adherent, accord: Accord) {
-    this.modalService.open(targetModal, {
-      centered: true,
-      backdrop: 'static'
-    });
-    this.selectedAdherent = adherent;
-    this.selectedAccord = accord;
-  }
-
-  selectedAdhesion: Adhesion = new Adhesion
-  openConfirmModalAccordAdhesion(targetModal: any, adhesion: Adhesion, accord: Accord) {
-    this.modalService.open(targetModal, {
-      centered: true,
-      backdrop: 'static'
-    });
-    this.selectedAdhesion = adhesion;
-    this.selectedAccord = accord;
-  }
-
-  dismissSupress() {
-    this.modalService.dismissAll();
-  }
-
-  consultation: boolean = true;
-  selectedAccord: Accord = new Accord
-  openAccordModal(targetModal: any, accord: Accord, consultation: boolean) {
-    this.modalService.open(targetModal, {
-      centered: true,
-      backdrop: consultation
-    });
-    this.selectedAccord = accord;
-    this.consultation = consultation
-  }
-
-  reponseAccord(accord: Accord, response: boolean) {
-    this.updateAccord(accord, response)
-    this.modalService.dismissAll();
-  }
-
-  cleaning(chaine: string) {
-    return chaine.toLowerCase().replaceAll(" ", "")
-  }
-
-  ajoutAccord(adherent: Adherent, nomAccord: string) {
-    this.adherentService.addAccord(adherent.id, nomAccord).subscribe(
-      data => {
-        adherent.accords = data;
-      },
-      err => {
-        this.isFailed = true;
-        this.errorMessage = err.message
-      }
-    );
-  }
-
-  retraitAccord(adherent: Adherent, accord: Accord) {
-    this.modalService.dismissAll();
-    this.adherentService.removeAccord(adherent.id, accord.nom).subscribe(
-      data => {
-        adherent.accords = data;
-      },
-      err => {
-        this.isFailed = true;
-        this.errorMessage = err.message
-      }
-    );
-  }
-
-  ajoutAccordAdhesion(adhesion: Adhesion, nomAccord: string) {
-    this.adhesionService.addAccord(adhesion.id, nomAccord).subscribe(
-      data => {
-        adhesion.accords = data;
-      },
-      err => {
-        this.isFailed = true;
-        this.errorMessage = err.message
-      }
-    );
-  }
-
-  retraitAccordAdhesion(adhesion: Adhesion, accord: Accord) {
-    this.modalService.dismissAll();
-    this.adhesionService.removeAccord(adhesion.id, accord.nom).subscribe(
-      data => {
-        adhesion.accords = data;
-      },
-      err => {
-        this.isFailed = true;
-        this.errorMessage = err.message
-      }
-    );
-  }
 }

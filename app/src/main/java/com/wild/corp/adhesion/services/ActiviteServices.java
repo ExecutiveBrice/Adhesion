@@ -2,6 +2,7 @@ package com.wild.corp.adhesion.services;
 
 import com.wild.corp.adhesion.models.Activite;
 import com.wild.corp.adhesion.models.Adherent;
+import com.wild.corp.adhesion.models.Adhesion;
 import com.wild.corp.adhesion.repository.ActiviteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,9 +25,9 @@ public class ActiviteServices {
     public List<Activite> getAll (){
         List<Activite> activites = activiteRepository.findAll();
         activites.stream().forEach(activite -> {
-            activite.setNbAdhesionsCompletes(activite.getAdhesions().stream().filter(adh -> STATUTS_VALIDES.contains(adh.getStatutActuel())).count());
-            activite.setNbAdhesionsEnCours(activite.getAdhesions().stream().filter(adh -> STATUTS_ENCOURS.contains(adh.getStatutActuel())).count());
-            activite.setNbAdhesionsAttente(activite.getAdhesions().stream().filter(adh -> STATUTS_ENATTENTE.contains(adh.getStatutActuel())).count());
+            activite.setNbAdhesionsCompletes(activite.getAdhesions().stream().filter(Adhesion::isValide).count());
+            activite.setNbAdhesionsEnCours(activite.getAdhesions().stream().filter(Adhesion::isEnCours).count());
+            activite.setNbAdhesionsAttente(activite.getAdhesions().stream().filter(Adhesion::isEnAttente).count());
         });
         return activites;
     }

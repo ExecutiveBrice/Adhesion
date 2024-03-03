@@ -8,6 +8,7 @@ import jakarta.websocket.server.PathParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 
 import java.io.IOException;
+import java.util.UUID;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -24,19 +26,24 @@ public class AdherentController {
 @Autowired
 AdherentServices adherentServices;
 
+	@GetMapping("/refreshAccords")
+	public ResponseEntity<?> refreshAccords() {
+		adherentServices.refreshAccords();
+		return ResponseEntity.ok("refreshAccords");
+	}
+
 	@DeleteMapping("/deleteAdherent")
-	@PreAuthorize("hasRole('ADMIN') or hasRole('SECRETAIRE') ")
+	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<?> deleteAdherent(@PathParam("adherentId") Long adherentId) {
 		adherentServices.deleteAdherent(adherentId);
 		return ResponseEntity.ok(adherentId+" deleted");
 	}
 
-	@DeleteMapping("/deleteDoc")
-	@PreAuthorize("hasRole('SECRETAIRE')")
-	public ResponseEntity<?> deleteDoc(Authentication principal,@PathParam("docId") Long docId, @PathParam("adherentId") Long adherentId) {
-		adherentServices.addModification(principal.getName(),adherentId);
-		adherentServices.deleteDoc(docId, adherentId);
-		return ResponseEntity.ok(docId+" deleted");
+
+	@PostMapping("/newAdherentDansTribu")
+	@PreAuthorize("hasRole('USER')")
+	public ResponseEntity<?> newAdherentDansTribu(Authentication principal,@PathParam("tribuUuid") String tribuUuid) {
+		return ResponseEntity.ok(adherentServices.newAdherentDansTribu(principal.getName(), tribuUuid));
 	}
 
 	@PostMapping("/changeTribu")
@@ -48,27 +55,10 @@ AdherentServices adherentServices;
 
 	@PostMapping("/update")
 	@PreAuthorize("hasRole('USER')")
-	public ResponseEntity<?> update(@RequestBody AdherentLite adherent, Authentication principal) {
-		System.out.println("update");
+	@ExceptionHandler(HttpMessageNotReadableException.class)
+	public ResponseEntity<?> update(Authentication principal, @RequestBody AdherentLite adherent) {
 		adherentServices.addModification(principal.getName(), adherent.getId());
 		return ResponseEntity.ok(adherentServices.update(adherent));
-	}
-
-	@PostMapping("/addDocument")
-	@PreAuthorize("hasRole('USER')")
-	public ResponseEntity<?> addDocument(Authentication principal,@RequestBody MultipartFile file, @PathParam("adherentId") Long adherentId) throws IOException {
-		Document response = adherentServices.addDocument(file, adherentId);
-		adherentServices.addModification(principal.getName(), adherentId);
-		return ResponseEntity.status(HttpStatus.OK)
-				.body(response);
-	}
-
-	@PostMapping("/save")
-	@PreAuthorize("hasRole('USER')")
-	public ResponseEntity<?> save(Authentication principal,@RequestBody Adherent adherent, @PathParam("tribuId") Long tribuId) {
-		Adherent bddAdherent = adherentServices.save(adherent, tribuId);
-		adherentServices.addModification(principal.getName(), bddAdherent.getId());
-		return ResponseEntity.ok(bddAdherent);
 	}
 
 	@PostMapping("/addVisite")
@@ -126,4 +116,5 @@ AdherentServices adherentServices;
 		adherentServices.addModification(principal.getName(),adherentId);
 		return ResponseEntity.ok(adherentServices.removeAccord(adherentId, nomAccord));
 	}
+
 }

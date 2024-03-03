@@ -1,9 +1,6 @@
 package com.wild.corp.adhesion.services;
 
-import com.wild.corp.adhesion.models.Activite;
-import com.wild.corp.adhesion.models.Paiement;
-import com.wild.corp.adhesion.models.ReportingActivite;
-import com.wild.corp.adhesion.models.ReportingAdhesion;
+import com.wild.corp.adhesion.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -70,16 +67,16 @@ public class ReportingService {
     }
 
     public Long getInitnbByDate(LocalDate jourJ){
-     return adhesionServices.getAll().stream().filter(adh -> STATUTS_ENCOURS.contains(adh.getStatutActuel())  && !adh.getValidPaiementSecretariat() && adh.getDateAjoutPanier().isBefore(jourJ.plusDays(1))).count();
+     return adhesionServices.getAll().stream().filter(adh -> adh.isEnCours()  && !adh.getValidPaiementSecretariat() && adh.getDateAjoutPanier().isBefore(jourJ.plusDays(1))).count();
     }
 
     public Long getPayenbByDate(LocalDate jourJ){
-        return adhesionServices.getAll().stream().filter(adh -> STATUTS_ENCOURS.contains(adh.getStatutActuel())  && adh.getValidPaiementSecretariat() && adh.getDateAjoutPanier().isBefore(jourJ.plusDays(1))).count();
+        return adhesionServices.getAll().stream().filter(adh -> adh.isEnCours()  && adh.getValidPaiementSecretariat() && adh.getDateAjoutPanier().isBefore(jourJ.plusDays(1))).count();
     }
 
 
     public Long getVnbByDate(LocalDate jourJ){
-        return adhesionServices.getAll().stream().filter(adh -> STATUTS_VALIDES.contains(adh.getStatutActuel()) && adh.getDateChangementStatut().isBefore(jourJ.plusDays(1))).count();
+        return adhesionServices.getAll().stream().filter(adh -> adh.isValide() && adh.getDateChangementStatut().isBefore(jourJ.plusDays(1))).count();
     }
 
 
@@ -106,19 +103,19 @@ public class ReportingService {
     }
 
     private Long getByValidByGenre(Activite activite, String genre){
-        return activite.getAdhesions().stream().filter(adh -> STATUTS_VALIDES.contains(adh.getStatutActuel()) && adh.getAdherent().getGenre().equals(genre)).count();
+        return activite.getAdhesions().stream().filter(adh -> adh.isValide() && adh.getAdherent().getGenre().equals(genre)).count();
     }
 
     private Long getByValid(Activite activite){
-        return activite.getAdhesions().stream().filter(adh -> STATUTS_VALIDES.contains(adh.getStatutActuel())).count();
+        return activite.getAdhesions().stream().filter(Adhesion::isValide).count();
     }
 
     private Long getByInitieePayee(Activite activite){
-        return activite.getAdhesions().stream().filter(adh -> STATUTS_ENCOURS.contains(adh.getStatutActuel()) && adh.getValidPaiementSecretariat()).count();
+        return activite.getAdhesions().stream().filter(adh -> adh.isEnCours() && adh.getValidPaiementSecretariat()).count();
     }
 
     private Long getByInitieeNonPayee(Activite activite){
-        return activite.getAdhesions().stream().filter(adh -> STATUTS_ENCOURS.contains(adh.getStatutActuel()) && !adh.getValidPaiementSecretariat()).count();
+        return activite.getAdhesions().stream().filter(adh -> adh.isEnCours() && !adh.getValidPaiementSecretariat()).count();
     }
 
 

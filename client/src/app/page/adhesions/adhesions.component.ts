@@ -344,7 +344,7 @@ export class AdhesionsComponent implements OnInit {
     });
 
     this.pdfName = doc.nom
-    this.pdfEditSrc = "data:" + doc.type + ";base64," + doc.file
+    this.pdfEditSrc = "data:" + doc.type + ";base64," + doc.content
   }
 
   pdfName: string = ""
@@ -361,7 +361,7 @@ export class AdhesionsComponent implements OnInit {
       if (adhesion.adherent) {
         newAdhesionExcel.nomAdherent = adhesion.adherent.nom
         newAdhesionExcel.prenomAdherent= adhesion.adherent.prenom
-        newAdhesionExcel.emailAdherent = adhesion.adherent.email
+        newAdhesionExcel.emailAdherent = adhesion.adherent.user.username
       }
 
 

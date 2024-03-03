@@ -17,7 +17,7 @@ import java.time.LocalDate;
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = "id"),
         })
-@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonIgnoreProperties(ignoreUnknown = true,   allowSetters = true)
 public class Accord {
 
     @Id
@@ -27,12 +27,26 @@ public class Accord {
     @NotBlank
     private String nom;
 
-    private Boolean etat = null;
+    private String title;
 
-    private LocalDate datePassage = null;
+    @Column(columnDefinition="TEXT")
+    private String text;
 
-    public Accord(String nom) {
+    private String bouton;
+
+    private Boolean refusable;
+
+    private Boolean etat;
+
+    private LocalDate datePassage;
+
+    public Accord(String nom, String title,  String bouton, Boolean refusable, String text) {
+        this.title = title;
         this.nom = nom;
-
+        this.text = text;
+        this.bouton = bouton;
+        this.refusable = refusable;
+        this.etat = null;
+        this.datePassage = null;
     }
 }

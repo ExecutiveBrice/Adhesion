@@ -119,7 +119,7 @@ export class AdherentsComponent implements OnInit {
 
   }
 
-  selectedAdherent: AdherentLite = new AdherentLite(0)
+  selectedAdherent: AdherentLite = new AdherentLite()
   openModal(targetModal: any, adherent: AdherentLite) {
     this.modalService.open(targetModal, {
       centered: true,
@@ -135,7 +135,7 @@ export class AdherentsComponent implements OnInit {
   }
 
 
-  referentAdherent: AdherentLite = new AdherentLite(0)
+  referentAdherent: AdherentLite = new AdherentLite()
   onSubmitChangeTribu() {
     this.modalService.dismissAll();
 

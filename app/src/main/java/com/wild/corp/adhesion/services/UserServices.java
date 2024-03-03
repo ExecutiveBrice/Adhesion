@@ -30,7 +30,7 @@ public class UserServices {
     @Autowired
     AdherentServices adherentServices;
     @Autowired
-    TribuServices tribuServices;
+    AccordServices accordServices;
     @Autowired
     PasswordEncoder encoder;
     @Value("${server.name:localhost:8002}")
@@ -96,67 +96,29 @@ public class UserServices {
     public Adherent createUserAnonymous(String email) {
         Random random = new Random();
         String password = random.toString();
-
-        // Create new user's account
-        User user = new User(email.toLowerCase(), encoder.encode(password));
-        Role userRole = roleRepository.findByName(ERole.ROLE_USER)
-                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-        user.getRoles().add(userRole);
-        user = userRepository.save(user);
-
-        Adherent adherent = new Adherent();
-        adherent.setEmail(user.getUsername().toLowerCase());
-        adherent.setReferent(true);
-        adherent.setAdresseReferent(false);
-        adherent.setEmailReferent(false);
-        adherent.setTelephoneReferent(false);
-        adherent.setTribu(new Tribu(UUID.randomUUID()));
-        Accord accordRgpd = new Accord("RGPD");
-        accordRgpd.setEtat(true);
-        accordRgpd.setDatePassage(LocalDate.now());
-        adherent.getAccords().add(accordRgpd);
-
-        adherent.getAccords().add(new Accord("Droit Image"));
+        User user = addNewUser(email.toLowerCase(), encoder.encode(password));
+        Adherent adherent = adherentServices.newAdherent(null, true);
         adherent.setUser(user);
-        adherentServices.save(adherent, null);
+        adherentServices.save(adherent);
 
         return adherent;
     }
 
     public User createNewUser(String email, String cryptedPassword) {
-        // Create new user's account
-        User user = new User(email.toLowerCase(), cryptedPassword);
-        Role userRole = roleRepository.findByName(ERole.ROLE_USER)
-                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-        user.getRoles().add(userRole);
-        user = userRepository.save(user);
+        User user = addNewUser(email.toLowerCase(), cryptedPassword);
 
-        Adherent adherent = new Adherent();
-        adherent.setEmail(user.getUsername().toLowerCase());
-        adherent.setReferent(true);
-        adherent.setAdresseReferent(false);
-        adherent.setEmailReferent(false);
-        adherent.setTelephoneReferent(false);
-        adherent.setTribu(new Tribu(UUID.randomUUID()));
-        Accord accordRgpd = new Accord("RGPD");
-        accordRgpd.setEtat(true);
-        accordRgpd.setDatePassage(LocalDate.now());
-        adherent.getAccords().add(accordRgpd);
-
-        adherent.getAccords().add(new Accord("Droit Image"));
+        Adherent adherent = adherentServices.newAdherent(null, true);
         adherent.setUser(user);
-        adherentServices.save(adherent, null);
+        adherentServices.save(adherent);
+
         confirmEmailAsking(user);
 
         return user;
     }
 
-    public User addNewUser(String email) {
-        Random random = new Random();
-        String password = random.toString();
-
+    public User addNewUser(String email, String cryptedPassword) {
         // Create new user's account
-        User user = new User(email.toLowerCase(), encoder.encode(password));
+        User user = new User(email.toLowerCase(), cryptedPassword);
         // Create new user's account
         Role userRole = roleRepository.findByName(ERole.ROLE_USER)
                 .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
@@ -165,7 +127,6 @@ public class UserServices {
 
         return user;
     }
-
 
     public User grantUser(ERole role, User user) {
         Role userRole = roleRepository.findByName(role)
@@ -255,10 +216,8 @@ public class UserServices {
         userRepository.deleteById(userId);
     }
 
-    public List<UserLite> getAllLite() {
-        List<User> users = userRepository.findAll();
-        List<UserLite> userLites = users.stream().map(user -> new UserLite(user)).collect(Collectors.toList());
-        return userLites;
+    public List<User> getAllLite() {
+        return userRepository.findAll();
     }
 
     public void initAdmin() {

@@ -62,8 +62,11 @@ export class AdhesionService {
     return this.http.get<Adhesion>(API_URL+"choisirStatut", {params, responseType: 'json' });
   }
   
-  add(adhesions: Adhesion[]): Observable<Adhesion[]> {
-    return this.http.post<Adhesion[]>(API_URL+"save", adhesions, { responseType: 'json' });
+  add(adherentId: number, activiteId: number): Observable<Adhesion> {
+    console.log(adherentId)
+    console.log(activiteId)
+    let params = new HttpParams().set('adherentId', '' + adherentId + '').set('activiteId', '' + activiteId + '');
+    return this.http.post<Adhesion>(API_URL+"save", null,{params, responseType: 'json' });
   }
   
   getAll(): Observable<Adhesion[]> {

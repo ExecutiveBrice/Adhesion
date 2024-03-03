@@ -3,11 +3,23 @@ label {
   display: block;
   margin-top: 10px;
 }
-.container-xxxl{
-  max-width:100%!important;
-}
+
 body {
   font-size: small;
+}
+
+.header {
+  font-weight: bold;
+  text-decoration: underline;
+  font-size: 1.1rem;
+}
+
+.title {
+  text-decoration: underline;
+}
+
+.attribute {
+  text-align: left;
 }
 
 .center {
@@ -113,9 +125,19 @@ table.table thead {
   color: rgba(188, 219, 205, 255);
 }
 
+
+.white {
+  color: rgb(255, 255, 255, 255);
+}
+
+.gris {
+  color: rgb(161, 161, 161, 255);
+}
+
 .alod{
   border-color: rgba(237, 101, 103, 255);
   background-color: rgba(237, 101, 103, 255)!important;
+  margin-bottom: 10px;
 }
 
 .pointer {
@@ -139,3 +161,31 @@ tr:hover {
 }
 
 .dropdown-item { white-space: nowrap; }
+
+
+.form-check-input:focus {
+  border-color: rgba(0, 0, 0, 0.25);
+  outline: 0;
+  box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba(0,0,0,0.25)'/></svg>");
+}
+
+
+.form-check-input {
+  background-color: rgb(212, 212, 212);
+  margin-top: 0;
+  margin-right: 1rem;
+}
+.form-check-input:checked {
+  background-color: rgba(92, 187, 174, 255);
+  border-color:green
+}
+
+
+
+.form-switch.form-switch-md .form-check-input {
+  height: 1.5rem;
+  width: calc(2rem + 0.75rem);
+  border-radius: 3rem;
+}
+

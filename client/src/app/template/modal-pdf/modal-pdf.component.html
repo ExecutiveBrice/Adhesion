@@ -1,0 +1,23 @@
+<div class="modal-header">
+  <h4 *ngIf="isLoaded" class="modal-title" id="modal-basic-title">{{documentName}}{{pdfFile.nom}}</h4>
+  <h4 *ngIf="!isLoaded" class="modal-title" id="modal-basic-title">Ajouter un document</h4>&nbsp;&nbsp;&nbsp;&nbsp;
+  <input *ngIf="!isLoaded" type="file" (change)="loadFile($event)" accept=".pdf">
+  <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
+</div>
+<div class="modal-body modal-fullsize modalFullHeight">
+
+  <div *ngIf="isLoaded">
+    <ngx-extended-pdf-viewer [base64Src]="pdfFile.content"></ngx-extended-pdf-viewer>
+  </div>
+  <div *ngIf="isFailedPdf">
+    <b>
+      <font color="red">{{messagePdf}}</font>
+    </b>
+  </div>
+</div>
+<div class="modal-footer">
+  <a class="left" href="https://www.adobe.com/fr/acrobat/mobile/scanner-app.html" target="_blank">ADOBE scanner PDF</a>
+  <button *ngIf="isFailedPdf" type="submit" class="btn btn-outline-secondary" disabled>Ajouter ce document</button>
+  <button *ngIf="!isFailedPdf && isLoaded" type="button" class="btn btn-primary"
+    (click)="activeModal.close(pdfFile)">Ajouter ce document</button>
+</div>

@@ -1,13 +1,11 @@
 
 export class ParamBoolean {
 
-  id: number;
-  paramName: string;
-  paramValue: boolean | null;
+  id!: number;
+  paramName!: string;
+  paramValue!: boolean;
 
   constructor(){
-    this.id = 0;
-    this.paramName = "";
-    this.paramValue = null;
+
   }
 }

@@ -86,7 +86,7 @@ import java.util.List;
 
     public void sendAutoMail(Adhesion adhesion, String sujetName, String corpsName){
         Email mail = new Email();
-        mail.setDiffusion(adhesion.getAdherent().isEmailReferent()? adhesion.getAdherent().getTribu().getAdherents().stream().filter(Adherent::isReferent).findFirst().get().getEmail():adhesion.getAdherent().getEmail());
+        mail.setDiffusion(adhesion.getAdherent().getRepresentant() != null ? adhesion.getAdherent().getRepresentant().getUser().getUsername():adhesion.getAdherent().getUser().getUsername());
         String sujet = paramTextServices.getParamValue(sujetName);
         sujet = sujet.replaceAll("#activite#",adhesion.getActivite().getNom());
         mail.setSubject(sujet);

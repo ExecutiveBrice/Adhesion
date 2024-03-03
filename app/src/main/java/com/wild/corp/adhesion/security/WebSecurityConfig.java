@@ -65,6 +65,7 @@ public class WebSecurityConfig{
                 .authorizeHttpRequests(auth ->
                         auth.requestMatchers("/auth/**").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/param/**").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/adherent/**").permitAll()
                                 .requestMatchers(HttpMethod.OPTIONS,"/**").permitAll()
                                 .anyRequest().authenticated()
                 );

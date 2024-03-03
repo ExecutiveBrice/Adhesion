@@ -27,6 +27,8 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+logging.level.org.springframework.web: DEBUG
+logging.level.org.hibernate: ERROR
 
 server:
   name : ${DNS_NAME}
@@ -34,3 +36,4 @@ server:
     jwtSecret: ${JWT_SECRET}
     jwtExpirationMs: 86400000
 
+image-storage-dir: C:\Users\PC\Documents\ProjetsDev\Adhesion

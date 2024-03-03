@@ -2,6 +2,7 @@ package com.wild.corp.adhesion.controllers;
 
 import com.wild.corp.adhesion.models.Accord;
 import com.wild.corp.adhesion.models.Adhesion;
+import com.wild.corp.adhesion.models.AdhesionLite;
 import com.wild.corp.adhesion.models.Paiement;
 import com.wild.corp.adhesion.services.AdhesionServices;
 import jakarta.websocket.server.PathParam;
@@ -52,7 +53,7 @@ AdhesionServices adhesionServices;
 	}
 
 	@DeleteMapping("/deleteAdhesion")
-	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('ADMIN')")
+	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<?> deleteAdhesion(@PathParam("adhesionId") Long adhesionId) {
 		adhesionServices.deleteAdhesion(adhesionId);
 		return ResponseEntity.ok(adhesionId+" deleted");
@@ -105,19 +106,17 @@ AdhesionServices adhesionServices;
 		return ResponseEntity.ok(adhesionServices.getAllLite());
 	}
 
-
 	@GetMapping("/liteBysection")
 	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
 	public ResponseEntity<?> getLiteBySection(@PathParam("sections") String sections) {
 		return ResponseEntity.ok(adhesionServices.getLiteBySection(sections));
 	}
 
-
 	@PostMapping("/save")
 	@PreAuthorize("hasRole('USER')")
-	public ResponseEntity<?> save(Authentication principal, @RequestBody List<Adhesion> adhesions) {
-		List<Adhesion> adhesionsBDD = adhesionServices.save(adhesions);
-		adhesionsBDD.forEach(adhesion -> adhesionServices.addModification(principal.getName(), adhesion.getId()));
+	public ResponseEntity<?> save(Authentication principal, @PathParam("adherentId") Long adherentId, @PathParam("activiteId") Long activiteId) {
+		Adhesion adhesionsBDD = adhesionServices.save(adherentId, activiteId);
+		adhesionServices.addModification(principal.getName(), adhesionsBDD.getId());
 		return ResponseEntity.ok(adhesionsBDD);
 	}
 

@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = "id"),
         })
-@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonIgnoreProperties(ignoreUnknown = true,   allowSetters = true)
 public class Notification {
 
     @Id

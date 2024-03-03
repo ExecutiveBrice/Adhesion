@@ -42,7 +42,7 @@ export class MaillingComponent implements OnInit, OnDestroy {
   ];
 
 
-  selectedAdherent: Adherent = new Adherent(0);
+  selectedAdherent: Adherent = new Adherent();
   constructor(
     private adherentService: AdherentService,
     public activiteService: ActiviteService,
@@ -129,7 +129,7 @@ export class MaillingComponent implements OnInit, OnDestroy {
       let email = new Email();
       email.subject = subject;
       email.text = toHTML(this.html);
-      email.diffusion = this.selectedAdherent.id != 0 ? this.selectedAdherent.email : this.choixMailing;
+      email.diffusion = this.selectedAdherent.id != 0 ? this.selectedAdherent.user.username : this.choixMailing;
       this.mailService.sendMail(email)
         .subscribe({
           next: (data) => {

@@ -26,6 +26,8 @@ services:
       context: ./app
     depends_on:
       - db_adhesion
+    volumes:
+      - /home/ubuntu/adhesion/:/home/ubuntu/adhesion/
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db_adhesion:5432/${DB_NAME}
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
