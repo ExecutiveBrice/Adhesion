@@ -1,0 +1,33 @@
+<div class="modal-header">
+  <h4 class="modal-title">Choix de l'activité</h4>
+
+  <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss('Cross click')"></button>
+</div>
+<div class="modal-body">
+
+    <div *ngIf="!mineur && activites.length > 0">
+      <div *ngFor="let activite of activites | orderBy:'nom':false">
+        <b>{{activite.nom}}</b>
+        <div *ngFor="let horaire of activite.horaires">
+          <div *ngIf="!horaire.complete && !horaire.dejaInscrit" class="indentation ligne pointer"
+            (click)="activeModal.close(horaire.id)">
+            {{horaire.nom}}
+          </div>
+          <div *ngIf="horaire.complete" class="indentation lignegrisee">
+            {{horaire.nom}} - Complet
+          </div>
+          <div *ngIf="horaire.dejaInscrit" class="indentation lignegrisee">
+            {{horaire.nom}} - Déjà Inscrit
+          </div>
+        </div>
+      </div>
+    </div>
+
+</div>
+
+<div class="modal-footer">
+  <button type="button" class="btn btn-outline-dark" 
+    (click)="activeModal.dismiss('Annuler')">Annuler</button>
+
+
+</div>

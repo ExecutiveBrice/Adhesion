@@ -1,0 +1,12 @@
+
+.lignegrisee{
+    background-color: rgba(197, 197, 197,255)!important;
+  }
+  .ligne:hover{
+    background-color: rgba(188, 219, 205, 255)!important;
+  }
+
+  
+.indentation{
+    margin-left: 5px;
+  }
