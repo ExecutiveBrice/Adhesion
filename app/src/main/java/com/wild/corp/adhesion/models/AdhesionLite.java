@@ -20,6 +20,8 @@ public class AdhesionLite {
 
     private Integer position;
 
+    private Boolean dejaLicencie;
+
     private LocalDate saison;
 
     private LocalDate dateReglement;

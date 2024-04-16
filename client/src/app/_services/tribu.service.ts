@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { Tribu } from '../models';
+import { ActivitesNm1 } from '../models/activitesNm1';
 
 const API_URL = environment.server+'/tribu/';
 
@@ -26,6 +27,13 @@ export class TribuService {
   getConnected(): Observable<Tribu> {
     return this.http.get<Tribu>(API_URL + 'getConnectedTribu', { responseType: 'json'});
   }
+
+  addActivitesNm1(tribuUuid: String, activitesNm1: ActivitesNm1[]): Observable<Tribu> {
+    let params = new HttpParams().set('tribuUuid', '' + tribuUuid + '');
+    return this.http.post<Tribu>(API_URL + 'addActivitesNm1', activitesNm1,{params, responseType: 'json' });
+  }
+
+
 }
 
 

@@ -246,16 +246,16 @@ public class ParamTextServices {
         }
 
 
-        if(!paramTextRepository.existsByParamName("Sujet_Mail_Annulation")) {
+        if(!paramTextRepository.existsByParamName("Sujet_Mail_Annulation_Automatique")) {
             paramTextRepository.save(ParamText.builder()
-                    .paramName("Sujet_Mail_Annulation")
+                    .paramName("Sujet_Mail_Annulation_Automatique")
                     .paramValue("Annulation de votre demande d'adhésion #activite#").build());
         }
-        if(!paramTextRepository.existsByParamName("Corp_Mail_Annulation")) {
+        if(!paramTextRepository.existsByParamName("Corp_Mail_Annulation_Automatique")) {
             paramTextRepository.save(ParamText.builder()
-                    .paramName("Corp_Mail_Annulation")
+                    .paramName("Corp_Mail_Annulation_Automatique")
                     .paramValue("Bonjour #prenom# #nom#,<br />" +
-                            "Votre adhésion est restée incomplète pendant plus de 8 jours,<br />" +
+                            "Votre adhésion est restée incomplète pendant plus de 10 jours,<br />" +
                             "Nous avons donc annulée votre demande pour libérer une place.<br />" +
                             "Si il reste des places disponible, vous pourrez la réactivée en contactant le secrétariat pour vous permettre de la completer.<br /><br />" +
 

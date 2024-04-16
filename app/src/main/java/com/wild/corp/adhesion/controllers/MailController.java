@@ -1,6 +1,7 @@
 package com.wild.corp.adhesion.controllers;
 
 
+import com.mailjet.client.errors.MailjetException;
 import com.wild.corp.adhesion.models.Email;
 import com.wild.corp.adhesion.services.AdherentServices;
 import com.wild.corp.adhesion.services.EmailService;
@@ -32,6 +33,15 @@ public class MailController {
 
         return new ResponseEntity<>(HttpStatus.OK);
     }
+
+    @RequestMapping(value = "/mail", method = RequestMethod.GET)
+    public ResponseEntity<Boolean> mail() throws MailjetException {
+        logger.debug("mail");
+        emailService.mail();
+        return new ResponseEntity<>(true, HttpStatus.OK);
+    }
+
+
 
     @RequestMapping(value = "/isInProgress", method = RequestMethod.GET)
     public ResponseEntity<Boolean> isInProgress() {

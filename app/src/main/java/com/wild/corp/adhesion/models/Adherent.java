@@ -41,6 +41,10 @@ public class Adherent {
 
     private String adresse;
 
+    private String codePostal;
+
+    private String ville;
+
     private Boolean adresseRepresentant;
 
     private Boolean telephoneRepresentant;
@@ -55,7 +59,7 @@ public class Adherent {
     private List<Accord> accords = new ArrayList<>();
 
     @ManyToOne
-    @JsonIgnoreProperties({"cours", "accords", "adhesions", "tribu",  "documents", "derniereModifs", "derniereVisites"})
+    @JsonIgnoreProperties({"cours", "accords", "adhesions", "activitesNm1", "tribu",  "documents", "derniereModifs", "derniereVisites"})
     private Adherent representant;
 
     @OneToMany(cascade = CascadeType.ALL)
@@ -67,8 +71,12 @@ public class Adherent {
     @ManyToOne
     private Tribu tribu;
 
-    @OneToMany(mappedBy = "adherent", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "adherent", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Adhesion> adhesions = new HashSet<>();
+
+    @OneToMany(mappedBy = "adherent", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"adherent", "tribu"})
+    private Set<ActiviteNm1> activitesNm1 = new HashSet<>();
 
     @ManyToMany
     @JsonIgnore

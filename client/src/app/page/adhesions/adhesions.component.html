@@ -18,7 +18,7 @@
     <tr>
 
       <th class="center" scope="col truncate">
- 
+
         <div ngbDropdown class="d-inline-block larger">
           <button type="button" class="btn btn-primary larger" id="dropdownBasic1" ngbDropdownToggle>
             {{choixSection.length >0?choixSection:'Activité'}}
@@ -99,10 +99,11 @@
               adhérent</button>
             <button ngbDropdownItem (click)="addFiltre('statutActuel', 'Attente validation secrétariat')">Attente
               validation secrétariat</button>
+            <button ngbDropdownItem (click)="addFiltre('statutActuel', 'Attente création licence')">Attente
+              création licence</button>
             <button ngbDropdownItem
               (click)="addFiltre('statutActuel', 'Validée, en attente du certificat médical')">Validée, en attente du
-              certificat
-              médical</button>
+              certificat médical</button>
             <button ngbDropdownItem (click)="addFiltre('statutActuel', 'Validée')">Validée</button>
             <button ngbDropdownItem (click)="addFiltre('statutActuel', 'Attente licence en ligne')">Attente
               licence en ligne</button>
@@ -276,6 +277,8 @@
               adhérent</button>
             <button ngbDropdownItem (click)="choisirStatut(adhesion,'Attente validation secrétariat')">Attente
               validation secrétariat</button>
+            <button ngbDropdownItem (click)="addFiltre('statutActuel', 'Attente création licence')">Attente
+              création licence</button>
             <button ngbDropdownItem (click)="choisirStatut(adhesion,'Attente licence en ligne')">Attente
               licence en ligne</button>
             <button ngbDropdownItem (click)="choisirStatut(adhesion,'Validée groupement sportif')">Validée groupement
@@ -290,7 +293,7 @@
           </div>
         </div>
 
-<br/>depuis le {{adhesion.dateChangementStatut!=null?adhesion.dateChangementStatut:adhesion.dateAjoutPanier}}
+        <br />depuis le {{adhesion.dateChangementStatut!=null?adhesion.dateChangementStatut:adhesion.dateAjoutPanier}}
 
 
       </td>
@@ -308,13 +311,11 @@
         <fa-icon (click)="updateFlag(adhesion, !adhesion.flag)" *ngIf="adhesion.flag" class="pointer orange fa-2xl"
           [icon]="faFlag"></fa-icon>
 
-        <fa-icon *ngIf="!verifyAdhesion(adhesion)" class="pointer fa-2xl"
-          [icon]="faCircleExclamation "></fa-icon>
+        <fa-icon *ngIf="!verifyAdhesion(adhesion)" class="pointer fa-2xl" [icon]="faCircleExclamation "></fa-icon>
         <fa-icon (click)="updateVisiteAdhesion(adhesion)" *ngIf="verifyAdhesion(adhesion)" class="pointer orange fa-2xl"
           [icon]="faCircleExclamation "></fa-icon>
 
-        <fa-icon *ngIf="!verifyAdherent(adhesion)" class="pointer fa-2xl"
-          [icon]="faCircleUser"></fa-icon>
+        <fa-icon *ngIf="!verifyAdherent(adhesion)" class="pointer fa-2xl" [icon]="faCircleUser"></fa-icon>
         <fa-icon (click)="updateVisiteAdherent(adhesion)" *ngIf="verifyAdherent(adhesion)" class="pointer orange fa-2xl"
           [icon]="faCircleUser"></fa-icon>
 

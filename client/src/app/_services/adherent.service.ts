@@ -12,6 +12,10 @@ const API_URL = environment.server+'/adherent/';
 export class AdherentService {
   constructor(private http: HttpClient) { }
 
+  nouvelleAnnee(): Observable<any> {
+    return this.http.get(API_URL+"nouvelleAnnee", {responseType: 'text'});
+  }
+
   deleteAdherent(adherentId : number): Observable<string> {
     let params = new HttpParams().set('adherentId', '' + adherentId + '');
     return this.http.delete(API_URL + 'deleteAdherent', {params, responseType: 'text' });
@@ -82,8 +86,6 @@ export class AdherentService {
   update(adherent: Adherent): Observable<Adherent> {
     return this.http.post<Adherent>(API_URL+"update", adherent, { responseType: 'json' });
   }
-
-
 
   changeTribu(referentId: number, adherentId: number): Observable<AdherentLite> {
     let params = new HttpParams().set('adherentId', '' + adherentId + '');

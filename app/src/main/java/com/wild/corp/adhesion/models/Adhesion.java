@@ -1,6 +1,7 @@
 package com.wild.corp.adhesion.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.wild.corp.adhesion.utils.Status;
 import lombok.*;
 
 import jakarta.persistence.*;
@@ -27,11 +28,7 @@ public class Adhesion {
 
     private Integer position;
 
-    private LocalDate saison;
-
-    private LocalDate dateReglement;
-
-    private String typeReglement;
+    private Boolean dejaLicencie;
 
     private Boolean validPaiementSecretariat;
 
@@ -68,17 +65,17 @@ public class Adhesion {
     private Activite activite;
 
     @ManyToOne
-    @JsonIgnoreProperties({"cours", "accords", "adhesions", "user", "tribu", "derniereModifs", "derniereVisites"})
+    @JsonIgnoreProperties({"adhesions", "profs"})
+    private Activite surClassement;
+
+    @ManyToOne
+    @JsonIgnoreProperties({"cours", "accords", "adhesions", "activitesNm1", "user", "tribu", "derniereModifs", "derniereVisites"})
     @ToString.Exclude
     private Adherent adherent;
 
-    private static final List<String> list_valid = List.of("Validée", "Validée, en attente du certificat médical");
-    private static final List<String> list_G_encours = List.of("Attente validation adhérent", "Attente validation secrétariat");
-
-    private static final List<String> list_B_valid = List.of("Validée", "Validée, en attente du certificat médical", "Licence T", "Retour Comité", "Licence générée", "Validée groupement sportif");
-    private static final List<String> list_B_encours = List.of("Attente validation adhérent", "Attente validation secrétariat", "Attente licence en ligne");
-
-    private static final List<String> list_attente = List.of("Sur liste d'attente");
+    private static final List<String> list_valid = List.of(Status.VALIDEE.label, Status.ATTENTE_CERFTIF.label, Status.LICENCE_T.label, Status.LICENCE_GENEREE.label, Status.VALIDEE_GROUPEMENT_SPORTIF.label);
+    private static final List<String> list_encours = List.of(Status.ATTENTE_ADHERENT.label, Status.ATTENTE_SECRETARIAT.label, Status.ATTENTE_LICENCE_EN_LIGNE.label);
+    private static final List<String> list_attente = List.of(Status.LISTE_ATTENTE.label);
 
     public boolean isValide(){
         return list_valid.contains(getStatutActuel());
@@ -87,6 +84,6 @@ public class Adhesion {
         return list_attente.contains(getStatutActuel());
     }
     public boolean isEnCours(){
-        return list_G_encours.contains(getStatutActuel());
+        return list_encours.contains(getStatutActuel());
     }
 }

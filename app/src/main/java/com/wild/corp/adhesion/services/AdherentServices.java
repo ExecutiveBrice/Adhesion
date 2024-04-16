@@ -2,14 +2,11 @@ package com.wild.corp.adhesion.services;
 
 
 import com.wild.corp.adhesion.models.*;
-import com.wild.corp.adhesion.repository.AdherentRepository;
-import com.wild.corp.adhesion.repository.DocumentRepository;
-import com.wild.corp.adhesion.repository.RoleRepository;
+import com.wild.corp.adhesion.repository.*;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -23,19 +20,53 @@ public class AdherentServices {
     @Autowired
     AdherentRepository adherentRepository;
     @Autowired
+    ActiviteNm1Repository activiteNm1Repository;
+    @Autowired
+    AdhesionRepository adhesionRepository;
+    @Autowired
     AccordServices accordServices;
     @Autowired
     AdhesionServices adhesionServices;
     @Autowired
     RoleRepository roleRepository;
     @Autowired
-    DocumentRepository documentRepository;
-    @Autowired
     ActiviteServices activiteServices;
     @Autowired
     UserServices userServices;
     @Autowired
     TribuServices tribuServices;
+
+
+    @Transactional
+    public void nouvelleAnnee (){
+        activiteNm1Repository.deleteAll();
+
+        adherentRepository.findAll().stream().forEach(adherent -> {
+            adherent.getActivitesNm1().clear();
+            adherent.getAdhesions().stream().forEach(adhesion -> {
+                ActiviteNm1 activiteNm1 = new ActiviteNm1();
+                activiteNm1.setAdherent(adherent);
+                activiteNm1.setNom(adhesion.getActivite().getNom());
+                activiteNm1.setHoraire(adhesion.getActivite().getHoraire());
+                activiteNm1.setGroupe(adhesion.getActivite().getGroupe());
+                activiteNm1.setSalle(adhesion.getActivite().getSalle());
+                activiteNm1.setTarif(adhesion.getActivite().getTarif());
+                activiteNm1.setGroupeFiltre(adhesion.getActivite().getGroupeFiltre());
+                adherent.getActivitesNm1().add(activiteNm1);
+
+                adhesion.setActivite(null);
+                adhesion.setSurClassement(null);
+                adhesion.setAdherent(null);
+            });
+
+
+
+            adherent.getAdhesions().clear();
+            adherentRepository.save(adherent);
+
+        });
+        adhesionRepository.deleteAll();
+    }
 
     public Set<String> findByGroup(String groupe) {
         Set<String> listDiffusion = null;
@@ -134,6 +165,7 @@ public class AdherentServices {
 
 
     public AdherentLite update(AdherentLite adherent) {
+
         Optional<Adherent> indbAdherent = adherentRepository.findById(adherent.getId());
         if (indbAdherent.isPresent()) {
             fillAdherent(adherent, indbAdherent.get());
@@ -218,12 +250,30 @@ public class AdherentServices {
                         (adherent.getTelephone() != null || adherent.getRepresentant() != null)
         ) {
             adherent.setCompletAdhesion(true);
+            setActiviteNm1(adherent);
         } else {
             adherent.setCompletAdhesion(false);
         }
 
     }
 
+    public void setActiviteNm1(Adherent adherent){
+        if(adherent.getMineur()){
+            adherent.getTribu().getAutorisations().stream().filter(activiteNm1 -> activiteNm1.getHoraire().contains("Mineur")).forEach(activiteNm1 -> {
+                activiteNm1.setHoraire("Autorisation d'inscription manuelle");
+                activiteNm1.setAdherent(adherent);
+                adherent.getActivitesNm1().add(activiteNm1);
+            });
+        }else{
+            adherent.getTribu().getAutorisations().stream().filter(activiteNm1 -> activiteNm1.getHoraire().contains("Majeur")).forEach(activiteNm1 -> {
+                activiteNm1.setHoraire("Autorisation d'inscription manuelle");
+                activiteNm1.setAdherent(adherent);
+                adherent.getActivitesNm1().add(activiteNm1);
+            });
+        }
+
+
+    }
     public Adherent fillAdherent(AdherentLite frontAdherent, Adherent dataAdherent) {
         dataAdherent.setNom(frontAdherent.getNom().toUpperCase());
         dataAdherent.setPrenom(frontAdherent.getPrenom().substring(0, 1).toUpperCase() + frontAdherent.getPrenom()
@@ -241,6 +291,8 @@ public class AdherentServices {
         }
         if(!frontAdherent.getMineur() || Boolean.FALSE.equals(frontAdherent.getAdresseRepresentant())){
             dataAdherent.setAdresse(frontAdherent.getAdresse());
+            dataAdherent.setCodePostal(frontAdherent.getCodePostal());
+            dataAdherent.setVille(frontAdherent.getVille());
         }
 
         dataAdherent.setMineur(frontAdherent.getMineur());
@@ -255,43 +307,30 @@ public class AdherentServices {
 
         Accord frontaccordRgpd = frontAdherent.getAccords().stream().filter(accord -> "RGPD".equals(accord.getNom())).findFirst().get();
         Accord dataaccordRgpd = dataAdherent.getAccords().stream().filter(accord -> "RGPD".equals(accord.getNom())).findFirst().get();
-        dataaccordRgpd.setEtat(frontaccordRgpd.getEtat());
-        dataaccordRgpd.setDatePassage(frontaccordRgpd.getDatePassage());
+        if(dataaccordRgpd.getDatePassage()==null){
+            dataaccordRgpd.setEtat(frontaccordRgpd.getEtat());
+            dataaccordRgpd.setDatePassage(LocalDate.now());
+        }
+
 
         Accord frontaccordImage = frontAdherent.getAccords().stream().filter(accord -> "DroitImage".equals(accord.getNom())).findFirst().get();
         Accord dataaccordImage = dataAdherent.getAccords().stream().filter(accord -> "DroitImage".equals(accord.getNom())).findFirst().get();
-        dataaccordImage.setEtat(frontaccordImage.getEtat());
-        dataaccordImage.setDatePassage(frontaccordImage.getDatePassage());
+        if(dataaccordImage.getDatePassage()==null){
+            dataaccordImage.setEtat(frontaccordImage.getEtat());
+            dataaccordImage.setDatePassage(LocalDate.now());
+        }
 
         isComplet(dataAdherent);
         return dataAdherent;
     }
 
+
     public Set<ActiviteLite> getAllCours(String username) {
         User user = userServices.findByEmail(username);
         Set<ActiviteLite> activiteLites = user.getAdherent().getCours().stream().map(activite -> {
+            Set<AdherentLite> adherentsLite = activite.getAdhesions().stream().map(this::veryReduceAdherent).collect(Collectors.toSet());
 
-            Set<AdherentLite> adherentsLite = activite.getAdhesions().stream().map(adhesion -> {
-
-                AdherentLite adhLite = AdherentLite.builder().id(adhesion.getAdherent().getId())
-                        .prenom(adhesion.getAdherent().getPrenom())
-                        .nom(adhesion.getAdherent().getNom())
-                        .accords(adhesion.getAccords())
-                        .telephone(adhesion.getAdherent().getTelephone())
-                        .email(adhesion.getAdherent().getUser().getUsername())
-                        .mineur(adhesion.getAdherent().getMineur())
-                        .representant(reduceAdherent(adhesion.getAdherent().getRepresentant()))
-                        .statut(adhesion.getStatutActuel())
-                        .commentaire(adhesion.getRemarqueSecretariat())
-                        .flag(adhesion.getFlag())
-                        .paiement(adhesion.getValidPaiementSecretariat())
-                        .build();
-                Optional<Accord> accordimage = adhesion.getAdherent().getAccords().stream().filter(accord -> accord.getNom().equals("DroitImage")).findFirst();
-                if (accordimage.isPresent()) {
-                    adhLite.getAccords().add(accordimage.get());
-                }
-                return adhLite;
-            }).collect(Collectors.toSet());
+            adherentsLite.addAll(activite.getSousClassement().stream().map(this::veryReduceAdherent).collect(Collectors.toSet()));
 
             return ActiviteLite.builder().id(activite.getId())
                     .salle(activite.getSalle())
@@ -300,10 +339,30 @@ public class AdherentServices {
                     .nom(activite.getNom())
                     .adherents(adherentsLite).build();
         }).collect(Collectors.toSet());
-
         return activiteLites;
     }
 
+    private AdherentLite veryReduceAdherent(Adhesion adhesion) {
+        AdherentLite adhLite = AdherentLite.builder().id(adhesion.getAdherent().getId())
+                .prenom(adhesion.getAdherent().getPrenom())
+                .nom(adhesion.getAdherent().getNom())
+                .accords(adhesion.getAccords())
+                .telephone(adhesion.getAdherent().getTelephone())
+                .email(adhesion.getAdherent().getUser().getUsername())
+                .mineur(adhesion.getAdherent().getMineur())
+                .naissance((adhesion.getAdherent().getNaissance()))
+                .representant(adhesion.getAdherent().getRepresentant() != null?reduceAdherent(adhesion.getAdherent().getRepresentant()):null)
+                .statut(adhesion.getStatutActuel())
+                .commentaire(adhesion.getRemarqueSecretariat())
+                .flag(adhesion.getFlag())
+                .paiement(adhesion.getValidPaiementSecretariat())
+                .build();
+        Optional<Accord> accordimage = adhesion.getAdherent().getAccords().stream().filter(accord -> accord.getNom().equals("DroitImage")).findFirst();
+        if (accordimage.isPresent()) {
+            adhLite.getAccords().add(accordimage.get());
+        }
+        return adhLite;
+    }
 
     public List<Long> getAllId() {
         return adherentRepository.getAllIds();
@@ -322,12 +381,9 @@ public class AdherentServices {
 
     public List<Accord> addAccord(Long adherentId, String nomAccord) {
         Adherent indbAdherent = adherentRepository.findById(adherentId).get();
-
         if (indbAdherent.getAccords().stream().noneMatch(accord -> nomAccord.equals(accord.getNom()))) {
-
             indbAdherent.getAccords().add(accordServices.createAccord(nomAccord));
         }
-
         return adherentRepository.save(indbAdherent).getAccords();
     }
 
@@ -336,23 +392,19 @@ public class AdherentServices {
         if (indbAdherent.getAccords().stream().anyMatch(accord -> nomAccord.equals(accord.getNom()))) {
             indbAdherent.getAccords().remove(indbAdherent.getAccords().stream().filter(accord -> nomAccord.equals(accord.getNom())).findFirst().get());
         }
-
         return adherentRepository.save(indbAdherent).getAccords();
     }
 
     public List<Adherent> getAll() {
         List<Adherent> adherents = adherentRepository.findAll();
-
         return adherents;
     }
 
     public List<AdherentLite> getAllLite() {
-
         return adherentRepository.findAll().stream().map(this::reduceAdherent).collect(Collectors.toList());
     }
 
     public List<AdherentLite> getByRole(Integer roleId) {
-
         return adherentRepository.findByUserRoleId(roleId).stream().map(this::reduceAdherent).collect(Collectors.toList());
     }
 
@@ -369,6 +421,8 @@ public class AdherentServices {
                 .completAdhesion(adherent.getCompletAdhesion())
                 .nomPrenom((adherent.getNom() == null ? "zzzz" : adherent.getNom()) + (adherent.getPrenom() == null ? "zzzz" : adherent.getPrenom()))
                 .adresse(adherent.getAdresse())
+                .codePostal(adherent.getCodePostal())
+                .ville(adherent.getVille())
                 .email(adherent.getUser().getUsername())
                 .telephone(adherent.getTelephone())
                 .mineur(adherent.getMineur())
@@ -381,15 +435,31 @@ public class AdherentServices {
                 .tribuId(adherent.getTribu().getUuid())
                 .tribuSize(adherent.getTribu().getAdherents().size())
                 .accords(adherent.getAccords())
+                .activitesNm1(adherent.getActivitesNm1())
                 .activites(activites.toString())
-                 .lien("www.alod.fr/adhesion/#/inscription/" + adherent.getTribu().getUuid())
+                .lien("www.alod.fr/adhesion/#/inscription/" + adherent.getTribu().getUuid())
                 .build();
         UserLite userLite = new UserLite();
         userLite.setUsername(adherent.getUser().getUsername());
         adherentLite.setUser(userLite);
         return adherentLite;
     }
+    @Autowired
+    NotificationRepository notificationRepository;
+    public void cleanNotification(){
 
+        List<Adherent> adherents = adherentRepository.findAll();
+        adherents.stream().forEach(adherent -> {
+        adherent.setDerniereModifs(null);
+        adherent.setDerniereVisites(null);
+        });
+
+        List<Notification> notifications = notificationRepository.findAll();
+        notifications.forEach(notification -> {
+            notification.setUser(null);
+        });
+notificationRepository.deleteAll();
+    }
 
     public void refreshAccords(){
         accordServices.refreshAccords();
@@ -422,4 +492,6 @@ public class AdherentServices {
         return adherentRepository.save(adherent);
 
     }
+
+
 }

@@ -13,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 
+import java.io.IOException;
 import java.util.List;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -23,13 +24,7 @@ public class AdhesionController {
 @Autowired
 AdhesionServices adhesionServices;
 
-	@GetMapping("/updateTypePaiement")
-	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('USER')")
-	public ResponseEntity<?> updateTypePaiement(Authentication principal,
-												@PathParam("inscriptionId") Long adhesionId, @PathParam("typePaiement") String typePaiement) {
-		adhesionServices.addModification(principal.getName(), adhesionId);
-		return ResponseEntity.ok(adhesionServices.updateTypePaiement(adhesionId, typePaiement));
-	}
+
 
 	@GetMapping("/addAccord")
 	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('ADMIN')")
@@ -95,7 +90,7 @@ AdhesionServices adhesionServices;
 
 	@GetMapping("/choisirStatut")
 	@PreAuthorize("hasRole('USER')")
-	public ResponseEntity<?> choisirStatut(Authentication principal,@PathParam("inscriptionId") Long adhesionId, @PathParam("statutActuel") String statutActuel) {
+	public ResponseEntity<?> choisirStatut(Authentication principal,@PathParam("inscriptionId") Long adhesionId, @PathParam("statutActuel") String statutActuel) throws IOException {
 		adhesionServices.addModification(principal.getName(), adhesionId);
 		return ResponseEntity.ok(adhesionServices.choisirStatut(adhesionId, statutActuel));
 	}
@@ -135,6 +130,20 @@ AdhesionServices adhesionServices;
 		return ResponseEntity.ok(paiementId+" deleted");
 	}
 
+	@PostMapping("/saveSurclassement")
+	@PreAuthorize("hasRole('USER')")
+	public ResponseEntity<?> saveSurclassement(Authentication principal, @PathParam("adhesionId") Long adhesionId, @PathParam("surClassementId") Long surClassementId) throws IOException {
+		adhesionServices.addModification(principal.getName(), adhesionId);
+		return ResponseEntity.ok(adhesionServices.saveSurclassement(adhesionId, surClassementId));
+	}
+
+	@DeleteMapping("/deleteSurclassement")
+	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+	public ResponseEntity<?> deleteSurclassement(Authentication principal, @PathParam("adhesionId") Long adhesionId) {
+		adhesionServices.addModification(principal.getName(), adhesionId);
+		adhesionServices.deleteSurclassement(adhesionId);
+		return ResponseEntity.ok("Surclassement deleted");
+	}
 	@PostMapping("/update")
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<?> update(Authentication principal, @RequestBody Adhesion adhesion) {

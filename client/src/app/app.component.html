@@ -21,9 +21,9 @@
         <li class="nav-item" *ngIf="showAdmin || showSecretaire"  (click)="isCollapsed = true">
           <a href="/adhesions" class="nav-link blanc" routerLink="adhesions">Adhésions</a>
         </li>
-        <li class="nav-item" *ngIf="showAdmin || showSecretaire"  (click)="isCollapsed = true">
+        <!--li class="nav-item" *ngIf="showAdmin || showSecretaire"  (click)="isCollapsed = true">
           <a href="/mail" class="nav-link blanc" *ngIf="isLoggedIn" [routerLink]="['/mail', 'listing']">Mailling</a>
-        </li>
+        </li-->
         <li class="nav-item"  (click)="isCollapsed = true">
           <a href="/inscription" class="nav-link blanc" *ngIf="isLoggedIn" [routerLink]="['/inscription', '']">{{showSecretaire?"Inscriptions Manuelles":"Mes adhésions"}}</a>
         </li>

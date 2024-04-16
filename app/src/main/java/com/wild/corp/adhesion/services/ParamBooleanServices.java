@@ -75,6 +75,11 @@ public class ParamBooleanServices {
                     .paramName("Show_HelloAsso")
                     .paramValue(false).build());
         }
+        if(!paramBooleanRepository.existsByParamName("Show_HelloAsso3X")) {
+            paramBooleanRepository.save(ParamBoolean.builder()
+                    .paramName("Show_HelloAsso3X")
+                    .paramValue(false).build());
+        }
     }
 
 

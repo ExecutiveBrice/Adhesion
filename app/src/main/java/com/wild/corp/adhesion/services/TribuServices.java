@@ -1,6 +1,8 @@
 package com.wild.corp.adhesion.services;
 
+import com.wild.corp.adhesion.models.ActiviteNm1;
 import com.wild.corp.adhesion.models.Tribu;
+import com.wild.corp.adhesion.repository.ActiviteNm1Repository;
 import com.wild.corp.adhesion.repository.TribuRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,7 +15,8 @@ public class TribuServices {
 
     @Autowired
     TribuRepository tribuRepository;
-
+    @Autowired
+    ActiviteNm1Repository activiteNm1Repository;
     @Autowired
     UserServices userServices;
 
@@ -38,5 +41,14 @@ public class TribuServices {
     public Tribu getTribuByUuid(UUID uuid) {
         return tribuRepository.findByUuid(uuid);
     }
+
+    public Tribu addActivitesNm1(UUID uuid, List<ActiviteNm1> activitesNm1) {
+        Tribu tribu = tribuRepository.findByUuid(uuid);
+        activitesNm1.forEach(activiteNm1 -> activiteNm1Repository.save(activiteNm1));
+        tribu.setAutorisations(activitesNm1);
+        save(tribu);
+        return tribu;
+    }
+
 
 }

@@ -1,5 +1,7 @@
 package com.wild.corp.adhesion.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -13,6 +15,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(of = {"id"})
+@JsonIgnoreProperties(ignoreUnknown = true,  allowSetters = true)
 public class AdherentLite {
 
     private Long id;
@@ -33,13 +36,15 @@ public class AdherentLite {
 
     private String adresse;
 
+    private String codePostal;
+
+    private String ville;
+
     private List<String> documents;
 
     private Boolean mineur = false;
 
     private Boolean completAdhesion = false;
-
-    private AdherentLite representant;
 
     private Boolean adresseRepresentant;
 
@@ -63,11 +68,17 @@ public class AdherentLite {
 
     private String lien;
 
+    private String activites;
+
     private Set<AdhesionLite> adhesions;
 
     private List<Accord> accords = new ArrayList<>();
 
-    private String activites;
+    @JsonIgnoreProperties({"adhesions", "accords"})
+    private AdherentLite representant;
+
+    @JsonIgnoreProperties({"adherent", "tribu"})
+    private Set<ActiviteNm1> activitesNm1;
 
     private List<Notification> derniereModifs = new ArrayList<>();
 

@@ -71,7 +71,8 @@ export class BoardUserComponent implements OnInit {
   showAdmin: boolean = false;
   showSecretaire: boolean = false;
 
-  showHelloAsso: boolean | null = false;
+  showHelloAsso?: boolean = false;
+  showHelloAsso3X?: boolean = false;
 
   // Default export is a4 paper, portrait, using millimeters for units
   doc: jsPDF = new jsPDF('p', 'mm', 'a4', true);
@@ -90,17 +91,17 @@ export class BoardUserComponent implements OnInit {
     private datePipe: DatePipe) { }
 
   showSuccess(message: string) {
-    this.toastr.success(message, 'Information');
+    this.toastr.info(message, 'Information');
   }
   showSecretariat() {
     this.toastr.warning("Le secrétariat validera votre dossier lorsqu'il sera complet", "Secrétariat");
   }
 
   showWarning(message: string) {
-    this.toastr.warning('Attention', message);
+    this.toastr.warning(message, 'Attention');
   }
   showError(message: string) {
-    this.toastr.error('Erreur', "Une erreur est survenue, recharger la page et recommencez. si le problème persiste contactez l'administrateur<br />" + message);
+    this.toastr.error("Une erreur est survenue, recharger la page et recommencez. si le problème persiste contactez l'administrateur<br />" + message, 'Erreur');
   }
 
 
@@ -111,9 +112,11 @@ export class BoardUserComponent implements OnInit {
     this.paramService.getAllBoolean().subscribe({
       next: (data) => {
         this.showHelloAsso = data.filter(param => param.paramName == "Show_HelloAsso")[0].paramValue;
+        this.showHelloAsso3X = data.filter(param => param.paramName == "Show_HelloAsso3X")[0].paramValue;
       },
       error: (error) => {
         this.showHelloAsso = false;
+        this.showHelloAsso3X = false;
       }
     });
 
@@ -157,14 +160,22 @@ export class BoardUserComponent implements OnInit {
     }
   }
 
+  ajoutPossible(){
+    if (this.tribu.adherents.filter(adh => !adh.completAdhesion).length > 0){
+      return false
+    }else{
+      return true 
+    }
+  }
+
   supprimable(adherent:Adherent):boolean{
-    if (this.tribu.adherents.filter(adh => !adh.mineur).length > 1){
-      return true
+    if (this.tribu.adherents.length == 1){
+      return false
     }
-    if (adherent.mineur){
-      return true;
-    }
-    return false;
+    if (!adherent.mineur && this.tribu.adherents.filter(adh => !adh.mineur).length == 1){
+      return false
+    }  
+    return true;
   }
 
   adhesionComplete(adherent:Adherent):boolean{
@@ -281,6 +292,7 @@ export class BoardUserComponent implements OnInit {
       next: (data) => {
         this.tribu.adherents.push(data)
         this.showSuccess("Utilisteur bien ajouté, complétez le pour lui ajouter une activité")
+        this.openAdherent(data)
       },
       error: (error) => {
         this.isFailed = true;

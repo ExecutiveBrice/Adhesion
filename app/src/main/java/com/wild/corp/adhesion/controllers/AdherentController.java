@@ -1,22 +1,18 @@
 package com.wild.corp.adhesion.controllers;
 
-import com.wild.corp.adhesion.models.Adherent;
 import com.wild.corp.adhesion.models.AdherentLite;
-import com.wild.corp.adhesion.models.Document;
 import com.wild.corp.adhesion.services.AdherentServices;
+import com.wild.corp.adhesion.services.UserServices;
 import jakarta.websocket.server.PathParam;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+
+	import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-
-import java.io.IOException;
-import java.util.UUID;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -25,12 +21,26 @@ public class AdherentController {
 
 @Autowired
 AdherentServices adherentServices;
+	@Autowired
+	UserServices userServices;
 
-	@GetMapping("/refreshAccords")
-	public ResponseEntity<?> refreshAccords() {
-		adherentServices.refreshAccords();
-		return ResponseEntity.ok("refreshAccords");
-	}
+//	@GetMapping("/nouvelleAnnee")
+//	public ResponseEntity<?> nouvelleAnnee() {
+//		adherentServices.nouvelleAnnee();
+//		return ResponseEntity.ok("nouvelleAnnee");
+//	}
+//
+//	@GetMapping("/refreshAccords")
+//	public ResponseEntity<?> refreshAccords() {
+//		adherentServices.refreshAccords();
+//		return ResponseEntity.ok("refreshAccords");
+//	}
+//
+//	@GetMapping("/cleanNotification")
+//	public ResponseEntity<?> cleanNotification() {
+//		adherentServices.cleanNotification();
+//		return ResponseEntity.ok("refreshAccords");
+//	}
 
 	@DeleteMapping("/deleteAdherent")
 	@PreAuthorize("hasRole('USER')")
@@ -38,7 +48,6 @@ AdherentServices adherentServices;
 		adherentServices.deleteAdherent(adherentId);
 		return ResponseEntity.ok(adherentId+" deleted");
 	}
-
 
 	@PostMapping("/newAdherentDansTribu")
 	@PreAuthorize("hasRole('USER')")
@@ -103,7 +112,7 @@ AdherentServices adherentServices;
 		return ResponseEntity.ok(adherentServices.getByRole(roleId));
 	}
 
-	@GetMapping("/addAccord")
+	@GetMapping("/getAccords")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<?> addAccord(Authentication principal, @PathParam("adherentId") Long adherentId, @PathParam("nomAccord") String nomAccord) {
 		adherentServices.addModification(principal.getName(),adherentId);

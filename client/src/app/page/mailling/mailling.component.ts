@@ -42,7 +42,7 @@ export class MaillingComponent implements OnInit, OnDestroy {
   ];
 
 
-  selectedAdherent: Adherent = new Adherent();
+  selectedAdherent!: Adherent;
   constructor(
     private adherentService: AdherentService,
     public activiteService: ActiviteService,
@@ -57,10 +57,10 @@ export class MaillingComponent implements OnInit, OnDestroy {
     let adherentId = this.route.snapshot.paramMap.get('adherentId');
 
     if (adherentId && !isNaN(Number.parseInt(adherentId))) {
-
+console.log(adherentId)
       this.adherentService.getById(Number.parseInt(adherentId)).subscribe(
         data => {
-
+console.log(data)
           this.selectedAdherent = data;
           this.isFailed = false;
         },

@@ -14,10 +14,10 @@ import java.util.Set;
 public class UserLite {
 	private Long id;
 
+	private String adherent;
+
 	private String username;
 
 	private Set<Role> roles = new HashSet<>();
-
-	private Set<Notification> notifs = new HashSet<>();
 
 }

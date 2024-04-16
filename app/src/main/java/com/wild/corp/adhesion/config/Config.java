@@ -6,6 +6,9 @@ import com.wild.corp.adhesion.services.AdhesionServices;
 import com.wild.corp.adhesion.services.EmailService;
 import com.wild.corp.adhesion.services.ParamBooleanServices;
 import com.wild.corp.adhesion.services.ParamNumberServices;
+import com.wild.corp.adhesion.utils.Status;
+import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -15,6 +18,7 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+@Slf4j
 @Configuration
 @EnableScheduling
 public class Config {
@@ -29,28 +33,30 @@ public class Config {
     EmailService emailService;
     @Scheduled(cron = "* * 1 * * ?", zone = "Europe/Paris")
     public void tachesJournalieres() {
-
+        log.info("tachesJournalieres");
         if(paramBooleanServices.findByParamValue("Mail_Annulation")) {
+            log.info("annulation");
             annulation();
         }
         if(paramBooleanServices.findByParamValue("Mail_Rappel")) {
+            log.info("rappel");
             rappel();
         }
     }
 
 
+    @Transactional
     private void rappel(){
 
-        LocalDate dt2 = LocalDate.now();
-        dt2.minus(paramNumberServices.findByParamValue("Jours_Avant_Rappel"), ChronoUnit.DAYS);
+        LocalDate dtr = LocalDate.now().minus(paramNumberServices.findByParamValue("Jours_Avant_Rappel"), ChronoUnit.DAYS);
 
         adhesionServices.getAll().stream().filter(adhesion ->
-                ("Attente validation adhérent".equals(adhesion.getStatutActuel()) || "Attente validation secrétariat".equals(adhesion.getStatutActuel())) &&
-                        (adhesion.getAccords().stream().anyMatch(accord -> accord.getDatePassage() == null) || !adhesion.getValidPaiementSecretariat()) &&
-                        adhesion.getDateChangementStatut()==null?adhesion.getDateAjoutPanier().atStartOfDay().isBefore(dt2.atStartOfDay()):adhesion.getDateChangementStatut().atStartOfDay().isBefore(dt2.atStartOfDay()) &&
-                        (adhesion.getRappel()==null || !adhesion.getRappel())).forEach(adhesion -> {
-            System.out.println("rappel "+adhesion.getId());
-            emailService.sendAutoMail(adhesion, "Sujet_Mail_Rappel", "Corp_Mail_Rappel");
+                ( Status.ATTENTE_ADHERENT.label.equals(adhesion.getStatutActuel()) ||  Status.ATTENTE_SECRETARIAT.label.equals(adhesion.getStatutActuel())) &&
+                       adhesion.getDateAjoutPanier().atStartOfDay().isBefore(dtr.atStartOfDay()) &&
+                       !adhesion.getRappel()).forEach(adhesion -> {
+            log.info("rappel "+adhesion.getAdherent().getNom() +" "+adhesion.getAdherent().getPrenom()+" pour l'activité "+adhesion.getActivite().getNom()+" "+adhesion.getActivite().getHoraire());
+
+            emailService.sendAutoMail(adhesion, "Sujet_Mail_Rappel", "Corp_Mail_Rappel", false);
             adhesion.setRappel(true);
             adhesionServices.saveUnique(adhesion);
         });
@@ -59,34 +65,26 @@ public class Config {
 
     private void annulation(){
 
-        LocalDate dt2 = LocalDate.now();
-        dt2.minus(paramNumberServices.findByParamValue("Jours_Avant_Annulation"), ChronoUnit.DAYS);
-
+        LocalDate dta = LocalDate.now().minus(paramNumberServices.findByParamValue("Jours_Avant_Annulation"), ChronoUnit.DAYS);
+        System.out.println(dta);
         adhesionServices.getAll().stream().filter(adhesion ->
-                ("Attente validation adhérent".equals(adhesion.getStatutActuel()) || "Attente validation secrétariat".equals(adhesion.getStatutActuel())) &&
-                        (adhesion.getAccords().stream().anyMatch(accord -> accord.getDatePassage() == null) || !adhesion.getValidPaiementSecretariat()) &&
-                        adhesion.getDateChangementStatut()==null?adhesion.getDateAjoutPanier().atStartOfDay().isBefore(dt2.atStartOfDay()):adhesion.getDateChangementStatut().atStartOfDay().isBefore(dt2.atStartOfDay()) &&
-                        adhesion.getRappel()).forEach(adhesion -> {
-            System.out.println("annulation "+adhesion.getId());
-              adhesionServices.choisirStatut(adhesion.getId(),"Annulée");
+                ( Status.ATTENTE_ADHERENT.label.equals(adhesion.getStatutActuel()) ||  Status.ATTENTE_SECRETARIAT.label.equals(adhesion.getStatutActuel())) &&
+                        adhesion.getDateAjoutPanier().atStartOfDay().isBefore(dta.atStartOfDay()) &&
+                        adhesion.getRappel()
+        ).forEach(adhesion -> {
+
+            log.info("annulation "+adhesion.getAdherent().getNom() +" "+adhesion.getAdherent().getPrenom()+" pour l'activité "+adhesion.getActivite().getNom()+" "+adhesion.getActivite().getHoraire());
 
 
-            List<Adhesion> adhesions = adhesion.getActivite().getAdhesions().stream().map(adh -> ("Attente validation adhérent".equals(adh.getStatutActuel()) || "Attente validation secrétariat".equals(adh.getStatutActuel()) || "Validée".equals(adh.getStatutActuel()))?adh:null).toList();
-            List<Adhesion> adhesionsAttente = adhesion.getActivite().getAdhesions().stream().filter(adh -> "Sur liste d'attente".equals(adh.getStatutActuel())).toList();
+            adhesionServices.choisirStatut(adhesion.getId(), Status.ANNULEE.label);
 
-            if(adhesions.size() < adhesion.getActivite().getNbPlaces()){
-                Adhesion lastAdhesion = null;
-                for (Adhesion adh : adhesionsAttente){
-                    if(lastAdhesion != null && adh.getDateAjoutPanier().isAfter(lastAdhesion.getDateAjoutPanier())){
-                        lastAdhesion = adh;
-                    }else{
-                        lastAdhesion = adh;
-                    }
-                }
+            List<Adhesion> adhesions = adhesion.getActivite().getAdhesions().stream().map(adh -> ( Status.ATTENTE_ADHERENT.label.equals(adh.getStatutActuel()) ||  Status.ATTENTE_SECRETARIAT.label.equals(adh.getStatutActuel()) ||  Status.VALIDEE.label.equals(adh.getStatutActuel()))?adh:null).toList();
+            List<Adhesion> adhesionsAttente = adhesion.getActivite().getAdhesions().stream().filter(adh ->  Status.LISTE_ATTENTE.label.equals(adh.getStatutActuel())).sorted((adh, t1) -> adh.getPosition()).toList();
 
-                if(lastAdhesion != null){
-                    adhesionServices.choisirStatut(lastAdhesion.getId(),"Attente validation adhérent");
-                }
+            emailService.sendAutoMail(adhesion, "Sujet_Mail_Annulation_Automatique", "Corp_Mail_Annulation_Automatique", false);
+
+            if(adhesions.size() < adhesion.getActivite().getNbPlaces() && adhesionsAttente.stream().findFirst().isPresent()){
+                adhesionServices.choisirStatut(adhesionsAttente.stream().findFirst().get().getId(), Status.ATTENTE_ADHERENT.label);
             }
 
         });

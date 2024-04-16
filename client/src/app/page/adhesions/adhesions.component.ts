@@ -63,7 +63,7 @@ export class AdhesionsComponent implements OnInit {
     if (this.tokenStorageService.getUser().roles) {
       this.showAdmin = this.tokenStorageService.getUser().roles.includes('ROLE_ADMIN');
       this.showSecretaire = this.tokenStorageService.getUser().roles.includes('ROLE_SECRETAIRE');
-      if (this.tokenStorageService.getUser().username == "alodbasket@free.fr" || this.tokenStorageService.getUser().username == "laurence.basket@yahoo.com" || this.tokenStorageService.getUser().username == "c.rullie@free.fr" ) {
+      if (this.tokenStorageService.getUser().username == "alodbasket@free.fr" || this.tokenStorageService.getUser().username == "laurence.basket@yahoo.com" || this.tokenStorageService.getUser().username == "xlcharonnat@yahoo.fr" || this.tokenStorageService.getUser().username == "c.rullie@free.fr" ) {
         this.choixSection = "activite#Basket"
       }else{
         this.choixSection = "activite#Aquagym"
@@ -178,6 +178,9 @@ export class AdhesionsComponent implements OnInit {
         adhesion.statutActuel = data.statutActuel;
         adhesion.derniereModifs=data.derniereModifs
         adhesion.derniereVisites=data.derniereVisites
+        adhesion.validDocumentSecretariat = data.validDocumentSecretariat
+        adhesion.validPaiementSecretariat = data.validPaiementSecretariat
+        adhesion.accords = data.accords
       },
       err => {
         this.isFailed = true;
@@ -189,20 +192,7 @@ export class AdhesionsComponent implements OnInit {
   opennewTab(page : string){
     window.open(page, '_blank');
   }
-  
-  choisirPaiement(adhesion: Adhesion, typePaiement: string) {
-    this.adhesionService.updateTypePaiement(adhesion.id, typePaiement).subscribe(
-      data => {
 
-        adhesion.typeReglement = typePaiement;
-      },
-      err => {
-        this.isFailed = true;
-        this.errorMessage = err.message
-
-      }
-    );
-  }
   enregistrerRemarque(adhesion: Adhesion) {
     this.adhesionService.enregistrerRemarque(adhesion.id, adhesion.remarqueSecretariat).subscribe(
       data => {

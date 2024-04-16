@@ -17,14 +17,9 @@ export class AdhesionService {
     return this.http.delete(API_URL+"deleteAdhesion", {params, responseType: 'text' });
   }
 
-  updateTypePaiement(adhesionId: number, typePaiement: string): Observable<Adhesion> {
-    let params = new HttpParams().set('adhesionId', '' + adhesionId + '').set('typePaiement', '' + typePaiement + '');
-    return this.http.get<Adhesion>(API_URL+"updateTypePaiement", {params, responseType: 'json' });
-  }
-
-  addAccord(adhesionId: number, nomAccord: string): Observable<Accord[]> {
+  addAccord(adhesionId: number, nomAccord: string): Observable<Adhesion> {
     let params = new HttpParams().set('adhesionId', '' + adhesionId + '').set('nomAccord', '' + nomAccord + '');
-    return this.http.get<Accord[]>(API_URL+"addAccord", {params, responseType: 'json' });
+    return this.http.get<Adhesion>(API_URL+"addAccord", {params, responseType: 'json' });
   }
 
   removeAccord(adhesionId: number, nomAccord: string): Observable<Accord[]> {
@@ -87,7 +82,15 @@ export class AdhesionService {
     let params = new HttpParams().set('adhesionId', '' + adhesionId + '');
     return this.http.post<Adhesion>(API_URL+"addVisite", null,  {params, responseType: 'json' });
   }
+  deleteSurclassement(adhesionId: number): Observable<any> {
+    let params = new HttpParams().set('adhesionId', '' + adhesionId + '');
+    return this.http.delete(API_URL+"deleteSurclassement", {params, responseType: 'text' });
+  }
 
+  saveSurclassement(adhesionId: number,surClassementId: number): Observable<Adhesion> {
+    let params = new HttpParams().set('adhesionId', '' + adhesionId + '').set('surClassementId', '' + surClassementId + '');
+    return this.http.post<Adhesion>(API_URL+"saveSurclassement", {}, {params, responseType: 'json' });
+  }
   deletePaiement(adhesionId: number,paiementId: number): Observable<any> {
     let params = new HttpParams().set('adhesionId', '' + adhesionId + '').set('paiementId', '' + paiementId + '');
     return this.http.delete(API_URL+"deletePaiement", {params, responseType: 'text' });

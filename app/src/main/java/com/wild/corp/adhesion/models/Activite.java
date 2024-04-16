@@ -5,14 +5,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
-
 import java.util.HashSet;
 import java.util.Set;
 
 
 @Getter
 @Setter
-@ToString
 @RequiredArgsConstructor
 @EqualsAndHashCode(of = {"id"})
 @Entity
@@ -29,16 +27,24 @@ public class Activite {
     private String groupeFiltre;
 
     private String nom;
+
     private String lien;
+
     private Integer tarif;
 
     private Integer nbPlaces;
+
+    private Integer ageMin;
+
+    private Integer ageMax;
+
+    private String genre;
 
     private String horaire;
 
     private String salle;
 
-    private Boolean pourEnfant;
+    private boolean reinscription;
 
     private boolean priseEnCharge;
 
@@ -47,7 +53,9 @@ public class Activite {
     private boolean vieClub;
 
     private boolean certificatMedical;
+
     private boolean complete;
+
     private Integer dureeVieCertif;
 
     @Transient
@@ -62,12 +70,15 @@ public class Activite {
     @Transient
     private Long nbAdhesionsAttente;
 
-    @OneToMany(mappedBy="activite", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy="activite",fetch = FetchType.EAGER,  cascade = CascadeType.ALL)
     @JsonIgnore
-    @ToString.Exclude
     private Set<Adhesion> adhesions = new HashSet<>();
 
+    @OneToMany(mappedBy = "surClassement",fetch = FetchType.EAGER,  cascade = CascadeType.ALL)
+    @JsonIgnore
+    private Set<Adhesion> sousClassement = new HashSet<>();
+
     @ManyToMany(mappedBy="cours", cascade = CascadeType.ALL)
-    @JsonIgnoreProperties({"cours", "accords", "adhesions", "user", "tribu", "derniereModifs", "derniereVisites"})
+    @JsonIgnoreProperties({"cours", "accords", "adhesions", "activitesNm1", "user", "tribu", "derniereModifs", "derniereVisites"})
     private Set<Adherent> profs = new HashSet<>();
 }

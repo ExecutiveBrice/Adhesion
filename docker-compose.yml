@@ -37,6 +37,8 @@ services:
       - DNS_NAME=${DNS_NAME}
       - JWT_SECRET=${JWT_SECRET}
       - SERVER_PORT=8000
+      - MJ_APIKEY_PUBLIC=${MJ_APIKEY_PUBLIC}
+      - MJ_APIKEY_PRIVATE=${MJ_APIKEY_PRIVATE}
     expose:
       - "8000"
     networks:

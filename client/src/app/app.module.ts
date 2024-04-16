@@ -41,6 +41,7 @@ import { ProfsComponent } from './page/profs/profs.component';
 import { ExcelService } from './_services/excel.service';
 import { UtilService } from './_services/util.service';
 import { FileService } from './_services/file.service';
+import { SimpleFilterPipe } from './_helpers/simpleFilter.pipe';
 
 
 
@@ -66,7 +67,9 @@ import { FileService } from './_services/file.service';
     UserComponent,
     SwitchComponent,
     OrderByPipe,
-    FilterByPipe
+    FilterByPipe,
+    
+    SimpleFilterPipe
   ],
   imports: [
     BrowserModule,

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+
+    <style>
+    .title span {
+        font-family: 'Open Sans SemiBold',sans serif;
+        color: #1CA096;
+        font-size: 28px;
+        letter-spacing: 0;
+    }
+    .bloc-info {
+        font-size: 15px;
+    }
+    .bloc-title {
+        font-size: 30px;
+  font-weight: bold;
+  text-align: center;
+    }
+    </style>
+</head>
+<body>
+
+
+<img th:src="@{images/logo.png}" style="height: 200px; margin-left:40px;"/>
+
+
+<div style="width: 90%; height:100%; border-collapse: collapse; background-color: transparent; margin: 0 auto; page-break-inside: avoid;">
+
+    <table th:each="tab, iStat: ${enTete}" style="width: 98%; border-collapse: collapse; margin: 0 auto;" th:class="bloc-info">
+        <tr th:each="valeur, iStat: ${tab}">
+            <td th:utext="${valeur}">
+                <tr style="height: 30px"></tr>
+            </td>
+        </tr>
+    </table>
+    <table style="width: 98%; border-collapse: collapse; margin: 0 auto; position: relative; bottom: 0;" th:class="bloc-title">
+        <tr th:each="tab, iStat: ${titre}">
+            <td th:each="valeur: ${tab}" th:utext="${valeur}">
+        <tr style="height: 30px"></tr>
+        </td>
+        </tr>
+    </table>
+    <table style="width: 98%; border-collapse: collapse; margin: 0 auto; position: relative; bottom: 0;" th:class="bloc-info">
+        <tr th:each="tab, iStat: ${corps}">
+            <td th:each="valeur: ${tab}" th:utext="${valeur}">
+                <tr style="height: 30px"></tr>
+            </td>
+        </tr>
+    </table>
+    <table style="width: 98%; border-collapse: collapse; margin: 0 auto; position: relative; bottom: 0;" th:class="bloc-info">
+        <tr th:each="tab, iStat: ${signature}">
+            <td th:each="valeur: ${tab}" th:utext="${valeur}">
+        <tr style="height: 30px"></tr>
+        </td>
+        </tr>
+    </table>
+
+</div>
+<div >
+    <img th:src="@{images/signature.png}" style="height: 200px; margin-left:250px; margin-top:50px"/>
+</div>
+</body>
+</html>

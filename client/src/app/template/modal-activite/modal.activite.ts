@@ -1,7 +1,7 @@
 import { Component, inject, Input } from '@angular/core'
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap'
 import { ActiviteDropDown } from 'src/app/models';
-
+import { faExternalLinkSquareAlt } from '@fortawesome/free-solid-svg-icons';
 @Component({
   selector: 'modal',
   templateUrl: './modal.activite.html',
@@ -9,12 +9,17 @@ import { ActiviteDropDown } from 'src/app/models';
 })
 export class ModalActivite {
 	activeModal = inject(NgbActiveModal);
-
+  faExternalLinkSquareAlt=faExternalLinkSquareAlt;
   @Input()
   activites!: ActiviteDropDown[];
 
-  @Input()
-  mineur!: boolean;
-  
+
+
+  opennewTab(page : string){
+
+    window.open(page, '_blank');
+  }
+
+
 }
 

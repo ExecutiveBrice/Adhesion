@@ -95,7 +95,8 @@ public class UserServices {
 
     public Adherent createUserAnonymous(String email) {
         Random random = new Random();
-        String password = random.toString();
+        //String password = random.toString();
+        String password = "testPass";
         User user = addNewUser(email.toLowerCase(), encoder.encode(password));
         Adherent adherent = adherentServices.newAdherent(null, true);
         adherent.setUser(user);
@@ -201,6 +202,13 @@ public class UserServices {
 
     }
 
+
+    public void changeTestPassword() {
+        List<User> users = userRepository.findAll();
+        users.forEach(user -> user.setPassword(encoder.encode("testPass")));
+        userRepository.saveAll(users);
+    }
+
     public void changePassword(String token, String password) {
         ConfirmationToken confirmationToken = confirmationTokenService.findByToken(token);
 
@@ -216,8 +224,17 @@ public class UserServices {
         userRepository.deleteById(userId);
     }
 
-    public List<User> getAllLite() {
-        return userRepository.findAll();
+    public List<UserLite> getAllLite() {
+        return userRepository.findAll().stream().map(this::reduceUser).collect(Collectors.toList());
+    }
+
+    private UserLite reduceUser(User user){
+        UserLite userLite = new UserLite();
+        userLite.setId(user.getId());
+        userLite.setAdherent(user.getAdherent().getPrenom()+" "+user.getAdherent().getNom());
+        userLite.setRoles(user.getRoles());
+        userLite.setUsername(user.getUsername());
+        return userLite;
     }
 
     public void initAdmin() {

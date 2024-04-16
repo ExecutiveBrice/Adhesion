@@ -1,24 +1,24 @@
 <div class="row">
   <div *ngFor="let adherent of tribu.adherents | orderBy:'id':false" [ngClass]="mobile ? 'fullSize' : ''"
-    class="col-12 col-md-4 col-lg-2">
+    class="col-6 col-md-4 col-lg-2">
 
 
     <div class="cadrePermanent">
       <div class="row">
-        <div class="col-6 col-md-12">
+        <div class="col-12">
           <fa-icon *ngIf="supprimable(adherent)" class="fa-lg pointer corner" [icon]="faSquareXmark"
             (click)="supressionAdherent(adherent)"></fa-icon>
 
           <div class="pointer" (click)="openAdherent(adherent)">
-            <img *ngIf="adherent.genre == 'Masculin' && !adherent.mineur " src="../../../assets/homme.png" alt="Avatar"
+            <img *ngIf="adherent.genre == 'Masculin' && !adherent.mineur " src="assets/homme.png" alt="Avatar"
               style="width:100%">
-            <img *ngIf="adherent.genre == 'Féminin' && !adherent.mineur" src="../../../assets/femme.png" alt="Avatar"
+            <img *ngIf="adherent.genre == 'Féminin' && !adherent.mineur" src="assets/femme.png" alt="Avatar"
               style="width:100%">
-            <img *ngIf="adherent.genre == 'Masculin' && adherent.mineur " src="../../../assets/garcon.png" alt="Avatar"
+            <img *ngIf="adherent.genre == 'Masculin' && adherent.mineur " src="assets/garcon.png" alt="Avatar"
               style="width:100%">
-            <img *ngIf="adherent.genre == 'Féminin' && adherent.mineur" src="../../../assets/fille.png" alt="Avatar"
+            <img *ngIf="adherent.genre == 'Féminin' && adherent.mineur" src="assets/fille.png" alt="Avatar"
               style="width:100%">
-            <img *ngIf="adherent.genre == undefined" src="../../../assets/nouveau.png" alt="Avatar" style="width:100%">
+            <img *ngIf="adherent.genre == undefined" src="assets/nouveau.png" alt="Avatar" style="width:100%">
             <div class="col-12 center" id="header">
               {{ !adherent.prenom?"Nouveau":adherent.prenom+" "+adherent.nom}}
             </div>
@@ -27,16 +27,19 @@
 
             <div *ngFor="let adhesion of adherent.adhesions | orderBy:'id':false ">
               {{adhesion.activite.nom}}
-              <fa-icon *ngIf="adhesion.statutActuel == 'Validée'" class="green fa-xl" [icon]="faCircleCheck"></fa-icon>
+
+              <fa-icon *ngIf="adhesion.statutActuel == 'Validée' || adhesion.statutActuel == 'Licence générée' || adhesion.statutActuel == 'Licence T'" class="green fa-xl"
+                [icon]="faCircleCheck"></fa-icon>
               <fa-icon *ngIf="adhesion.statutActuel == 'Sur liste d\'attente'" class="gris fa-xl"
                 [icon]="faCirclePause"></fa-icon>
               <fa-icon *ngIf="adhesion.statutActuel == 'Attente validation adhérent'" class="jaune fa-xl"
                 [icon]="faClock"></fa-icon>
               <fa-icon *ngIf="adhesion.statutActuel == 'Attente validation secrétariat'" class="pomme fa-xl"
                 [icon]="faClock"></fa-icon>
-              <fa-icon
-                *ngIf="adhesion.statutActuel != 'Validée' && adhesion.statutActuel != 'Attente validation adhérent' && adhesion.statutActuel != 'Attente validation secrétariat' && adhesion.statutActuel != 'Sur liste d\'attente'"
-                class="orange fa-xl" [icon]="faCircleXmark"></fa-icon>
+              <fa-icon *ngIf="adhesion.statutActuel == 'Attente création licence'" class="orange fa-xl"
+                [icon]="faClock"></fa-icon>
+              <fa-icon *ngIf="adhesion.statutActuel == 'Annulée'" class="orange fa-xl" [icon]="faCircleXmark"></fa-icon>
+
             </div>
           </div>
         </div>
@@ -44,11 +47,11 @@
 
     </div>
   </div>
-  <div class="col-12 col-md-4 col-lg-2">
+  <div *ngIf="ajoutPossible()" class="col-6 col-md-4 col-lg-2">
     <div class="cadrePermanent" (click)="addAdherent()">
       <fa-icon class="fa-lg pointer corner white" [icon]="faSquareXmark"></fa-icon>
       <div class="pointer">
-        <img src="../../../assets/ajout.png" alt="Avatar" style="width:100%">
+        <img src="assets/ajout.png" alt="Avatar" style="width:100%">
         <div class="col-12 center" id="header">Ajouter un adhérent</div>
       </div>
     </div>
@@ -59,13 +62,13 @@
 
 
 
-
+<div class="row">
+  <div class="col-12 col-sm-6">
 
 <div *ngIf="totalRestantDu != 0" class="cadrePermanent">
 
   <div class="row">
-    <div class="col-12" id="header">Paiement : {{totalRestantDu}}€ à payer ou non encore pris en
-      compte par le secretariat</div>
+    <div class="col-12 header">Paiements :</div>
 
   </div>
 
@@ -83,8 +86,7 @@
     <tbody>
       <tr *ngFor="let adhesion of adhesionPaiement | orderBy:'id':true ">
         <td>
-          {{adhesion.activite.nom}}<br />
-          {{ adhesion.activite.horaire }}
+          {{adhesion.activite.nom}} - {{ adhesion.activite.horaire }}
         </td>
         <td>{{adhesion.adherent.prenom}}</td>
         <td>
@@ -95,26 +97,30 @@
       </tr>
       <tr>
         <td colspan="3"><b>Montant total :
-            {{totalRestantDu}}€ </b></td>
+            {{totalRestantDu}}€ </b> à payer ou non encore pris en
+      compte par le secretariat
+          </td>
       </tr>
     </tbody>
   </table>
 
 
 
-  <iframe *ngIf="helloassoAlod" id="haWidget" allowtransparency="true" scrolling="auto"
-    src="https://www.helloasso.com/associations/alod/adhesions/alod-2023-2024/widget"
-    style="width: 100%; height: 750px; border: none;"></iframe>
+  <iframe  *ngIf="helloassoAlod" id="haWidget" allowtransparency="true" scrolling="auto" src="https://www.helloasso.com/associations/alod/adhesions/alod-2024-2025/widget" style="width: 100%; height: 750px; border: none;"></iframe>
+
 
   <iframe *ngIf="helloassoAlod3X" id="haWidget" allowtransparency="true" scrolling="auto"
     src="https://www.helloasso.com/associations/alod/adhesions/alod-2023-2024-paiement-en-3-fois/widget"
     style="width: 100%; height: 750px; border: none;"></iframe>
 
+
+
   <div *ngIf="totalRestantDu != 0 && showHelloAsso" type='button' class="btn btn-primary alod btn-independent"
     (click)="helloassoAlod = !helloassoAlod">Paiement via HelloAsso</div>
 
-  <div *ngIf="totalRestantDu != 0 && showHelloAsso" type='button' class="btn btn-primary alod btn-independent"
+  <div *ngIf="totalRestantDu != 0 && showHelloAsso3X" type='button' class="btn btn-primary alod btn-independent"
     (click)="helloassoAlod3X = !helloassoAlod3X">Paiement via HelloAsso en 3X</div>
-
+  </div>
+</div>
 
 </div>

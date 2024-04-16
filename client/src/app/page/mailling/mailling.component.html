@@ -19,7 +19,7 @@
   </div>
 
 
-  <div *ngIf="selectedAdherent.id == undefined" class="larger">
+  <div *ngIf="selectedAdherent == undefined || selectedAdherent.id == undefined" class="larger">
 
 
 
@@ -77,7 +77,7 @@
 
 
 
-  <div *ngIf="selectedAdherent.id != 0">
+  <div *ngIf="selectedAdherent && selectedAdherent.id != 0">
     <h3>Le mail sera envoyé à : {{selectedAdherent.prenom}} {{selectedAdherent.nom}} - {{selectedAdherent.user.username}}
     </h3>
   </div>

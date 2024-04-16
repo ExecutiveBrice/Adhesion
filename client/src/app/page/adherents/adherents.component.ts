@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AdherentService } from '../../_services/adherent.service';
-import { Adherent, AdherentLite } from 'src/app/models';
+import { Activite, ActiviteDropDown, Adherent, AdherentLite } from 'src/app/models';
 import { faPen, faUsersRays, faSkull, faUsers, faEnvelope, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TokenStorageService } from 'src/app/_services/token-storage.service';
@@ -10,6 +10,9 @@ import { AuthService } from 'src/app/_services/auth.service';
 import { ParamService } from 'src/app/_services/param.service';
 import { ExcelService } from 'src/app/_services/excel.service';
 import { FilterAdhesionByPipe } from 'src/app/_helpers/filterAdhesion.pipe';
+import { ActiviteService } from 'src/app/_services/activite.service';
+import { ActivitesNm1 } from 'src/app/models/activitesNm1';
+import { TribuService } from 'src/app/_services/tribu.service';
 
 @Component({
   selector: 'app-adherents',
@@ -17,10 +20,10 @@ import { FilterAdhesionByPipe } from 'src/app/_helpers/filterAdhesion.pipe';
   styleUrls: ['./adherents.component.css']
 })
 export class AdherentsComponent implements OnInit {
-  faCircleCheck=faCircleCheck
-  faCircleXmark=faCircleXmark
-  faSquareMinus=faSquareMinus
-  faSquarePlus=faSquarePlus
+  faCircleCheck = faCircleCheck
+  faCircleXmark = faCircleXmark
+  faSquareMinus = faSquareMinus
+  faSquarePlus = faSquarePlus
   faPen = faPen;
   faUsersRays = faUsersRays;
   faUsers = faUsers;
@@ -34,13 +37,17 @@ export class AdherentsComponent implements OnInit {
   errorMessage = '';
   ordre: string = 'nom';
   search: string = "";
+  type:string = 'Mineur';
   sens: boolean = false;
   showAdmin: boolean = false;
   showSecretaire: boolean = false;
   filtres: Map<string, any> = new Map<string, any>();
   subscription = new Subscription()
-
+  activitesListe: ActiviteDropDown[] = [];
+  activites: Activite[] = []
   constructor(
+    public activiteService: ActiviteService,
+    public tribuService: TribuService,
     private filterByPipe: FilterAdhesionByPipe,
     private excelService: ExcelService,
     private authService: AuthService,
@@ -67,6 +74,8 @@ export class AdherentsComponent implements OnInit {
         this.isFailed = true;
         this.errorMessage = err.message
       })
+
+    this.activiteService.fillObjects(this.activites, this.activitesListe, undefined);
   }
 
   exportAsXLSX(): void {
@@ -78,7 +87,7 @@ export class AdherentsComponent implements OnInit {
   addSearch(search: string) {
     if (search.length > 2) {
       this.addFiltre('nomPrenom', search)
-    } else if(this.filtres.has('nomPrenom')) {
+    } else if (this.filtres.has('nomPrenom')) {
       this.removeFiltre('nomPrenom')
     }
   }
@@ -158,9 +167,32 @@ export class AdherentsComponent implements OnInit {
     this.modalService.dismissAll();
 
     this.authService.registerAnonymous(email).subscribe(
-      data => {
+      adherent => {
 
-        this.router.navigate(['inscription', data.tribu.uuid]);
+        let activitesNm1: ActivitesNm1[] = []
+        this.activitesListe.forEach(activiteMineur => {
+          if (activiteMineur.selected) {
+            let activiteNm1 = new ActivitesNm1();
+            activiteNm1.nom = activiteMineur.nom
+            activiteNm1.horaire = this.type
+            activiteNm1.tribu=adherent.tribu
+            activitesNm1.push(activiteNm1)
+          }
+        })
+
+
+        this.tribuService.addActivitesNm1(adherent.tribu.uuid, activitesNm1).subscribe({
+          next: (response) => {
+            console.log(response)
+
+            this.router.navigate(['inscription', adherent.tribu.uuid]);
+          },
+          error: (error) => {
+            console.log(error)
+          }
+        });
+
+
       },
       err => {
         this.isFailed = true;
@@ -170,7 +202,7 @@ export class AdherentsComponent implements OnInit {
 
   }
 
-  opennewTab(page : string){
+  opennewTab(page: string) {
     window.open(page, '_blank');
   }
 
@@ -205,7 +237,7 @@ export class AdherentsComponent implements OnInit {
 
       }
     );
-     
+
   }
 
   retraitAccord(adherent: AdherentLite, nomAccord: string) {

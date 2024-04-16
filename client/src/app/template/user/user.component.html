@@ -61,6 +61,34 @@
           Ajouter un document <fa-icon class="orange fa-xl" [icon]="faSquarePlus" container="body"></fa-icon>
         </div>
       </div>
+
+
+
+
+
+      <div class="col-12 header">
+        Activités de l'année dernière:
+      </div>
+
+      <div *ngIf="adherent.activitesNm1.length > 0" class="col-12 ">
+
+        <div
+          *ngFor="let activiteNm1 of adherent.activitesNm1 | simplefilter:'horaire':['Mineur','Majeur'] | orderBy:'id':true"
+          class="col-12 ">
+
+          <div class="cadrePermanent ">
+            <div class="row">
+              <div class="col-8 header">
+                {{activiteNm1.nom}}
+              </div>
+              <div class="col-12 ">
+                <i>{{ activiteNm1.horaire }}</i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
 
@@ -127,7 +155,7 @@
               <div class="form-group">
                 <label for="naissance">Date de naissance <span class="orange" container="body">*</span></label>
                 <input type="date" class="form-control" name="naissance" [(ngModel)]="adherent.naissance"
-                  #naissance="ngModel" required />
+                  (change)="udpadteMineur(adherent)" #naissance="ngModel" required />
                 <div class="alert-danger" *ngIf="naissance.errors && f.submitted">
                   <div *ngIf="naissance.errors.required">Date de naissance obligatoire</div>
                 </div>
@@ -146,22 +174,28 @@
 
               <div class="col-12 header">
                 Accords
-              </div>
-              <div *ngIf="showAdmin || showSecretaire" ngbDropdown id="icon">
-                <div id="dropdownBasic1" ngbDropdownToggle>
-                  Ajouter un accord <fa-icon [icon]="faSquarePlus" container="body"></fa-icon>
+
+                <div *ngIf="showAdmin || showSecretaire" ngbDropdown id="icon">
+                  <div id="dropdownBasic1" ngbDropdownToggle>
+                    Ajouter un accord <fa-icon [icon]="faSquarePlus" container="body"></fa-icon>
+                  </div>
+
+                  <div ngbDropdownMenu aria-labelledby="dropdownBasic1" style="float:right;">
+                    <div type='button' ngbDropdownItem (click)="ajoutAccord(adherent,'RGPD')">RGPD</div>
+                    <div type='button' ngbDropdownItem (click)="ajoutAccord(adherent,'DroitImage')">Droit Image</div>
+                  </div>
                 </div>
-
-                <div ngbDropdownMenu aria-labelledby="dropdownBasic1" style="float:right;">
-                  <div type='button' ngbDropdownItem (click)="ajoutAccord(adherent,'RGPD')">RGPD</div>
-                  <div type='button' ngbDropdownItem (click)="ajoutAccord(adherent,'DroitImage')">Droit Image</div>
-                </div>
               </div>
 
-
-              <div *ngFor="let accord of adherent.accords | orderBy:'id':false ">
-
+              <div *ngFor="let accord of adherent.accords | orderBy:'id':false " class="high-row">
+                <div *ngIf="accord.datePassage == null" class="form-check form-switch">
+                  <input class="form-check-input big-checkbox" [disabled]="!accord.refusable" [(ngModel)]="accord.etat"
+                    type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+                  {{accord.etat?accord.valide:accord.refus}} <fa-icon (click)="openAccordModal(accord, true)"
+                    class="pointer orange" [icon]="faCircleQuestion"></fa-icon>
+                </div>
                 <div *ngIf="accord.datePassage != null">
+                  <fa-icon [icon]="faSquareMinus" (click)="retraitAccord(adherent,accord)"></fa-icon>
                   <fa-icon *ngIf="accord.etat == true" class="green fa-2xl" [icon]="faCircleCheck"></fa-icon>
                   <fa-icon *ngIf="accord.etat == false" class="orange fa-2xl" [icon]="faCircleXmark"></fa-icon>
                   {{accord.title}} {{accord.etat?"accepté":"refusé"}} le {{accord.datePassage | date: 'dd/MM/YYYY'}}
@@ -169,37 +203,19 @@
                     [icon]="faCircleQuestion"></fa-icon>
                 </div>
 
-                <div *ngIf="accord.datePassage == null" type='button' class="btn btn-block btn-primary col-12 alod"
-                  (click)="openAccordModal(accord, false)">
-                  Merci de confirmer votre accord{{accord.bouton}}
-                </div>
-
               </div>
             </div>
 
             <div [ngClass]="adherent.completAdhesion ? 'col-12' : ' col-12 col-sm-6'">
 
-              <div *ngIf="!isRepresentant" class="form-group">
-
-                <label for="image">{{adherent.prenom}} est : <span class="orange" container="body">*</span></label>
-
-                <div class="btn-group btn-group-sm col-12" role="group" aria-label="image">
-                  <div type='button' class="btn btn-block"
-                    [ngClass]="!adherent.mineur ? 'btn-primary' : ' btn-outline-secondary'"
-                    (click)="adherent.mineur = false">
-                    Majeur</div>
-                  <div type='button' class="btn btn-block"
-                    [ngClass]="adherent.mineur ? 'btn-primary' : ' btn-outline-secondary'"
-                    (click)="adherent.mineur = true">
-                    Mineur</div>
-                </div>
-
+              <div class="col-12 header">
+                Contact
               </div>
-
 
               <div *ngIf="adherent.mineur" class="form-group">
 
-                <label for="image">Représetnant légal : <span class="orange" container="body">*</span></label>
+                <div class="orange"><b>{{adherent.prenom}} est mineur, il faut lui désigner un représentant</b><span
+                    class="orange" container="body">*</span></div>
 
                 <div ngbDropdown class="d-inline-block larger">
                   <button type="button" class="btn btn-primary larger" id="dropdownBasic1" ngbDropdownToggle>
@@ -208,7 +224,7 @@
                     adulte'}}
                   </button>
 
-                  <div *ngIf="adultes.length > 0" ngbDropdownMenu aria-labelledby="dropdownBasic1">
+                  <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
                     <a ngbDropdownItem (click)="newAdherent()">
                       Ajouter un représentant</a>
                     <div *ngFor="let adulte of adultes | orderBy:'nom':false" class="ligne pointer">
@@ -305,6 +321,36 @@
                 </div>
               </div>
 
+              <div *ngIf="!adherent.adresseRepresentant || !adherent.mineur" class="form-group">
+                <label for="codePostal">Code Postal <span class="orange" container="body">*</span></label>
+                <input type="text" class="form-control" name="codePostal" [(ngModel)]="adherent.codePostal" required
+                  minlength="5" maxlength="7" #codePostal="ngModel" />
+                <div class="alert-danger" *ngIf="codePostal.errors && f.submitted">
+                  <div *ngIf="codePostal.errors.required">le code postal est obligatoire</div>
+                  <div *ngIf="codePostal.errors.minlength">
+                    Le code postal doit avoir au moins 5 caractères
+                  </div>
+                  <div *ngIf="codePostal.errors.maxlength">
+                    Le code postal doit avoir au maximum 7 caractères
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="!adherent.adresseRepresentant || !adherent.mineur" class="form-group">
+                <label for="ville">Ville <span class="orange" container="body">*</span></label>
+                <input type="text" class="form-control" name="ville" [(ngModel)]="adherent.ville" required
+                  minlength="4" maxlength="200" #ville="ngModel" />
+                <div class="alert-danger" *ngIf="ville.errors && f.submitted">
+                  <div *ngIf="ville.errors.required">la ville est obligatoire</div>
+                  <div *ngIf="ville.errors.minlength">
+                    La ville doit avoir au moins 4 caractères
+                  </div>
+                  <div *ngIf="ville.errors.maxlength">
+                    La ville doit avoir au maximum 200 caractères
+                  </div>
+                </div>
+              </div>
+
               <div *ngIf="!isAllAccordsDone(adherent.accords) || !isAdherentComplet(adherent)" class="orange">
                 <span class="orange">* champs obligatoires</span>
               </div>
@@ -328,7 +374,18 @@
         </form>
 
       </div>
+
+
+
     </div>
+
+
+
+
+
+
+
+
 
     <div *ngIf="adherent.completAdhesion" class="col-12 col-sm-6">
 
@@ -358,31 +415,53 @@
               <div class="row">
                 <div class="col-8 header">
                   {{adhesion.activite.nom}}
-                  <fa-icon *ngIf="adhesion.statutActuel != 'Validée'" class="pointer" [icon]="faSquareMinus"
+
+                  <fa-icon *ngIf="adhesion.statutActuel != 'Validée' || adhesion.statutActuel != 'Licence générée' || adhesion.statutActuel != 'Licence T' " class="pointer" [icon]="faSquareMinus"
                     (click)="suppressionAdhesionModal(adhesion)" container="body"></fa-icon>
                 </div>
                 <div class="col-4 ">
 
-                  <fa-icon *ngIf="adhesion.statutActuel == 'Validée'" class="green fa-xl"
-                    [icon]="faCircleCheck"></fa-icon>
+                  <fa-icon *ngIf="adhesion.statutActuel == 'Validée' || adhesion.statutActuel == 'Licence générée' || adhesion.statutActuel == 'Licence T'"
+                    class="green fa-xl" [icon]="faCircleCheck"></fa-icon>
                   <fa-icon *ngIf="adhesion.statutActuel == 'Sur liste d\'attente'" class="gris fa-xl"
                     [icon]="faCirclePause"></fa-icon>
                   <fa-icon *ngIf="adhesion.statutActuel == 'Attente validation adhérent'" class="jaune fa-xl"
                     [icon]="faClock"></fa-icon>
                   <fa-icon *ngIf="adhesion.statutActuel == 'Attente validation secrétariat'" class="pomme fa-xl"
                     [icon]="faClock"></fa-icon>
-                  <fa-icon
-                    *ngIf="adhesion.statutActuel != 'Validée' && adhesion.statutActuel != 'Attente validation adhérent' && adhesion.statutActuel != 'Attente validation secrétariat' && adhesion.statutActuel != 'Sur liste d\'attente'"
-                    class="orange fa-xl" [icon]="faCircleXmark"></fa-icon>
+                  <fa-icon *ngIf="adhesion.statutActuel == 'Attente création licence'" class="orange fa-xl"
+                    [icon]="faClock"></fa-icon>
+                  <fa-icon *ngIf="adhesion.statutActuel == 'Annulée'" class="orange fa-xl"
+                    [icon]="faCircleXmark"></fa-icon>
 
                 </div>
                 <div class="col-12 ">
                   <i>Statut : {{ adhesion.statutActuel }}</i>
                 </div>
                 <div class="col-12 ">
-                  <i>Le {{ adhesion.activite.horaire }}</i>
+                  <i>{{ adhesion.activite.horaire }}</i>
                 </div>
+                <div *ngIf="adhesion.surClassement" class="col-6 ">
+                  <i>surclassement : {{ adhesion.surClassement.horaire }}</i>
+                  <fa-icon *ngIf="(showAdmin || showSecretaire) && adhesion.surClassement" class="pointer"
+                    [icon]="faSquareMinus" (click)="removeSurclassement(adhesion)" container="body"></fa-icon>
+                </div>
+                
+                <div *ngIf="(showAdmin || showSecretaire) &&  activites.length > 0" ngbDropdown id="icon"
+                  class="col-6 ">
+                  <div id="dropdownBasic1" ngbDropdownToggle>
+                    Ajouter un surclassement <fa-icon [icon]="faSquarePlus" container="body"></fa-icon>
+                  </div>
 
+                  <div ngbDropdownMenu aria-labelledby="dropdownBasic1" style="float:right;">
+
+                    <div *ngFor="let activite of activites | orderBy:'id':true">
+                      <div type='button' (click)="addSurclassement(adhesion, activite)" ngbDropdownItem>{{activite.nom}}
+                        - {{activite.horaire}}</div>
+
+                    </div>
+                  </div>
+                </div>
                 <div *ngIf="adhesion.statutActuel != 'Sur liste d\'attente'">
                   <div class="col-8 header">
                     Paiement :
@@ -393,17 +472,12 @@
                       [icon]="faCircleCheck"></fa-icon>
                     <fa-icon *ngIf="!adhesion.validPaiementSecretariat" class="jaune fa-xl" [icon]="faClock"></fa-icon>
                   </div>
-                  <div class="col-12 pointer order-md-13" *ngIf="adhesion.validPaiementSecretariat"
-                    (click)="openPDF(adhesion)">
-                    Télécharger l'attestation ici : <fa-icon class=" fa-2xl" [icon]="faFileSignature"></fa-icon>
-                  </div>
 
 
 
-                  <div
-                    *ngIf="adhesion.activite.certificatMedical || adhesion.activite.groupe == 'ALOD_B' && adhesion.adherent.mineur"
-                    class="col-12 header">
-                    Documents à fournir :
+
+                  <div *ngIf="adhesion.activite.certificatMedical" class="col-12 header">
+                    Documents :
                   </div>
                   <div *ngIf="adhesion.activite.certificatMedical" class="col-12 row align-items-center fullSize">
                     <div class="col-10">Questionnaire de santé</div>
@@ -413,48 +487,77 @@
                   </div>
 
                   <div *ngIf="adhesion.activite.certificatMedical" class="col-12 row align-items-center fullSize">
-                    <div class="col-10">Certificat médical</div>
+                    <div class="col-10">Certificat médical (si une réponse négative au questionnaire de santé) </div>
                     <div class="col-2" (click)="openCertifMed(adhesion.activite)"><fa-icon class="pointer orange fa-2xl"
                         [icon]="faCloudDownloadAlt"></fa-icon>
                     </div>
                   </div>
-                  <div *ngIf="adhesion.activite.groupe == 'ALOD_B' && adhesion.adherent.mineur"
-                    class="col-12 row align-items-center fullSize">
-                    <div class="col-10">Doc de surclassement</div>
-                    <div class="col-2" (click)="openSurclassement()"><fa-icon class="pointer orange fa-2xl"
-                        [icon]="faCloudDownloadAlt"></fa-icon>
+
+
+
+
+                  <div *ngIf="adhesion.activite.groupe == 'ALOD_B'">
+                    <div *ngIf="adhesion.statutActuel == 'Attente validation adhérent'"  class="form-check form-switch">
+                      <input class="form-check-input big-checkbox" [(ngModel)]="adhesion.dejaLicencie" type="checkbox"
+                        role="switch" [ngModelOptions]="{standalone: true}">
+                      {{adhesion.dejaLicencie?"J'ai déjà été licencié FFHB":"Je n'ai jamais été licencié FFHB"}}
+                    </div>
+
+                    <div *ngIf="adhesion.statutActuel != 'Attente validation adhérent'">
+                      <fa-icon *ngIf="adhesion.dejaLicencie == true" class="green fa-2xl"
+                        [icon]="faCircleCheck"></fa-icon>
+                      <fa-icon *ngIf="adhesion.dejaLicencie == false" class="orange fa-2xl"
+                        [icon]="faCircleXmark"></fa-icon>
+                      {{adhesion.dejaLicencie?"J'ai déjà été licencié FFHB":"Je n'ai jamais été licencié FFHB"}}
                     </div>
                   </div>
-
 
                   <div class="col-12 header">
-                    Accords :
+                    Accords
+
+                    <div *ngIf="showAdmin || showSecretaire" ngbDropdown id="icon">
+                      <div id="dropdownBasic1" ngbDropdownToggle>
+                        Ajouter un accord <fa-icon [icon]="faSquarePlus" container="body"></fa-icon>
+                      </div>
+
+                      <div ngbDropdownMenu aria-labelledby="dropdownBasic1" style="float:right;">
+                        <div type='button' ngbDropdownItem (click)="ajoutAccordAdhesion(adhesion,'ReglementInterieur')">
+                          ReglementInterieur</div>
+                        <div type='button' ngbDropdownItem (click)="ajoutAccordAdhesion(adhesion,'AttestationSante')">
+                          AttestationSante</div>
+                        <div type='button' ngbDropdownItem (click)="ajoutAccordAdhesion(adhesion,'VieClub')">VieClub
+                        </div>
+                        <div type='button' ngbDropdownItem
+                          (click)="ajoutAccordAdhesion(adhesion,'AutorisationParentale')">AutorisationParentale</div>
+                        <div type='button' ngbDropdownItem (click)="ajoutAccordAdhesion(adhesion,'PriseEnCharge')">
+                          PriseEnCharge</div>
+                      </div>
+                    </div>
                   </div>
-                  <div *ngFor="let accord of adhesion.accords | orderBy:'id':false " class="col-12">
 
-                    <div class="row align-items-center fullSize">
-                      <div *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || accord.datePassage != null"
-                        class="col-6">
-                        <b>{{accord.title}}</b>
-                      </div>
-
-                      <div class="col-4" *ngIf="accord.datePassage != null">
-                        {{accord.datePassage | date: 'dd/MM/YYYY'}} <fa-icon (click)="openAccordModal(accord, true)"
-                          class="pointer orange" [icon]="faCircleQuestion"></fa-icon>
-                      </div>
-                      <div *ngIf="adhesion.statutActuel != 'Attente validation adhérent' || accord.datePassage != null"
-                        class="col-2">
-                        <fa-icon *ngIf="accord.etat == true" class="green fa-2xl" [icon]="faCircleCheck"></fa-icon>
-                        <fa-icon *ngIf="accord.etat == false" class="orange fa-2xl" [icon]="faCircleXmark"></fa-icon>
-                      </div>
-                      <div *ngIf="adhesion.statutActuel == 'Attente validation adhérent' && accord.datePassage == null"
-                        type='button' class="btn btn-block btn-primary col-12 alod"
-                        (click)="openAccordModal(accord, false)">
-                        Merci de confirmer votre accord<br />{{accord.bouton}}
-                      </div>
+                  <div *ngFor="let accord of adhesion.accords | orderBy:'id':false " class="high-row">
+                    <div *ngIf="accord.datePassage == null" class="form-check form-switch">
+                      <input class="form-check-input big-checkbox" [disabled]="!accord.refusable"
+                        [(ngModel)]="accord.etat" type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+                      {{accord.etat?accord.valide:accord.refus}} <fa-icon (click)="openAccordModal(accord, true)"
+                        class="pointer orange" [icon]="faCircleQuestion"></fa-icon>
+                      <fa-icon *ngIf="showAdmin || showSecretaire" [icon]="faSquareMinus"
+                        (click)="retraitAccordAdhesion(adhesion,accord)"></fa-icon>
+                    </div>
+                    <div *ngIf="accord.datePassage != null">
+                      <fa-icon *ngIf="showAdmin || showSecretaire" [icon]="faSquareMinus"
+                        (click)="retraitAccordAdhesion(adhesion,accord)"></fa-icon>
+                      <fa-icon *ngIf="accord.etat == true" class="green fa-2xl" [icon]="faCircleCheck"></fa-icon>
+                      <fa-icon *ngIf="accord.etat == false" class="orange fa-2xl" [icon]="faCircleXmark"></fa-icon>
+                      {{accord.title}} {{accord.etat?"accepté":"refusé"}} le {{accord.datePassage | date: 'dd/MM/YYYY'}}
+                      <fa-icon (click)="openAccordModal(accord, true)" class="pointer orange"
+                        [icon]="faCircleQuestion"></fa-icon>
                     </div>
 
                   </div>
+
+
+
 
                   <div class="col-12 ">
                     <div class="row align-items-center fullSize">
@@ -479,6 +582,10 @@
         </div>
       </div>
     </div>
+
+
+
+
   </div>
 </div>
 

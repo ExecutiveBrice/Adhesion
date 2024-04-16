@@ -1,15 +1,16 @@
 package com.wild.corp.adhesion.services;
 
-
-import com.wild.corp.adhesion.models.Adherent;
+import com.mailjet.client.errors.MailjetException;
 import com.wild.corp.adhesion.models.Adhesion;
 import com.wild.corp.adhesion.models.Email;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
@@ -18,15 +19,25 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import com.mailjet.client.MailjetClient;
+import com.mailjet.client.MailjetRequest;
+import com.mailjet.client.MailjetResponse;
+import com.mailjet.client.ClientOptions;
+import com.mailjet.client.resource.Emailv31;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 
 
 @RequiredArgsConstructor
 @Service
+@Slf4j
     public class EmailService {
-    public static final Logger logger = LoggerFactory.getLogger(EmailService.class);
 
     private Boolean inProgress = false;
 
@@ -43,9 +54,44 @@ import java.util.List;
     @Autowired
     private Environment environment;
 
+
+    public void mail() throws MailjetException {
+        MailjetClient client;
+        MailjetRequest request;
+        MailjetResponse response;
+
+        //System.getenv(MJ_APIKEY_PUBLIC) = 4c5237379978582eea6e38c201982247
+        //MJ_APIKEY_PRIVATE = 81ba0acb185a9babb76d688c6217bdac
+        final ClientOptions clientOptions = ClientOptions
+                .builder()
+                .apiKey(System.getenv("MJ_APIKEY_PUBLIC") )
+                .apiSecretKey(System.getenv("MJ_APIKEY_PRIVATE") )
+                .build();
+
+
+        client = new MailjetClient(clientOptions);
+        request = new MailjetRequest(Emailv31.resource)
+                .property(Emailv31.MESSAGES, new JSONArray()
+                        .put(new JSONObject()
+                                .put(Emailv31.Message.FROM, new JSONObject()
+                                        .put("Email", "alod.section.fete@gmail.com")
+                                        .put("Name", "Mailjet Pilot"))
+                                .put(Emailv31.Message.TO, new JSONArray()
+                                        .put(new JSONObject()
+                                                .put("Email", "brice_morel@hotmail.com")
+
+                                                .put("Name", "passenger 1")))
+                                .put(Emailv31.Message.SUBJECT, "Your email flight plan!")
+                                .put(Emailv31.Message.TEXTPART, "Dear passenger 1, welcome to Mailjet! May the delivery force be with you!")
+                                .put(Emailv31.Message.HTMLPART, "<h3>Dear passenger 1, welcome to <a href=\"https://www.mailjet.com/\">Mailjet</a>!</h3><br />May the delivery force be with you!")));
+        response = client.post(request);
+
+        System.out.println(response.getStatus());
+        System.out.println(response.getData());
+    }
+
     @Async
     public void sendEmail(SimpleMailMessage email) {
-
 
         MimeMessage message = emailSender.createMimeMessage();
 
@@ -55,36 +101,32 @@ import java.util.List;
             helper.setTo(email.getTo());
             helper.setSubject(email.getSubject());
             helper.setText(email.getText(),true);
-
-
         } catch (MessagingException e) {
             e.printStackTrace();
         }
-        logger.debug("sendEmail getFrom "+email.getFrom());
-        logger.debug("sendEmail getTo "+email.getTo());
-        logger.debug("sendEmail getSubject "+email.getSubject());
-        logger.debug("sendEmail getText "+email.getText());
+        log.debug("sendEmail getFrom "+email.getFrom());
+        log.debug("sendEmail getTo "+email.getTo());
+        log.debug("sendEmail getSubject "+email.getSubject());
+        log.debug("sendEmail getText "+email.getText());
 
         try {
             emailSender.send(message);
         } catch (MailException e) {
-            logger.debug("send mail " + e);
+            log.debug("send mail " + e);
         }
     }
     public void sendMessage(Email mail) {
         inProgress = true;
         restant=0;
 
-
         if(mail.getDiffusion().contains("@")){
-            singleMessage(mail);
+            singleMessage(mail, null, false);
         }else{
             mailling(mail);
         }
-
     }
 
-    public void sendAutoMail(Adhesion adhesion, String sujetName, String corpsName){
+    public void sendAutoMail(Adhesion adhesion, String sujetName, String corpsName, boolean attachement){
         Email mail = new Email();
         mail.setDiffusion(adhesion.getAdherent().getRepresentant() != null ? adhesion.getAdherent().getRepresentant().getUser().getUsername():adhesion.getAdherent().getUser().getUsername());
         String sujet = paramTextServices.getParamValue(sujetName);
@@ -97,27 +139,77 @@ import java.util.List;
         corps = corps.replaceAll("#nom#",adhesion.getAdherent().getNom());
         mail.setText(corps);
 
-        singleMessage(mail);
+        singleMessage(mail, adhesion, attachement);
     }
 
-    public void singleMessage(Email mail){
-        MimeMessage message = emailSender.createMimeMessage();
-        MimeMessageHelper helper = null;
+    @Value("${image-storage-dir}")
+    private Path imageStorageDir;
+    public void singleMessage(Email mail, Adhesion adhesion, boolean attachement){
+
+        MailjetClient client;
+        MailjetRequest request;
+        MailjetResponse response;
+        final ClientOptions clientOptions = ClientOptions
+                .builder()
+                .apiKey(System.getenv("MJ_APIKEY_PUBLIC") )
+                .apiSecretKey(System.getenv("MJ_APIKEY_PRIVATE") )
+                .build();
+
+
+
         try {
-            helper = new MimeMessageHelper(message, true);
-            helper.setTo(mail.getDiffusion());
-            helper.setSubject(mail.getSubject());
-            helper.setText(mail.getText(),true);
-        } catch (MessagingException e) {
-            logger.error("create mail MessagingException " + e);
+
+            JSONObject email = new JSONObject()
+                    .put(Emailv31.Message.FROM, new JSONObject()
+                            .put("Email", "alod.section.fete@gmail.com"))
+                    .put(Emailv31.Message.TO, new JSONArray()
+                            .put(new JSONObject().put(Emailv31.Message.EMAIL, mail.getDiffusion()))
+                    )
+
+                    .put(Emailv31.Message.SUBJECT, mail.getSubject())
+                    .put(Emailv31.Message.HTMLPART, mail.getText());
+
+
+            if(attachement) {
+                Path prePath = this.imageStorageDir.resolve(String.valueOf(adhesion.getAdherent().getId()));
+                if (!Files.exists(prePath)) {
+                    Files.createDirectories(prePath);
+                }
+
+                final Path targetPath = prePath.resolve("Attestation_ALOD_" + adhesion.getAdherent().getPrenom() + "_" + adhesion.getAdherent().getNom() + ".pdf");
+
+                byte[] inFileBytes = Files.readAllBytes(targetPath);
+                String encoded = Base64.getEncoder().encodeToString(inFileBytes);
+
+                JSONArray fileAttachement = new JSONArray()
+                        .put(new JSONObject()
+                                .put("ContentType", "application/pdf")
+                                .put("Filename", targetPath.getFileName())
+                                .put("Base64Content", encoded));
+
+
+                email.put(Emailv31.Message.ATTACHMENTS, fileAttachement);
+            }
+
+
+
+            client = new MailjetClient(clientOptions);
+            request = new MailjetRequest(Emailv31.resource)
+                    .property(Emailv31.MESSAGES, new JSONArray()
+                            .put(email));
+
+            response = client.post(request);
+
+
+            log.info(response.getRawResponseContent());
+
+        } catch (IOException | MailjetException e) {
+            log.error("create mail MessagingException " + e);
         }
-        try {
-            emailSender.send(message);
-        } catch (MailException e) {
-            logger.error("send mail MailException " + e);
-        }
+
         inProgress=false;
     }
+
     public void mailling(Email mail){
         MimeMessage message = emailSender.createMimeMessage();
         String[][] listDiffusionByPack = sliceByPack(adherentServices.findByGroup(mail.getDiffusion()).stream().toList());
@@ -133,15 +225,13 @@ import java.util.List;
                 helper.setSubject(mail.getSubject());
                 helper.setText(mail.getText(),true);
             } catch (MessagingException e) {
-                logger.error("create mail MessagingException " + e);
+                log.error("create mail MessagingException " + e);
             }
-
             try {
                 emailSender.send(message);
             } catch (MailException e) {
-                logger.error("send mail MailException " + e);
+                log.error("send mail MailException " + e);
             }
-
         }
         inProgress=false;
     }
@@ -159,7 +249,6 @@ import java.util.List;
         String [][] listDiffusionByPack = new String[iteration][100];
         int pas = 100;
 
-
         for (int i = 0; i < iteration; i++) {
 
             if(listDiffusion.size() < pas) {
@@ -169,8 +258,6 @@ import java.util.List;
                 listDiffusion = listDiffusion.subList(pas+1, listDiffusion.size());
             }
         }
-
-
         return listDiffusionByPack;
     }
 }

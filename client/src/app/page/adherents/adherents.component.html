@@ -47,6 +47,29 @@
         <label for="email">Email</label>
         <input type="email" class="form-control" name="email" [(ngModel)]="newUser" />
 
+
+
+        Choissez une ou plusieurs activités dans les listes ci-après pour permettre à cet adhérent ou à un membre de sa famille de se <b>réinscrire</b> à une activité
+
+      <div ngbDropdown class="d-inline-block">
+        <button type="button" class="btn btn-primary" id="dropdownBasic1" ngbDropdownToggle>
+          Activités pour {{type}}
+        </button>
+        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+          <div ngbDropdownItem (click)="type = 'Majeur'">Majeur</div>
+          <div ngbDropdownItem (click)="type = 'Mineur'">Mineur</div>
+        </div>
+      </div>
+
+        <label for="email"><u>Liste des activités</u></label>
+        <div *ngIf="activitesListe.length > 0">
+          <div *ngFor="let activite of activitesListe | orderBy:'nom':false"  class="ligne pointer" (click)="activite.selected = !activite.selected">
+            <b>{{activite.nom}}</b>
+            <fa-icon *ngIf="activite.selected" class="green fa-xl" [icon]="faCircleCheck"></fa-icon>
+          </div>
+        </div>
+
+
       </div>
     </div>
     <div class="modal-footer">

@@ -32,7 +32,9 @@ public class Accord {
     @Column(columnDefinition="TEXT")
     private String text;
 
-    private String bouton;
+    private String valide;
+
+    private String refus;
 
     private Boolean refusable;
 
@@ -40,13 +42,14 @@ public class Accord {
 
     private LocalDate datePassage;
 
-    public Accord(String nom, String title,  String bouton, Boolean refusable, String text) {
+    public Accord(String nom, String title,  String valide, String refus, Boolean refusable, String text) {
         this.title = title;
         this.nom = nom;
         this.text = text;
-        this.bouton = bouton;
+        this.valide = valide;
+        this.refus = refus;
         this.refusable = refusable;
-        this.etat = null;
+        this.etat = true;
         this.datePassage = null;
     }
 }

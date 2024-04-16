@@ -4,6 +4,7 @@ import com.wild.corp.adhesion.models.Activite;
 import com.wild.corp.adhesion.models.Adherent;
 import com.wild.corp.adhesion.models.Adhesion;
 import com.wild.corp.adhesion.repository.ActiviteRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -11,7 +12,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.wild.corp.adhesion.utils.Constantes.*;
 
 @Service
 public class ActiviteServices {
@@ -57,10 +57,6 @@ public class ActiviteServices {
 
     public Activite getById(Long activiteId){
         return activiteRepository.findById(activiteId).get();
-    }
-
-    public boolean existsByNom(String nom){
-        return activiteRepository.existsByNom(nom);
     }
 
 }

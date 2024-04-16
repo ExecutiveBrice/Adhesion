@@ -5,6 +5,7 @@ import { ParamService } from '../../_services/param.service';
 import { ParamBoolean, ParamNumber, ParamText, UserLite } from 'src/app/models';
 import { Observable } from 'rxjs';
 import { faEnvelope, faCircleQuestion, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { AdherentService } from 'src/app/_services/adherent.service';
 
 
 
@@ -27,7 +28,7 @@ export class BoardAdminComponent implements OnInit {
   secretairesLite: UserLite[] = [];
   profsLite: UserLite[] = [];
   comptablesLite: UserLite[] = [];
-  constructor(private paramService: ParamService, private userService: UserService) { }
+  constructor(private paramService: ParamService, private userService: UserService,  private adherentService: AdherentService) { }
 
   ngOnInit(): void {
     this.getAllBoolean()
@@ -40,7 +41,7 @@ export class BoardAdminComponent implements OnInit {
   fillLists() {
     this.userService.getAllLite().subscribe(
       data => {
-
+console.log(data)
         this.usersLite = data;
         this.adminsLite = data.filter(adh => adh.roles.filter(role => role.name === 'ROLE_ADMIN').length > 0)
         this.administrateursLite = data.filter(adh => adh.roles.filter(role => role.name === 'ROLE_ADMINISTRATEUR').length > 0)
@@ -139,6 +140,19 @@ export class BoardAdminComponent implements OnInit {
     this.paramService.getAllNumber().subscribe(
       data => {
         this.paramNumbers = data;
+        
+      },
+      err => {
+        ;
+      }
+    );
+  }
+
+
+  nouvelleAnnee(){
+    this.adherentService.nouvelleAnnee().subscribe(
+      data => {
+      console.log(data)
         
       },
       err => {

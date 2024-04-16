@@ -85,6 +85,23 @@
         <input type="number" class="form-control" name="nbPlaces" [(ngModel)]="newActivite.nbPlaces" />
       </div>
 
+      
+      <div class="form-group">
+        <label for="reinscription">Reinscription <fa-icon *ngIf="newActivite.reinscription" class="green"
+            [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!newActivite.reinscription" class="orange"
+            [icon]="faCircleXmark"></fa-icon></label>
+
+        <div class="btn-group btn-group-sm" role="group" aria-label="reinscription">
+          <div type='button' class="btn btn-block"
+            [ngClass]="newActivite.reinscription ? 'btn-primary alod' : ' btn-outline-secondary'"
+            (click)="newActivite.reinscription = true">Oui</div>
+          <div type='button' class="btn btn-block"
+            [ngClass]="!newActivite.reinscription ? 'btn-primary alod' : ' btn-outline-secondary'"
+            (click)="newActivite.reinscription = false">Non</div>
+        </div>
+      </div>
+
+
       <div class="form-group">
         <label for="complete">Complete <fa-icon *ngIf="newActivite.complete" class="green"
             [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!newActivite.complete" class="orange"
@@ -102,21 +119,23 @@
 
 
       <div class="form-group">
-        <label for="pourEnfant">Activité pour Enfant ? <fa-icon *ngIf="newActivite.pourEnfant" class="green"
-            [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="newActivite.pourEnfant == false" class="orange"
-            [icon]="faCircleXmark"></fa-icon><fa-icon *ngIf="newActivite.pourEnfant == null"
-            [icon]="faCircleQuestion"></fa-icon></label>
+        <label for="ageMax">Age Maximal</label>
+        <input type="number" class="form-control" name="ageMax" [(ngModel)]="newActivite.ageMax" />
+        <label for="ageMin">Age Minimal</label>
+        <input type="number" class="form-control" name="ageMin" [(ngModel)]="newActivite.ageMin" />
+      </div>
 
-        <div class="btn-group btn-group-sm" role="group" aria-label="pourEnfant">
-          <div type='button' class="btn btn-block"
-            [ngClass]="newActivite.pourEnfant ? 'btn-primary alod' : ' btn-outline-secondary'"
-            (click)="newActivite.pourEnfant = true">Oui</div>
-          <div type='button' class="btn btn-block"
-            [ngClass]="newActivite.pourEnfant == false ? 'btn-primary alod' : ' btn-outline-secondary'"
-            (click)="newActivite.pourEnfant = false">Non</div>
-          <div type='button' class="btn btn-block"
-            [ngClass]="newActivite.pourEnfant == null ? 'btn-primary alod' : ' btn-outline-secondary'"
-            (click)="newActivite.pourEnfant = null">Non spécifié</div>
+      
+      <div ngbDropdown class="d-inline-block">
+        <button type="button" class="btn btn-primary" id="dropdownBasic1" ngbDropdownToggle>
+          Activité {{newActivite.genre}}
+        </button>
+
+
+        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+          <div ngbDropdownItem (click)="newActivite.genre = 'Non genrée'">Non genrée</div>
+          <div ngbDropdownItem (click)="newActivite.genre = 'Masculine'">Masculine</div>
+          <div ngbDropdownItem (click)="newActivite.genre = 'Féminine'">Féminine</div>
         </div>
       </div>
 
@@ -224,17 +243,13 @@
       <th class="center" scope="col" (click)="ordre='nom'; sens = !sens">Nom</th>
       <th class="center" scope="col" (click)="ordre='tarif'; sens = !sens">Tarif</th>
       <th class="center" scope="col" (click)="ordre='horaire'; sens = !sens">Horaire</th>
-      <th class="center" scope="col" (click)="ordre='lien'; sens = !sens">Lien</th>
-      <th class="center" scope="col" (click)="ordre='salle'; sens = !sens">Salle</th>
-      <th class="center" scope="col" (click)="ordre='prof'; sens = !sens">Référents</th>
+
       <th class="center" scope="col" (click)="ordre='nbPlaces'; sens = !sens">Places</th>
       <th class="center" scope="col" (click)="ordre='complete'; sens = !sens">Complete</th>
-      <th class="center" scope="col" (click)="ordre='pourEnfant'; sens = !sens">Pour mineur</th>
-      <th class="center" scope="col" (click)="ordre='priseEnCharge'; sens = !sens">prise en charge</th>
-      <th class="center" scope="col" (click)="ordre='autorisationParentale'; sens = !sens">autorisation Parentale</th>
-      <th class="center" scope="col" (click)="ordre='certificatMedical'; sens = !sens">Certificat Médical</th>
-      <th class="center" scope="col" (click)="ordre='dureeVieCertif'; sens = !sens">Durée max certif</th>
-      <th class="center" scope="col" (click)="ordre='vieclub'; sens = !sens">Vie du Club</th>
+      <th class="center" scope="col" (click)="ordre='reinscription'; sens = !sens">Reinscription</th>
+      <th class="center" scope="col" (click)="ordre='pourEnfant'; sens = !sens">AgeMin/AgeMax</th>
+      <th class="center" scope="col" (click)="ordre='priseEnCharge'; sens = !sens">Genre</th>
+
     </tr>
   </thead>
   <tbody>
@@ -246,14 +261,7 @@
       <td>{{activite.nom}}</td>
       <td class="center">{{activite.tarif}}</td>
       <td>{{activite.horaire}}</td>
-      <td>{{activite.lien}}</td>
-      <td>{{activite.salle}}</td>
-      <td>
-        <div *ngFor="let prof of activite.profs | orderBy:'id':true ">
-          {{prof.prenom}} {{prof.nom}} <fa-icon (click)="opennewTab('#/mail/'+prof.id)" class="pointer green"
-            [icon]="faEnvelope"></fa-icon>
-        </div>
-      </td>
+
       <td class="center">
         {{activite.nbPlaces}}<br />
         <font color="red">{{activite.nbAdhesionsAttente}}</font>/{{activite.nbAdhesionsEnCours}}/<font color="green">{{activite.nbAdhesionsCompletes}}</font>
@@ -265,35 +273,17 @@
           [icon]="faCircleXmark"></fa-icon>
       </td>
       <td class="center">
-        <fa-icon *ngIf="activite.pourEnfant" class="green" [icon]="faCircleCheck"></fa-icon>
-        <fa-icon *ngIf="activite.pourEnfant == false" class="orange" [icon]="faCircleXmark"></fa-icon>
-        <fa-icon *ngIf="activite.pourEnfant == null" [icon]="faCircleQuestion"></fa-icon>
-      </td>
-      <td class="center">
-        <fa-icon *ngIf="activite.priseEnCharge" [ngClass]="activite.priseEnCharge ? 'green' : ''"
+        <fa-icon *ngIf="activite.reinscription" [ngClass]="activite.reinscription ? 'green' : ''"
           [icon]="faCircleCheck"></fa-icon>
-        <fa-icon *ngIf="!activite.priseEnCharge" [ngClass]="!activite.priseEnCharge ? 'orange' : ''"
+        <fa-icon *ngIf="!activite.reinscription" [ngClass]="!activite.reinscription ? 'orange' : ''"
           [icon]="faCircleXmark"></fa-icon>
       </td>
-      <td class="center">
-        <fa-icon *ngIf="activite.autorisationParentale" [ngClass]="activite.autorisationParentale ? 'green' : ''"
-          [icon]="faCircleCheck"></fa-icon>
-        <fa-icon *ngIf="!activite.autorisationParentale" [ngClass]="!activite.autorisationParentale ? 'orange' : ''"
-          [icon]="faCircleXmark"></fa-icon>
-      </td>
-      <td class="center">
-        <fa-icon *ngIf="activite.certificatMedical" [ngClass]="activite.certificatMedical ? 'green' : ''"
-          [icon]="faCircleCheck"></fa-icon>
-        <fa-icon *ngIf="!activite.certificatMedical" [ngClass]="!activite.certificatMedical ? 'orange' : ''"
-          [icon]="faCircleXmark"></fa-icon>
-      </td>
-      <td class="center">{{activite.dureeVieCertif}}an{{activite.dureeVieCertif>1?"s":""}}</td>
+      <td>{{activite.ageMin}}/{{activite.ageMax}}</td>
 
-      <td class="center">
-        <fa-icon *ngIf="activite.vieClub" [ngClass]="activite.vieClub ? 'green' : ''" [icon]="faCircleCheck"></fa-icon>
-        <fa-icon *ngIf="!activite.vieClub" [ngClass]="!activite.vieClub ? 'orange' : ''"
-          [icon]="faCircleXmark"></fa-icon>
-      </td>
+      <td>{{activite.genre}}</td>
+
+      
+
     </tr>
   </tbody>
 </table>

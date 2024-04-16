@@ -28,8 +28,8 @@
   }
   .toast-top-left-wide {
     top: 100px;
-    left: 12px;
-    width: 20%;
+    right: -10px;
+    width: 40%;
     min-width: 300px;
   }
   .toast-top-left {
@@ -156,14 +156,15 @@
     background-color: #030303;
     pointer-events: auto;
   }
+
   .toast-success {
-    background-color: rgb(65, 164, 89);
+    background-color:  rgb(188, 219, 205);
   }
   .toast-error {
     background-color: #BD362F;
   }
   .toast-info {
-    background-color: #2F96B4;
+    background-color: rgb(223, 215, 183);
   }
   .toast-warning {
     background-color: #F89406;

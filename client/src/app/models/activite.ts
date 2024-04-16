@@ -8,6 +8,10 @@ export class Activite {
   groupe!: string;
   groupeFiltre!: string;
   tarif!: number;
+
+  ageMin!: number;
+  ageMax!: number;
+  genre!: string;
   horaire!: string;
   lien!: string;
   salle!: string;
@@ -20,10 +24,11 @@ export class Activite {
   adhesions!: Adhesion[];
   priseEnCharge!: boolean;
   autorisationParentale!: boolean;
-  pourEnfant!: boolean|null;
   certificatMedical!: boolean;
   vieClub!: boolean;
   complete!: boolean;
+  reinscription!: boolean;
+  
   dureeVieCertif!:number;
   
   constructor(){

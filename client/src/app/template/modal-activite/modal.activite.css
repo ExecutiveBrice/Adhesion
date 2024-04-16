@@ -1,7 +1,16 @@
 
 .lignegrisee{
-    background-color: rgba(197, 197, 197,255)!important;
+  background-color: rgb(224, 224, 224)!important;
   }
+
+.lignebleue{
+  background-color: rgb(103, 182, 255)!important;
+}
+
+.lignerouge{
+  background-color: rgb(255, 123, 123)!important;
+}
+  
   .ligne:hover{
     background-color: rgba(188, 219, 205, 255)!important;
   }

@@ -1,4 +1,8 @@
 <div class="row">
+  
+  <!--div class="col-md-12">
+    <div type='button' class="btn btn-block btn-primary" (click)="nouvelleAnnee()">Nouvelle Annee</div>
+  </div-->
 
   <div class="col-md-6">
     <div class="card card-container">
@@ -62,8 +66,7 @@
         </button>
         <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
           <div ngbDropdownItem *ngFor="let user of usersLite  | orderBy:'nom':false"
-            (click)="grantUser(user.email,'ROLE_ADMIN')"> {{user.nom}}
-            {{user.prenom}}</div>
+            (click)="grantUser(user.username,'ROLE_ADMIN')"> {{user.adherent}}</div>
         </div>
 
 
@@ -74,8 +77,8 @@
       </div>
       <div *ngFor="let user of adminsLite | orderBy:'nom':false ">
         <fa-icon class="pointer orange" [icon]="faSquareMinus"
-          (click)="unGrantUser(user.email, 'ROLE_ADMIN')"></fa-icon>
-        {{user.nom}} {{user.prenom}} {{user.email}} <fa-icon *ngIf="user.email != null"
+          (click)="unGrantUser(user.username, 'ROLE_ADMIN')"></fa-icon>
+        {{user.adherent}} {{user.username}} <fa-icon *ngIf="user.username != null"
           [routerLink]="['/mail', user.id]" class="pointer green" [icon]="faEnvelope"></fa-icon>
       </div>
 
@@ -85,15 +88,14 @@
         </button>
         <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
           <div ngbDropdownItem *ngFor="let user of usersLite  | orderBy:'nom':false"
-            (click)="grantUser(user.email,'ROLE_ADMINISTRATEUR')">{{user.nom}}
-            {{user.prenom}} </div>
+            (click)="grantUser(user.username,'ROLE_ADMINISTRATEUR')">{{user.adherent}} </div>
         </div>
       </div>
 
       <div *ngFor="let user of administrateursLite | orderBy:'nom':false ">
         <fa-icon class="pointer orange" [icon]="faSquareMinus"
-          (click)="unGrantUser(user.email, 'ROLE_ADMINISTRATEUR')"></fa-icon>
-        {{user.nom}} {{user.prenom}} {{user.email}} <fa-icon *ngIf="user.email != null"
+          (click)="unGrantUser(user.username, 'ROLE_ADMINISTRATEUR')"></fa-icon>
+        {{user.adherent}} {{user.username}} <fa-icon *ngIf="user.username != null"
           [routerLink]="['/mail', user.id]" class="pointer green" [icon]="faEnvelope"></fa-icon>
       </div>
 
@@ -103,15 +105,14 @@
         </button>
         <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
           <div ngbDropdownItem *ngFor="let user of usersLite  | orderBy:'nom':false"
-            (click)="grantUser(user.email,'ROLE_BUREAU')">{{user.nom}}
-            {{user.prenom}} </div>
+            (click)="grantUser(user.username,'ROLE_BUREAU')">{{user.adherent}} </div>
         </div>
       </div>
 
       <div *ngFor="let user of bureauxLite | orderBy:'nom':false ">
         <fa-icon class="pointer orange" [icon]="faSquareMinus"
-          (click)="unGrantUser(user.email, 'ROLE_BUREAU')"></fa-icon>
-        {{user.nom}} {{user.prenom}} {{user.email}} <fa-icon *ngIf="user.email != null"
+          (click)="unGrantUser(user.username, 'ROLE_BUREAU')"></fa-icon>
+        {{user.adherent}} {{user.username}} <fa-icon *ngIf="user.username != null"
           [routerLink]="['/mail', user.id]" class="pointer green" [icon]="faEnvelope"></fa-icon>
       </div>
 
@@ -121,14 +122,14 @@
         </button>
         <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
           <div ngbDropdownItem *ngFor="let user of usersLite  | orderBy:'nom':false"
-            (click)="grantUser(user.email,'ROLE_SECRETAIRE')">{{user.nom}} {{user.prenom}} </div>
+            (click)="grantUser(user.username,'ROLE_SECRETAIRE')">{{user.adherent}} </div>
         </div>
       </div>
 
       <div *ngFor="let user of secretairesLite | orderBy:'nom':false ">
         <fa-icon class="pointer orange" [icon]="faSquareMinus"
-          (click)="unGrantUser(user.email, 'ROLE_SECRETAIRE')"></fa-icon>
-        {{user.nom}} {{user.prenom}} {{user.email}} <fa-icon *ngIf="user.email != null"
+          (click)="unGrantUser(user.username, 'ROLE_SECRETAIRE')"></fa-icon>
+        {{user.adherent}} {{user.username}} <fa-icon *ngIf="user.username != null"
           [routerLink]="['/mail', user.id]" class="pointer green" [icon]="faEnvelope"></fa-icon>
       </div>
 
@@ -140,14 +141,14 @@
         </button>
         <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
           <div ngbDropdownItem *ngFor="let user of usersLite  | orderBy:'nom':false"
-            (click)="grantUser(user.email,'ROLE_COMPTABLE')">{{user.nom}} {{user.prenom}} </div>
+            (click)="grantUser(user.username,'ROLE_COMPTABLE')">{{user.adherent}} </div>
         </div>
       </div>
 
       <div *ngFor="let user of comptablesLite | orderBy:'nom':false ">
         <fa-icon class="pointer orange" [icon]="faSquareMinus"
-          (click)="unGrantUser(user.email, 'ROLE_PROF')"></fa-icon>
-        {{user.nom}} {{user.prenom}} {{user.email}} <fa-icon *ngIf="user.email != null"
+          (click)="unGrantUser(user.username, 'ROLE_PROF')"></fa-icon>
+        {{user.adherent}} {{user.username}} <fa-icon *ngIf="user.username != null"
           [routerLink]="['/mail', user.id]" class="pointer green" [icon]="faEnvelope"></fa-icon>
       </div>
 
@@ -159,14 +160,14 @@
         </button>
         <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
           <div ngbDropdownItem *ngFor="let user of usersLite  | orderBy:'nom':false"
-            (click)="grantUser(user.email,'ROLE_PROF')">{{user.nom}} {{user.prenom}} </div>
+            (click)="grantUser(user.username,'ROLE_PROF')">{{user.adherent}} </div>
         </div>
       </div>
 
       <div *ngFor="let user of profsLite | orderBy:'nom':false ">
         <fa-icon class="pointer orange" [icon]="faSquareMinus"
-          (click)="unGrantUser(user.email, 'ROLE_PROF')"></fa-icon>
-        {{user.nom}} {{user.prenom}} {{user.email}} <fa-icon *ngIf="user.email != null"
+          (click)="unGrantUser(user.username, 'ROLE_PROF')"></fa-icon>
+        {{user.adherent}} {{user.username}} <fa-icon *ngIf="user.username != null"
           [routerLink]="['/mail', user.id]" class="pointer green" [icon]="faEnvelope"></fa-icon>
       </div>
     </div>
