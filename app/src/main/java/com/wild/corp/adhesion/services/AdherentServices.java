@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.wild.corp.adhesion.utils.Accords.*;
 import static java.time.LocalDateTime.now;
 
 @Service
@@ -201,13 +202,13 @@ public class AdherentServices {
         Adherent adherent = new Adherent();
         adherent.setTribu(tribu);
 
-        Accord accordRgpd = accordServices.createAccord(AccordServices.RGPD);
+        Accord accordRgpd = accordServices.createAccord(RGPD);
         if (initialiseRGPD) {
             accordRgpd.setEtat(true);
             accordRgpd.setDatePassage(LocalDate.now());
         }
         adherent.getAccords().add(accordRgpd);
-        adherent.getAccords().add(accordServices.createAccord(AccordServices.DROIT_IMAGE));
+        adherent.getAccords().add(accordServices.createAccord(DROIT_IMAGE));
 
         adherent.setMineur(false);
         adherent.setAdresseRepresentant(true);

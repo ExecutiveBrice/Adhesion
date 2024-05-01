@@ -103,11 +103,11 @@ public class AuthController {
 		return ResponseEntity.ok("Votre e-mail à bien été confirmée");
 	}
 
-	@GetMapping("/testPassword")
-	public ResponseEntity<?> changeTestPassword() {
-		userServices.changeTestPassword();
-		return ResponseEntity.ok("Réinitialisation du mot de passe de test réussie");
-	}
+//	@GetMapping("/testPassword")
+//	public ResponseEntity<?> changeTestPassword() {
+//		userServices.changeTestPassword();
+//		return ResponseEntity.ok("Réinitialisation du mot de passe de test réussie");
+//	}
 
 	@PostMapping("/changePassword")
 	public ResponseEntity<?> changePassword(@PathParam("token") String token, @RequestBody SignupRequest signUpRequest) {

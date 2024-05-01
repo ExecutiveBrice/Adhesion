@@ -172,7 +172,10 @@ export class BoardUserComponent implements OnInit {
     if (this.tribu.adherents.length == 1){
       return false
     }
-    if (!adherent.mineur && this.tribu.adherents.filter(adh => !adh.mineur).length == 1){
+    if (!adherent.completAdhesion){
+      return true
+    }
+    if (!adherent.mineur && this.tribu.adherents.filter(adh => !adh.mineur && adh.completAdhesion).length == 1){
       return false
     }  
     return true;
@@ -235,7 +238,7 @@ export class BoardUserComponent implements OnInit {
     this.adhesionPaiement = []
 
     this.adhesions.forEach(adh => {
-      if (!adh.validPaiementSecretariat && adh.statutActuel != 'Annulée' && adh.statutActuel != 'Liste d\'attente') {
+      if (!adh.validPaiementSecretariat && adh.statutActuel != 'Annulée' && adh.statutActuel != 'Liste d\'attente' && adh.statutActuel != 'Attente validation adhérent') {
         this.totalRestantDu = this.totalRestantDu + adh.tarif;
         this.adhesionPaiement.push(adh)
       }

@@ -45,8 +45,6 @@ import java.util.List;
 
     @Autowired
     private AdherentServices adherentServices;
-    @Autowired
-    private JavaMailSender emailSender;
 
     @Autowired
     ParamTextServices paramTextServices;
@@ -55,74 +53,40 @@ import java.util.List;
     private Environment environment;
 
 
-    public void mail() throws MailjetException {
-        MailjetClient client;
-        MailjetRequest request;
-        MailjetResponse response;
-
-        //System.getenv(MJ_APIKEY_PUBLIC) = 4c5237379978582eea6e38c201982247
-        //MJ_APIKEY_PRIVATE = 81ba0acb185a9babb76d688c6217bdac
-        final ClientOptions clientOptions = ClientOptions
-                .builder()
-                .apiKey(System.getenv("MJ_APIKEY_PUBLIC") )
-                .apiSecretKey(System.getenv("MJ_APIKEY_PRIVATE") )
-                .build();
-
-
-        client = new MailjetClient(clientOptions);
-        request = new MailjetRequest(Emailv31.resource)
-                .property(Emailv31.MESSAGES, new JSONArray()
-                        .put(new JSONObject()
-                                .put(Emailv31.Message.FROM, new JSONObject()
-                                        .put("Email", "alod.section.fete@gmail.com")
-                                        .put("Name", "Mailjet Pilot"))
-                                .put(Emailv31.Message.TO, new JSONArray()
-                                        .put(new JSONObject()
-                                                .put("Email", "brice_morel@hotmail.com")
-
-                                                .put("Name", "passenger 1")))
-                                .put(Emailv31.Message.SUBJECT, "Your email flight plan!")
-                                .put(Emailv31.Message.TEXTPART, "Dear passenger 1, welcome to Mailjet! May the delivery force be with you!")
-                                .put(Emailv31.Message.HTMLPART, "<h3>Dear passenger 1, welcome to <a href=\"https://www.mailjet.com/\">Mailjet</a>!</h3><br />May the delivery force be with you!")));
-        response = client.post(request);
-
-        System.out.println(response.getStatus());
-        System.out.println(response.getData());
-    }
-
-    @Async
-    public void sendEmail(SimpleMailMessage email) {
-
-        MimeMessage message = emailSender.createMimeMessage();
-
-        MimeMessageHelper helper = null;
-        try {
-            helper = new MimeMessageHelper(message, true);
-            helper.setTo(email.getTo());
-            helper.setSubject(email.getSubject());
-            helper.setText(email.getText(),true);
-        } catch (MessagingException e) {
-            e.printStackTrace();
-        }
-        log.debug("sendEmail getFrom "+email.getFrom());
-        log.debug("sendEmail getTo "+email.getTo());
-        log.debug("sendEmail getSubject "+email.getSubject());
-        log.debug("sendEmail getText "+email.getText());
-
-        try {
-            emailSender.send(message);
-        } catch (MailException e) {
-            log.debug("send mail " + e);
-        }
-    }
+//    @Async
+//    public void sendEmail(SimpleMailMessage email) {
+//
+//        MimeMessage message = emailSender.createMimeMessage();
+//
+//        MimeMessageHelper helper = null;
+//        try {
+//            helper = new MimeMessageHelper(message, true);
+//            helper.setTo(email.getTo());
+//            helper.setSubject(email.getSubject());
+//            helper.setText(email.getText(),true);
+//        } catch (MessagingException e) {
+//            e.printStackTrace();
+//        }
+//        log.debug("sendEmail getFrom "+email.getFrom());
+//        log.debug("sendEmail getTo "+email.getTo());
+//        log.debug("sendEmail getSubject "+email.getSubject());
+//        log.debug("sendEmail getText "+email.getText());
+//
+//        try {
+//            emailSender.send(message);
+//        } catch (MailException e) {
+//            log.debug("send mail " + e);
+//        }
+//    }
     public void sendMessage(Email mail) {
         inProgress = true;
         restant=0;
 
         if(mail.getDiffusion().contains("@")){
+            log.info("singleMessage");
             singleMessage(mail, null, false);
         }else{
-            mailling(mail);
+           // mailling(mail);
         }
     }
 
@@ -155,20 +119,16 @@ import java.util.List;
                 .apiSecretKey(System.getenv("MJ_APIKEY_PRIVATE") )
                 .build();
 
-
-
         try {
 
             JSONObject email = new JSONObject()
                     .put(Emailv31.Message.FROM, new JSONObject()
-                            .put("Email", "alod.section.fete@gmail.com"))
+                            .put("Email", System.getenv("MJ_MAIL")))
                     .put(Emailv31.Message.TO, new JSONArray()
                             .put(new JSONObject().put(Emailv31.Message.EMAIL, mail.getDiffusion()))
                     )
-
                     .put(Emailv31.Message.SUBJECT, mail.getSubject())
                     .put(Emailv31.Message.HTMLPART, mail.getText());
-
 
             if(attachement) {
                 Path prePath = this.imageStorageDir.resolve(String.valueOf(adhesion.getAdherent().getId()));
@@ -191,18 +151,13 @@ import java.util.List;
                 email.put(Emailv31.Message.ATTACHMENTS, fileAttachement);
             }
 
-
-
             client = new MailjetClient(clientOptions);
             request = new MailjetRequest(Emailv31.resource)
                     .property(Emailv31.MESSAGES, new JSONArray()
                             .put(email));
 
             response = client.post(request);
-
-
             log.info(response.getRawResponseContent());
-
         } catch (IOException | MailjetException e) {
             log.error("create mail MessagingException " + e);
         }
@@ -210,31 +165,31 @@ import java.util.List;
         inProgress=false;
     }
 
-    public void mailling(Email mail){
-        MimeMessage message = emailSender.createMimeMessage();
-        String[][] listDiffusionByPack = sliceByPack(adherentServices.findByGroup(mail.getDiffusion()).stream().toList());
-
-        for (int i = 0; i < listDiffusionByPack.length; i++) {
-            System.out.println(Arrays.toString(listDiffusionByPack[i]));
-
-            MimeMessageHelper helper = null;
-            restant++;
-            try {
-                helper = new MimeMessageHelper(message, true);
-                helper.setBcc(listDiffusionByPack[i]);
-                helper.setSubject(mail.getSubject());
-                helper.setText(mail.getText(),true);
-            } catch (MessagingException e) {
-                log.error("create mail MessagingException " + e);
-            }
-            try {
-                emailSender.send(message);
-            } catch (MailException e) {
-                log.error("send mail MailException " + e);
-            }
-        }
-        inProgress=false;
-    }
+//    public void mailling(Email mail){
+//        MimeMessage message = emailSender.createMimeMessage();
+//        String[][] listDiffusionByPack = sliceByPack(adherentServices.findByGroup(mail.getDiffusion()).stream().toList());
+//
+//        for (int i = 0; i < listDiffusionByPack.length; i++) {
+//            System.out.println(Arrays.toString(listDiffusionByPack[i]));
+//
+//            MimeMessageHelper helper = null;
+//            restant++;
+//            try {
+//                helper = new MimeMessageHelper(message, true);
+//                helper.setBcc(listDiffusionByPack[i]);
+//                helper.setSubject(mail.getSubject());
+//                helper.setText(mail.getText(),true);
+//            } catch (MessagingException e) {
+//                log.error("create mail MessagingException " + e);
+//            }
+//            try {
+//                emailSender.send(message);
+//            } catch (MailException e) {
+//                log.error("send mail MailException " + e);
+//            }
+//        }
+//        inProgress=false;
+//    }
 
     public Boolean isInProgress() {
         return inProgress;

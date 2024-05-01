@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.wild.corp.adhesion.utils.Constantes.*;
 import static java.util.stream.Collectors.groupingBy;
 
 @Service

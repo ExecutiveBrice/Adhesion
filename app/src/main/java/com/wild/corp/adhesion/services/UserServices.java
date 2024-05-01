@@ -3,6 +3,7 @@ package com.wild.corp.adhesion.services;
 import com.wild.corp.adhesion.repository.RoleRepository;
 import com.wild.corp.adhesion.repository.UserRepository;
 import com.wild.corp.adhesion.models.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
@@ -15,16 +16,14 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class UserServices {
-
-
     @Autowired
     UserRepository userRepository;
     @Autowired
     ConfirmationTokenService confirmationTokenService;
     @Autowired
     RoleRepository roleRepository;
-
     @Autowired
     EmailService emailService;
     @Autowired
@@ -160,14 +159,14 @@ public class UserServices {
         UUID uuid = UUID.randomUUID();
         cft.setConfirmationToken(uuid);
         cft.setType("ConfirmationEmail");
-        SimpleMailMessage mess = new SimpleMailMessage();
-        mess.setTo(user.getUsername());
+        Email mess = new Email();
+        mess.setDiffusion(user.getUsername());
         mess.setSubject("Confirmation Email");
         mess.setText("Bonjour,<br>" +
                 "Ceci est le <a href=https://" + serverName + "/api_adhesion/auth/confirmEmail/" + uuid + ">lien de confirmation de votre adresse mail</a><br>" +
                 "Cordialement,<br>" +
                 "l'équipe de l'ALOD");
-        emailService.sendEmail(mess);
+        emailService.sendMessage(mess);
 
         confirmationTokenService.saveConfirmationToken(cft);
     }
@@ -190,14 +189,16 @@ public class UserServices {
 
         confirmationTokenService.saveConfirmationToken(cft);
 
-        SimpleMailMessage mess = new SimpleMailMessage();
-        mess.setTo(user.getUsername());
+        Email mess = new Email();
+        mess.setDiffusion(user.getUsername());
         mess.setSubject("Réinitialisation du mot de passe");
         mess.setText("Bonjour,<br>" +
                 "Ceci est le <a href=https://" + serverName + "/adhesion/#/resetPassword/" + uuid + ">lien de renouvellement de votre mot de passe</a><br>" +
                 "Cordialement,<br>" +
                 "l'équipe de l'ALOD");
-        emailService.sendEmail(mess);
+
+        log.info(mess.getDiffusion());
+        emailService.sendMessage(mess);
         return cft;
 
     }

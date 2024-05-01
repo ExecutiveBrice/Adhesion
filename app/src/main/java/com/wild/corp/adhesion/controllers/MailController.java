@@ -34,14 +34,6 @@ public class MailController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/mail", method = RequestMethod.GET)
-    public ResponseEntity<Boolean> mail() throws MailjetException {
-        logger.debug("mail");
-        emailService.mail();
-        return new ResponseEntity<>(true, HttpStatus.OK);
-    }
-
-
 
     @RequestMapping(value = "/isInProgress", method = RequestMethod.GET)
     public ResponseEntity<Boolean> isInProgress() {

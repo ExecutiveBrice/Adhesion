@@ -23,7 +23,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.wild.corp.adhesion.services.AccordServices.*;
+
+import static com.wild.corp.adhesion.utils.Accords.*;
 import static java.time.LocalDate.now;
 
 @Slf4j

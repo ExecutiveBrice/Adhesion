@@ -60,9 +60,9 @@ public class AdhesionWebApp {
 			roleRepository.save(new Role(ERole.ROLE_SECRETAIRE));
 		}
 
-		if(!userServices.existsByEmail("admin")){
-			userServices.initAdmin();
-		}
+//		if(!userServices.existsByEmail("admin")){
+//			userServices.initAdmin();
+//		}
 
 		paramBooleanServices.fillParamBoolean();
 		paramTextServices.fillParamText();

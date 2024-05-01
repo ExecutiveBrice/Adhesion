@@ -100,9 +100,12 @@ public class PdfService {
 
     private void openhtmltopdf(String html, ByteArrayOutputStream buffer) throws IOException {
 
-        String baseUrl = FileSystems.getDefault()
-                .getPath("app/src/main/resources/")
-                .toUri().toURL().toString();
+        var baseUrl = getClass()
+                .getProtectionDomain()
+                .getCodeSource()
+                .getLocation()
+                .toString();
+
         System.out.println(baseUrl);
         PdfRendererBuilder builder = new PdfRendererBuilder();
         builder.useDefaultPageSize(210, 297, BaseRendererBuilder.PageSizeUnits.MM);

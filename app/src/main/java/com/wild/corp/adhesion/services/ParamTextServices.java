@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-import static com.wild.corp.adhesion.services.AccordServices.*;
+import static com.wild.corp.adhesion.utils.Accords.*;
 
 
 @Service

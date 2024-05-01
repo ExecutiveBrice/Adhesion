@@ -195,7 +195,7 @@
                     class="pointer orange" [icon]="faCircleQuestion"></fa-icon>
                 </div>
                 <div *ngIf="accord.datePassage != null">
-                  <fa-icon [icon]="faSquareMinus" (click)="retraitAccord(adherent,accord)"></fa-icon>
+                  <fa-icon *ngIf="showAdmin || showSecretaire" [icon]="faSquareMinus" (click)="retraitAccord(adherent,accord)"></fa-icon>
                   <fa-icon *ngIf="accord.etat == true" class="green fa-2xl" [icon]="faCircleCheck"></fa-icon>
                   <fa-icon *ngIf="accord.etat == false" class="orange fa-2xl" [icon]="faCircleXmark"></fa-icon>
                   {{accord.title}} {{accord.etat?"accepté":"refusé"}} le {{accord.datePassage | date: 'dd/MM/YYYY'}}
@@ -252,7 +252,7 @@
                 <input type="email" class="form-control" name="email" [(ngModel)]="adherent.user.username"
                   (ngModelChange)="adherent.user.username = cleaning(adherent.user.username)"
                   (ngModelBlur)="adherent.user.username = cleaning(adherent.user.username)" required minlength="10"
-                  #email="ngModel" ngModel email />
+                  #email="ngModel" ngModel email  [disabled]="adherent.completAdhesion && !showAdmin && !showSecretaire" />
                 <div class="alert-danger" *ngIf="email.errors && f.submitted">
                   <div *ngIf="email.errors.required">l'e-mail est obligatoire</div>
                   <div *ngIf="email.errors.minlength">
@@ -500,7 +500,7 @@
                     <div *ngIf="adhesion.statutActuel == 'Attente validation adhérent'"  class="form-check form-switch">
                       <input class="form-check-input big-checkbox" [(ngModel)]="adhesion.dejaLicencie" type="checkbox"
                         role="switch" [ngModelOptions]="{standalone: true}">
-                      {{adhesion.dejaLicencie?"J'ai déjà été licencié FFHB":"Je n'ai jamais été licencié FFHB"}}
+                      {{adhesion.dejaLicencie?"J'ai déjà été licencié FFFB":"Je n'ai jamais été licencié FFFB"}}
                     </div>
 
                     <div *ngIf="adhesion.statutActuel != 'Attente validation adhérent'">
@@ -508,7 +508,7 @@
                         [icon]="faCircleCheck"></fa-icon>
                       <fa-icon *ngIf="adhesion.dejaLicencie == false" class="orange fa-2xl"
                         [icon]="faCircleXmark"></fa-icon>
-                      {{adhesion.dejaLicencie?"J'ai déjà été licencié FFHB":"Je n'ai jamais été licencié FFHB"}}
+                      {{adhesion.dejaLicencie?"J'ai déjà été licencié FFFB":"Je n'ai jamais été licencié FFFB"}}
                     </div>
                   </div>
 

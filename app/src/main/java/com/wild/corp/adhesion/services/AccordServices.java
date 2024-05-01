@@ -9,18 +9,13 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;
 
+import static com.wild.corp.adhesion.utils.Accords.*;
 import static java.util.Map.entry;
 
 @Service
 public class AccordServices {
 
-    public static final String REGLEMENT_INTERIEUR = "ReglementInterieur";
-    public static final String ATTESTATION_SANTE = "AttestationSante";
-    public static final String VIE_CLUB = "VieClub";
-    public static final String AUTORISATION_PARENTALE = "AutorisationParentale";
-    public static final String PRISE_EN_CHARGE = "PriseEnCharge";
-    public static final String RGPD = "RGPD";
-    public static final String DROIT_IMAGE = "DroitImage";
+
 
     public static final Map<String, Map<String, String>> ACCORDS = Map.ofEntries(
             entry(REGLEMENT_INTERIEUR, Map.ofEntries(entry("title", "Règlement intérieur"), entry("valide", "J'accèpte le règlement intérieur"), entry("refusable", "false"))),

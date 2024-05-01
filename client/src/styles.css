@@ -189,3 +189,6 @@ tr:hover {
   border-radius: 3rem;
 }
 
+.alert-danger{
+  color: red;
+}
