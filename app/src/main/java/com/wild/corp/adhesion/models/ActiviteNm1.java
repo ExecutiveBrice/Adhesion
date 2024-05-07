@@ -23,7 +23,6 @@ public class ActiviteNm1 {
 
     @ManyToOne
     @JsonIgnoreProperties({"cours", "accords", "adhesions", "activitesNm1", "user", "tribu", "derniereModifs", "derniereVisites"})
-    @ToString.Exclude
     private Adherent adherent;
 
     @ManyToOne

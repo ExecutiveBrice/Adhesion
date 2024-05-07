@@ -161,14 +161,13 @@ public class AdhesionServices {
 
     public Adhesion validation(List<Accord> accords, Long adhesionId) {
         Adhesion dataAdhesion = adhesionRepository.findById(adhesionId).get();
-
+        dataAdhesion.getAccords().clear();
+        adhesionRepository.save(dataAdhesion);
         accords.forEach(accord -> {
             accord.setDatePassage(LocalDate.now());
+            dataAdhesion.getAccords().add(accord);
+            adhesionRepository.save(dataAdhesion);
         });
-
-        dataAdhesion.setAccords(accords);
-
-        adhesionRepository.save(dataAdhesion);
         return choisirStatut(dataAdhesion.getId(),  Status.ATTENTE_SECRETARIAT.label);
     }
 
@@ -384,12 +383,17 @@ public class AdhesionServices {
 
         User user = userServices.findByEmail(userEmail);
         Adhesion adhesion = adhesionRepository.findById(adhesionId).get();
-        List<Notification> modifications = new java.util.ArrayList<>(adhesion.getDerniereModifs().stream().filter(visite -> !visite.getUser().equals(user)).toList());
-        Notification nouvelleModif = new Notification();
-        nouvelleModif.setDate(LocalDateTime.now());
-        nouvelleModif.setUser(user);
-        modifications.add(nouvelleModif);
-        adhesion.setDerniereModifs(modifications);
+        List<Notification> modifications = adhesion.getDerniereModifs().stream().filter(notification -> notification.getUser().equals(user)).toList();
+
+        if(modifications.isEmpty()){
+            Notification nouvelleModif = new Notification();
+            nouvelleModif.setDate(LocalDateTime.now());
+            nouvelleModif.setUser(user);
+            adhesion.getDerniereModifs().add(nouvelleModif);
+        }else{
+            modifications.forEach(notification -> notification.setDate(LocalDateTime.now()));
+        }
+
         adhesionRepository.save(adhesion);
 
         return addVisite(userEmail, adhesionId);
@@ -398,12 +402,17 @@ public class AdhesionServices {
     public Adhesion addVisite(String userEmail, Long adhesionId) {
         User user = userServices.findByEmail(userEmail);
         Adhesion adhesion = adhesionRepository.findById(adhesionId).get();
-        List<Notification> visites = new java.util.ArrayList<>(adhesion.getDerniereVisites().stream().filter(visite -> !visite.getUser().equals(user)).toList());
-        Notification nouvelleVisite = new Notification();
-        nouvelleVisite.setDate(LocalDateTime.now());
-        nouvelleVisite.setUser(user);
-        visites.add(nouvelleVisite);
-        adhesion.setDerniereVisites(visites);
+
+        List<Notification> visites = adhesion.getDerniereVisites().stream().filter(notification -> notification.getUser().equals(user)).toList();
+
+        if(visites.isEmpty()){
+            Notification nouvelleVisite = new Notification();
+            nouvelleVisite.setDate(LocalDateTime.now());
+            nouvelleVisite.setUser(user);
+            adhesion.getDerniereVisites().add(nouvelleVisite);
+        }else{
+            visites.forEach(notification -> notification.setDate(LocalDateTime.now()));
+        }
 
         return adhesionRepository.save(adhesion);
 

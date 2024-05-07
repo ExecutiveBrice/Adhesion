@@ -9,6 +9,7 @@ import { Editor, Toolbar, toHTML } from 'ngx-editor';
 import { ActiviteService } from 'src/app/_services/activite.service';
 import { AdherentService } from 'src/app/_services/adherent.service';
 import { ParamService } from 'src/app/_services/param.service';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-mailling',
@@ -44,6 +45,7 @@ export class MaillingComponent implements OnInit, OnDestroy {
 
   selectedAdherent!: Adherent;
   constructor(
+    private toastr: ToastrService,
     private adherentService: AdherentService,
     public activiteService: ActiviteService,
     public route: ActivatedRoute,
@@ -57,10 +59,10 @@ export class MaillingComponent implements OnInit, OnDestroy {
     let adherentId = this.route.snapshot.paramMap.get('adherentId');
 
     if (adherentId && !isNaN(Number.parseInt(adherentId))) {
-console.log(adherentId)
+      console.log(adherentId)
       this.adherentService.getById(Number.parseInt(adherentId)).subscribe(
         data => {
-console.log(data)
+          console.log(data)
           this.selectedAdherent = data;
           this.isFailed = false;
         },
@@ -74,37 +76,31 @@ console.log(data)
     this.timer = setInterval(() => {
       this.onTimeOut();
     }, 1000);
-
-    
     this.getActivites()
   }
 
 
 
   getActivites() {
-
-
     this.activiteService.getAll().subscribe(
       data => {
-           data.forEach(act => {
+        data.forEach(act => {
 
-              if (this.activites.filter(activiteDropDown => activiteDropDown.nom == act.nom).length > 0) {
-                let horaireDropDown = new HoraireDropDown
-                horaireDropDown.id = act.id
-                horaireDropDown.nom = act.horaire
-                this.activites.filter(activiteDropDown => activiteDropDown.nom == act.nom)[0].horaires.push(horaireDropDown)
-              } else {
-                let activiteDropDown = new ActiviteDropDown()
-                activiteDropDown.nom = act.nom
-                let horaireDropDown = new HoraireDropDown
-                horaireDropDown.id = act.id
-                horaireDropDown.nom = act.horaire
-                activiteDropDown.horaires.push(horaireDropDown)
-                this.activites.push(activiteDropDown)
-              }
-
+          if (this.activites.filter(activiteDropDown => activiteDropDown.nom == act.nom).length > 0) {
+            let horaireDropDown = new HoraireDropDown
+            horaireDropDown.id = act.id
+            horaireDropDown.nom = act.horaire
+            this.activites.filter(activiteDropDown => activiteDropDown.nom == act.nom)[0].horaires.push(horaireDropDown)
+          } else {
+            let activiteDropDown = new ActiviteDropDown()
+            activiteDropDown.nom = act.nom
+            let horaireDropDown = new HoraireDropDown
+            horaireDropDown.id = act.id
+            horaireDropDown.nom = act.horaire
+            activiteDropDown.horaires.push(horaireDropDown)
+            this.activites.push(activiteDropDown)
+          }
         });
-
       },
       err => {
         this.isFailed = true;
@@ -119,7 +115,10 @@ console.log(data)
     this.editor.destroy();
   }
 
+
   envoiMail(subject: string) {
+    console.log(subject)
+    this.showWarning("Votre message est en cours de préparation")
     if (subject == undefined || subject.length < 5 || this.html == undefined || toHTML(this.html).length < 20) {
       this.mailIncomplet = true;
       setTimeout(() => {
@@ -133,7 +132,7 @@ console.log(data)
       this.mailService.sendMail(email)
         .subscribe({
           next: (data) => {
-
+            this.showWarning("Votre message est à bien été envoyé")
             this.isFailed = false;
           },
           error: (error) => {
@@ -141,13 +140,11 @@ console.log(data)
             this.errorMessage = error.message
           }
         });
-
     }
-
   }
 
-  onTimeOut() {
 
+  onTimeOut() {
     this.mailService.isInProgress()
       .subscribe({
         next: (response) => {
@@ -159,10 +156,16 @@ console.log(data)
           this.errorMessage = error.message
         }
       });
-
   }
 
 
-
-
+  showSucces(message: string) {
+    this.toastr.success(message, 'Bravo!');
+  }
+  showWarning(message: string) {
+    this.toastr.warning(message, 'Attention!');
+  }
+  showError(message: string) {
+    this.toastr.error("Une erreur est survenue, recharger la page et recommencez. si le problème persiste contactez l'administrateur<br />" + message, 'Erreur');
+  }
 }

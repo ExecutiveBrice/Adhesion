@@ -58,6 +58,7 @@ public class Config {
 
             emailService.sendAutoMail(adhesion, "Sujet_Mail_Rappel", "Corp_Mail_Rappel", false);
             adhesion.setRappel(true);
+            adhesion.setRemarqueSecretariat(adhesion.getRemarqueSecretariat()+" mail de rappel auto fait le "+LocalDate.now());
             adhesionServices.saveUnique(adhesion);
         });
     }

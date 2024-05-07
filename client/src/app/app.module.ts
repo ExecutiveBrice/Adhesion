@@ -17,7 +17,9 @@ import { ComptaComponent } from './page/compta/compta.component';
 import { ContactComponent } from './page/contact/contact.component';
 import { ModalComponent } from './template/modal/modal.component';
 import { ModalPDFComponent } from './template/modal-pdf/modal-pdf.component';
+import { ModalChoixActivite } from './template/modal-choixactivite/modal.choixactivite';
 import { ModalActivite } from './template/modal-activite/modal.activite';
+
 import { NgxExtendedPdfViewerModule } from 'ngx-extended-pdf-viewer';
 import { ngfModule } from "angular-file"
 
@@ -63,6 +65,7 @@ import { SimpleFilterPipe } from './_helpers/simpleFilter.pipe';
     ComptaComponent,
     ModalComponent,
     ModalPDFComponent,
+    ModalChoixActivite,
     ModalActivite,
     UserComponent,
     SwitchComponent,

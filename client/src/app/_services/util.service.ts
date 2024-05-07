@@ -3,7 +3,7 @@ import { NgbModal } from "@ng-bootstrap/ng-bootstrap";
 import { ModalComponent } from "../template/modal/modal.component";
 import { ModalPDFComponent } from "../template/modal-pdf/modal-pdf.component";
 import { Activite, ActiviteDropDown, Document } from "../models";
-import { ModalActivite } from "../template/modal-activite/modal.activite";
+import { ModalChoixActivite } from "../template/modal-choixactivite/modal.choixactivite";
 
 @Injectable({
   providedIn: 'root'
@@ -42,8 +42,8 @@ export class UtilService {
   }
 
 
-  openModalActivite(activites : ActiviteDropDown[]): Promise<any> {
-    const modalRef = this.modalService.open(ModalActivite, {
+  openModalChoixActivite(activites : ActiviteDropDown[], admin : boolean, secretaire:boolean): Promise<any> {
+    const modalRef = this.modalService.open(ModalChoixActivite, {
       animation: true,
       size: 'md',
       centered: true,
@@ -51,7 +51,8 @@ export class UtilService {
       scrollable: true
     });
     modalRef.componentInstance.activites = activites;
-
+    modalRef.componentInstance.admin = admin;
+    modalRef.componentInstance.secretaire = secretaire;
     return modalRef.result;
   }
 }

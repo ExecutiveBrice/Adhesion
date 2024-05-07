@@ -3,7 +3,8 @@ package com.wild.corp.adhesion.services;
 
 import com.wild.corp.adhesion.models.*;
 import com.wild.corp.adhesion.repository.*;
-import jakarta.transaction.Transactional;
+
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -38,35 +39,32 @@ public class AdherentServices {
     TribuServices tribuServices;
 
 
-    @Transactional
+
     public void nouvelleAnnee (){
-        activiteNm1Repository.deleteAll();
 
         adherentRepository.findAll().stream().forEach(adherent -> {
-            adherent.getActivitesNm1().clear();
-            adherent.getAdhesions().stream().forEach(adhesion -> {
-                ActiviteNm1 activiteNm1 = new ActiviteNm1();
-                activiteNm1.setAdherent(adherent);
-                activiteNm1.setNom(adhesion.getActivite().getNom());
-                activiteNm1.setHoraire(adhesion.getActivite().getHoraire());
-                activiteNm1.setGroupe(adhesion.getActivite().getGroupe());
-                activiteNm1.setSalle(adhesion.getActivite().getSalle());
-                activiteNm1.setTarif(adhesion.getActivite().getTarif());
-                activiteNm1.setGroupeFiltre(adhesion.getActivite().getGroupeFiltre());
-                adherent.getActivitesNm1().add(activiteNm1);
+            List<ActiviteNm1> activitesNm1 = adherent.getActivitesNm1();
+            activitesNm1.clear();
+            activitesNm1.addAll(adherent.getAdhesions().stream().filter(Adhesion::isValide).map(this::convertAdh).toList());
 
-                adhesion.setActivite(null);
-                adhesion.setSurClassement(null);
-                adhesion.setAdherent(null);
-            });
-
-
-
-            adherent.getAdhesions().clear();
+            adhesionRepository.deleteAll(adherent.getAdhesions());
+            adherent.getAdhesions().removeAll(adherent.getAdhesions());
             adherentRepository.save(adherent);
-
         });
-        adhesionRepository.deleteAll();
+
+    }
+
+    public ActiviteNm1 convertAdh(Adhesion adhesion){
+        ActiviteNm1 activiteNm1 = new ActiviteNm1();
+        activiteNm1.setAdherent(adhesion.getAdherent());
+        activiteNm1.setNom(adhesion.getActivite().getNom());
+        activiteNm1.setHoraire(adhesion.getActivite().getHoraire());
+        activiteNm1.setGroupe(adhesion.getActivite().getGroupe());
+        activiteNm1.setSalle(adhesion.getActivite().getSalle());
+        activiteNm1.setTarif(adhesion.getActivite().getTarif());
+        activiteNm1.setGroupeFiltre(adhesion.getActivite().getGroupeFiltre());
+        System.out.println(activiteNm1.getNom());
+        return activiteNm1;
     }
 
     public Set<String> findByGroup(String groupe) {
@@ -240,8 +238,8 @@ public class AdherentServices {
 
     private void isComplet(Adherent adherent) {
 
-        if (adherent.getNom() != null && adherent.getNom().length() > 3 &&
-                        adherent.getPrenom() != null & adherent.getPrenom().length() > 3 &&
+        if (StringUtils.isNotBlank(adherent.getNom()) &&
+                StringUtils.isNotBlank(adherent.getPrenom()) &&
                         adherent.getNaissance() != null &&
                         adherent.getLieuNaissance() != null &&
                         adherent.getGenre() != null &&

@@ -500,7 +500,7 @@
                     <div *ngIf="adhesion.statutActuel == 'Attente validation adhérent'"  class="form-check form-switch">
                       <input class="form-check-input big-checkbox" [(ngModel)]="adhesion.dejaLicencie" type="checkbox"
                         role="switch" [ngModelOptions]="{standalone: true}">
-                      {{adhesion.dejaLicencie?"J'ai déjà été licencié FFFB":"Je n'ai jamais été licencié FFFB"}}
+                      {{adhesion.dejaLicencie?"J'ai déjà été licencié FFBB":"Je n'ai jamais été licencié FFBB"}}
                     </div>
 
                     <div *ngIf="adhesion.statutActuel != 'Attente validation adhérent'">
@@ -508,7 +508,7 @@
                         [icon]="faCircleCheck"></fa-icon>
                       <fa-icon *ngIf="adhesion.dejaLicencie == false" class="orange fa-2xl"
                         [icon]="faCircleXmark"></fa-icon>
-                      {{adhesion.dejaLicencie?"J'ai déjà été licencié FFFB":"Je n'ai jamais été licencié FFFB"}}
+                      {{adhesion.dejaLicencie?"J'ai déjà été licencié FFBB":"Je n'ai jamais été licencié FFBB"}}
                     </div>
                   </div>
 

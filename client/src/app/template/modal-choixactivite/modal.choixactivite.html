@@ -1,0 +1,39 @@
+<div class="modal-header">
+  <h4 class="modal-title">Choix de l'activité</h4>
+
+  <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss('Cross click')"></button>
+</div>
+<div class="modal-body">
+    <div *ngIf="activites.length > 0">
+      <div *ngFor="let activite of activites | orderBy:'nom':false">
+        <b>{{activite.nom}}</b>
+        <div *ngFor="let horaire of activite.horaires">
+          <div *ngIf="!horaire.reinscription && !horaire.complete && !horaire.dejaInscrit" class="indentation ligne pointer"
+            (click)="activeModal.close(horaire.id)">
+            {{horaire.nom}}
+          </div>
+
+          <div  (click)="admin ||secretaire ?activeModal.close(horaire.id):false" *ngIf=" !horaire.complete && horaire.dejaInscrit" class="indentation lignebleue pointer">
+            {{horaire.nom}} - Déjà Inscrit
+          </div>
+          <div  (click)="admin ||secretaire ?activeModal.close(horaire.id):false" *ngIf=" horaire.complete && !horaire.dejaInscrit" class="indentation lignerouge pointer">
+            {{horaire.nom}} - Complet
+          </div>
+          <div  (click)="admin ||secretaire ?activeModal.close(horaire.id):false" *ngIf="horaire.reinscription && !horaire.complete && !horaire.dejaInscrit" class="indentation lignegrisee pointer">
+            {{horaire.nom}} -
+            <a *ngIf="activite.nom == 'Basket'" href="https://alod.fr/protocle-basket/" target="_blank">Procédure de réinscription</a>
+            <div *ngIf="activite.nom != 'Basket'" >Uniquement sur réinscription, veuillez attendre le 1 juin </div>
+           
+          </div>
+        </div>
+      </div>
+    </div>
+
+</div>
+
+<div class="modal-footer">
+  <button type="button" class="btn btn-outline-dark" 
+    (click)="activeModal.dismiss('Annuler')">Annuler</button>
+
+
+</div>

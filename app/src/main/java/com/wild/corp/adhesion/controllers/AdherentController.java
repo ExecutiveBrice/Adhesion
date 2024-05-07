@@ -112,15 +112,15 @@ AdherentServices adherentServices;
 		return ResponseEntity.ok(adherentServices.getByRole(roleId));
 	}
 
-	@GetMapping("/getAccords")
-	@PreAuthorize("hasRole('ADMIN')")
+	@GetMapping("/addAccord")
+	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('ADMIN')")
 	public ResponseEntity<?> addAccord(Authentication principal, @PathParam("adherentId") Long adherentId, @PathParam("nomAccord") String nomAccord) {
 		adherentServices.addModification(principal.getName(),adherentId);
 		return ResponseEntity.ok(adherentServices.addAccord(adherentId, nomAccord));
 	}
 
 	@GetMapping("/removeAccord")
-	@PreAuthorize("hasRole('ADMIN')")
+	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('ADMIN')")
 	public ResponseEntity<?> removeAccord(Authentication principal, @PathParam("adherentId") Long adherentId, @PathParam("nomAccord") String nomAccord) {
 		adherentServices.addModification(principal.getName(),adherentId);
 		return ResponseEntity.ok(adherentServices.removeAccord(adherentId, nomAccord));

@@ -78,7 +78,7 @@ public class AdherentLite {
     private AdherentLite representant;
 
     @JsonIgnoreProperties({"adherent", "tribu"})
-    private Set<ActiviteNm1> activitesNm1;
+    private List<ActiviteNm1> activitesNm1;
 
     private List<Notification> derniereModifs = new ArrayList<>();
 

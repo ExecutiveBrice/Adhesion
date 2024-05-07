@@ -4,36 +4,187 @@
   <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss('Cross click')"></button>
 </div>
 <div class="modal-body">
-    <div *ngIf="activites.length > 0">
-      <div *ngFor="let activite of activites | orderBy:'nom':false">
-        <b>{{activite.nom}}</b>
-        <div *ngFor="let horaire of activite.horaires">
-          <div *ngIf="!horaire.reinscription && !horaire.complete && !horaire.dejaInscrit" class="indentation ligne pointer"
-            (click)="activeModal.close(horaire.id)">
-            {{horaire.nom}}
-          </div>
 
-          <div *ngIf=" !horaire.complete && horaire.dejaInscrit" class="indentation lignebleue">
-            {{horaire.nom}} - Déjà Inscrit
+  <div class="row">
+
+    <div class="col-12 col-sm-6">
+
+      <div class="form-group">
+        <label for="nom">Nom</label>
+        <input type="text" class="form-control" name="nom" [(ngModel)]="activite.nom" />
+      </div>
+
+      <div ngbDropdown class="d-inline-block">
+        <button type="button" class="btn btn-primary" id="dropdownBasic1" ngbDropdownToggle>
+          {{activite.groupe?activite.groupe:'Groupe'}}
+        </button>
+
+
+        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+          <div ngbDropdownItem (click)="activite.groupe = 'ALOD_B'">ALOD_B</div>
+          <div ngbDropdownItem (click)="activite.groupe = 'ALOD_G'">ALOD_G</div>
+        </div>
+      </div>
+
+
+      <div class="form-group">
+        <label for="groupeFiltre">Goupe Filtre</label>
+        <input type="text" class="form-control" name="groupeFiltre" [(ngModel)]="activite.groupeFiltre" />
+      </div>
+
+
+      <div class="form-group">
+        <label for="tarif">Tarif</label>
+        <input type="number" class="form-control" name="tarif" [(ngModel)]="activite.tarif" />
+      </div>
+
+      <div class="form-group">
+        <label for="horaire">Horaire</label>
+        <input type="text" class="form-control" name="horaire" [(ngModel)]="activite.horaire" />
+      </div>
+
+      <div class="form-group">
+        <label for="lien">Lien</label>
+        <input type="text" class="form-control" name="lien" [(ngModel)]="activite.lien" />
+      </div>
+
+      <div class="form-group">
+        <label for="salle">Salle</label>
+        <input type="text" class="form-control" name="salle" [(ngModel)]="activite.salle" />
+      </div>
+
+      <div class="form-group">
+        <label for="prof">Prof</label>
+        <div *ngIf="activite.profs.length > 0">
+          <div *ngFor="let prof of activite.profs | orderBy:'id':true ">
+            {{prof.prenom}} {{prof.nom}} <fa-icon class="pointer" (click)="retirerProf(activite,prof)"
+              [icon]="faSquareMinus"></fa-icon>
           </div>
-          <div *ngIf=" horaire.complete && !horaire.dejaInscrit" class="indentation lignerouge">
-            {{horaire.nom}} - Complet
-          </div>
-          <div *ngIf="horaire.reinscription && !horaire.complete && !horaire.dejaInscrit" class="indentation lignegrisee">
-            {{horaire.nom}} -
-            <a *ngIf="activite.nom == 'Basket'" href="https://alod.fr/protocle-basket/" target="_blank">Procédure de réinscription</a>
-            <div *ngIf="activite.nom != 'Basket'" >Uniquement sur réinscription, veuillez attendre le 1 juin </div>
-           
+        </div>
+
+        <div ngbDropdown class="d-inline-block col-md-12 ">
+          <button type="button" class="btn btn-block btn-primary" id="dropdownBasic1" ngbDropdownToggle>
+            Ajouter un prof
+          </button>
+
+
+          <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+
+            <div ngbDropdownItem *ngFor="let prof of profs  | orderBy:'ordre':false"
+              (click)="ajouterProf(activite,prof)">{{prof.prenom}} {{prof.nom}}</div>
+
           </div>
         </div>
       </div>
+
     </div>
+    <div class="col-12 col-sm-6">
+
+      <div class="form-group">
+        <label for="nbPlaces">Nombre de Place Maximale</label>
+        <input type="number" class="form-control" name="nbPlaces" [(ngModel)]="activite.nbPlaces" />
+      </div>
+
+
+      <div class="form-group">
+        <div class="form-check form-switch">
+          <input class="form-check-input big-checkbox" [(ngModel)]="activite.reinscription"
+            type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+            Reinscription <fa-icon *ngIf="activite.reinscription" class="green"
+            [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!activite.reinscription" class="orange"
+            [icon]="faCircleXmark"></fa-icon>
+        </div>
+
+      </div>
+
+      <div class="form-group">
+        <div class="form-check form-switch">
+          <input class="form-check-input big-checkbox" [(ngModel)]="activite.complete"
+            type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+            Complete <fa-icon *ngIf="activite.complete" class="green"
+            [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!activite.complete" class="orange"
+            [icon]="faCircleXmark"></fa-icon>
+        </div>
+      </div>
+
+
+      <div class="form-group">
+        <label for="ageMax">Age Maximal</label>
+        <input type="number" class="form-control" name="ageMax" [(ngModel)]="activite.ageMax" />
+        <label for="ageMin">Age Minimal</label>
+        <input type="number" class="form-control" name="ageMin" [(ngModel)]="activite.ageMin" />
+      </div>
+
+
+      <div ngbDropdown class="d-inline-block">
+        <button type="button" class="btn btn-primary" id="dropdownBasic1" ngbDropdownToggle>
+          Activité {{activite.genre}}
+        </button>
+
+
+        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+          <div ngbDropdownItem (click)="activite.genre = 'Non genrée'">Non genrée</div>
+          <div ngbDropdownItem (click)="activite.genre = 'Masculine'">Masculine</div>
+          <div ngbDropdownItem (click)="activite.genre = 'Féminine'">Féminine</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="form-check form-switch">
+          <input class="form-check-input big-checkbox" [(ngModel)]="activite.certificatMedical"
+            type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+            Document Certificat Médical ? <fa-icon *ngIf="activite.certificatMedical" class="green"
+            [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!activite.certificatMedical" class="orange"
+            [icon]="faCircleXmark"></fa-icon>
+        </div>
+      </div>
+      <div *ngIf="activite.certificatMedical" class="form-group">
+        <label for="dureeVieCertif">Nb année validité max</label>
+        <input type="number" class="form-control" name="dureeVieCertif" [(ngModel)]="activite.dureeVieCertif" />
+      </div>
+
+      <div class="form-group">
+        <div class="form-check form-switch">
+          <input class="form-check-input big-checkbox" [(ngModel)]="activite.priseEnCharge"
+            type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+            Accord de Prise en Charge ? <fa-icon *ngIf="activite.priseEnCharge" class="green"
+            [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!activite.priseEnCharge" class="orange"
+            [icon]="faCircleXmark"></fa-icon>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="form-check form-switch">
+          <input class="form-check-input big-checkbox" [(ngModel)]="activite.autorisationParentale"
+            type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+            Accord Autorisation Parentale ? <fa-icon *ngIf="activite.autorisationParentale" class="green"
+            [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!activite.autorisationParentale" class="orange"
+            [icon]="faCircleXmark"></fa-icon>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="form-check form-switch">
+          <input class="form-check-input big-checkbox" [(ngModel)]="activite.vieClub"
+            type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+            Accord Vie du Club ? <fa-icon *ngIf="activite.vieClub" class="green"
+            [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!activite.vieClub" class="orange"
+            [icon]="faCircleXmark"></fa-icon>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
 
 </div>
 
 <div class="modal-footer">
-  <button type="button" class="btn btn-outline-dark" 
-    (click)="activeModal.dismiss('Annuler')">Annuler</button>
+  <button type="button" class="btn btn-success"
+  (click)="enregistrer()">Enregistrer</button>
+
+  <button type="button" class="btn btn-outline-dark" (click)="activeModal.dismiss('Annuler')">Annuler</button>
 
 
 </div>

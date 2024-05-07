@@ -33,13 +33,14 @@ public class ActiviteServices {
     }
 
     public Activite save(Activite activite){
-        Optional<Activite> activiteInDB = activiteRepository.findById(activite.getId());
-        activiteInDB.ifPresent(value -> value.getProfs().forEach(adherent -> adherent.getCours().remove(value)));
+        if(activite.getId()!=null) {
+            Optional<Activite> activiteInDB = activiteRepository.findById(activite.getId());
+            activiteInDB.ifPresent(value -> value.getProfs().forEach(adherent -> adherent.getCours().remove(value)));
 
-        activite.setProfs(activite.getProfs().stream().map(adherent -> adherentServices.getBasicById(adherent.getId())).collect(Collectors.toSet()));
+            activite.setProfs(activite.getProfs().stream().map(adherent -> adherentServices.getBasicById(adherent.getId())).collect(Collectors.toSet()));
 
-        activite.getProfs().forEach(adherent -> adherent.getCours().add(activite));
-
+            activite.getProfs().forEach(adherent -> adherent.getCours().add(activite));
+        }
         return activiteRepository.save(activite);
     }
 

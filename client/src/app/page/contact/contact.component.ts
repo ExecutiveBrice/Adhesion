@@ -7,6 +7,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { Editor, Toolbar, toHTML } from 'ngx-editor';
 import { Email } from 'src/app/models';
 import { ParamService } from 'src/app/_services/param.service';
+import { ToastrService } from 'ngx-toastr';
 
 
 @Component({
@@ -44,6 +45,7 @@ export class ContactComponent implements OnInit, OnDestroy {
 
 
   constructor(
+    private toastr: ToastrService,
     public paramService: ParamService,
     public route: ActivatedRoute,
     public router: Router,
@@ -72,21 +74,31 @@ export class ContactComponent implements OnInit, OnDestroy {
     this.editor.destroy();
   }
 
+  locksend:boolean = false
   envoiMail(subject: string) {
+    console.log(subject)
+
+
     if (subject == undefined || subject.length < 5 || this.html == undefined || toHTML(this.html).length < 20) {
       this.mailIncomplet = true;
       setTimeout(() => {
         this.mailIncomplet = false;
       }, 5000);
     } else {
+      this.locksend = true;
+      setTimeout(() => {
+        this.locksend = false;
+      }, 5000);
+      this.showWarning("Votre message est en cours de préparation")
       let email = new Email();
       email.subject = subject;
       email.text = toHTML(this.html);
+      
       email.diffusion = "alod.amicale@gmail.com";
       this.mailService.sendMail(email)
         .subscribe({
           next: (data) => {
-            
+            this.showSucces("Votre message est à bien été envoyé")
             this.isFailed = false;
           },
           error: (error) => {
@@ -113,4 +125,13 @@ export class ContactComponent implements OnInit, OnDestroy {
   }
 
 
+  showSucces(message: string) {
+    this.toastr.success(message, 'Bravo!');
+  }
+  showWarning(message: string) {
+    this.toastr.warning(message, 'Veuillez patienter,');
+  }
+  showError(message: string) {
+    this.toastr.error("Une erreur est survenue, recharger la page et recommencez. si le problème persiste contactez l'administrateur<br />" + message, 'Erreur');
+  }
 }

@@ -91,7 +91,7 @@ export class BoardUserComponent implements OnInit {
     private datePipe: DatePipe) { }
 
   showSuccess(message: string) {
-    this.toastr.info(message, 'Information');
+    this.toastr.success(message, 'Information');
   }
   showSecretariat() {
     this.toastr.warning("Le secrétariat validera votre dossier lorsqu'il sera complet", "Secrétariat");
@@ -169,6 +169,9 @@ export class BoardUserComponent implements OnInit {
   }
 
   supprimable(adherent:Adherent):boolean{
+    if (this.showAdmin || this.showSecretaire){
+      return true
+    }
     if (this.tribu.adherents.length == 1){
       return false
     }
@@ -329,48 +332,7 @@ export class BoardUserComponent implements OnInit {
     });
   }
 
-  openPDF(adherent: Adherent) {
 
-    const adhesionsValide = adherent.adhesions.filter(adh => adh.validPaiementSecretariat);
-    let prix = 0
-    adhesionsValide.forEach(adh => adh.paiements.forEach(paiement => prix += paiement.montant));
-    if (adhesionsValide.length >= 1) {
-
-      this.doc.setFontSize(7)
-      this.doc.addImage("assets/logo.png", "JPEG", 15, 10, 52, 33);
-      this.doc.text("Agrément à «Jeunesse et Sports» : le 27/08/1967 n° 44 S 42", 42, 50, { align: "center" });
-      this.doc.text("Déclaration en Préfecture de Nantes : le 12/02/1960 n° 6669", 42, 55, { align: "center" });
-
-      this.doc.setFontSize(12)
-      this.doc.text("Fait à Rezé", 150, 15);
-      this.doc.text("Le : " + this.datePipe.transform(new Date, 'dd/MM/yyyy'), 150, 20);
-
-      this.doc.setFontSize(30)
-      this.doc.text("Attestation", 105, 100, { align: "center" });
-
-      this.doc.setFontSize(12)
-      this.doc.text("Je soussigné MAURY Morgane en qualité de présidente de l'ALOD,", 10, 120);
-      this.doc.text("atteste que " + adherent.prenom + " " + adherent.nom + " né le " + this.datePipe.transform(adherent.naissance, 'dd/MM/yyyy'), 10, 130);
-      this.doc.text("résident au " + adherent.representant && adherent.representant?.adresse ? adherent.representant.adresse : adherent.adresse, 10, 140);
-
-      if (adherent.adhesions.length == 1) {
-        this.doc.text("est inscrit(e) à l'activité suivante pour l'année scolaire 2024/2025 : ", 10, 150);
-      } else {
-        this.doc.text("est inscrit(e) aux activités suivantes pour l'année scolaire 2024/2025 :", 10, 150);
-      }
-
-      let ligneText = 160;
-      adherent.adhesions.forEach(adh => {
-        this.doc.text(" -" + adh.activite?.nom, 10, ligneText);
-        ligneText = ligneText + 10;
-      })
-      this.doc.text("et est à jour de sa cotisation de " + prix + "€", 10, ligneText);
-      this.doc.addImage("assets/signature.png", "JPEG", 100, 230, 77, 43);
-
-      this.doc.save("Attestation_" + adherent.prenom + "_" + adherent.nom + "_20232024.pdf");
-    }
-    this.doc = new jsPDF('p', 'mm', 'a4', true);
-  }
  
 
 }

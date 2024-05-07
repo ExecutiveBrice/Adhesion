@@ -17,10 +17,10 @@ export class Activite {
   salle!: string;
   profs!: Adherent[];
   nbPlaces!: number;
-  nbAdhesionsEnCours!:number;
-  nbAdhesionsCompletes!:number;
-  nbAdhesionsAttente!:number;
-  montantCollecte!:number;
+  nbAdhesionsEnCours!: number;
+  nbAdhesionsCompletes!: number;
+  nbAdhesionsAttente!: number;
+  montantCollecte!: number;
   adhesions!: Adhesion[];
   priseEnCharge!: boolean;
   autorisationParentale!: boolean;
@@ -28,14 +28,30 @@ export class Activite {
   vieClub!: boolean;
   complete!: boolean;
   reinscription!: boolean;
-  
-  dureeVieCertif!:number;
-  
-  constructor(){
+
+  dureeVieCertif!: number;
+
+  constructor() {
 
     this.profs = [];
-
     this.adhesions = [];
+
+    this.nom = 'nouvelle activité'
+    this.groupeFiltre = 'Amicaliste'
+    this.horaire = 'dimanche matin'
+    this.groupe = 'ALOD_G'
+    this.tarif = 200
+    
+    this.nbPlaces = 10;
+    this.ageMin = 16;
+    this.ageMax = 99;
+    this.genre = 'Non genrée';
+    this.priseEnCharge = false;
+    this.autorisationParentale = false;
+    this.certificatMedical = false;
+    this.vieClub = false;
+    this.complete = false;
+    this.reinscription = false;
 
   }
 }

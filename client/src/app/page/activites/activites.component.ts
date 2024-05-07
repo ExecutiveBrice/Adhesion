@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, inject } from '@angular/core';
 import { NgbModalConfig, NgbModal, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ActiviteService } from 'src/app/_services/activite.service';
 import { Activite, Adherent, AdherentLite } from 'src/app/models';
@@ -8,6 +8,7 @@ import { AdherentService } from 'src/app/_services/adherent.service';
 import { ParamService } from 'src/app/_services/param.service';
 import { TokenStorageService } from 'src/app/_services/token-storage.service';
 import { Route, Router } from '@angular/router';
+import { ModalActivite } from 'src/app/template/modal-activite/modal.activite';
 
 
 
@@ -38,14 +39,12 @@ export class ActivitesComponent implements OnInit {
   sens: boolean = false;
   filtres: Map<string, boolean> = new Map<string, boolean>();
   editProfileForm!: FormGroup;
-  profs: AdherentLite[] = []
+
   showAdmin: boolean = false;
   showSecretaire: boolean = false;
 
   constructor(
-    private adherentService: AdherentService,
     public activiteService: ActiviteService,
-    private modalService: NgbModal, 
     public paramService: ParamService,
     private tokenStorageService: TokenStorageService,
     public router: Router
@@ -60,66 +59,39 @@ export class ActivitesComponent implements OnInit {
     }
 
     this.getActivites();
-    this.getProfs();
   }
 
 
-  opennewTab(page : string){
 
-    window.open(page, '_blank');
+
+  private modalService = inject(NgbModal);
+  openActivite(activite: Activite) {
+
+    const modalRef = this.modalService.open(ModalActivite, {
+      size: 'xl',
+      centered: true,
+      backdrop: 'static',
+      scrollable: true
+    });
+    modalRef.componentInstance.activite = activite;
+
+
+    modalRef.result.then((data) => {
+      console.log(data)
+
+      this.getActivites();
+      // on close
+    }, (reason) => {
+      console.log(reason)
+
+      // on dismiss
+    });
   }
 
-  onSubmit() {
-    this.modalService.dismissAll();
-
-
-    this.activiteService.save(this.newActivite).subscribe(
-      data => {
-
-        this.getActivites()
-        this.newActivite = new Activite;
-      },
-      err => {
-        this.isFailed = true;
-        this.errorMessage = err.message
-
-      }
-    );
-  }
-
-  ajouterProf(newActivite: Activite, adherent: Adherent) {
-    newActivite.profs.push(adherent);
-  }
-
-  retirerProf(newActivite: Activite, adherent: Adherent) {
-    newActivite.profs= newActivite.profs.filter(prof => prof.id != adherent.id);
-  }
   
 
 
-  getProfs() {
-    this.adherentService.getByRole(3).subscribe(
-      data => {
-        this.profs = data;
-      },
-      err => {
-        this.isFailed = true;
-        this.errorMessage = err.message
-      }
-    );
-  }
-  openModal(targetModal: any, activite: Activite) {
-    this.modalService.open(targetModal, {
-      centered: true,
-      backdrop: 'static'
-    });
-    this.newActivite = activite;
-  }
 
-  dismiss() {
-    this.modalService.dismissAll();
-    this.getActivites()
-  }
 
 
 

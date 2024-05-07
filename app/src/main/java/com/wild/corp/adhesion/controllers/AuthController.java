@@ -111,11 +111,7 @@ public class AuthController {
 
 	@PostMapping("/changePassword")
 	public ResponseEntity<?> changePassword(@PathParam("token") String token, @RequestBody SignupRequest signUpRequest) {
-
-
 		userServices.changePassword(token, signUpRequest.getPassword());
 		return ResponseEntity.ok("Réinitialisation du mot de passe réussie");
-
-
 	}
 }

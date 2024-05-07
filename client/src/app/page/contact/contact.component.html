@@ -62,7 +62,8 @@
             </div>
           </div>
           <div class="col-sm-12 ">
-            <button [disabled]="inProgress" class="btn btn-block btn-primary" (click)="envoiMail(subject)">
+            <button [disabled]="inProgress || locksend" class="btn btn-block btn-primary" (click)="envoiMail(subject)">
+              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" [hidden]="!locksend"></span>
               Envoyer ce message</button>
 
           </div>

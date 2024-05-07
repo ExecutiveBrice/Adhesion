@@ -170,6 +170,7 @@ export class LoginComponent implements OnInit {
 
 
   forgotMdp() {
+
     const { username, password } = this.form;
     this.authService.reinitPassword(username).subscribe(
       data => {

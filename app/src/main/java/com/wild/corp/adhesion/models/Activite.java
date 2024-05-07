@@ -44,7 +44,7 @@ public class Activite {
 
     private String salle;
 
-    private boolean reinscription;
+    private Boolean reinscription;
 
     private boolean priseEnCharge;
 

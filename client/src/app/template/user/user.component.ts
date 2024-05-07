@@ -99,7 +99,7 @@ export class UserComponent implements OnInit {
     private datePipe: DatePipe) { }
 
   showSuccess(message: string) {
-    this.toastr.info(message, 'Information');
+    this.toastr.success(message, 'Information');
   }
   showSecretariat() {
     this.toastr.warning("Le secrétariat validera votre dossier lorsqu'il sera complet", "Secrétariat");
@@ -184,7 +184,7 @@ export class UserComponent implements OnInit {
 
   choixActivites(adherent: Adherent) {
 
-    this.utilService.openModalActivite( this.activitesListe).then((data) => {
+    this.utilService.openModalChoixActivite(this.activitesListe, this.showAdmin, this.showSecretaire).then((data) => {
       console.log(data)
       // on close
       this.choisir(adherent, data);

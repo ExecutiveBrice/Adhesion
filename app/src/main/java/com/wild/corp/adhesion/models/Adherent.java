@@ -76,7 +76,7 @@ public class Adherent {
 
     @OneToMany(mappedBy = "adherent", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties({"adherent", "tribu"})
-    private Set<ActiviteNm1> activitesNm1 = new HashSet<>();
+    private List<ActiviteNm1> activitesNm1 = new ArrayList<>();
 
     @ManyToMany
     @JsonIgnore
