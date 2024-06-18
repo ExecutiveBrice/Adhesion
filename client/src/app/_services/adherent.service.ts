@@ -31,6 +31,12 @@ export class AdherentService {
     return this.http.get<Accord[]>(API_URL+"removeAccord", {params, responseType: 'json' });
   }
   
+  regenerate(adherentId: number): Observable<string> {
+    let params = new HttpParams().set('adherentId', '' + adherentId + '');
+    return this.http.get(API_URL+"regenerate", {params, responseType: 'text' });
+  }
+  
+
   addDocument(document:File, adherentId : number): Observable<Document> {
     let params = new HttpParams().set('adherentId', '' + adherentId + '');
     const formData: FormData = new FormData();
@@ -53,8 +59,8 @@ export class AdherentService {
     return this.http.get<Adherent[]>(API_URL + 'all', { responseType: 'json' });
   }
 
-  getAllLite(): Observable<AdherentLite[]> {
-    return this.http.get<AdherentLite[]>(API_URL + 'allLite', { responseType: 'json' });
+  getAllLite(): Observable<Adherent[]> {
+    return this.http.get<Adherent[]>(API_URL + 'allLite', { responseType: 'json' });
   }
 
   getAllCours(): Observable<ActiviteLite[]> {

@@ -1,8 +1,3 @@
-<div *ngIf="isFailed" class="card card-container">
-  {{errorMessage}}
-</div>
-
-
 <div class="row">
 
   <div class="col-md-8 center">
@@ -16,27 +11,20 @@
 <table class="table table-striped">
   <thead>
     <tr>
-
       <th class="center" scope="col truncate">
-
         <div ngbDropdown class="d-inline-block larger">
           <button type="button" class="btn btn-primary larger" id="dropdownBasic1" ngbDropdownToggle>
             {{choixSection.length >0?choixSection:'Activité'}}
           </button>
-
           <div *ngIf="activites.length > 0" ngbDropdownMenu aria-labelledby="dropdownBasic1">
-
             <a ngbDropdownItem (click)="choixSection = 'Toutes';  getAdhesion()">
               Toutes</a>
-
-
             <div *ngFor="let activite of activites  | orderBy:'nom':false" class="ligne pointer">
               <a ngbDropdownItem (click)="choixSection = 'activite#'+activite.nom;  getAdhesion()">
                 <b>{{activite.nom}}</b></a>
               <div *ngFor="let horaire of activite.horaires">
                 <a ngbDropdownItem (click)="choixSection = 'horaire#'+horaire.id; getAdhesion()">
                   {{horaire.nom}}</a>
-
               </div>
             </div>
           </div>
@@ -44,10 +32,7 @@
 
       </th>
       <th class="center" scope="col">
-
-        <input class="form-control xs" type="text" name="search" [(ngModel)]="search"
-          (ngModelChange)="addSearch(search)" placeholder="Adhérent" />
-
+        Adhérent
       </th>
       <th class="center" scope="col">
 
@@ -93,7 +78,8 @@
             Statut <fa-icon [icon]="faFilter" container="body"></fa-icon>
           </div>
           <div ngbDropdownMenu aria-labelledby="dropdownBasic1" style="float:right;">
-            <button ngbDropdownItem (click)="addFiltre('statutActuel', 'Attente validation adhérent')">Attente validation
+            <button ngbDropdownItem (click)="addFiltre('statutActuel', 'Attente validation adhérent')">Attente
+              validation
               adhérent</button>
             <button ngbDropdownItem (click)="addFiltre('statutActuel', 'Attente validation secrétariat')">Attente
               validation secrétariat</button>
@@ -148,7 +134,9 @@
 
     </tr>
   </thead>
-  <tbody>
+  <div *ngIf="loadder" class="spinner-border text-info"></div>
+
+  <tbody *ngIf="adhesions.length > 0">
     <tr *ngFor="let adhesion of adhesions  | orderBy:'adherent.nomPrenom':false ">
       <td width="10%" class="truncate">
         <ng-template #tipsAdhesionDelete><b>icons</b><br />
@@ -158,7 +146,7 @@
           [ngbTooltip]="tipsAdhesionDelete" [icon]="faSquareMinus"></fa-icon>
         {{adhesion.activite.nom}}<br />{{adhesion.activite.horaire}}
 
-        <div width="20%"  *ngIf="showAdmin || showSecretaire" ngbDropdown>
+        <div width="20%" *ngIf="showAdmin || showSecretaire" ngbDropdown>
           <div id="dropdownBasic1" ngbDropdownToggle>
             <fa-icon [icon]="faSquarePlus" container="body"></fa-icon>
           </div>
@@ -174,22 +162,24 @@
         </div>
       </td>
 
-      <td  width="20%" >
+      <td width="20%">
         {{adhesion.adherent.nom}} {{adhesion.adherent.prenom}} <br />
-        {{adhesion.adherent.email}}
+        {{adhesion.adherent.emailRepresentant && adhesion.adherent.representant != undefined
+        ?adhesion.adherent.representant.user.username:adhesion.adherent.user.username}} <br />
+        {{adhesion.adherent.naissance | date:'dd-MM-yyyy'}}
         <ng-template #tipsAdherentSendMail><b>icons</b><br />
           <fa-icon class="fa-lg green" [icon]="faEnvelope"></fa-icon> permet d'envoyer un mail pour cet adhérent
         </ng-template>
         <fa-icon *ngIf="adhesion.adherent.email != null" (click)="opennewTab('#/mail/'+adhesion.adherent.id)"
           class="fa-lg pointer green" [icon]="faEnvelope" [ngbTooltip]="tipsAdherentSendMail"></fa-icon>
-        <fa-icon class="fa-lg pointer" (click)="opennewTab('#/inscription/'+adhesion.adherent.tribuId)"
+        <fa-icon class="fa-lg pointer" (click)="opennewTab('#/inscription/'+adhesion.adherent.tribu.uuid)"
           [icon]="faPen"></fa-icon>
       </td>
 
 
 
 
-      <td width="20%"  class="center">
+      <td width="20%" class="center">
         <div class="row">
           <div class="col-8">
             <div *ngFor="let paiement of adhesion.paiements | orderBy:'id':false">
@@ -209,7 +199,7 @@
 
       </td>
 
-      <td width="20%" >
+      <td width="20%">
 
         <div class="row">
           <div class="col-8">
@@ -238,7 +228,7 @@
 
 
       </td>
-      <td  width="10%"  class="center">
+      <td width="10%" class="center">
         <div *ngIf="adhesion.activite.groupe == 'ALOD_G'" ngbDropdown class="d-inline-block">
           <button [disabled]="adhesion.statutActuel == 'Validée' " type="button" class="btn btn-primary"
             id="dropdownBasic1" ngbDropdownToggle>
@@ -295,7 +285,7 @@
 
 
       </td>
-      <td width="10%" >
+      <td width="10%">
         <textarea [(ngModel)]="adhesion.remarqueSecretariat" id="story" name="story" rows="2" cols="20"
           placeholder="Note..." (blur)='enregistrerRemarque(adhesion)'>
 
@@ -303,7 +293,7 @@
 
       </td>
 
-      <td width="10%"  class="center">
+      <td width="10%" class="center">
         <fa-icon (click)="updateFlag(adhesion, !adhesion.flag)" *ngIf="!adhesion.flag" class="pointer fa-2xl"
           [icon]="faFlag "></fa-icon>
         <fa-icon (click)="updateFlag(adhesion, !adhesion.flag)" *ngIf="adhesion.flag" class="pointer orange fa-2xl"

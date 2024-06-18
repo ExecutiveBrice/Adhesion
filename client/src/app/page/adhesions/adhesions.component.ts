@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActiviteDropDown, Adhesion, AdhesionExcel, Document, HoraireDropDown, Notification, Paiement } from 'src/app/models';
 import { AdhesionService } from 'src/app/_services/adhesion.service';
-import { faEarth, faBasketball, faFilterCircleXmark, faFilter, faPen, faEye, faEnvelope, faCircleUser, faFlag, faCircleXmark, faCircleExclamation, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { faEarth, faBasketball, faFilterCircleXmark, faFilter, faPen, faEye, faEnvelope, faCircleUser, faFlag, faCircleXmark, faCircleExclamation, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus, faL } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TokenStorageService } from 'src/app/_services/token-storage.service';
 import { Router } from '@angular/router';
@@ -12,6 +12,7 @@ import { FilterAdhesionByPipe } from 'src/app/_helpers/filterAdhesion.pipe';
 import { DatePipe } from '@angular/common';
 import { FilterByPipe } from 'src/app/_helpers/filter.pipe';
 import { AdherentService } from 'src/app/_services/adherent.service';
+import { ToastrService } from 'ngx-toastr';
 const ADHESIONS = 'ADHESIONS';
 
 @Component({
@@ -25,7 +26,7 @@ export class AdhesionsComponent implements OnInit {
   faFilterCircleXmark = faFilterCircleXmark
   faFilter = faFilter
   faCircleUser = faCircleUser
-  faCircleExclamation=faCircleExclamation
+  faCircleExclamation = faCircleExclamation
   faPen = faPen
   faSquarePlus = faSquarePlus
   faEye = faEye
@@ -35,17 +36,16 @@ export class AdhesionsComponent implements OnInit {
   faCircleCheck = faCircleCheck;
   faFlag = faFlag;
   adhesions: Adhesion[] = [];
-  cloned: Adhesion[] = [];
-  isFailed: boolean = false;
-  errorMessage = '';
+
   ordre: string = 'nom';
   search: string = "";
   sens: boolean = false;
   filtres: Map<string, any> = new Map<string, any>();
   showAdmin: boolean = false;
   showSecretaire: boolean = false;
-  choixSection:string=""
+  choixSection: string = ""
   constructor(
+    private toastr: ToastrService,
     private datePipe: DatePipe,
     private adherentService: AdherentService,
     private filterAdhesionBy: FilterAdhesionByPipe,
@@ -58,14 +58,30 @@ export class AdhesionsComponent implements OnInit {
     public router: Router
   ) { }
 
+  showSuccess(message: string) {
+    this.toastr.info(message, 'Information');
+  }
+  showSecretariat() {
+    this.toastr.warning("Le secrétariat validera votre dossier lorsqu'il sera complet", "Secrétariat");
+  }
+
+  showWarning(message: string) {
+    this.toastr.warning(message, 'Attention');
+  }
+  showError(message: string) {
+    this.toastr.error("Une erreur est survenue, recharger la page et recommencez. si le problème persiste contactez l'administrateur<br />" + message, 'Erreur');
+  }
+
+
+
   ngOnInit(): void {
 
     if (this.tokenStorageService.getUser().roles) {
       this.showAdmin = this.tokenStorageService.getUser().roles.includes('ROLE_ADMIN');
       this.showSecretaire = this.tokenStorageService.getUser().roles.includes('ROLE_SECRETAIRE');
-      if (this.tokenStorageService.getUser().username == "alodbasket@free.fr" || this.tokenStorageService.getUser().username == "laurence.basket@yahoo.com" || this.tokenStorageService.getUser().username == "xlcharonnat@yahoo.fr" || this.tokenStorageService.getUser().username == "c.rullie@free.fr" ) {
+      if (this.tokenStorageService.getUser().username == "alodbasket@free.fr" || this.tokenStorageService.getUser().username == "laurence.basket@yahoo.com" || this.tokenStorageService.getUser().username == "xlcharonnat@yahoo.fr" || this.tokenStorageService.getUser().username == "c.rullie@free.fr") {
         this.choixSection = "activite#Basket"
-      }else{
+      } else {
         this.choixSection = "activite#Aquagym"
       }
     } else {
@@ -75,25 +91,29 @@ export class AdhesionsComponent implements OnInit {
     this.getActivites()
   }
 
-  getAdhesion(){
-    this.adhesionService.getAllLiteBysection(this.choixSection).subscribe(
-      data => {
+  loadder:boolean=true
+  getAdhesion() {
+this.loadder=true
+this.adhesions = []
+    this.adhesionService.getAllLiteBysection(this.choixSection).subscribe({
+      next: (data) => {
         console.log(data)
-        this.cloned = data.map(x => Object.assign({}, x));
         this.adhesions = data;
+        this.adhesions.forEach(adh => adh.adherent.nomPrenom = adh.adherent.nom+adh.adherent.prenom)
+        this.loadder=false
       },
-      err => {
-        this.isFailed = true;
-        this.errorMessage = err.message
+      error: (error) => {
+        console.log(error)
+        this.showError(error.error.message)
       }
-    );
+    });
   }
 
   activites: ActiviteDropDown[] = []
   getActivites() {
 
-    this.activiteService.getAll().subscribe(
-      data => {
+    this.activiteService.getAll().subscribe({
+      next: (data) => {
         data.forEach(act => {
           if (this.activites.filter(activiteDropDown => activiteDropDown.nom == act.nom).length > 0) {
             let horaireDropDown = new HoraireDropDown
@@ -111,101 +131,102 @@ export class AdhesionsComponent implements OnInit {
           }
         });
       },
-      err => {
-        this.isFailed = true;
-        this.errorMessage = err.message
+      error: (error) => {
+        console.log(error)
+        this.showError(error.error.message)
       }
-    );
+    });
   }
 
   changeActivite(adhesion: Adhesion, activiteId: number) {
-    this.adhesionService.changeActivite(adhesion.id, activiteId).subscribe(
-      data => {
+    this.adhesionService.changeActivite(adhesion.id, activiteId).subscribe({
+      next: (data) => {
+        this.showSuccess("Changement d'activité réussie pour l'adhérent "+adhesion.adherent.prenom +" "+adhesion.adherent.nom)
         adhesion.activite = data;
       },
-      err => {
-        this.isFailed = true;
-        this.errorMessage = err.message
+      error: (error) => {
+        console.log(error)
+        this.showError(error.error.message)
       }
-    );
+    });
   }
 
   updateFlag(adhesion: Adhesion, statut: boolean) {
-    this.adhesionService.updateFlag(adhesion.id, statut).subscribe(
-      data => {
+    this.adhesionService.updateFlag(adhesion.id, statut).subscribe({
+      next: (data) => {
         adhesion.flag = data.flag;
-        adhesion.derniereModifs=data.derniereModifs
-        adhesion.derniereVisites=data.derniereVisites
+        adhesion.derniereModifs = data.derniereModifs
+        adhesion.derniereVisites = data.derniereVisites
       },
-      err => {
-        this.isFailed = true;
-        this.errorMessage = err.message
+      error: (error) => {
+        console.log(error)
+        this.showError(error.error.message)
       }
-    );
+    });
   }
 
   updateDocumentsSecretariat(adhesion: Adhesion, statut: boolean) {
-    this.adhesionService.updateDocumentsSecretariat(adhesion.id, statut).subscribe(
-      data => {
+    this.adhesionService.updateDocumentsSecretariat(adhesion.id, statut).subscribe({
+      next: (data) => {
         adhesion.validDocumentSecretariat = data.validDocumentSecretariat;
-        adhesion.derniereModifs=data.derniereModifs
-        adhesion.derniereVisites=data.derniereVisites
+        adhesion.derniereModifs = data.derniereModifs
+        adhesion.derniereVisites = data.derniereVisites
       },
-      err => {
-        this.isFailed = true;
-        this.errorMessage = err.message
+      error: (error) => {
+        console.log(error)
+        this.showError(error.error.message)
       }
-    );
+    });
   }
 
 
   updatePaiementSecretariat(adhesion: Adhesion, statut: boolean) {
-    this.adhesionService.updatePaiementSecretariat(adhesion.id, statut).subscribe(
-      data => {
+    this.adhesionService.updatePaiementSecretariat(adhesion.id, statut).subscribe({
+      next: (data) => {
         adhesion.validPaiementSecretariat = data.validPaiementSecretariat;
-        adhesion.derniereModifs=data.derniereModifs
-        adhesion.derniereVisites=data.derniereVisites
+        adhesion.derniereModifs = data.derniereModifs
+        adhesion.derniereVisites = data.derniereVisites
       },
-      err => {
-        this.isFailed = true;
-        this.errorMessage = err.message
+      error: (error) => {
+        console.log(error)
+        this.showError(error.error.message)
       }
-    );
+    });
   }
   choisirStatut(adhesion: Adhesion, statutActuel: string) {
-    this.adhesionService.choisirStatut(adhesion.id, statutActuel).subscribe(
-      data => {
+    this.adhesionService.choisirStatut(adhesion.id, statutActuel).subscribe({
+      next: (data) => {
+        this.showSuccess("Changement de statut de l'adhésion réussie pour l'adhérent "+adhesion.adherent.prenom +" "+adhesion.adherent.nom)
         adhesion.statutActuel = data.statutActuel;
-        adhesion.derniereModifs=data.derniereModifs
-        adhesion.derniereVisites=data.derniereVisites
+        adhesion.derniereModifs = data.derniereModifs
+        adhesion.derniereVisites = data.derniereVisites
         adhesion.validDocumentSecretariat = data.validDocumentSecretariat
         adhesion.validPaiementSecretariat = data.validPaiementSecretariat
         adhesion.accords = data.accords
       },
-      err => {
-        this.isFailed = true;
-        this.errorMessage = err.message
+      error: (error) => {
+        console.log(error)
+        this.showError(error.error.message)
       }
-    );
+    });
   }
 
-  opennewTab(page : string){
+  opennewTab(page: string) {
     window.open(page, '_blank');
   }
 
   enregistrerRemarque(adhesion: Adhesion) {
-    this.adhesionService.enregistrerRemarque(adhesion.id, adhesion.remarqueSecretariat).subscribe(
-      data => {
+    this.adhesionService.enregistrerRemarque(adhesion.id, adhesion.remarqueSecretariat).subscribe({
+      next: (data) => {
         adhesion.remarqueSecretariat = data.remarqueSecretariat
-        adhesion.derniereModifs=data.derniereModifs
-        adhesion.derniereVisites=data.derniereVisites
+        adhesion.derniereModifs = data.derniereModifs
+        adhesion.derniereVisites = data.derniereVisites
       },
-      err => {
-        this.isFailed = true;
-        this.errorMessage = err.message
-
+      error: (error) => {
+        console.log(error)
+        this.showError(error.error.message)
       }
-    );
+    });
   }
 
 
@@ -222,7 +243,7 @@ export class AdhesionsComponent implements OnInit {
     if (this.filtres.has(nomFiltre)) {
       this.filtres.delete(nomFiltre)
     }
-
+    this.getAdhesion()
     this.filtrage()
   }
 
@@ -241,7 +262,7 @@ export class AdhesionsComponent implements OnInit {
 
   filtrage() {
 
-    this.adhesions = this.filterAdhesionBy.transform(this.cloned.map(x => Object.assign({}, x)), this.filtres)
+    this.adhesions = this.filterAdhesionBy.transform(this.adhesions.map(x => Object.assign({}, x)), this.filtres)
 
   }
 
@@ -253,16 +274,16 @@ export class AdhesionsComponent implements OnInit {
 
   acceptSupress(adhesion: Adhesion) {
     this.modalService.dismissAll();
-    this.adhesionService.deleteAdhesion(adhesion.id).subscribe(
-      data => {
+    this.adhesionService.deleteAdhesion(adhesion.id).subscribe({
+      next: (data) => {
+        this.showSuccess("Suppresson de l'adhésion réussie pour l'adhérent "+adhesion.adherent.prenom +" "+adhesion.adherent.nom)
         this.adhesions = this.adhesions.filter(adh => adh.id != adhesion.id)
       },
-      err => {
-        this.isFailed = true;
-        this.errorMessage = err.message
-
+      error: (error) => {
+        console.log(error)
+        this.showError(error.error.message)
       }
-    )
+    })
   }
 
   selectedAdhesion: Adhesion = new Adhesion;
@@ -296,6 +317,8 @@ export class AdhesionsComponent implements OnInit {
         adhesion.paiements = adhesion.paiements.filter(paiement => paiement.id != paiementId)
       },
       error: (error) => {
+        console.log(error)
+        this.showError(error.error.message)
       }
     });
 
@@ -309,6 +332,8 @@ export class AdhesionsComponent implements OnInit {
 
       },
       error: (error) => {
+        console.log(error)
+        this.showError(error.error.message)
       }
     });
   }
@@ -319,6 +344,8 @@ export class AdhesionsComponent implements OnInit {
         adhesion.paiements = data.paiements
       },
       error: (error) => {
+        console.log(error)
+        this.showError(error.error.message)
       }
     });
   }
@@ -350,8 +377,8 @@ export class AdhesionsComponent implements OnInit {
       let newAdhesionExcel = new AdhesionExcel;
       if (adhesion.adherent) {
         newAdhesionExcel.nomAdherent = adhesion.adherent.nom
-        newAdhesionExcel.prenomAdherent= adhesion.adherent.prenom
-        newAdhesionExcel.emailAdherent = adhesion.adherent.user.username
+        newAdhesionExcel.prenomAdherent = adhesion.adherent.prenom
+        newAdhesionExcel.emailAdherent = adhesion.adherent.email
       }
 
 
@@ -386,67 +413,57 @@ export class AdhesionsComponent implements OnInit {
   }
 
 
-  updateVisiteAdhesion(adhesion:Adhesion){
+  updateVisiteAdhesion(adhesion: Adhesion) {
     this.adhesionService.addVisite(adhesion.id).subscribe({
       next: (response) => {
-        adhesion.derniereModifs=response.derniereModifs
-        adhesion.derniereVisites=response.derniereVisites
+        adhesion.derniereModifs = response.derniereModifs
+        adhesion.derniereVisites = response.derniereVisites
       },
       error: (error) => {
-        this.isFailed = true;
-        this.errorMessage = error.message
+        console.log(error)
+        this.showError(error.error.message)
       }
     });
   }
 
-  updateVisiteAdherent(adhesion:Adhesion){
+  updateVisiteAdherent(adhesion: Adhesion) {
     this.adherentService.addVisite(adhesion.adherent.id).subscribe({
       next: (response) => {
-        adhesion.adherent.derniereModifs=response.derniereModifs
-        adhesion.adherent.derniereVisites=response.derniereVisites
+        adhesion.adherent.derniereModifs = response.derniereModifs
+        adhesion.adherent.derniereVisites = response.derniereVisites
       },
       error: (error) => {
-        this.isFailed = true;
-        this.errorMessage = error.message
+        console.log(error)
+        this.showError(error.error.message)
       }
     });
   }
 
 
-  verifyAdhesion(adhesion:Adhesion):boolean{
-    let visite = adhesion.derniereVisites?.find(notif => notif.user.id == this.tokenStorageService.getUser().id);
-    let modif: Notification = new Notification;
-    adhesion.derniereModifs?.forEach(notif => {
-      if(modif.id == 0){
-        modif = notif
-      }else if(Date.parse(modif.date) < Date.parse(notif.date)){
-        modif = notif
-      }
-    });
+  verifyAdhesion(adhesion: Adhesion): boolean {
 
-    if(visite != undefined && (modif.id == 0 || Date.parse(modif.date) < Date.parse(visite.date))){
+    let lastVisite = adhesion.derniereVisites.length>1?adhesion.derniereVisites.reduce(function (r, a) {
+      return r.date > a.date ? r : a;
+    }):undefined
+
+    if (lastVisite != undefined && lastVisite.user.id == this.tokenStorageService.getUser().id) {
       return false
+    } else {
+      return true
     }
-
-    return true;
   }
 
 
-  verifyAdherent(adhesion:Adhesion):boolean{
-    let visite = adhesion.adherent?.derniereVisites?.find(visite => visite.user.id == this.tokenStorageService.getUser().id);
-    let modif: Notification = new Notification;
-    adhesion.adherent?.derniereModifs?.forEach(notif => {
-      if(modif.id == 0){
-        modif = notif
-      }else if(Date.parse(modif.date) < Date.parse(notif.date)){
-        modif = notif
-      }
-    });
+  verifyAdherent(adhesion: Adhesion): boolean {
 
-    if(visite != undefined && (modif.id == 0 || Date.parse(modif.date) < Date.parse(visite.date))){
+    let lastVisite = adhesion.adherent?.derniereVisites?.reduce(function (r, a) {
+      return r.date > a.date ? r : a;
+    })
+
+    if (lastVisite != undefined && lastVisite.user.id == this.tokenStorageService.getUser().id) {
       return false
+    } else {
+      return true
     }
-
-    return true;
   }
 }

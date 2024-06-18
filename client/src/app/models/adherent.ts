@@ -11,7 +11,9 @@ export class Adherent {
   id!: number;
   prenom!: string;
   nom!: string;
+  nomPrenom!: string;
   genre!: string;
+  email!: string;
   telephone!: string;
   naissance!: Date;
   lieuNaissance!: string;

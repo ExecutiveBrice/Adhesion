@@ -58,6 +58,7 @@ export class ProfsComponent implements OnInit {
 
     this.adherentService.getAllCours().subscribe(
       data => {
+        console.log(data)
         this.activitesLite = data
       },
       err => {

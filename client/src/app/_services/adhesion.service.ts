@@ -68,11 +68,29 @@ export class AdhesionService {
     return this.http.get<Adhesion[]>(API_URL+"all", {responseType: 'json' });
   }
 
+  
+  getById(adhesionId:number): Observable<Adhesion> {
+    let params = new HttpParams().set('adhesionId', '' + adhesionId + '');
+    return this.http.get<Adhesion>(API_URL, {params, responseType: 'json' });
+  }
+
+  
+  
+  getAllIdBysection(sections:string): Observable<number[]> {
+    let params = new HttpParams().set('sections', '' + sections + '');
+    return this.http.get<number[]>(API_URL+"idBysection", {params, responseType: 'json' });
+  }
+
   getAllLiteBysection(sections:string): Observable<Adhesion[]> {
     let params = new HttpParams().set('sections', '' + sections + '');
     return this.http.get<Adhesion[]>(API_URL+"liteBysection", {params, responseType: 'json' });
   }
-  
+
+  updateDejaLicencie(adhesionId : number, dejaLicencie:boolean): Observable<any> {
+    let params = new HttpParams().set('adhesionId', '' + adhesionId + '').set('dejaLicencie', '' + dejaLicencie + '');
+    return this.http.put(API_URL+"updateDejaLicencie", {}, {params, responseType: 'json' });
+  }
+
   validation(accords: Accord[], adhesionId : number): Observable<any> {
     let params = new HttpParams().set('adhesionId', '' + adhesionId + '');
     return this.http.post(API_URL+"validation", accords, {params, responseType: 'json' });

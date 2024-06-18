@@ -1,5 +1,6 @@
 package com.wild.corp.adhesion.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -41,6 +42,16 @@ public class Accord {
     private Boolean etat;
 
     private LocalDate datePassage;
+
+    @ManyToOne
+    @JsonIgnore
+    @ToString.Exclude
+    private Adherent adherent;
+
+    @ManyToOne
+    @JsonIgnore
+    @ToString.Exclude
+    private Adhesion adhesion;
 
     public Accord(String nom, String title,  String valide, String refus, Boolean refusable, String text) {
         this.title = title;

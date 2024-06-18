@@ -55,23 +55,25 @@ public class Adherent {
 
     private Boolean completAdhesion;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "adherent", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Accord> accords = new ArrayList<>();
 
     @ManyToOne
-    @JsonIgnoreProperties({"cours", "accords", "adhesions", "activitesNm1", "tribu",  "documents", "derniereModifs", "derniereVisites"})
+    @JsonIgnoreProperties({"cours", "accords", "adhesions", "activitesNm1", "tribu",  "documents", "derniereModifs", "derniereVisites", "representant"})
     private Adherent representant;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "adherentModif", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Notification> derniereModifs = new ArrayList<>();
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "adherentVisite", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Notification> derniereVisites = new ArrayList<>();
 
     @ManyToOne
+    @JsonIgnoreProperties({"adherents", "autorisations"})
     private Tribu tribu;
 
-    @OneToMany(mappedBy = "adherent", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "adherent")
+    @JsonIgnoreProperties({"paiements", "derniereModifs", "derniereVisites", "surClassement",  "adherent"})
     private Set<Adhesion> adhesions = new HashSet<>();
 
     @OneToMany(mappedBy = "adherent", cascade = CascadeType.ALL, orphanRemoval = true)

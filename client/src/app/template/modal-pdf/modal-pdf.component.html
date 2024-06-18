@@ -7,7 +7,7 @@
 <div class="modal-body modal-fullsize modalFullHeight">
 
   <div *ngIf="isLoaded">
-    <ngx-extended-pdf-viewer [base64Src]="pdfFile.content"></ngx-extended-pdf-viewer>
+    <ngx-extended-pdf-viewer [src]="pdfFile.content"></ngx-extended-pdf-viewer>
   </div>
   <div *ngIf="isFailedPdf">
     <b>

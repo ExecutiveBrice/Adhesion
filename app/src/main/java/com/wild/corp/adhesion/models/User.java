@@ -43,7 +43,7 @@ public class User {
 	@ToString.Exclude
 	private Adherent adherent;
 
-	@OneToMany(mappedBy="user", cascade = CascadeType.ALL)
+	@OneToMany(mappedBy="user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<Notification> notifs = new HashSet<>();
 
 	@OneToMany(mappedBy="user", cascade = CascadeType.ALL)

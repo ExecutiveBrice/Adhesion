@@ -17,6 +17,7 @@ import org.springframework.util.ResourceUtils;
 import java.io.*;
 import java.nio.file.FileSystems;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
@@ -46,22 +47,23 @@ public class PdfService {
 
         cfmPrint.put("titre", List.of("ATTESTATION"));
 
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d/MM/yyyy");
         List<String> corps = new ArrayList<>();
         corps.add("Je soussignée Morgane Maury, présidente de l’Amicale Laïque de l’Ouche Dinier de REZE");
-        corps.add(" atteste que " + (adherent.getGenre().equals("Masculin")?"Monsieur ":"Madame ") + adherent.getPrenom() + " " + adherent.getNom() + " né"+(adherent.getGenre().equals("Masculin")?"":"e")+" le "+ adherent.getNaissance());
+        corps.add(" atteste que " + (adherent.getGenre().equals("Masculin")?"Monsieur ":"Madame ") + adherent.getPrenom() + " " + adherent.getNom() + " né"+(adherent.getGenre().equals("Masculin")?"":"e")+" le "+ formatter.format(adherent.getNaissance()));
         if(adherent.getAdhesions().stream().filter(Adhesion::isValide).toList().size()>1) {
             corps.add("est inscrit"+ (adherent.getGenre().equals("Masculin")?"":"e ")+" aux cours :");
             adherent.getAdhesions().stream().filter(Adhesion::isValide).forEach(adhesion ->
-                    corps.add("- " + adhesion.getActivite().getNom())
+                    corps.add("- " + adhesion.getActivite().getNom() + " " + adhesion.getActivite().getHoraire())
             );
         }else{
-            corps.add("est inscrit"+ (adherent.getGenre().equals("Masculin")?"":"e ")+" au cours de "+ adherent.getAdhesions().stream().findFirst().get().getActivite().getNom());
+            corps.add("est inscrit"+ (adherent.getGenre().equals("Masculin")?"":"e ")+" au cours de "+ adherent.getAdhesions().stream().findFirst().get().getActivite().getNom()+ " " + adherent.getAdhesions().stream().findFirst().get().getActivite().getHoraire());
         }
         corps.add("pour l'année scolaire 2024/2025");
         corps.add("et est à jour de sa cotisation qui s’élève à " + total + "€");
         cfmPrint.put("corps", corps);
 
-        cfmPrint.put("signature", List.of("Fait à Rezé le "+ LocalDate.now()));
+        cfmPrint.put("signature", List.of("Fait à Rezé le "+ formatter.format(LocalDate.now())));
 
 
         byte[] response;
@@ -106,7 +108,6 @@ public class PdfService {
                 .getLocation()
                 .toString();
 
-        System.out.println(baseUrl);
         PdfRendererBuilder builder = new PdfRendererBuilder();
         builder.useDefaultPageSize(210, 297, BaseRendererBuilder.PageSizeUnits.MM);
         // Load SVG support plugin

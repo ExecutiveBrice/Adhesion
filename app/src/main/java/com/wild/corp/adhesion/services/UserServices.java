@@ -6,7 +6,6 @@ import com.wild.corp.adhesion.models.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -29,8 +28,6 @@ public class UserServices {
     @Autowired
     AdherentServices adherentServices;
     @Autowired
-    AccordServices accordServices;
-    @Autowired
     PasswordEncoder encoder;
     @Value("${server.name:localhost:8002}")
     private String serverName;
@@ -49,58 +46,23 @@ public class UserServices {
         return user;
     }
 
-    public void addUserForAll() {
-        List<Adherent> adherents = adherentServices.getAll();
-
-        adherents.forEach(adherent -> {
-            if (adherent.getUser() == null) {
-                addUserToAdherent(adherent);
-            }
-        });
-    }
-
-    public User addUserToAdherent(Adherent adherent) {
-        Random random = new Random();
-        String password = random.toString();
-        User user;
-        String username = adherent.getPrenom() + adherent.getNom();
-        int compteur = 1;
-        while (userRepository.findByUsername(username).isPresent()) {
-            username = adherent.getPrenom() + adherent.getNom() + "_" + compteur;
-            compteur++;
-        }
-
-        user = new User(username, encoder.encode(password));
-        Role userRole = roleRepository.findByName(ERole.ROLE_USER)
-                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-        user.getRoles().add(userRole);
-        user = userRepository.save(user);
-        adherent.setUser(user);
-        adherentServices.save(adherent);
-        return user;
-    }
-
-    public User findById(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UsernameNotFoundException("User Not Found with id: " + userId));
-        return user;
-    }
-
-    public User updateUsername(String newEmail, User user) {
-        user.setUsername(newEmail);
-        userRepository.save(user);
-        return user;
-    }
-
     public Adherent createUserAnonymous(String email) {
         Random random = new Random();
-        //String password = random.toString();
-        String password = "testPass";
-        User user = addNewUser(email.toLowerCase(), encoder.encode(password));
+        String password = random.toString();
+        User user = addNewUser(email.toLowerCase(), password);
         Adherent adherent = adherentServices.newAdherent(null, true);
         adherent.setUser(user);
         adherentServices.save(adherent);
 
+        EmailContent mess = new EmailContent();
+        mess.setDiffusion(user.getUsername());
+        mess.setSubject("Inscription ALOD");
+        mess.setText("Bonjour,<br>" +
+                "Notre secrétariat vous à ajouté manuellement dans notre outil de suivi des adhésions,<br>" +
+                "vous pouvez dors et déjà vous inscrire aux activités de votre choix<br><br>" +
+                "Cordialement,<br>" +
+                "l'équipe de l'ALOD");
+        emailService.sendMessage(mess);
         return adherent;
     }
 
@@ -116,9 +78,9 @@ public class UserServices {
         return user;
     }
 
-    public User addNewUser(String email, String cryptedPassword) {
+    public User addNewUser(String email, String password) {
         // Create new user's account
-        User user = new User(email.toLowerCase(), cryptedPassword);
+        User user = new User(email.toLowerCase(), encoder.encode(password));
         // Create new user's account
         Role userRole = roleRepository.findByName(ERole.ROLE_USER)
                 .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
@@ -159,11 +121,12 @@ public class UserServices {
         UUID uuid = UUID.randomUUID();
         cft.setConfirmationToken(uuid);
         cft.setType("ConfirmationEmail");
-        Email mess = new Email();
+        EmailContent mess = new EmailContent();
         mess.setDiffusion(user.getUsername());
         mess.setSubject("Confirmation Email");
         mess.setText("Bonjour,<br>" +
-                "Ceci est le <a href=https://" + serverName + "/api_adhesion/auth/confirmEmail/" + uuid + ">lien de confirmation de votre adresse mail</a><br>" +
+                "Ceci est le <a href=https://" + serverName + "/api_adhesion/auth/confirmEmail/" + uuid + ">lien de confirmation de votre adresse mail</a><br><br>" +
+                "Vous pouvez dors et déjà vous inscrire aux activités de votre choix<br><br>" +
                 "Cordialement,<br>" +
                 "l'équipe de l'ALOD");
         emailService.sendMessage(mess);
@@ -189,7 +152,7 @@ public class UserServices {
 
         confirmationTokenService.saveConfirmationToken(cft);
 
-        Email mess = new Email();
+        EmailContent mess = new EmailContent();
         mess.setDiffusion(user.getUsername());
         mess.setSubject("Réinitialisation du mot de passe");
         mess.setText("Bonjour,<br>" +
@@ -200,10 +163,9 @@ public class UserServices {
         log.info(mess.getDiffusion());
         emailService.sendMessage(mess);
         return cft;
-
     }
 
-
+//pour les tests en local
     public void changeTestPassword() {
         List<User> users = userRepository.findAll();
         users.forEach(user -> user.setPassword(encoder.encode("testPass")));
@@ -212,17 +174,10 @@ public class UserServices {
 
     public void changePassword(String token, String password) {
         ConfirmationToken confirmationToken = confirmationTokenService.findByToken(token);
-
         final User user = confirmationToken.getUser();
         user.setPassword(encoder.encode(password));
         userRepository.save(user);
-
         confirmationTokenService.deleteConfirmationToken(confirmationToken.getId());
-
-    }
-
-    public void deleteById(Long userId) {
-        userRepository.deleteById(userId);
     }
 
     public List<UserLite> getAllLite() {
@@ -230,17 +185,19 @@ public class UserServices {
     }
 
     private UserLite reduceUser(User user){
+        log.info(user.getId().toString());
         UserLite userLite = new UserLite();
         userLite.setId(user.getId());
-        userLite.setAdherent(user.getAdherent().getPrenom()+" "+user.getAdherent().getNom());
+        if(user.getAdherent() == null){
+            log.error("pas d'adhérent pour ce user :"+user.getId());
+        }else{
+            userLite.setAdherent(user.getAdherent().getPrenom()+" "+user.getAdherent().getNom());
+        }
+
         userLite.setRoles(user.getRoles());
         userLite.setUsername(user.getUsername());
         return userLite;
     }
 
-    public void initAdmin() {
-        User user = createNewUser("admin", encoder.encode("adminPass"));
-        grantUser(ERole.ROLE_ADMIN, user);
 
-    }
 }

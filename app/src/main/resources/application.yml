@@ -18,7 +18,7 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
-logging.level.org.springframework.web: DEBUG
+#logging.level.org.springframework.web: DEBUG
 logging.level.com.wild.corp: INFO
 logging.level.org.hibernate: ERROR
 

@@ -2,9 +2,7 @@ package com.wild.corp.adhesion.services;
 
 import com.mailjet.client.errors.MailjetException;
 import com.wild.corp.adhesion.models.Adhesion;
-import com.wild.corp.adhesion.models.Email;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
+import com.wild.corp.adhesion.models.EmailContent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
@@ -12,11 +10,6 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
-import org.springframework.mail.MailException;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.mailjet.client.MailjetClient;
@@ -28,8 +21,6 @@ import com.mailjet.client.resource.Emailv31;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 
@@ -78,7 +69,7 @@ import java.util.List;
 //            log.debug("send mail " + e);
 //        }
 //    }
-    public void sendMessage(Email mail) {
+    public void sendMessage(EmailContent mail) {
         inProgress = true;
         restant=0;
 
@@ -91,8 +82,8 @@ import java.util.List;
     }
 
     public void sendAutoMail(Adhesion adhesion, String sujetName, String corpsName, boolean attachement){
-        Email mail = new Email();
-        mail.setDiffusion(adhesion.getAdherent().getRepresentant() != null ? adhesion.getAdherent().getRepresentant().getUser().getUsername():adhesion.getAdherent().getUser().getUsername());
+        EmailContent mail = new EmailContent();
+        mail.setDiffusion(Boolean.TRUE.equals(adhesion.getAdherent().getEmailRepresentant()) && adhesion.getAdherent().getRepresentant() != null ? adhesion.getAdherent().getRepresentant().getUser().getUsername():adhesion.getAdherent().getUser().getUsername());
         String sujet = paramTextServices.getParamValue(sujetName);
         sujet = sujet.replaceAll("#activite#",adhesion.getActivite().getNom());
         mail.setSubject(sujet);
@@ -108,7 +99,7 @@ import java.util.List;
 
     @Value("${image-storage-dir}")
     private Path imageStorageDir;
-    public void singleMessage(Email mail, Adhesion adhesion, boolean attachement){
+    public void singleMessage(EmailContent mail, Adhesion adhesion, boolean attachement){
 
         MailjetClient client;
         MailjetRequest request;

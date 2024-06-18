@@ -1,5 +1,6 @@
 package com.wild.corp.adhesion.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 
@@ -28,4 +29,24 @@ public class Notification {
     @ManyToOne
     @JsonIgnoreProperties({"adherent","tokens","notifs" })
     private User user;
+
+    @ManyToOne
+    @JsonIgnore
+    @ToString.Exclude
+    private Adherent adherentModif;
+
+    @ManyToOne
+    @JsonIgnore
+    @ToString.Exclude
+    private Adherent adherentVisite;
+
+    @ManyToOne
+    @JsonIgnore
+    @ToString.Exclude
+    private Adhesion adhesionModif;
+
+    @ManyToOne
+    @JsonIgnore
+    @ToString.Exclude
+    private Adhesion adhesionVisite;
 }

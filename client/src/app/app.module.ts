@@ -90,7 +90,7 @@ import { SimpleFilterPipe } from './_helpers/simpleFilter.pipe';
     ngfModule,
     ToastrModule.forRoot({
       enableHtml: true,
-      timeOut: 5000,
+      timeOut: 10000,
       closeButton:true,
       tapToDismiss:true,
       progressBar: true,

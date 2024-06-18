@@ -3,7 +3,7 @@ import { Accord, Activite, ActiviteDropDown, Adherent, Adhesion, Document, Horai
 
 import { ActiviteService } from '../../_services/activite.service';
 import { AdherentService } from 'src/app/_services/adherent.service';
-import { faCirclePause, faClock, faPiggyBank, faSkull, faFileSignature, faSquareCaretLeft, faSquareCaretDown, faEye, faCircleQuestion, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { faRefresh, faCirclePause, faClock, faPiggyBank, faSkull, faFileSignature, faSquareCaretLeft, faSquareCaretDown, faEye, faCircleQuestion, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { AdhesionService } from 'src/app/_services/adhesion.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -33,6 +33,7 @@ export class UserComponent implements OnInit {
   tribu!: Tribu;
 
   activeModal = inject(NgbActiveModal);
+  faRefresh=faRefresh;
   faClock = faClock;
   faCirclePause = faCirclePause;
   faPiggyBank = faPiggyBank;
@@ -128,20 +129,20 @@ export class UserComponent implements OnInit {
     this.showAdmin = this.tokenStorageService.getUser().roles.includes('ROLE_ADMIN');
     this.showSecretaire = this.tokenStorageService.getUser().roles.includes('ROLE_SECRETAIRE');
 
-    console.log(this.tribu)
-    this.adultes = this.tribu.adherents.filter(adh => adh.mineur == false && adh.id != this.adherent.id);
+
+    this.adultes = this.tribu.adherents.filter(adh => adh.mineur == false && adh.representant == null && adh.id != this.adherent.id);
     this.adherent.user.username = this.adherent.user.username.endsWith('mailfictif.com') ? '' : this.adherent.user.username;
     if (this.isRepresentant) {
       this.adherent.mineur = false;
     }
-    console.log(this.adherent)
+
     console.log(window.innerWidth)
     this.windows_width = window.innerWidth;
     if (window.innerWidth <= 1080) { // 768px portrait
       this.mobile = true;
     }
 
-    this.activiteService.fillObjects(this.activites, this.activitesListe,this.adherent);
+    this.activiteService.fillObjects(this.activites, this.activitesListe, this.adherent);
     this.fillFiles();
   }
 
@@ -149,6 +150,9 @@ export class UserComponent implements OnInit {
 
   chooseAdherent(adherent: Adherent) {
     this.adherent.representant = adherent;
+    this.adherent.emailRepresentant = true;
+    this.adherent.adresseRepresentant = true;
+    this.adherent.telephoneRepresentant = true;
   }
 
   private modalService = inject(NgbModal);
@@ -183,7 +187,7 @@ export class UserComponent implements OnInit {
 
 
   choixActivites(adherent: Adherent) {
-
+console.log(this.activitesListe)
     this.utilService.openModalChoixActivite(this.activitesListe, this.showAdmin, this.showSecretaire).then((data) => {
       console.log(data)
       // on close
@@ -195,43 +199,56 @@ export class UserComponent implements OnInit {
 
   }
 
-  udpadteMineur(adherent:Adherent){
+
+  udpadteMineur(adherent: Adherent) {
     let anneeRef = new Date().getFullYear()
     let anneeAdh = new Date(adherent.naissance).getFullYear()
 
     let age = anneeRef - anneeAdh
-    if(age >= 18){
+    if (age >= 18) {
       adherent.mineur = false
-    }else{
+    } else {
       adherent.mineur = true
     }
   }
 
   onSubmit(adherent: Adherent): void {
+    
     adherent.telephone = this.cleaning(adherent.telephone)
     adherent.user.username = this.cleaning(adherent.user.username)
     this.adherentService.update(adherent).subscribe(
       data => {
+        this.showSuccess("L'adhérent à bien été mis à jour")
         this.adherent = data;
-        console.log(data)
+        this.activites = []
+        this.activitesListe = []
+        this.activiteService.fillObjects(this.activites, this.activitesListe, this.adherent);
         if (this.isRepresentant) {
           this.activeModal.close(data)
         }
       },
       error => {
-        this.isFailed = true;
         console.log(error)
-        this.showError(error.error.message)
+        this.isFailed = true;
+        if (error.status == 409) {
+          this.toastr.error("Cette adresse e-mail est déjà utilisée. Veuillez en choisir une autre", 'Erreur')
+        } else {
+          this.showError(error.error)
+        }
+
+
+
       }
     );
   }
 
 
   choisir(adherent: Adherent, activiteId: number) {
-
     this.adhesionService.add(adherent.id, activiteId).subscribe(
       adhesionBdd => {
+        this.showSuccess("L'adhésion à bien été ajoutée, veuillez valider les accords en enregistrant l'adhésion")
         adherent.adhesions.push(adhesionBdd)
+        this.activitesListe.find(adh => adh.nom == adhesionBdd.activite?.nom)!.horaires.find(hor => hor.id == activiteId)!.dejaInscrit = true
       },
       error => {
         this.isFailed = true;
@@ -246,23 +263,41 @@ export class UserComponent implements OnInit {
   }
 
   isAdherentComplet(adherent: Adherent) {
-    if (adherent.mineur && (adherent.representant != null && ((adherent.emailRepresentant || !adherent.emailRepresentant && adherent.user.username && adherent.user.username.length > 0) &&
+    if (adherent.representant != null && ((adherent.emailRepresentant || !adherent.emailRepresentant && adherent.user.username && adherent.user.username.length > 0) &&
       (adherent.telephoneRepresentant || !adherent.telephoneRepresentant && adherent.telephone && adherent.telephone.length > 0) &&
       (adherent.adresseRepresentant || !adherent.adresseRepresentant && adherent.adresse && adherent.adresse.length > 0))
-    )) {
+    ) {
       return true;
     }
     else if (adherent.user.username && adherent.user.username.length > 0 && adherent.telephone && adherent.telephone.length > 0 && adherent.adresse && adherent.adresse.length > 0) {
       return true;
     }
     return false;
-
   }
 
 
+
+  updateDejaLicencie(adhesion: Adhesion) {
+
+    setTimeout(() => {
+      this.adhesionService.updateDejaLicencie(adhesion.id, adhesion.dejaLicencie!).subscribe(
+        data => {
+          adhesion.statutActuel = data.statutActuel;
+          adhesion.accords = data.accords;
+        },
+        error => {
+          this.isFailed = true;
+          this.showError(error.message)
+        }
+      );
+    }, 100);
+  }
+
   updateAdhesion(adhesion: Adhesion) {
+
     this.adhesionService.validation(adhesion.accords, adhesion.id).subscribe(
       data => {
+        this.showSuccess("L'adhésion à bien été enregistrée, vous pouvez réaliser le paiement")
         adhesion.statutActuel = data.statutActuel;
         adhesion.accords = data.accords;
       },
@@ -271,10 +306,7 @@ export class UserComponent implements OnInit {
         this.showError(error.message)
       }
     );
-  }
 
-  deleteAdhesion(adhesion: Adhesion) {
-    this.newAdhesions = this.newAdhesions.filter(adh => adh.id != adhesion.id)
   }
 
   openAttestationSante() {
@@ -309,7 +341,6 @@ export class UserComponent implements OnInit {
   fillFiles() {
     this.fileService.getAllFilesName(this.adherent.id).subscribe(data => {
       this.adherent.documents = data
-      console.log(data)
     },
       error => {
         this.isFailed = true;
@@ -318,7 +349,6 @@ export class UserComponent implements OnInit {
     );
   }
   openEditModal(doc: string) {
-    console.log(doc)
     this.utilService.openModalPDF(doc, this.adherent.id).then((data) => {
       console.log(data)
       // on close
@@ -339,6 +369,46 @@ export class UserComponent implements OnInit {
     });
   }
 
+  downloadPDF(file: string) {
+    this.fileService.get(this.adherent.id, file).subscribe(res => {
+
+      //window.open("data:application/pdf;base64," + data, '_self');
+      let url = window.URL.createObjectURL(this.b64toBlob(res));
+      let a = document.createElement('a');
+      document.body.appendChild(a);
+      a.setAttribute('style', 'display: none');
+      a.href = url;
+      a.download = file;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+    },
+      error => {
+        console.log('😢 Oh no!', error);
+      });
+
+  }
+
+
+  b64toBlob(b64Data: string, contentType = 'application/pdf', sliceSize = 512): Blob {
+    const byteCharacters = atob(b64Data);
+    const byteArrays = [];
+
+    for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+      const slice = byteCharacters.slice(offset, offset + sliceSize);
+
+      const byteNumbers = new Array(slice.length);
+      for (let i = 0; i < slice.length; i++) {
+        byteNumbers[i] = slice.charCodeAt(i);
+      }
+
+      const byteArray = new Uint8Array(byteNumbers);
+      byteArrays.push(byteArray);
+    }
+
+    const blob = new Blob(byteArrays, { type: contentType });
+    return blob;
+  }
 
   uploadPDF(file: Document) {
 
@@ -382,7 +452,7 @@ export class UserComponent implements OnInit {
 
   suppressionAdhesionModal(adhesion: Adhesion) {
     this.utilService.openModal(
-      "Vous êtes sur le point de supprimer l'adhesion de " + adhesion.adherent.prenom + " au " +
+      "Vous êtes sur le point de supprimer l'adhesion de " + this.adherent.prenom + " au " +
       adhesion.activite?.nom + " " + adhesion.activite?.horaire, "Suppression de l'adhésion", true, true, false, "lg").then((data) => {
         console.log(data)
         this.acceptSupressAdhesion(adhesion);
@@ -394,16 +464,15 @@ export class UserComponent implements OnInit {
   }
 
   acceptSupressAdhesion(adhesion: Adhesion) {
-
     this.adhesionService.deleteAdhesion(adhesion.id).subscribe(
       data => {
         this.adherent.adhesions = this.adherent.adhesions.filter(adh => adh.id != adhesion.id)
+        this.activitesListe.find(adh => adh.nom == adhesion.activite?.nom)!.horaires.find(hor => hor.id == adhesion.activite?.id)!.dejaInscrit = false
         this.showSuccess("Votre demande d'adhésion à bien été supprimée")
       },
       error => {
         this.isFailed = true;
         this.showError(error.message)
-
       }
     )
   }
@@ -494,13 +563,10 @@ export class UserComponent implements OnInit {
     );
   }
 
-  
+
   addSurclassement(adhesion: Adhesion, surClassement: Activite) {
     this.adhesionService.saveSurclassement(adhesion.id, surClassement.id).subscribe(
       data => {
-        console.log(adhesion)
-        console.log(surClassement)
-        console.log(data)
         adhesion.surClassement = data.surClassement;
       },
       error => {
@@ -520,5 +586,21 @@ export class UserComponent implements OnInit {
         this.showError(error.message)
       }
     );
+  }
+
+
+  regenerate(adherent:Adherent){
+    this.adherentService.regenerate(adherent.id).subscribe({
+      next: (response) => {
+        console.log(response)
+
+        this.showSuccess("La régénération de l'attestation de l'adhérent est terminée")
+      },
+      error: (error) => {
+        console.log(error)
+        this.showError(error.error.message)
+      }
+    });
+
   }
 }

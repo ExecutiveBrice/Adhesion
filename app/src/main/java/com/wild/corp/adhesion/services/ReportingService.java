@@ -66,18 +66,16 @@ public class ReportingService {
     }
 
     public Long getInitnbByDate(LocalDate jourJ){
-     return adhesionServices.getAll().stream().filter(adh -> adh.isEnCours()  && !adh.getValidPaiementSecretariat() && adh.getDateAjoutPanier().isBefore(jourJ.plusDays(1))).count();
+     return adhesionServices.getAll().stream().filter(adh -> adh.getDateAjoutPanier().isBefore(jourJ.plusDays(1))).count();
     }
 
     public Long getPayenbByDate(LocalDate jourJ){
-        return adhesionServices.getAll().stream().filter(adh -> adh.isEnCours()  && adh.getValidPaiementSecretariat() && adh.getDateAjoutPanier().isBefore(jourJ.plusDays(1))).count();
+        return adhesionServices.getAll().stream().filter(adh -> adh.getValidPaiementSecretariat() && adh.getDateAjoutPanier().isBefore(jourJ.plusDays(1))).count();
     }
-
 
     public Long getVnbByDate(LocalDate jourJ){
         return adhesionServices.getAll().stream().filter(adh -> adh.isValide() && adh.getDateChangementStatut().isBefore(jourJ.plusDays(1))).count();
     }
-
 
     public List<ReportingActivite> getAllActiviteGeneral(){
         Map<String, List<Activite>> activieFiltre = activiteServices.getAll().stream().filter(activite -> activite.getGroupe().equals("ALOD_G"))
@@ -116,8 +114,6 @@ public class ReportingService {
     private Long getByInitieeNonPayee(Activite activite){
         return activite.getAdhesions().stream().filter(adh -> adh.isEnCours() && !adh.getValidPaiementSecretariat()).count();
     }
-
-
 
     private Long getCotisationByStatut(Activite activite){
         activite.setMontantCollecte(0L);

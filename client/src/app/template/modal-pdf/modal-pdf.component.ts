@@ -65,14 +65,7 @@ export class ModalPDFComponent {
 
   getFile() {
     console.log(this.documentName)
-    this.fileService.get(this.adherentId, this.documentName).subscribe(data => {
-      console.log(data)
-      this.isLoaded = true;
-      this.pdfFile.content = data
-    },
-      error => {
-        console.log('😢 Oh no!', error);
-      });
+
   }
 
 

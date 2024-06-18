@@ -51,13 +51,13 @@ public class Adhesion {
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Paiement> paiements = new ArrayList<>();
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "adhesionModif", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Notification> derniereModifs = new ArrayList<>();
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "adhesionVisite", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Notification> derniereVisites = new ArrayList<>();
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "adhesion", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Accord> accords = new ArrayList<>();
 
     @ManyToOne
@@ -69,7 +69,7 @@ public class Adhesion {
     private Activite surClassement;
 
     @ManyToOne
-    @JsonIgnoreProperties({"cours", "accords", "adhesions", "activitesNm1", "user", "tribu", "derniereModifs", "derniereVisites"})
+    @JsonIgnoreProperties({"cours", "accords", "adhesions", "activitesNm1"})
     @ToString.Exclude
     private Adherent adherent;
 
@@ -78,12 +78,12 @@ public class Adhesion {
     private static final List<String> list_attente = List.of(Status.LISTE_ATTENTE.label);
 
     public boolean isValide(){
-        return list_valid.contains(getStatutActuel());
+        return list_valid.contains(this.statutActuel);
     }
     public boolean isEnAttente(){
-        return list_attente.contains(getStatutActuel());
+        return list_attente.contains(this.statutActuel);
     }
     public boolean isEnCours(){
-        return list_encours.contains(getStatutActuel());
+        return list_encours.contains(this.statutActuel);
     }
 }

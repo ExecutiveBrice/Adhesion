@@ -25,10 +25,6 @@ export class ActiviteService {
     return this.http.post<Activite>(API_URL + 'save', activite, { responseType: 'json' });
   }
 
-
-
-
-
   fillObjects(activites: Activite[], activitesListe: ActiviteDropDown[], adherent?: Adherent) {
     let age =0
     if (adherent != undefined){
@@ -39,7 +35,6 @@ export class ActiviteService {
 
     this.getAll().subscribe(
       data => {
-        console.log(data)
 
         data.forEach(act => {
           activites.push(act)

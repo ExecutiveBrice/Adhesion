@@ -1,38 +1,3 @@
-<div *ngIf="isFailed" class="card card-container">
-  {{errorMessage}}
-</div>
-
-<ng-template #editProfileModal let-c="close" let-d="dismiss">
-  <div class="modal-header">
-    <h4 class="modal-title" id="modal-basic-title">Changement de groupe</h4>
-    <button type="button" class="btn-close" aria-label="Close" (click)="dismiss()"></button>
-  </div>
-  <div class="modal-body">
-    Vous souhaitez que l'{{selectedAdherent.genre=="Masculin"?"adhérent":"adhérente"}} {{selectedAdherent.prenom}}
-    {{selectedAdherent.nom}} soit {{selectedAdherent.genre=="Masculin"?"associé":"associée"}} au groupe de :
-    {{referentAdherent.prenom}} {{referentAdherent.nom}}
-    <form name="form" (ngSubmit)="f.form.valid && onSubmitChangeTribu()" #f="ngForm" novalidate>
-      <div class="form-group">
-        <div ngbDropdown class="d-inline-block col-md-12 ">
-          <button type="button" class="btn btn-block btn-primary" id="dropdownBasic1" ngbDropdownToggle>
-            Changer de groupe
-          </button>
-          <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-            <div ngbDropdownItem *ngFor="let adherent of adherentsReferent | orderBy:'nom':false"
-              (click)="referentAdherent=adherent">{{adherent.nom}} {{adherent.prenom}}</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button type="submit" class="btn btn-primary">Effectuer ce changement</button>
-      </div>
-
-    </form>
-  </div>
-</ng-template>
-
-
 <ng-template #newAdherentModal let-c="close" let-d="dismiss">
   <div class="modal-header">
     <h4 class="modal-title" id="modal-basic-title">Ajouter un nouvel adherent</h4>
@@ -49,21 +14,23 @@
 
 
 
-        Choissez une ou plusieurs activités dans les listes ci-après pour permettre à cet adhérent ou à un membre de sa famille de se <b>réinscrire</b> à une activité
+        Choissez une ou plusieurs activités dans les listes ci-après pour permettre à cet adhérent ou à un membre de sa
+        famille de se <b>réinscrire</b> à une activité
 
-      <div ngbDropdown class="d-inline-block">
-        <button type="button" class="btn btn-primary" id="dropdownBasic1" ngbDropdownToggle>
-          Activités pour {{type}}
-        </button>
-        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-          <div ngbDropdownItem (click)="type = 'Majeur'">Majeur</div>
-          <div ngbDropdownItem (click)="type = 'Mineur'">Mineur</div>
+        <div ngbDropdown class="d-inline-block">
+          <button type="button" class="btn btn-primary" id="dropdownBasic1" ngbDropdownToggle>
+            Activités pour {{type}}
+          </button>
+          <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+            <div ngbDropdownItem (click)="type = 'Majeur'">Majeur</div>
+            <div ngbDropdownItem (click)="type = 'Mineur'">Mineur</div>
+          </div>
         </div>
-      </div>
 
         <label for="email"><u>Liste des activités</u></label>
         <div *ngIf="activitesListe.length > 0">
-          <div *ngFor="let activite of activitesListe | orderBy:'nom':false"  class="ligne pointer" (click)="activite.selected = !activite.selected">
+          <div *ngFor="let activite of activitesListe | orderBy:'nom':false" class="ligne pointer"
+            (click)="activite.selected = !activite.selected">
             <b>{{activite.nom}}</b>
             <fa-icon *ngIf="activite.selected" class="green fa-xl" [icon]="faCircleCheck"></fa-icon>
           </div>
@@ -104,17 +71,7 @@
         (click)="removeFiltre('mineur')">Majeur</div>
 
     </div>
-    <div class="btn-group btn-group-sm col-6" role="group">
-      <div type='button' *ngIf="filtres.get('referent')!=true" class="btn btn-block btn-secondary"
-        (click)="addFiltre('referent', true)">Référent</div>
-      <div type='button' *ngIf="filtres.get('referent')==true" class="btn btn-block btn-danger"
-        (click)="removeFiltre('referent')">Référent</div>
 
-      <div type='button' *ngIf="filtres.get('referent')!=false" class="btn btn-block btn-secondary"
-        (click)="addFiltre('referent', false)">Pas référent</div>
-      <div type='button' *ngIf="filtres.get('referent')==false" class="btn btn-block btn-danger"
-        (click)="removeFiltre('referent')">Pas référent</div>
-    </div>
 
   </div>
 </div>
@@ -127,8 +84,7 @@
         <tr>
           <th class="center col-1" scope="col">Edit</th>
           <th class="center col-2" scope="col">
-            <input class="form-control xs" type="text" name="search" [(ngModel)]="search"
-              (ngModelChange)="addSearch(search)" placeholder="Nom Prénom" />
+            Adhérent
           </th>
 
           <th class="center col-1" scope="col">Telephone</th>
@@ -138,32 +94,26 @@
           <th class="center col-2" scope="col">Activitées</th>
         </tr>
       </thead>
-      <tbody>
+      <div *ngIf="loadder" class="spinner-border text-info"></div>
+      <tbody *ngIf="!loadder">
         <tr *ngFor="let adherent of adherents  | orderBy:'nomPrenom':false">
-
           <td class="center">
-            <fa-icon class="fa-2xl pointer" (click)="opennewTab('#/inscription/'+adherent.tribuId)" [icon]="faUsersRays"></fa-icon>
-
+            <fa-icon class="fa-2xl pointer" (click)="opennewTab('#/inscription/'+adherent.tribu.uuid)" [icon]="faUsersRays"></fa-icon>
           </td>
-
           <td>
             {{adherent.nom}} {{adherent.prenom}}<br />
-            {{adherent.email}}
-          </td>
-
-
-          <td>
-            {{adherent.telephone}}
+            {{adherent.emailRepresentant && adherent.representant != undefined?adherent.representant.user.username:adherent.user.username}}
           </td>
           <td>
-            {{adherent.adresseReferent? adherent.adresse:""}}
+            {{adherent.telephoneRepresentant && adherent.representant != undefined?adherent.representant.telephone:adherent.telephone}}
+          </td>
+          <td>
+            {{adherent.adresseRepresentant && adherent.representant != undefined?adherent.representant.adresse:adherent.adresse}}
           </td>
           <td>
             {{adherent.naissance}}<br />
             {{adherent.lieuNaissance}}
           </td>
-
-
           <td>
             <div *ngFor="let accord of adherent.accords | orderBy:'id':false ">
               {{accord.nom}}
@@ -173,8 +123,11 @@
           </td>
 
           <td>
+            <div *ngFor="let adhesion of adherent.adhesions | orderBy:'id':false ">
+              {{adhesion.activite.nom}} {{adhesion.activite.horaire}}<br/>
 
-            {{adherent.activites}}
+            </div>
+
 
           </td>
         </tr>
@@ -184,10 +137,3 @@
   </div>
 
 </div>
-
-
-
-
-
-
-

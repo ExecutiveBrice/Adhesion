@@ -31,7 +31,7 @@ public class Config {
     ParamNumberServices paramNumberServices;
     @Autowired
     EmailService emailService;
-    @Scheduled(cron = "* * 1 * * ?", zone = "Europe/Paris")
+    @Scheduled(cron = "0 0 1 * * ?", zone = "Europe/Paris")
     public void tachesJournalieres() {
         log.info("tachesJournalieres");
         if(paramBooleanServices.findByParamValue("Mail_Annulation")) {
@@ -58,7 +58,7 @@ public class Config {
 
             emailService.sendAutoMail(adhesion, "Sujet_Mail_Rappel", "Corp_Mail_Rappel", false);
             adhesion.setRappel(true);
-            adhesion.setRemarqueSecretariat(adhesion.getRemarqueSecretariat()+" mail de rappel auto fait le "+LocalDate.now());
+            adhesion.setRemarqueSecretariat((adhesion.getRemarqueSecretariat() != null?adhesion.getRemarqueSecretariat():"")+" mail de rappel auto fait le "+LocalDate.now());
             adhesionServices.saveUnique(adhesion);
         });
     }
@@ -67,7 +67,7 @@ public class Config {
     private void annulation(){
 
         LocalDate dta = LocalDate.now().minus(paramNumberServices.findByParamValue("Jours_Avant_Annulation"), ChronoUnit.DAYS);
-        System.out.println(dta);
+
         adhesionServices.getAll().stream().filter(adhesion ->
                 ( Status.ATTENTE_ADHERENT.label.equals(adhesion.getStatutActuel()) ||  Status.ATTENTE_SECRETARIAT.label.equals(adhesion.getStatutActuel())) &&
                         adhesion.getDateAjoutPanier().atStartOfDay().isBefore(dta.atStartOfDay()) &&
@@ -78,7 +78,7 @@ public class Config {
 
 
             adhesionServices.choisirStatut(adhesion.getId(), Status.ANNULEE.label);
-
+            adhesion.setRemarqueSecretariat((adhesion.getRemarqueSecretariat() != null?adhesion.getRemarqueSecretariat():"")+" anulation auto faite le "+LocalDate.now());
             List<Adhesion> adhesions = adhesion.getActivite().getAdhesions().stream().map(adh -> ( Status.ATTENTE_ADHERENT.label.equals(adh.getStatutActuel()) ||  Status.ATTENTE_SECRETARIAT.label.equals(adh.getStatutActuel()) ||  Status.VALIDEE.label.equals(adh.getStatutActuel()))?adh:null).toList();
             List<Adhesion> adhesionsAttente = adhesion.getActivite().getAdhesions().stream().filter(adh ->  Status.LISTE_ATTENTE.label.equals(adh.getStatutActuel())).sorted((adh, t1) -> adh.getPosition()).toList();
 

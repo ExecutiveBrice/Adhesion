@@ -70,11 +70,11 @@ public class Activite {
     @Transient
     private Long nbAdhesionsAttente;
 
-    @OneToMany(mappedBy="activite",fetch = FetchType.EAGER,  cascade = CascadeType.ALL)
+    @OneToMany(mappedBy="activite")
     @JsonIgnore
     private Set<Adhesion> adhesions = new HashSet<>();
 
-    @OneToMany(mappedBy = "surClassement",fetch = FetchType.EAGER,  cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "surClassement")
     @JsonIgnore
     private Set<Adhesion> sousClassement = new HashSet<>();
 

@@ -51,7 +51,7 @@ export class BoardUserComponent implements OnInit {
   activitesMajeur: ActiviteDropDown[] = [];
   activitesMineur: ActiviteDropDown[] = [];
   newAdhesions: Adhesion[] = [];
-  adhesions: Adhesion[] = [];
+
   tribu: Tribu = new Tribu;
   helloassoAlod: boolean = false;
   helloassoAlod3X: boolean = false;
@@ -91,7 +91,7 @@ export class BoardUserComponent implements OnInit {
     private datePipe: DatePipe) { }
 
   showSuccess(message: string) {
-    this.toastr.success(message, 'Information');
+    this.toastr.info(message, 'Information');
   }
   showSecretariat() {
     this.toastr.warning("Le secrétariat validera votre dossier lorsqu'il sera complet", "Secrétariat");
@@ -169,7 +169,7 @@ export class BoardUserComponent implements OnInit {
   }
 
   supprimable(adherent:Adherent):boolean{
-    if (this.showAdmin || this.showSecretaire){
+    if (this.showAdmin ){
       return true
     }
     if (this.tribu.adherents.length == 1){
@@ -189,15 +189,13 @@ export class BoardUserComponent implements OnInit {
   }
 
   getTribu() {
-    this.adhesions = []
+
     if (this.showSecretaire && this.tribuUuid) {
       this.tribuService.getTribuByUuid(this.tribuUuid).subscribe(
         data => {
           console.log(data)
           this.tribu = data
-          this.tribu.adherents.forEach(adh => {
-            adh.adhesions.forEach(adhesion => this.adhesions.push(adhesion))
-          });
+
           this.calculRestantDu()
         },
         error => {
@@ -210,9 +208,7 @@ export class BoardUserComponent implements OnInit {
         data => {
           console.log(data)
           this.tribu = data
-          this.tribu.adherents.forEach(adh => {
-            adh.adhesions.forEach(adhesion => this.adhesions.push(adhesion))
-          });
+
           this.calculRestantDu()
         },
         error => {
@@ -222,29 +218,27 @@ export class BoardUserComponent implements OnInit {
       );
     }
   }
+// 4ec4076ae13f41a38c78f6c15e67cc96@developer.sumup.com
 
-  adhesionsACompleter: number = 0
-  calculCompletudeAdhesion() {
-    this.adhesionsACompleter = 0;
-    this.adhesionsACompleter += this.adhesions.filter(adh => adh.statutActuel == 'Attente validation adhérent').length
-    if (this.adhesionsACompleter > 0) {
-      this.showSecretariat()
-      this.adhesionsOpen = true
-    } else {
-      this.adhesionsOpen = false
-    }
-  }
+//vjcskSV3KDdhbbWEjvNJ
+
 
   adhesionPaiement: Adhesion[] = []
   calculRestantDu() {
     this.totalRestantDu = 0
     this.adhesionPaiement = []
 
-    this.adhesions.forEach(adh => {
-      if (!adh.validPaiementSecretariat && adh.statutActuel != 'Annulée' && adh.statutActuel != 'Liste d\'attente' && adh.statutActuel != 'Attente validation adhérent') {
-        this.totalRestantDu = this.totalRestantDu + adh.tarif;
-        this.adhesionPaiement.push(adh)
+    this.tribu.adherents.forEach(adher => {
+      adher.adhesions.forEach(adhes => {
+      if (!adhes.validPaiementSecretariat && adhes.statutActuel != 'Annulée' && adhes.statutActuel != 'Liste d\'attente' && adhes.statutActuel != 'Attente validation adhérent') {
+        this.totalRestantDu = this.totalRestantDu + adhes.tarif;
+
+        adhes.adherent = new Adherent()
+        adhes.adherent.prenom = adher.prenom
+        
+        this.adhesionPaiement.push(adhes)
       }
+    })
     })
     if (this.totalRestantDu > 0) {
       this.PaiementsOpen = true

@@ -13,6 +13,7 @@ import { FilterAdhesionByPipe } from 'src/app/_helpers/filterAdhesion.pipe';
 import { ActiviteService } from 'src/app/_services/activite.service';
 import { ActivitesNm1 } from 'src/app/models/activitesNm1';
 import { TribuService } from 'src/app/_services/tribu.service';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-adherents',
@@ -30,14 +31,14 @@ export class AdherentsComponent implements OnInit {
   faSkull = faSkull;
   faEnvelope = faEnvelope;
   faPencilSquare = faPencilSquare;
-  adherents: AdherentLite[] = [];
-  cloned: AdherentLite[] = [];
-  adherentsReferent: AdherentLite[] = [];
-  isFailed: boolean = false;
+  adherents: Adherent[] = [];
+  cloned: Adherent[] = [];
+
+  loadder:boolean=true
   errorMessage = '';
   ordre: string = 'nom';
   search: string = "";
-  type:string = 'Mineur';
+  type: string = 'Mineur';
   sens: boolean = false;
   showAdmin: boolean = false;
   showSecretaire: boolean = false;
@@ -46,6 +47,7 @@ export class AdherentsComponent implements OnInit {
   activitesListe: ActiviteDropDown[] = [];
   activites: Activite[] = []
   constructor(
+    private toastr: ToastrService,
     public activiteService: ActiviteService,
     public tribuService: TribuService,
     private filterByPipe: FilterAdhesionByPipe,
@@ -57,6 +59,15 @@ export class AdherentsComponent implements OnInit {
     public paramService: ParamService,
     public router: Router) { }
 
+
+  showError(message: string) {
+    this.toastr.error("Une erreur est survenue, recharger la page et recommencez. si le problème persiste contactez l'administrateur<br />" + message, 'Erreur');
+  }
+
+  showSuccess(message: string) {
+    this.toastr.info(message, 'Information');
+  }
+
   ngOnInit(): void {
     if (this.tokenStorageService.getUser().roles) {
       this.showAdmin = this.tokenStorageService.getUser().roles.includes('ROLE_ADMIN');
@@ -64,17 +75,21 @@ export class AdherentsComponent implements OnInit {
     } else {
       this.router.navigate(['login']);
     }
-    this.adherentService.getAllLite().subscribe(
-      data => {
+    this.adherentService.getAllLite().subscribe({
+      next: (data) => {
+        console.log(data)
         this.cloned = data.map(x => Object.assign({}, x));
-        this.adherentsReferent = data.filter(a => a.referent)
+        this.cloned.forEach(adh => adh.nomPrenom = adh.nom+adh.prenom)
         this.filtrage()
-      },
-      err => {
-        this.isFailed = true;
-        this.errorMessage = err.message
-      })
+        this.loadder=false
 
+
+      },
+      error: (error) => {
+        console.log(error)
+        this.showError(error.error.message)
+      }
+    })
     this.activiteService.fillObjects(this.activites, this.activitesListe, undefined);
   }
 
@@ -94,24 +109,19 @@ export class AdherentsComponent implements OnInit {
 
 
   removeFiltre(nomFiltre: string) {
-
     if (this.filtres.has(nomFiltre)) {
       this.filtres.delete(nomFiltre)
     }
-
     this.filtrage()
   }
 
   addFiltre(nomFiltre: string, valeurFiltre: any) {
-
     if (this.filtres.has(nomFiltre)) {
       this.filtres.delete(nomFiltre)
     }
     if (valeurFiltre.length != 0) {
       this.filtres.set(nomFiltre, valeurFiltre);
-
     }
-
     this.filtrage()
   }
 
@@ -125,49 +135,18 @@ export class AdherentsComponent implements OnInit {
       centered: true,
       backdrop: 'static'
     });
-
-  }
-
-  selectedAdherent: AdherentLite = new AdherentLite()
-  openModal(targetModal: any, adherent: AdherentLite) {
-    this.modalService.open(targetModal, {
-      centered: true,
-      backdrop: 'static'
-    });
-    this.selectedAdherent = adherent;
-
   }
 
   dismiss() {
     this.modalService.dismissAll();
-
-  }
-
-
-  referentAdherent: AdherentLite = new AdherentLite()
-  onSubmitChangeTribu() {
-    this.modalService.dismissAll();
-
-
-    this.adherentService.changeTribu(this.referentAdherent.id, this.selectedAdherent.id).subscribe(
-      data => {
-
-        this.selectedAdherent = data
-      },
-      err => {
-        this.isFailed = true;
-        this.errorMessage = err.message
-
-      }
-    );
   }
 
 
   onSubmitAddUser(email: string) {
     this.modalService.dismissAll();
 
-    this.authService.registerAnonymous(email).subscribe(
-      adherent => {
+    this.authService.registerAnonymous(email).subscribe({
+      next: (adherent) => {
 
         let activitesNm1: ActivitesNm1[] = []
         this.activitesListe.forEach(activiteMineur => {
@@ -175,12 +154,12 @@ export class AdherentsComponent implements OnInit {
             let activiteNm1 = new ActivitesNm1();
             activiteNm1.nom = activiteMineur.nom
             activiteNm1.horaire = this.type
-            activiteNm1.tribu=adherent.tribu
+            activiteNm1.tribu = adherent.tribu
             activitesNm1.push(activiteNm1)
           }
         })
 
-
+        this.showSuccess("L'adhérent " + adherent.user.username + " à bien été créé")
         this.tribuService.addActivitesNm1(adherent.tribu.uuid, activitesNm1).subscribe({
           next: (response) => {
             console.log(response)
@@ -189,16 +168,18 @@ export class AdherentsComponent implements OnInit {
           },
           error: (error) => {
             console.log(error)
+            this.showError(error.error.message)
           }
         });
 
 
       },
-      err => {
-        this.isFailed = true;
-        this.errorMessage = err.message
+      error: (error) => {
+        if (error.s)
+          console.log(error)
+        this.showError(error.error.message)
       }
-    );
+    });
 
   }
 
@@ -206,52 +187,8 @@ export class AdherentsComponent implements OnInit {
     window.open(page, '_blank');
   }
 
-  acceptSupress(adherent: AdherentLite) {
-    this.modalService.dismissAll();
-    this.adherentService.deleteAdherent(adherent.id).subscribe(
-      data => {
-        this.adherents = this.adherents.filter(adh => adh.id != adherent.id)
-      },
-      err => {
-        this.isFailed = true;
-        this.errorMessage = err.message
 
-      }
-    )
-  }
 
-  dismissSupress() {
-    this.modalService.dismissAll();
 
-  }
-
-  ajoutAccord(adherent: AdherentLite, nomAccord: string) {
-    this.adherentService.addAccord(adherent.id, nomAccord).subscribe(
-      data => {
-
-        adherent.accords = data;
-      },
-      err => {
-        this.isFailed = true;
-        this.errorMessage = err.message
-
-      }
-    );
-
-  }
-
-  retraitAccord(adherent: AdherentLite, nomAccord: string) {
-    this.adherentService.removeAccord(adherent.id, nomAccord).subscribe(
-      data => {
-
-        adherent.accords = data;
-      },
-      err => {
-        this.isFailed = true;
-        this.errorMessage = err.message
-
-      }
-    );
-  }
 
 }

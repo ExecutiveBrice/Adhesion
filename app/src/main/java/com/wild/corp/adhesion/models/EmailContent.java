@@ -8,7 +8,7 @@ import lombok.*;
 @ToString
 @RequiredArgsConstructor
 @EqualsAndHashCode
-public class Email {
+public class EmailContent {
 
     private String diffusion;
     private String subject;

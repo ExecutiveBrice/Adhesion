@@ -8,8 +8,8 @@
 
     <div class="row" (click)="activite.open = !activite.open">
       <div class="col-10" id="header">
-        <h4>{{activite.nom}} {{activite.horaire}}</h4>
-      </div>
+        <h4>{{activite.nom}} {{activite.horaire}} ({{activite.adherents.length}})</h4>
+      </div>  
 
       <div class="col-2" id="icon">
         <fa-icon *ngIf="!activite.open" class="pointer green fa-2xl" [icon]="faSquareCaretLeft"
@@ -28,8 +28,9 @@
           <div>
             <b>{{adherent.nom}} {{adherent.prenom}}</b><br />
             {{adherent.naissance | date:'yyyy'}}<br />
-            {{adherent.email}}<br />
-            {{adherent.telephone}}
+            {{adherent.emailRepresentant?adherent.representant.email:adherent.email}}<br />
+            {{adherent.telephoneRepresentant?adherent.representant.telephone:adherent.telephone}}
+
           </div>
         </div>
 
@@ -52,7 +53,7 @@
 
         </div>
         <div class="col-12" *ngIf="adherent.mineur">
-          <b>Référent :</b>{{adherent.nomLegal}} {{adherent.prenomLegal}} {{adherent.telLegal}}
+          <b>Référent :</b>{{adherent.representant?adherent.representant.prenom:''}} {{adherent.representant?adherent.representant.nom:''}}
         </div>
       </div>
     </div>
@@ -61,7 +62,7 @@
       <thead>
         <tr>
           <th class="center pointer" scope="col" (click)="ordre='nom'; sens = !sens">Nom</th>
-          <th class="center pointer" scope="col" (click)="ordre='email'; sens = !sens">contact</th>
+          <th class="center pointer" scope="col" (click)="ordre='email'; sens = !sens">Contact</th>
           <th class="center pointer" scope="col" (click)="ordre='telephone'; sens = !sens">Référent</th>
           <th class="center pointer" scope="col" (click)="ordre='telephone'; sens = !sens">Secrétariat</th>
           <th class="center pointer" scope="col" (click)="ordre='telephone'; sens = !sens">Accords</th>
@@ -77,13 +78,11 @@
             {{adherent.naissance | date:'yyyy'}}
           </td>
           <td>
-            {{adherent.email}}<br />
-            {{adherent.telephone}}
+            {{adherent.emailRepresentant?adherent.representant.email:adherent.email}}<br />
+            {{adherent.telephoneRepresentant?adherent.representant.telephone:adherent.telephone}}
           </td>
           <td>
-            {{adherent.prenomLegal}}
-            {{adherent.nomLegal}} <br />
-            {{adherent.telLegal}}
+            {{adherent.representant?adherent.representant.prenom:''}} {{adherent.representant?adherent.representant.nom:''}}
           </td>
           <td>
             {{adherent.commentaire}}

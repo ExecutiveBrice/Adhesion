@@ -99,12 +99,18 @@ public class ParamTextServices {
         if(!paramTextRepository.existsByParamName(VIE_CLUB)) {
             paramTextRepository.save(ParamText.builder()
                     .paramName(VIE_CLUB)
-                    .paramValue("J'accepte également de participer,<br />" +
-                            "dans la limite de mes possibilités et de manière collective,<br />" +
-                            "aux déplacements de l'équipe,<br />" +
-                            "aux responsabilités d'arbitre ou de marqueur/chronométreur<br />" +
-                            "et de tenir le bar à tour de rôle<br />" +
-                            "pendant les matchs de mon enfant ou de mon équipe.<br />").build());
+                    .paramValue("<strong>Le Basketball est un sport collectif. Il est, par conséquent, indispensable d'avoir un bon esprit d'équipe :<br />" +
+                            "Je joue, j’encourage, je respecte</strong><br /><br />" +
+
+                            "1-Ponctualité<br />" +
+                            "2-Représentation, Politesse et Respect<br />" +
+                            "3-Supporter, et ne pas être insupportable !<br />" +
+                            "4-Organisation<br />" +
+                            "5-Investissement sportif<br />" +
+                            "6-Participer à la vie du club<br />" +
+                            "7-Objets personnels<br /><br />" +
+                            "Tous ensemble, partageons notre passion pour une saison inoubliable !<br />" +
+                            "<a href=\"https://alod.fr/wp-content/uploads/2024/06/ALOD-Basket-Charte-saison-2024-2025-v1.0.pdf\" target=\"_blank\">Charte de l'ALOD Basket</a><br>").build());
         }
 
         if(!paramTextRepository.existsByParamName(AUTORISATION_PARENTALE)) {

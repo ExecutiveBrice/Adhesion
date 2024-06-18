@@ -81,7 +81,7 @@ public class AuthController {
 					.body(new MessageResponse("Erreur: cet e-mail est déjà utilisé"));
 		}
 		userServices.createNewUser(signUpRequest.getUsername(),
-				encoder.encode(signUpRequest.getPassword()));
+				signUpRequest.getPassword());
 		return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
 	}
 

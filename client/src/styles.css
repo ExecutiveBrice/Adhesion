@@ -154,6 +154,12 @@ tr:hover {
   background-color: rgba(188, 219, 205, 255)!important;
 }
 
+.spinner-border{
+
+margin-left: 50vw;
+margin-top: 100px;
+}
+
 .dropdown-menu { max-height: 300px; overflow-y: auto; min-width: 100% !important; background-attachment: local, local, scroll, scroll; }
 
 .modalFullHeight{
