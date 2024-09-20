@@ -18,7 +18,7 @@ export class Adhesion {
   remarqueSecretariat!: String;
   inscrit!: boolean;
   flag!: boolean;
-  
+  majoration!: boolean;
   dejaLicencie?: boolean;
   validPaiementSecretariat!: boolean;
   validDocumentSecretariat!: boolean;

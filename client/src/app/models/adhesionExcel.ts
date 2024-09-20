@@ -5,7 +5,7 @@ export class AdhesionExcel {
     nomAdherent!:  string 
     prenomAdherent!:  string 
     emailAdherent!:  string 
-
+    telephone!: string;
     statutActuel!: String;
 
     dateReglement1!: String;

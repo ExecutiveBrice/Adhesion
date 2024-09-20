@@ -33,7 +33,7 @@ export class UserComponent implements OnInit {
   tribu!: Tribu;
 
   activeModal = inject(NgbActiveModal);
-  faRefresh=faRefresh;
+  faRefresh = faRefresh;
   faClock = faClock;
   faCirclePause = faCirclePause;
   faPiggyBank = faPiggyBank;
@@ -187,7 +187,7 @@ export class UserComponent implements OnInit {
 
 
   choixActivites(adherent: Adherent) {
-console.log(this.activitesListe)
+    console.log(this.activitesListe)
     this.utilService.openModalChoixActivite(this.activitesListe, this.showAdmin, this.showSecretaire).then((data) => {
       console.log(data)
       // on close
@@ -213,33 +213,37 @@ console.log(this.activitesListe)
   }
 
   onSubmit(adherent: Adherent): void {
-    
-    adherent.telephone = this.cleaning(adherent.telephone)
-    adherent.user.username = this.cleaning(adherent.user.username)
-    this.adherentService.update(adherent).subscribe(
-      data => {
-        this.showSuccess("L'adhérent à bien été mis à jour")
-        this.adherent = data;
-        this.activites = []
-        this.activitesListe = []
-        this.activiteService.fillObjects(this.activites, this.activitesListe, this.adherent);
-        if (this.isRepresentant) {
-          this.activeModal.close(data)
+
+    if (adherent.mineur && !adherent.representant) {
+      this.toastr.error("L'adhérent mineur doit avoir un représentant majeur", 'Erreur')
+    } else {
+      adherent.telephone = this.cleaning(adherent.telephone)
+      adherent.user.username = this.cleaning(adherent.user.username)
+      this.adherentService.update(adherent).subscribe(
+        data => {
+          this.showSuccess("L'adhérent à bien été mis à jour")
+          this.adherent = data;
+          this.activites = []
+          this.activitesListe = []
+          this.activiteService.fillObjects(this.activites, this.activitesListe, this.adherent);
+          if (this.isRepresentant) {
+            this.activeModal.close(data)
+          }
+        },
+        error => {
+          console.log(error)
+          this.isFailed = true;
+          if (error.status == 409) {
+            this.toastr.error("Cette adresse e-mail est déjà utilisée. Veuillez en choisir une autre", 'Erreur')
+          } else {
+            this.showError(error.error)
+          }
+
+
+
         }
-      },
-      error => {
-        console.log(error)
-        this.isFailed = true;
-        if (error.status == 409) {
-          this.toastr.error("Cette adresse e-mail est déjà utilisée. Veuillez en choisir une autre", 'Erreur')
-        } else {
-          this.showError(error.error)
-        }
-
-
-
-      }
-    );
+      );
+    }
   }
 
 
@@ -589,7 +593,7 @@ console.log(this.activitesListe)
   }
 
 
-  regenerate(adherent:Adherent){
+  regenerate(adherent: Adherent) {
     this.adherentService.regenerate(adherent.id).subscribe({
       next: (response) => {
         console.log(response)

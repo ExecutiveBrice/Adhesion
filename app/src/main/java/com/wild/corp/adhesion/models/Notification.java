@@ -49,4 +49,6 @@ public class Notification {
     @JsonIgnore
     @ToString.Exclude
     private Adhesion adhesionVisite;
+
+    private String raison;
 }

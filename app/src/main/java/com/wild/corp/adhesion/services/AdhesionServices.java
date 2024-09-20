@@ -6,7 +6,6 @@ import com.wild.corp.adhesion.repository.AdhesionRepository;
 import com.wild.corp.adhesion.repository.NotificationRepository;
 import com.wild.corp.adhesion.repository.PaiementRepository;
 import com.wild.corp.adhesion.utils.Status;
-import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,9 +21,12 @@ import java.nio.file.StandardOpenOption;
 import java.security.Principal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
 
 import static com.wild.corp.adhesion.utils.Accords.*;
 import static java.time.LocalDate.now;
@@ -67,7 +69,7 @@ public class AdhesionServices {
         }
     }
 
-    public Set<AdhesionLite> reduceAdhesions(Set<Adhesion> adhesions){
+    public Set<AdhesionLite> reduceAdhesions(Set<Adhesion> adhesions) {
         return adhesions.stream().map(this::reduceAdhesion).collect(Collectors.toSet());
     }
 
@@ -79,7 +81,7 @@ public class AdhesionServices {
                         .nom(adhesion.getAdherent().getNom())
                         .prenom(adhesion.getAdherent().getPrenom())
                         .naissance(adhesion.getAdherent().getNaissance())
-                        .email(Boolean.TRUE.equals(adhesion.getAdherent().getEmailRepresentant()) && adhesion.getAdherent().getRepresentant() != null ? adhesion.getAdherent().getRepresentant().getUser().getUsername():adhesion.getAdherent().getUser().getUsername())
+                        .email(Boolean.TRUE.equals(adhesion.getAdherent().getEmailRepresentant()) && adhesion.getAdherent().getRepresentant() != null ? adhesion.getAdherent().getRepresentant().getUser().getUsername() : adhesion.getAdherent().getUser().getUsername())
                         .adresse(adhesion.getAdherent().getAdresse())
                         .derniereVisites(adhesion.getAdherent().getDerniereVisites())
                         .derniereModifs(adhesion.getAdherent().getDerniereModifs())
@@ -117,14 +119,16 @@ public class AdhesionServices {
         Adhesion adhesion = adhesionRepository.findById(adhesionId).get();
         adhesion.setSurClassement(null);
     }
+
     @Value("${image-storage-dir}")
     private Path imageStorageDir;
+
     public Adhesion saveSurclassement(Long adhesionId, Long surClassementId) throws IOException {
         Adhesion adhesion = adhesionRepository.findById(adhesionId).get();
         Activite surClassement = activiteServices.getById(surClassementId);
         adhesion.setSurClassement(surClassement);
         adhesionRepository.save(adhesion);
-        return  adhesion;
+        return adhesion;
     }
 
     public void deletePaiement(Long adhesionId, Long paiementId) {
@@ -172,7 +176,7 @@ public class AdhesionServices {
         return dataAdhesion;
     }
 
-    public Adhesion validation(List<Accord> accords,  Long adhesionId) {
+    public Adhesion validation(List<Accord> accords, Long adhesionId) {
         Adhesion dataAdhesion = adhesionRepository.findById(adhesionId).get();
 
         accords.forEach(accord -> {
@@ -184,7 +188,7 @@ public class AdhesionServices {
         });
 
         adhesionRepository.save(dataAdhesion);
-        return choisirStatut(dataAdhesion.getId(),  Status.ATTENTE_SECRETARIAT.label);
+        return choisirStatut(dataAdhesion.getId(), Status.ATTENTE_SECRETARIAT.label);
     }
 
     public Adhesion update(Adhesion frontAdhesion) {
@@ -241,13 +245,19 @@ public class AdhesionServices {
         newAdhesion.setDateAjoutPanier(now());
         newAdhesion.setAdherent(adherent);
         newAdhesion.setActivite(activite);
-        newAdhesion.setDejaLicencie("ALOD_B".equals(activite.getGroupeFiltre())?true:false);
+        newAdhesion.setDejaLicencie("ALOD_B".equals(activite.getGroupeFiltre()) ? true : false);
         newAdhesion.setFlag(false);
         newAdhesion.setInscrit(false);
         newAdhesion.setValidDocumentSecretariat(false);
         newAdhesion.setValidPaiementSecretariat(false);
-        newAdhesion.setTarif(activite.getTarif());
 
+        Predicate<ActiviteNm1> basket = activiteNm1 -> activiteNm1.getGroupeFiltre() != null && activiteNm1.getGroupeFiltre().matches("^U(.*)|^Loisir$|^Senior$|^Dirigeant$");
+        if(adherent.getActivitesNm1().stream().anyMatch(basket)){
+            newAdhesion.setMajoration(true);
+            newAdhesion.setTarif(activite.getTarif()+30);
+        }else{
+            newAdhesion.setTarif(activite.getTarif());
+        }
 
         if (activite.getAdhesions().stream().filter(adh -> adh.isEnCours() || adh.isValide()).count() >= activite.getNbPlaces()) {
             newAdhesion.setStatutActuel(Status.LISTE_ATTENTE.label);
@@ -264,13 +274,13 @@ public class AdhesionServices {
         }
 
 
-        if(adherent.getTribu().getAdherents().stream().filter(adh -> adh.getUser().getUsername().equals(principal.getName())).toList().size() == 0){
+        if (adherent.getTribu().getAdherents().stream().filter(adh -> adh.getUser().getUsername().equals(principal.getName())).toList().size() == 0) {
             EmailContent mess = new EmailContent();
 
-            mess.setDiffusion(Boolean.TRUE.equals(adherent.getEmailRepresentant()) && adherent.getRepresentant() != null ? adherent.getRepresentant().getUser().getUsername():adherent.getUser().getUsername());
+            mess.setDiffusion(Boolean.TRUE.equals(adherent.getEmailRepresentant()) && adherent.getRepresentant() != null ? adherent.getRepresentant().getUser().getUsername() : adherent.getUser().getUsername());
             mess.setSubject("Nouvelle activitée a valider");
             mess.setText("Bonjour,<br>" +
-                    "Vous pouvez dès maintenant valider votre nouvelle adhésion au "+activite.getNom()+"<br><br>" +
+                    "Vous pouvez dès maintenant valider votre nouvelle adhésion au " + activite.getNom() + "<br><br>" +
                     "Cordialement,<br>" +
                     "l'équipe de l'ALOD<br>" +
                     "<a href=https://www.alod.fr/adhesion>www.alod.fr/adhesion</a>");
@@ -327,15 +337,15 @@ public class AdhesionServices {
         Adhesion adhesion = adhesionRepository.findById(adhesionId).get();
 
         if (Status.LICENCE_T.label.equals(nouveauStatut) && !Status.LICENCE_T.label.equals(adhesion.getStatutActuel())) {
-           adhesion.setValidPaiementSecretariat(true);
-           adhesion.setValidDocumentSecretariat(true);
-           adhesion.setAccords(null);
+            adhesion.setValidPaiementSecretariat(true);
+            adhesion.setValidDocumentSecretariat(true);
+            adhesion.setAccords(null);
             adhesion.setInscrit(true);
         }
 
 
         if ((Status.VALIDEE.label.equals(nouveauStatut) && !Status.VALIDEE.label.equals(adhesion.getStatutActuel()))
-        ||
+                ||
                 (Status.LICENCE_GENEREE.label.equals(nouveauStatut) && !Status.LICENCE_GENEREE.label.equals(adhesion.getStatutActuel()))
         ) {
             adhesion.setInscrit(true);
@@ -349,11 +359,11 @@ public class AdhesionServices {
                 if (!Files.exists(prePath)) {
                     Files.createDirectories(prePath);
                 }
-                final Path targetPath = prePath.resolve("Attestation_ALOD_"+adhesion.getAdherent().getPrenom()+"_"+adhesion.getAdherent().getNom()+".pdf");
+                final Path targetPath = prePath.resolve("Attestation_ALOD_" + adhesion.getAdherent().getPrenom() + "_" + adhesion.getAdherent().getNom() + ".pdf");
                 try (InputStream in = new ByteArrayInputStream(attestation)) {
                     try (OutputStream out = Files.newOutputStream(targetPath, StandardOpenOption.CREATE)) {
                         in.transferTo(out);
-                        log.error("Succes " +in);
+                        log.error("Succes " + in);
                     }
                 }
             } catch (IOException e) {
@@ -410,23 +420,19 @@ public class AdhesionServices {
         Adhesion adhesion = adhesionRepository.findById(adhesionId).get();
 
         adhesionRepository.delete(adhesion);
-     }
+    }
 
-    public Adhesion addModification(String userEmail, Long adhesionId) {
+    public Adhesion addModification(String userEmail, Long adhesionId, String raison) {
 
         User user = userServices.findByEmail(userEmail);
         Adhesion adhesion = adhesionRepository.findById(adhesionId).get();
-        List<Notification> modifications = adhesion.getDerniereModifs().stream().filter(notification -> notification.getUser().equals(user)).toList();
 
-        if(modifications.isEmpty()){
-            Notification nouvelleModif = new Notification();
-            nouvelleModif.setDate(LocalDateTime.now());
-            nouvelleModif.setUser(user);
-            nouvelleModif.setAdhesionModif(adhesion);
-            adhesion.getDerniereModifs().add(nouvelleModif);
-        }else{
-            modifications.forEach(notification -> notification.setDate(LocalDateTime.now()));
-        }
+        Notification nouvelleModif = new Notification();
+        nouvelleModif.setDate(LocalDateTime.now());
+        nouvelleModif.setUser(user);
+        nouvelleModif.setAdhesionModif(adhesion);
+        nouvelleModif.setRaison(raison);
+        adhesion.getDerniereModifs().add(nouvelleModif);
 
         adhesionRepository.save(adhesion);
 
@@ -439,13 +445,13 @@ public class AdhesionServices {
 
         List<Notification> visites = adhesion.getDerniereVisites().stream().filter(notification -> notification.getUser().equals(user)).toList();
 
-        if(visites.isEmpty()){
+        if (visites.isEmpty()) {
             Notification nouvelleVisite = new Notification();
             nouvelleVisite.setDate(LocalDateTime.now());
             nouvelleVisite.setUser(user);
             nouvelleVisite.setAdhesionVisite(adhesion);
             adhesion.getDerniereVisites().add(nouvelleVisite);
-        }else{
+        } else {
             visites.forEach(notification -> notification.setDate(LocalDateTime.now()));
         }
 

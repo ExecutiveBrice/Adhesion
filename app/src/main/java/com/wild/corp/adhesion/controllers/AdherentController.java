@@ -64,7 +64,7 @@ AdherentServices adherentServices;
 	@ExceptionHandler(HttpMessageNotReadableException.class)
 	public ResponseEntity<?> update(Authentication principal, @RequestBody AdherentLite adherent) {
 		log.info("update by " + principal.getName() + " for adherent id "+adherent.getId());
-		adherentServices.addModification(principal.getName(), adherent.getId());
+		adherentServices.addModification(principal.getName(), adherent.getId(), "Mise à jour des données personnelles de l'adhérent");
 
 		AdherentLite adh = null;
 		try{
@@ -140,7 +140,7 @@ AdherentServices adherentServices;
 	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('ADMIN')")
 	public ResponseEntity<?> addAccord(Authentication principal, @PathParam("adherentId") Long adherentId, @PathParam("nomAccord") String nomAccord) {
 		log.info("addAccord by " + principal.getName() + " "+nomAccord+" for adherent id "+adherentId);
-		adherentServices.addModification(principal.getName(),adherentId);
+		adherentServices.addModification(principal.getName(),adherentId, "Ajout de l'accord "+nomAccord+" pour l'adhérent");
 		return ResponseEntity.ok(adherentServices.addAccord(adherentId, nomAccord));
 	}
 
@@ -148,7 +148,7 @@ AdherentServices adherentServices;
 	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('ADMIN')")
 	public ResponseEntity<?> removeAccord(Authentication principal, @PathParam("adherentId") Long adherentId, @PathParam("nomAccord") String nomAccord) {
 		log.info("removeAccord by " + principal.getName() + " "+nomAccord+" for adherent id "+adherentId);
-		adherentServices.addModification(principal.getName(),adherentId);
+		adherentServices.addModification(principal.getName(),adherentId, "Suppression de l'accord "+nomAccord+" pour l'adhérent");
 		return ResponseEntity.ok(adherentServices.removeAccord(adherentId, nomAccord));
 	}
 

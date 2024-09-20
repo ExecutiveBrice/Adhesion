@@ -58,8 +58,6 @@ export class AdhesionService {
   }
   
   add(adherentId: number, activiteId: number): Observable<Adhesion> {
-    console.log(adherentId)
-    console.log(activiteId)
     let params = new HttpParams().set('adherentId', '' + adherentId + '').set('activiteId', '' + activiteId + '');
     return this.http.post<Adhesion>(API_URL+"save", null,{params, responseType: 'json' });
   }

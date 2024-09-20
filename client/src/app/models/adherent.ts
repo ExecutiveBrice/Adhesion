@@ -24,7 +24,8 @@ export class Adherent {
   adresseRepresentant!: boolean;
   telephoneRepresentant!: boolean;
   emailRepresentant!: boolean;
-
+  activitesNm1Text!:string;
+  activitesText!:string;
   mineur!: boolean;
   completAdhesion!: boolean;
 

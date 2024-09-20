@@ -46,7 +46,7 @@ public class MailController {
 
         MailerSend ms = new MailerSend();
 
-
+        ms.setToken("mlsn.e1ae68be56b3e19e9321927d35782861ac1cae949647c2f3a4b54990d3141697");
 
         try {
             MailerSendResponse response = ms.emails().send(email);

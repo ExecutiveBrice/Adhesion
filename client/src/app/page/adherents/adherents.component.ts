@@ -79,7 +79,11 @@ export class AdherentsComponent implements OnInit {
       next: (data) => {
         console.log(data)
         this.cloned = data.map(x => Object.assign({}, x));
-        this.cloned.forEach(adh => adh.nomPrenom = adh.nom+adh.prenom)
+        this.cloned.forEach(adh => {
+          adh.nomPrenom = adh.nom+adh.prenom
+          adh.activitesNm1.forEach(act =>  adh.activitesNm1Text = " "+act.nom +" " + act.horaire)
+          adh.adhesions.forEach(adhesion =>  adh.activitesText = " "+adhesion.activite?.nom +" " + adhesion.activite?.horaire)
+        })
         this.filtrage()
         this.loadder=false
 
@@ -95,6 +99,7 @@ export class AdherentsComponent implements OnInit {
 
   exportAsXLSX(): void {
     console.log(this.adherents)
+    
     this.excelService.exportAsExcelFile(this.adherents, 'adherents');
   }
 

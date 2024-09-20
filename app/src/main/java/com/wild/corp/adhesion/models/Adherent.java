@@ -62,6 +62,7 @@ public class Adherent {
     @JsonIgnoreProperties({"cours", "accords", "adhesions", "activitesNm1", "tribu",  "documents", "derniereModifs", "derniereVisites", "representant"})
     private Adherent representant;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "adherentModif", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Notification> derniereModifs = new ArrayList<>();
 

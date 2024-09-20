@@ -40,18 +40,14 @@
       </ul>
 
       <ul class="navbar-nav ml-auto" *ngIf="!isLoggedIn">
-        <li class="nav-item" (click)="isCollapsed = true" >
-          <a href="/contact" class="nav-link blanc" routerLink="contact">Contact</a>
-        </li>
+
         <li class="nav-item"  (click)="isCollapsed = true">
           <a href="/login" class="nav-link blanc" routerLink="login">Connexion</a>
         </li>
       </ul>
 
       <ul class="navbar-nav ml-auto" *ngIf="isLoggedIn">
-        <li class="nav-item" (click)="isCollapsed = true">
-          <a href="/contact" class="nav-link blanc" routerLink="contact">Contact</a>
-        </li>
+
         <li class="nav-item" (click)="isCollapsed = true">
           <a href class="nav-link blanc" (click)="logout()">Deconnexion</a>
         </li>

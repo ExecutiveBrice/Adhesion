@@ -167,11 +167,6 @@
         {{adhesion.adherent.emailRepresentant && adhesion.adherent.representant != undefined
         ?adhesion.adherent.representant.user.username:adhesion.adherent.user.username}} <br />
         {{adhesion.adherent.naissance | date:'dd-MM-yyyy'}}
-        <ng-template #tipsAdherentSendMail><b>icons</b><br />
-          <fa-icon class="fa-lg green" [icon]="faEnvelope"></fa-icon> permet d'envoyer un mail pour cet adhérent
-        </ng-template>
-        <fa-icon *ngIf="adhesion.adherent.email != null" (click)="opennewTab('#/mail/'+adhesion.adherent.id)"
-          class="fa-lg pointer green" [icon]="faEnvelope" [ngbTooltip]="tipsAdherentSendMail"></fa-icon>
         <fa-icon class="fa-lg pointer" (click)="opennewTab('#/inscription/'+adhesion.adherent.tribu.uuid)"
           [icon]="faPen"></fa-icon>
       </td>
@@ -196,46 +191,35 @@
             <br />Total de {{ calculSomme(adhesion) }}€
           </div>
         </div>
-
       </td>
 
       <td width="20%">
-
         <div class="row">
           <div class="col-8">
-
-
             <div *ngFor="let accord of adhesion.accords | orderBy:'id':false ">
               {{accord.nom}}
               <fa-icon *ngIf="accord.etat == true" class="green" [icon]="faCircleCheck"></fa-icon>
               <fa-icon *ngIf="accord.etat != true" class="orange" [icon]="faCircleXmark"></fa-icon>
-
-
             </div>
-
           </div>
           <div class="col-4">
-
             <fa-icon (click)="adhesion.validDocumentSecretariat = true; updateDocumentsSecretariat(adhesion, true)"
               [ngClass]="adhesion.validDocumentSecretariat ? 'pointer green fa-2xl' : 'pointer fa-2xl'"
               [icon]="faCircleCheck"></fa-icon>
             <fa-icon (click)="adhesion.validDocumentSecretariat = false; updateDocumentsSecretariat(adhesion, false)"
               [ngClass]="!adhesion.validDocumentSecretariat ? 'pointer orange fa-2xl' : 'pointer fa-2xl'"
               [icon]="faCircleXmark"></fa-icon>
-
           </div>
         </div>
-
-
       </td>
+
+
       <td width="10%" class="center">
         <div *ngIf="adhesion.activite.groupe == 'ALOD_G'" ngbDropdown class="d-inline-block">
-          <button [disabled]="adhesion.statutActuel == 'Validée' " type="button" class="btn btn-primary"
+          <button [ngClass]="adhesion.statutActuel == 'Validée' ? 'btn-outline-secondary' : 'btn-primary'" type="button" class="btn"
             id="dropdownBasic1" ngbDropdownToggle>
             {{adhesion.statutActuel}}
           </button>
-
-
           <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
             <button ngbDropdownItem (click)="choisirStatut(adhesion,'Attente validation adhérent')">Attente validation
               adhérent</button>
@@ -254,12 +238,10 @@
 
 
         <div *ngIf="adhesion.activite.groupe == 'ALOD_B'" ngbDropdown class="d-inline-block">
-          <button [disabled]="adhesion.statutActuel == 'Validée' " type="button" class="btn btn-primary"
+          <button [ngClass]="adhesion.statutActuel == 'Licence générée' ? 'btn-outline-secondary' : 'btn-primary'" type="button" class="btn"
             id="dropdownBasic1" ngbDropdownToggle>
             {{adhesion.statutActuel}}
           </button>
-
-
           <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
             <button ngbDropdownItem (click)="choisirStatut(adhesion,'Attente validation adhérent')">Attente validation
               adhérent</button>
@@ -276,7 +258,6 @@
             <button ngbDropdownItem (click)="choisirStatut(adhesion,'Licence T')">Licence T</button>
             <button ngbDropdownItem (click)="choisirStatut(adhesion,'Sur liste d\'attente')">Sur liste
               d'attente</button>
-
             <button ngbDropdownItem (click)="choisirStatut(adhesion,'Annulée')">Annulée</button>
           </div>
         </div>

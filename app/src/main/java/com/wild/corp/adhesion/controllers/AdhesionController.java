@@ -31,7 +31,7 @@ AdhesionServices adhesionServices;
 	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('ADMIN')")
 	public ResponseEntity<?> addAccord(Authentication principal, @PathParam("inscriptionId") Long adhesionId, @PathParam("nomAccord") String nomAccord) {
 		log.info("addAccord by " + principal.getName() + " for adhesion id "+adhesionId);
-		adhesionServices.addModification(principal.getName(), adhesionId);
+		adhesionServices.addModification(principal.getName(), adhesionId, "Ajout de l'accord "+nomAccord+" pour l'adhesion");
 		return ResponseEntity.ok(adhesionServices.addAccord(adhesionId, nomAccord));
 	}
 
@@ -39,7 +39,7 @@ AdhesionServices adhesionServices;
 	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('ADMIN')")
 	public ResponseEntity<?> removeAccord(Authentication principal, @PathParam("inscriptionId") Long adhesionId, @PathParam("nomAccord") String nomAccord) {
 		log.info("removeAccord by " + principal.getName() + " for adhesion id "+adhesionId);
-		adhesionServices.addModification(principal.getName(), adhesionId);
+		adhesionServices.addModification(principal.getName(), adhesionId, "Suppression de l'accord "+nomAccord+" pour l'adhesion");
 		return ResponseEntity.ok(adhesionServices.removeAccord(adhesionId, nomAccord));
 	}
 
@@ -47,7 +47,7 @@ AdhesionServices adhesionServices;
 	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('ADMIN')")
 	public ResponseEntity<?> changeActivite(Authentication principal,@PathParam("inscriptionId") Long adhesionId, @PathParam("activiteId") Long activiteId) {
 		log.info("changeActivite by " + principal.getName() + " for adhesion id "+adhesionId);
-		adhesionServices.addModification(principal.getName(), adhesionId);
+		adhesionServices.addModification(principal.getName(), adhesionId, "Changement pour l'activité "+activiteId);
 		return ResponseEntity.ok(adhesionServices.changeActivite(adhesionId, activiteId));
 	}
 
@@ -63,7 +63,7 @@ AdhesionServices adhesionServices;
 	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
 	public ResponseEntity<?> updateDocumentsSecretariat(Authentication principal,@PathParam("inscriptionId") Long adhesionId, @PathParam("statut") Boolean statut) {
 		log.info("updateDocumentsSecretariat by " + principal.getName() + " for adhesion id "+adhesionId);
-		adhesionServices.addModification(principal.getName(), adhesionId);
+		adhesionServices.addModification(principal.getName(), adhesionId, "Mise a jour du statut documentaire de l'adhesion pour "+ statut);
 		return ResponseEntity.ok(adhesionServices.updateDocumentsSecretariat(adhesionId, statut));
 	}
 
@@ -71,7 +71,7 @@ AdhesionServices adhesionServices;
 	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
 	public ResponseEntity<?> updatePaiementSecretariat(Authentication principal,@PathParam("inscriptionId") Long adhesionId, @PathParam("statut") Boolean statut) {
 		log.info("updatePaiementSecretariat by " + principal.getName() + " for adhesion id "+adhesionId);
-		adhesionServices.addModification(principal.getName(), adhesionId);
+		adhesionServices.addModification(principal.getName(), adhesionId, "Mise a jour du statut du paiement de l'adhesion pour "+ statut);
 		return ResponseEntity.ok(adhesionServices.updatePaiementSecretariat(adhesionId, statut));
 	}
 
@@ -79,7 +79,7 @@ AdhesionServices adhesionServices;
 	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
 	public ResponseEntity<?> updateFlag(Authentication principal,@PathParam("inscriptionId") Long adhesionId, @PathParam("statut") Boolean statut) {
 		log.info("updateFlag by " + principal.getName() + " for adhesion id "+adhesionId);
-		adhesionServices.addModification(principal.getName(), adhesionId);
+		adhesionServices.addModification(principal.getName(), adhesionId,"Mise a jour du Flag d'alerte de l'adhesion pour "+ statut);
 		return ResponseEntity.ok(adhesionServices.updateFlag(adhesionId, statut));
 	}
 
@@ -94,7 +94,7 @@ AdhesionServices adhesionServices;
 	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
 	public ResponseEntity<?> enregistrerRemarque(Authentication principal,@PathParam("inscriptionId") Long adhesionId, @PathParam("remarqueSecretariat") String remarqueSecretariat) {
 		log.info("enregistrerRemarque by " + principal.getName() + " for adhesion id "+adhesionId);
-		adhesionServices.addModification(principal.getName(), adhesionId);
+		adhesionServices.addModification(principal.getName(), adhesionId, "Mise a jour de la remarque de l'adhesion : "+ remarqueSecretariat);
 		return ResponseEntity.ok(adhesionServices.enregistrerRemarque(adhesionId, remarqueSecretariat));
 	}
 
@@ -102,7 +102,7 @@ AdhesionServices adhesionServices;
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<?> choisirStatut(Authentication principal,@PathParam("inscriptionId") Long adhesionId, @PathParam("statutActuel") String statutActuel) {
 		log.info("choisirStatut by " + principal.getName() + " for adhesion id "+adhesionId);
-		adhesionServices.addModification(principal.getName(), adhesionId);
+		adhesionServices.addModification(principal.getName(), adhesionId, "Mise a jour du statut de l'adhesion : "+ statutActuel);
 		return ResponseEntity.ok(adhesionServices.choisirStatut(adhesionId, statutActuel));
 	}
 
@@ -125,7 +125,7 @@ AdhesionServices adhesionServices;
 	public ResponseEntity<?> save(Authentication principal, @PathParam("adherentId") Long adherentId, @PathParam("activiteId") Long activiteId) {
 		log.info("save by " + principal.getName() + " for adherent id "+adherentId + " and activite id " + activiteId);
 		Adhesion adhesionsBDD = adhesionServices.save(principal, adherentId, activiteId);
-		adhesionServices.addModification(principal.getName(), adhesionsBDD.getId());
+		adhesionServices.addModification(principal.getName(), adhesionsBDD.getId(),"Enregistrement de la nouvelle adhesion pour l'adherent "+adherentId+" a l'activite "+activiteId);
 		return ResponseEntity.ok(adhesionsBDD);
 	}
 
@@ -133,7 +133,7 @@ AdhesionServices adhesionServices;
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<?> savePaiement(Authentication principal, @PathParam("adhesionId") Long adhesionId, @RequestBody Paiement paiement) {
 		log.info("savePaiement by " + principal.getName() + " for paiement "+paiement.getMontant()+" and adhesion id "+adhesionId);
-		adhesionServices.addModification(principal.getName(), adhesionId);
+		adhesionServices.addModification(principal.getName(), adhesionId, "Enregistrement d'un nouveau paiement"+paiement.getMontant());
 		return ResponseEntity.ok(adhesionServices.savePaiement(adhesionId, paiement));
 	}
 
@@ -141,7 +141,7 @@ AdhesionServices adhesionServices;
 	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
 	public ResponseEntity<?> deletePaiement(Authentication principal, @PathParam("adhesionId") Long adhesionId, @PathParam("paiementId") Long paiementId) {
 		log.info("deletePaiement by " + principal.getName() + " for paiement "+paiementId+" and adhesion id "+adhesionId);
-		adhesionServices.addModification(principal.getName(), adhesionId);
+		adhesionServices.addModification(principal.getName(), adhesionId,"Supression d'un paiement"+paiementId);
 		adhesionServices.deletePaiement(adhesionId, paiementId);
 		return ResponseEntity.ok(paiementId+" deleted");
 	}
@@ -150,7 +150,7 @@ AdhesionServices adhesionServices;
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<?> saveSurclassement(Authentication principal, @PathParam("adhesionId") Long adhesionId, @PathParam("surClassementId") Long surClassementId) throws IOException {
 		log.info("saveSurclassement by " + principal.getName() + " for activite "+surClassementId+" and adhesion id "+adhesionId);
-		adhesionServices.addModification(principal.getName(), adhesionId);
+		adhesionServices.addModification(principal.getName(), adhesionId,"Surclassement de l'adhesion vers un autre activité"+surClassementId);
 		return ResponseEntity.ok(adhesionServices.saveSurclassement(adhesionId, surClassementId));
 	}
 
@@ -158,24 +158,16 @@ AdhesionServices adhesionServices;
 	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
 	public ResponseEntity<?> deleteSurclassement(Authentication principal, @PathParam("adhesionId") Long adhesionId) {
 		log.info("deleteSurclassement by " + principal.getName() +" and adhesion id "+adhesionId);
-		adhesionServices.addModification(principal.getName(), adhesionId);
+		adhesionServices.addModification(principal.getName(), adhesionId,"Supression du surclassement de l'adhesion");
 		adhesionServices.deleteSurclassement(adhesionId);
 		return ResponseEntity.ok("Surclassement deleted");
-	}
-
-	@PostMapping("/update")
-	@PreAuthorize("hasRole('USER')")
-	public ResponseEntity<?> update(Authentication principal, @RequestBody Adhesion adhesion) {
-		log.info("update by " + principal.getName() + " for adhesion id "+adhesion.getId());
-		adhesionServices.addModification(principal.getName(), adhesion.getId());
-		return ResponseEntity.ok(adhesionServices.update(adhesion));
 	}
 
 	@PutMapping("/updateDejaLicencie")
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<?> updateDejaLicencie(Authentication principal,@PathParam("adhesionId") Long adhesionId, @PathParam("dejaLicencie") boolean dejaLicencie) {
 		log.info("updateDejaLicencie by " + principal.getName() + " for dejalicencie "+dejaLicencie+" adhesion id "+adhesionId);
-		adhesionServices.addModification(principal.getName(), adhesionId);
+		adhesionServices.addModification(principal.getName(), adhesionId, "Modification du déjaLicencié à "+dejaLicencie);
 		return ResponseEntity.ok(adhesionServices.updateDejaLicencie(dejaLicencie, adhesionId));
 	}
 
@@ -184,7 +176,7 @@ AdhesionServices adhesionServices;
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<?> validation(Authentication principal, @PathParam("adhesionId") Long adhesionId, @RequestBody List<Accord> accords) {
 		log.info("validation by " + principal.getName() + " for adhesion id "+adhesionId);
-		adhesionServices.addModification(principal.getName(), adhesionId);
+		adhesionServices.addModification(principal.getName(), adhesionId, "Validation de la demande d'adhesion par l'adhérent "+accords.stream().map(accord -> "["+accord.getTitle()+":"+accord.getEtat()+"]").toList());
 		return ResponseEntity.ok(adhesionServices.validation(accords, adhesionId));
 	}
 }

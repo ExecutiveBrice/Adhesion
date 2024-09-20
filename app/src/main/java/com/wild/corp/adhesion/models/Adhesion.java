@@ -1,5 +1,6 @@
 package com.wild.corp.adhesion.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.wild.corp.adhesion.utils.Status;
 import lombok.*;
@@ -42,6 +43,8 @@ public class Adhesion {
 
     private Boolean flag;
 
+    private Boolean majoration;
+
     private Boolean rappel;
 
     private LocalDate dateAjoutPanier;
@@ -51,6 +54,7 @@ public class Adhesion {
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Paiement> paiements = new ArrayList<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "adhesionModif", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Notification> derniereModifs = new ArrayList<>();
 

@@ -377,8 +377,9 @@ this.adhesions = []
       let newAdhesionExcel = new AdhesionExcel;
       if (adhesion.adherent) {
         newAdhesionExcel.nomAdherent = adhesion.adherent.nom
+        newAdhesionExcel.telephone = adhesion.adherent.representant != undefined?adhesion.adherent.representant.telephone:adhesion.adherent.telephone;
         newAdhesionExcel.prenomAdherent = adhesion.adherent.prenom
-        newAdhesionExcel.emailAdherent = adhesion.adherent.email
+        newAdhesionExcel.emailAdherent = adhesion.adherent.representant != undefined?adhesion.adherent.representant.user.username:adhesion.adherent.user.username
       }
 
 
@@ -442,7 +443,7 @@ this.adhesions = []
 
   verifyAdhesion(adhesion: Adhesion): boolean {
 
-    let lastVisite = adhesion.derniereVisites.length>1?adhesion.derniereVisites.reduce(function (r, a) {
+    let lastVisite = adhesion.derniereVisites.length>0?adhesion.derniereVisites.reduce(function (r, a) {
       return r.date > a.date ? r : a;
     }):undefined
 
@@ -456,9 +457,9 @@ this.adhesions = []
 
   verifyAdherent(adhesion: Adhesion): boolean {
 
-    let lastVisite = adhesion.adherent?.derniereVisites?.reduce(function (r, a) {
+    let lastVisite = adhesion.adherent.derniereVisites.length>0?adhesion.adherent?.derniereVisites?.reduce(function (r, a) {
       return r.date > a.date ? r : a;
-    })
+    }):undefined
 
     if (lastVisite != undefined && lastVisite.user.id == this.tokenStorageService.getUser().id) {
       return false

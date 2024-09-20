@@ -55,6 +55,10 @@ export class BoardUserComponent implements OnInit {
   tribu: Tribu = new Tribu;
   helloassoAlod: boolean = false;
   helloassoAlod3X: boolean = false;
+
+  helloassoAlodMajoration: boolean = false;
+  helloassoAlod3XMajoration: boolean = false;
+
   testRgpd: boolean = false
   isFailed = false;
   validSecretariat: boolean = false;
@@ -224,6 +228,7 @@ export class BoardUserComponent implements OnInit {
 
 
   adhesionPaiement: Adhesion[] = []
+  majoration: boolean = false;
   calculRestantDu() {
     this.totalRestantDu = 0
     this.adhesionPaiement = []
@@ -236,6 +241,10 @@ export class BoardUserComponent implements OnInit {
         adhes.adherent = new Adherent()
         adhes.adherent.prenom = adher.prenom
         
+        if(adhes.majoration == true){
+          this.majoration = true
+        }
+
         this.adhesionPaiement.push(adhes)
       }
     })

@@ -92,6 +92,7 @@
           <th class="center col-1" scope="col">Naissance / Lieu</th>
           <th class="center col-1" scope="col">Accords</th>
           <th class="center col-2" scope="col">Activitées</th>
+          <th class="center col-2" scope="col">Activitées Nm1</th>
         </tr>
       </thead>
       <div *ngIf="loadder" class="spinner-border text-info"></div>
@@ -125,6 +126,14 @@
           <td>
             <div *ngFor="let adhesion of adherent.adhesions | orderBy:'id':false ">
               {{adhesion.activite.nom}} {{adhesion.activite.horaire}}<br/>
+
+            </div>
+
+
+          </td>
+          <td>
+            <div *ngFor="let activiteNm1 of adherent.activitesNm1 | orderBy:'id':false ">
+              {{activiteNm1.nom}} {{activiteNm1.horaire}}<br/>
 
             </div>
 

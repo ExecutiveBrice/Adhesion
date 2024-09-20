@@ -172,6 +172,16 @@ public class UserServices {
         userRepository.saveAll(users);
     }
 
+    public void deleteuser(User user) {
+
+        user.getTokens().clear();
+        user.getNotifs().clear();
+        userRepository.save(user);
+        userRepository.delete(user);
+    }
+
+
+
     public void changePassword(String token, String password) {
         ConfirmationToken confirmationToken = confirmationTokenService.findByToken(token);
         final User user = confirmationToken.getUser();

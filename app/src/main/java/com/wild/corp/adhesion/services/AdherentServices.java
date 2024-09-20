@@ -173,12 +173,15 @@ public class AdherentServices {
         adherent.getAdhesions().forEach(adhesion -> {
             adhesionServices.deleteAdhesion(adhesion.getId());
         });
+        User adh = adherent.getUser();
 
-        if (adherent.getUser() != null) {
-            adherent.getUser().getNotifs().clear();
-        }
+        adherent.setUser(null);
+        userServices.deleteuser(adh);
 
         adherentRepository.deleteById(adherentId);
+
+
+
     }
 
     public Adherent save(Adherent adherent) {
@@ -492,20 +495,16 @@ public class AdherentServices {
         return adherentLite;
     }
 
-    public Adherent addModification(String userEmail, Long adherentId) {
+    public Adherent addModification(String userEmail, Long adherentId, String raison) {
         User user = userServices.findByEmail(userEmail);
         Adherent adherent = getById(adherentId);
-        List<Notification> modifications = new ArrayList<>(adherent.getDerniereModifs().stream().filter(visite -> visite.getUser().equals(user)).toList());
 
-        if(modifications.isEmpty()){
-            Notification nouvelleModif = new Notification();
-            nouvelleModif.setDate(LocalDateTime.now());
-            nouvelleModif.setUser(user);
-            nouvelleModif.setAdherentModif(adherent);
-            adherent.getDerniereModifs().add(nouvelleModif);
-        }else{
-            modifications.forEach(notification -> notification.setDate(LocalDateTime.now()));
-        }
+        Notification nouvelleModif = new Notification();
+        nouvelleModif.setDate(LocalDateTime.now());
+        nouvelleModif.setUser(user);
+        nouvelleModif.setAdherentModif(adherent);
+        nouvelleModif.setRaison(raison);
+        adherent.getDerniereModifs().add(nouvelleModif);
 
         adherentRepository.save(adherent);
 

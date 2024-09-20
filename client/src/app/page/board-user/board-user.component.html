@@ -28,8 +28,9 @@
             <div *ngFor="let adhesion of adherent.adhesions | orderBy:'id':false ">
               {{adhesion.activite.nom}}
 
-              <fa-icon *ngIf="adhesion.statutActuel == 'Validée' || adhesion.statutActuel == 'Licence générée' || adhesion.statutActuel == 'Licence T'" class="green fa-xl"
-                [icon]="faCircleCheck"></fa-icon>
+              <fa-icon
+                *ngIf="adhesion.statutActuel == 'Validée' || adhesion.statutActuel == 'Licence générée' || adhesion.statutActuel == 'Licence T'"
+                class="green fa-xl" [icon]="faCircleCheck"></fa-icon>
               <fa-icon *ngIf="adhesion.statutActuel == 'Sur liste d\'attente'" class="gris fa-xl"
                 [icon]="faCirclePause"></fa-icon>
               <fa-icon *ngIf="adhesion.statutActuel == 'Attente validation adhérent'" class="jaune fa-xl"
@@ -65,58 +66,93 @@
 <div class="row">
   <div class="col-12 col-sm-6">
 
-<div *ngIf="totalRestantDu != 0" class="cadrePermanent">
+    <div *ngIf="totalRestantDu != 0" class="cadrePermanent">
 
-  <div class="row">
-    <div class="col-12 header">Paiements :</div>
+      <div class="row">
+        <div class="col-12 header">Paiements :</div>
+
+      </div>
+
+
+
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th class="center" scope="col">Activité</th>
+            <th class="center" scope="col">Licencié</th>
+
+            <th class="center" scope="col">Tarif</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let adhesion of adhesionPaiement | orderBy:'id':true ">
+            <td>
+              {{adhesion.activite.nom}} - {{ adhesion.activite.horaire }}
+            </td>
+            <td>{{adhesion.adherent.prenom}}</td>
+            <td>
+              <div>
+                {{ adhesion.tarif }}€
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="3"><b>Montant total :
+                {{totalRestantDu}}€ </b> à payer ou non encore pris en
+              compte par le secretariat
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+
+      <iframe *ngIf="helloassoAlod" id="haWidget" allowtransparency="true" scrolling="auto"
+        src="https://www.helloasso.com/associations/alod/adhesions/alod-2024-2025/widget"
+        style="width: 100%; height: 750px; border: none;"></iframe>
+
+      <iframe *ngIf="helloassoAlod3X" id="haWidget" allowtransparency="true" scrolling="auto"
+        src="https://www.helloasso.com/associations/alod/adhesions/alod-2024-2025-paiement-en-3-fois/widget"
+        style="width: 100%; height: 750px; border: none;"></iframe>
+
+
+      <div *ngIf="totalRestantDu != 0 && showHelloAsso && !majoration" type='button'
+        class="btn btn-primary alod btn-independent" (click)="helloassoAlod = !helloassoAlod">Paiement via HelloAsso
+      </div>
+
+      <div *ngIf="totalRestantDu != 0 && showHelloAsso3X && !majoration" type='button'
+        class="btn btn-primary alod btn-independent" (click)="helloassoAlod3X = !helloassoAlod3X">Paiement via HelloAsso
+        en 3X</div>
+
+
+
+
+
+
+
+
+      <iframe *ngIf="helloassoAlodMajoration" id="haWidget" allowtransparency="true"
+        src="https://www.helloasso.com/associations/alod/adhesions/alod-reinscription-2024-2025/widget-bouton"
+        style="width: 100%; height: 70px; border: none;"></iframe>
+
+      <iframe *ngIf="helloassoAlod3XMajoration" id="haWidget" allowtransparency="true"
+        src="https://www.helloasso.com/associations/alod/adhesions/alod-reinscription-2024-2025-paiement-en-3-fois/widget-bouton"
+        style="width: 100%; height: 70px; border: none;"></iframe>
+
+      <div *ngIf="totalRestantDu != 0 && showHelloAsso && majoration" type='button'
+        class="btn btn-primary alod btn-independent" (click)="helloassoAlodMajoration = !helloassoAlodMajoration">
+        Paiement via HelloAsso</div>
+
+      <div *ngIf="totalRestantDu != 0 && showHelloAsso3X && majoration" type='button'
+        class="btn btn-primary alod btn-independent" (click)="helloassoAlod3XMajoration = !helloassoAlod3XMajoration">
+        Paiement via HelloAsso en 3X</div>
+
+
+
+    </div>
+
+
+
 
   </div>
-
-
-
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th class="center" scope="col">Activité</th>
-        <th class="center" scope="col">Licencié</th>
-
-        <th class="center" scope="col">Tarif</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let adhesion of adhesionPaiement | orderBy:'id':true ">
-        <td>
-          {{adhesion.activite.nom}} - {{ adhesion.activite.horaire }}
-        </td>
-        <td>{{adhesion.adherent.prenom}}</td>
-        <td>
-          <div>
-            {{ adhesion.tarif }}€
-          </div>
-        </td>
-      </tr>
-      <tr>
-        <td colspan="3"><b>Montant total :
-            {{totalRestantDu}}€ </b> à payer ou non encore pris en
-      compte par le secretariat
-          </td>
-      </tr>
-    </tbody>
-  </table>
-
-
-
-  <iframe  *ngIf="helloassoAlod" id="haWidget" allowtransparency="true" scrolling="auto" src="https://www.helloasso.com/associations/alod/adhesions/alod-2024-2025/widget" style="width: 100%; height: 750px; border: none;"></iframe>
-
-  <iframe *ngIf="helloassoAlod3X" id="haWidget" allowtransparency="true" scrolling="auto" src="https://www.helloasso.com/associations/alod/adhesions/alod-2024-2025-paiement-en-3-fois/widget" style="width: 100%; height: 750px; border: none;"></iframe>
-
-
-  <div *ngIf="totalRestantDu != 0 && showHelloAsso" type='button' class="btn btn-primary alod btn-independent"
-    (click)="helloassoAlod = !helloassoAlod">Paiement via HelloAsso</div>
-
-  <div *ngIf="totalRestantDu != 0 && showHelloAsso3X" type='button' class="btn btn-primary alod btn-independent"
-    (click)="helloassoAlod3X = !helloassoAlod3X">Paiement via HelloAsso en 3X</div>
-  </div>
-</div>
 
 </div>
