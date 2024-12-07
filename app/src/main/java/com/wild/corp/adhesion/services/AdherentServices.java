@@ -2,12 +2,12 @@ package com.wild.corp.adhesion.services;
 
 
 import com.wild.corp.adhesion.models.*;
+import com.wild.corp.adhesion.models.resources.AdherentFlat;
+import com.wild.corp.adhesion.models.resources.AdherentLite;
 import com.wild.corp.adhesion.repository.*;
 
-import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.postgresql.util.PSQLException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -425,8 +425,37 @@ public class AdherentServices {
         }
     }
 
-    public List<Adherent> getAllLite() {
-        return adherentRepository.findAll();
+    public List<AdherentFlat> getAllFlat() {
+        List<AdherentFlat> adherentFlats = new ArrayList<>();
+        List<Adherent> adherents = adherentRepository.findAll();
+
+        adherents.forEach(adherent -> {
+            AdherentFlat adherentFlat = new AdherentFlat();
+
+
+            StringBuilder adhesions = new StringBuilder();
+            adherent.getAdhesions().forEach(adhesion -> adhesions.append(adhesion.getActivite().getNom() + " " + adhesion.getActivite().getHoraire() + "\n\r"));
+            adherentFlat.setAdhesions(adhesions.toString());
+
+
+            adherentFlat.setId(adherent.getId());
+            adherentFlat.setEmail(Boolean.TRUE.equals(adherent.getEmailRepresentant()) && adherent.getRepresentant() != null ? adherent.getRepresentant().getUser().getUsername():adherent.getUser().getUsername());
+            adherentFlat.setTelephone(Boolean.TRUE.equals(adherent.getTelephoneRepresentant()) && adherent.getRepresentant() != null ? adherent.getRepresentant().getTelephone():adherent.getTelephone());
+            adherentFlat.setAdresse(Boolean.TRUE.equals(adherent.getAdresseRepresentant()) && adherent.getRepresentant() != null ?
+                    adherent.getRepresentant().getAdresse() + " " + adherent.getRepresentant().getCodePostal() + " " + adherent.getRepresentant().getVille():
+                    adherent.getAdresse() + " " + adherent.getCodePostal() + " " + adherent.getVille());
+            adherentFlat.setNaissance(adherent.getNaissance());
+            adherentFlat.setPrenom(adherent.getPrenom());
+            adherentFlat.setNom(adherent.getNom());
+            adherentFlat.setNomPrenom((adherent.getNom() == null ? "zzzz" : adherent.getNom()) + (adherent.getPrenom() == null ? "zzzz" : adherent.getPrenom()));
+            adherentFlat.setAccords(adherent.getAccords());
+                    adherentFlat.setTribuId(adherent.getTribu().getUuid());
+
+            adherentFlats.add(adherentFlat);
+        });
+
+            return adherentFlats;
+
     }
 
     public List<AdherentLite> getByRole(Integer roleId) {

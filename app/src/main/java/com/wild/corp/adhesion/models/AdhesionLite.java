@@ -1,5 +1,6 @@
 package com.wild.corp.adhesion.models;
 
+import com.wild.corp.adhesion.models.resources.AdherentLite;
 import lombok.*;
 import java.time.LocalDate;
 import java.util.ArrayList;

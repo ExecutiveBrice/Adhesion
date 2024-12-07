@@ -1,7 +1,7 @@
-package com.wild.corp.adhesion.models;
+package com.wild.corp.adhesion.models.resources;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.wild.corp.adhesion.models.*;
 import lombok.*;
 
 import java.time.LocalDate;

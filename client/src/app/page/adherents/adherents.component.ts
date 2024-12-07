@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AdherentService } from '../../_services/adherent.service';
-import { Activite, ActiviteDropDown, Adherent, AdherentLite } from 'src/app/models';
+import { Activite, ActiviteDropDown, Adherent } from 'src/app/models';
 import { faPen, faUsersRays, faSkull, faUsers, faEnvelope, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TokenStorageService } from 'src/app/_services/token-storage.service';
@@ -100,7 +100,13 @@ export class AdherentsComponent implements OnInit {
   exportAsXLSX(): void {
     console.log(this.adherents)
     
-    this.excelService.exportAsExcelFile(this.adherents, 'adherents');
+    const adherents:Adherent[] = JSON.parse(JSON.stringify((this.adherents)));
+    adherents.forEach(adherent => {
+      adherent.email = (adherent.emailRepresentant && adherent.representant != undefined)?adherent.representant.user.username:adherent.user.username
+      adherent.tel =(adherent.telephoneRepresentant && adherent.representant != undefined)?adherent.representant.telephone:adherent.telephone
+      adherent.adress =(adherent.adresseRepresentant && adherent.representant != undefined)?adherent.representant.adresse +' '+ (adherent.representant.codePostal != null?adherent.representant.codePostal:'') + ' ' + (adherent.representant.ville != null?adherent.representant.ville:'') : adherent.adresse + ' ' + (adherent.codePostal != null?adherent.codePostal:'') + ' ' + (adherent.ville != null?adherent.ville:'');
+    })
+    this.excelService.exportAsExcelFile(adherents, 'adherents');
   }
 
 

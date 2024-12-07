@@ -2,6 +2,7 @@ package com.wild.corp.adhesion.services;
 
 
 import com.wild.corp.adhesion.models.*;
+import com.wild.corp.adhesion.models.resources.AdherentLite;
 import com.wild.corp.adhesion.repository.AdhesionRepository;
 import com.wild.corp.adhesion.repository.NotificationRepository;
 import com.wild.corp.adhesion.repository.PaiementRepository;
@@ -252,7 +253,7 @@ public class AdhesionServices {
         newAdhesion.setValidPaiementSecretariat(false);
 
         Predicate<ActiviteNm1> basket = activiteNm1 -> activiteNm1.getGroupeFiltre() != null && activiteNm1.getGroupeFiltre().matches("^U(.*)|^Loisir$|^Senior$|^Dirigeant$");
-        if(adherent.getActivitesNm1().stream().anyMatch(basket)){
+        if(adherent.getActivitesNm1().stream().anyMatch(basket) && "Basket".equals(activite.getGroupeFiltre())){
             newAdhesion.setMajoration(true);
             newAdhesion.setTarif(activite.getTarif()+30);
         }else{

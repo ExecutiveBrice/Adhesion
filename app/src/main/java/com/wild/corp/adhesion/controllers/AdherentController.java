@@ -1,6 +1,6 @@
 package com.wild.corp.adhesion.controllers;
 
-import com.wild.corp.adhesion.models.AdherentLite;
+import com.wild.corp.adhesion.models.resources.AdherentLite;
 import com.wild.corp.adhesion.services.AdherentServices;
 import com.wild.corp.adhesion.services.UserServices;
 import jakarta.websocket.server.PathParam;
@@ -101,11 +101,18 @@ AdherentServices adherentServices;
 		return ResponseEntity.ok("regenerate");
 	}
 
+	@GetMapping("/allFlat")
+	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+	public ResponseEntity<?> getAllFlat(Authentication principal) {
+		log.info("getAllFlat by " + principal.getName() );
+		return ResponseEntity.ok(adherentServices.getAllFlat());
+	}
+
 	@GetMapping("/allLite")
 	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
 	public ResponseEntity<?> getAllLite(Authentication principal) {
 		log.info("getAllLite by " + principal.getName() );
-		return ResponseEntity.ok(adherentServices.getAllLite());
+		return ResponseEntity.ok(adherentServices.getAll());
 	}
 
 	@GetMapping("/allId")
