@@ -39,6 +39,7 @@ public class ComptaService {
             ca.setEspece(totalTypePaiementSurPeriodeParActivite(dateDebut, dateFin, nomActivite, "Pass sport"));
             ca.setPassport(totalTypePaiementSurPeriodeParActivite(dateDebut, dateFin, nomActivite, "Espèces"));
             ca.setAutre(totalTypePaiementSurPeriodeParActivite(dateDebut, dateFin, nomActivite, "Autre"));
+            ca.setIntermarche(totalTypePaiementSurPeriodeParActivite(dateDebut, dateFin, nomActivite, "Intermarché"));
             listCA.add(ca);
         });
         return listCA;

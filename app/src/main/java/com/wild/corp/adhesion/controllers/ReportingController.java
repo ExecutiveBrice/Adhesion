@@ -30,7 +30,7 @@ public class ReportingController {
 
 	@GetMapping("/getAllAdhesions")
 	public ResponseEntity<?> getAllAdhesions() {
-		LocalDate debut = LocalDate.of(2024,05,01);
+		LocalDate debut = LocalDate.of(2025,05,01);
 
 		return ResponseEntity.ok(reportingService.getAllAdhesions(debut, LocalDate.now()));
 	}

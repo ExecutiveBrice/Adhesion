@@ -40,11 +40,8 @@ export class Adherent {
   activitesNm1!: ActivitesNm1[]
   cours!: Activite[];
   user!: User;
-  
-  tribuId!: number
-  editMail!: boolean
-  rgpdDate!: Date;
-  certifDate!: Date;
+
+  tribuId!: string
   edit!:boolean
 
   constructor() {

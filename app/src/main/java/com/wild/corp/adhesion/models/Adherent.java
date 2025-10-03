@@ -2,7 +2,6 @@ package com.wild.corp.adhesion.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -73,8 +72,8 @@ public class Adherent {
     @JsonIgnoreProperties({"adherents", "autorisations"})
     private Tribu tribu;
 
-    @OneToMany(mappedBy = "adherent")
-    @JsonIgnoreProperties({"paiements", "derniereModifs", "derniereVisites", "surClassement",  "adherent"})
+    @OneToMany(mappedBy = "adherent", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"paiements", "derniereModifs", "derniereVisites", "adherent"})
     private Set<Adhesion> adhesions = new HashSet<>();
 
     @OneToMany(mappedBy = "adherent", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -85,8 +84,9 @@ public class Adherent {
     @JsonIgnore
     private Set<Activite> cours = new HashSet<>();
 
-    @OneToOne
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties({"adherent", "tokens"})
     private User user;
+
 
 }

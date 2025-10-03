@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { Accord, ActiviteLite, Adherent, AdherentLite, Document, Notification } from '../models';
+import {AdherentFlat} from "../models/adherentFlat";
 
 const API_URL = environment.server+'/adherent/';
 
@@ -30,12 +31,12 @@ export class AdherentService {
     let params = new HttpParams().set('adherentId', '' + adherentId + '').set('nomAccord', '' + nomAccord + '');
     return this.http.get<Accord[]>(API_URL+"removeAccord", {params, responseType: 'json' });
   }
-  
+
   regenerate(adherentId: number): Observable<string> {
     let params = new HttpParams().set('adherentId', '' + adherentId + '');
     return this.http.get(API_URL+"regenerate", {params, responseType: 'text' });
   }
-  
+
 
   addDocument(document:File, adherentId : number): Observable<Document> {
     let params = new HttpParams().set('adherentId', '' + adherentId + '');
@@ -50,7 +51,7 @@ export class AdherentService {
     let params = new HttpParams().set('docId', '' + docId + '').set('adherentId', '' + adherentId + '');
     return this.http.delete(API_URL + 'deleteDoc', {params, responseType: 'text' });
   }
-  
+
   getAllId(): Observable<number[]> {
     return this.http.get<number[]>(API_URL + 'allId', { responseType: 'json' });
   }
@@ -59,8 +60,8 @@ export class AdherentService {
     return this.http.get<Adherent[]>(API_URL + 'all', { responseType: 'json' });
   }
 
-  getAllLite(): Observable<Adherent[]> {
-    return this.http.get<Adherent[]>(API_URL + 'allLite', { responseType: 'json' });
+  getAllLite(): Observable<AdherentFlat[]> {
+    return this.http.get<AdherentFlat[]>(API_URL + 'allFlat', { responseType: 'json' });
   }
 
   getAllCours(): Observable<ActiviteLite[]> {
@@ -71,13 +72,13 @@ export class AdherentService {
     let params = new HttpParams().set('adherentId', '' + adherentId + '');
     return this.http.get<Adherent>(API_URL + 'getById', {params, responseType: 'json' });
   }
-  
+
 
   getByRole(roleId : number): Observable<AdherentLite[]> {
     let params = new HttpParams().set('roleId', '' + roleId + '');
     return this.http.get<AdherentLite[]>(API_URL + 'getByRole', {params, responseType: 'json' });
   }
-  
+
 
   updateEmail(email: string, adherentId : number): Observable<Adherent> {
     let params = new HttpParams().set('adherentId', '' + adherentId + '');
@@ -102,7 +103,7 @@ export class AdherentService {
     let params = new HttpParams().set('tribuUuid', '' + tribuUuid + '');
     return this.http.post<Adherent>(API_URL+"newAdherentDansTribu", null, {params, responseType: 'json' });
   }
-  
+
 }
 
 

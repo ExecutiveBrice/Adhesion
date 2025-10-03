@@ -84,6 +84,7 @@ export class ReportingComponent implements OnInit {
 
           data.forEach(adh => {
             this.initiee.push(adh.nbInitiee)
+
             this.payee.push(adh.nbPayee)
             this.validee.push(adh.nbValidee)
             this.label.push(adh.x)

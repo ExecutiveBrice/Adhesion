@@ -3,6 +3,7 @@ package com.wild.corp.adhesion.services;
 import com.wild.corp.adhesion.repository.RoleRepository;
 import com.wild.corp.adhesion.repository.UserRepository;
 import com.wild.corp.adhesion.models.*;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@Transactional
 public class UserServices {
     @Autowired
     UserRepository userRepository;
@@ -31,6 +33,22 @@ public class UserServices {
     PasswordEncoder encoder;
     @Value("${server.name:localhost:8002}")
     private String serverName;
+
+
+    public List<Seance> getSeancesDuJourForUser (String username){
+
+
+        User user = findByEmail(username);
+        List<Seance> seances = user.getAdherent().getCours().stream().flatMap(activite -> {
+            LocalDate now = LocalDate.now();
+            return activite.getSeances().stream().filter(seance -> now.equals(seance.getDateSeance()));
+        }).toList();
+
+
+        return seances;
+    }
+
+
 
     public boolean existsByEmail(String email) {
         return userRepository.existsByUsername(email);
@@ -176,7 +194,8 @@ public class UserServices {
 
         user.getTokens().clear();
         user.getNotifs().clear();
-        userRepository.save(user);
+        user.getRoles().clear();
+
         userRepository.delete(user);
     }
 
@@ -193,6 +212,14 @@ public class UserServices {
     public List<UserLite> getAllLite() {
         return userRepository.findAll().stream().map(this::reduceUser).collect(Collectors.toList());
     }
+    public void getAllAlone() {
+        List<User> users = userRepository.findAll();
+
+
+        userRepository.deleteAll(users.stream().filter(user -> user.getAdherent() == null).toList());
+
+    }
+
 
     private UserLite reduceUser(User user){
         log.info(user.getId().toString());

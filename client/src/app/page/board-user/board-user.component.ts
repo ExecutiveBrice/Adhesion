@@ -1,22 +1,51 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { UserService } from '../../_services/user.service';
-import { Accord, Activite, ActiviteDropDown, Adherent, Adhesion, Document, HoraireDropDown, Tribu, User } from '../../models';
-import { NgbDateStruct, NgbCalendar, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ActiviteService } from '../../_services/activite.service';
-import { AdherentService } from 'src/app/_services/adherent.service';
-import { faCirclePause, faClock, faSquareXmark, faFileSignature, faSquareCaretLeft, faSquareCaretDown, faEye, faCircleQuestion, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
-import { AdhesionService } from 'src/app/_services/adhesion.service';
-import { ActivatedRoute, Router } from '@angular/router';
-import { TokenStorageService } from 'src/app/_services/token-storage.service';
-import { Subscription } from 'rxjs';
-import { ParamService } from 'src/app/_services/param.service';
-import { jsPDF } from "jspdf";
-import { DatePipe } from '@angular/common';
-import { TribuService } from 'src/app/_services/tribu.service';
-import { ToastrService } from 'ngx-toastr';
-import { UserComponent } from 'src/app/template/user/user.component';
-import { UtilService } from 'src/app/_services/util.service';
-import { FileService } from 'src/app/_services/file.service';
+import {Component, OnInit, inject} from '@angular/core';
+import {UserService} from '../../_services/user.service';
+import {
+  Accord,
+  Activite,
+  ActiviteDropDown,
+  Adherent,
+  Adhesion,
+  Document,
+  HoraireDropDown,
+  ParamText,
+  Tribu,
+  User
+} from '../../models';
+import {NgbDateStruct, NgbCalendar, NgbModal} from '@ng-bootstrap/ng-bootstrap';
+import {ActiviteService} from '../../_services/activite.service';
+import {AdherentService} from 'src/app/_services/adherent.service';
+import {
+  faCirclePause,
+  faClock,
+  faSquareXmark,
+  faFileSignature,
+  faSquareCaretLeft,
+  faSquareCaretDown,
+  faEye,
+  faCircleQuestion,
+  faCircleXmark,
+  faCloudDownloadAlt,
+  faBook,
+  faScaleBalanced,
+  faPencilSquare,
+  faSquarePlus,
+  faSquareMinus,
+  faCircleCheck,
+  faUserPlus
+} from '@fortawesome/free-solid-svg-icons';
+import {AdhesionService} from 'src/app/_services/adhesion.service';
+import {ActivatedRoute, Router} from '@angular/router';
+import {TokenStorageService} from 'src/app/_services/token-storage.service';
+import {Subscription} from 'rxjs';
+import {ParamService} from 'src/app/_services/param.service';
+import {jsPDF} from "jspdf";
+import {DatePipe} from '@angular/common';
+import {TribuService} from 'src/app/_services/tribu.service';
+import {ToastrService} from 'ngx-toastr';
+import {UserComponent} from 'src/app/template/user/user.component';
+import {UtilService} from 'src/app/_services/util.service';
+import {FileService} from 'src/app/_services/file.service';
 
 @Component({
   selector: 'app-board-user',
@@ -24,8 +53,8 @@ import { FileService } from 'src/app/_services/file.service';
   styleUrls: ['./board-user.component.css']
 })
 export class BoardUserComponent implements OnInit {
-  faClock =faClock
-  faCirclePause=faCirclePause
+  faClock = faClock
+  faCirclePause = faCirclePause
   faFileSignature = faFileSignature;
   faSquareXmark = faSquareXmark;
   faSquareCaretLeft = faSquareCaretLeft
@@ -92,11 +121,13 @@ export class BoardUserComponent implements OnInit {
     private tokenStorageService: TokenStorageService,
     public paramService: ParamService,
     public fileService: FileService,
-    private datePipe: DatePipe) { }
+    private datePipe: DatePipe) {
+  }
 
   showSuccess(message: string) {
     this.toastr.info(message, 'Information');
   }
+
   showSecretariat() {
     this.toastr.warning("Le secrétariat validera votre dossier lorsqu'il sera complet", "Secrétariat");
   }
@@ -104,15 +135,14 @@ export class BoardUserComponent implements OnInit {
   showWarning(message: string) {
     this.toastr.warning(message, 'Attention');
   }
+
   showError(message: string) {
     this.toastr.error("Une erreur est survenue, recharger la page et recommencez. si le problème persiste contactez l'administrateur<br />" + message, 'Erreur');
   }
 
 
-
-
   ngOnInit(): void {
-
+    this.getAllText()
     this.paramService.getAllBoolean().subscribe({
       next: (data) => {
         this.showHelloAsso = data.filter(param => param.paramName == "Show_HelloAsso")[0].paramValue;
@@ -164,31 +194,31 @@ export class BoardUserComponent implements OnInit {
     }
   }
 
-  ajoutPossible(){
-    if (this.tribu.adherents.filter(adh => !adh.completAdhesion).length > 0){
+  ajoutPossible() {
+    if (this.tribu.adherents.filter(adh => !adh.completAdhesion).length > 0) {
       return false
-    }else{
-      return true 
+    } else {
+      return true
     }
   }
 
-  supprimable(adherent:Adherent):boolean{
-    if (this.showAdmin ){
+  supprimable(adherent: Adherent): boolean {
+    if (this.showAdmin) {
       return true
     }
-    if (this.tribu.adherents.length == 1){
+    if (this.tribu.adherents.length == 1) {
       return false
     }
-    if (!adherent.completAdhesion){
+    if (!adherent.completAdhesion) {
       return true
     }
-    if (!adherent.mineur && this.tribu.adherents.filter(adh => !adh.mineur && adh.completAdhesion).length == 1){
+    if (!adherent.mineur && this.tribu.adherents.filter(adh => !adh.mineur && adh.completAdhesion).length == 1) {
       return false
-    }  
+    }
     return true;
   }
 
-  adhesionComplete(adherent:Adherent):boolean{
+  adhesionComplete(adherent: Adherent): boolean {
     return adherent.adhesions.find(adh => adh.statutActuel == 'Validée') != undefined;
   }
 
@@ -222,6 +252,7 @@ export class BoardUserComponent implements OnInit {
       );
     }
   }
+
 // 4ec4076ae13f41a38c78f6c15e67cc96@developer.sumup.com
 
 //vjcskSV3KDdhbbWEjvNJ
@@ -229,25 +260,26 @@ export class BoardUserComponent implements OnInit {
 
   adhesionPaiement: Adhesion[] = []
   majoration: boolean = false;
+
   calculRestantDu() {
     this.totalRestantDu = 0
     this.adhesionPaiement = []
 
     this.tribu.adherents.forEach(adher => {
       adher.adhesions.forEach(adhes => {
-      if (!adhes.validPaiementSecretariat && adhes.statutActuel != 'Annulée' && adhes.statutActuel != 'Liste d\'attente' && adhes.statutActuel != 'Attente validation adhérent') {
-        this.totalRestantDu = this.totalRestantDu + adhes.tarif;
+        if (!adhes.validPaiementSecretariat && adhes.statutActuel != 'Annulée' && adhes.statutActuel != 'Sur liste d\'attente' && adhes.statutActuel != 'Attente validation adhérent') {
+          this.totalRestantDu = this.totalRestantDu + adhes.tarif;
 
-        adhes.adherent = new Adherent()
-        adhes.adherent.prenom = adher.prenom
-        
-        if(adhes.majoration == true){
-          this.majoration = true
+          adhes.adherent = new Adherent()
+          adhes.adherent.prenom = adher.prenom
+
+          if (adhes.majoration == true) {
+            this.majoration = true
+          }
+
+          this.adhesionPaiement.push(adhes)
         }
-
-        this.adhesionPaiement.push(adhes)
-      }
-    })
+      })
     })
     if (this.totalRestantDu > 0) {
       this.PaiementsOpen = true
@@ -255,13 +287,16 @@ export class BoardUserComponent implements OnInit {
   }
 
   afficheAlerte: boolean = false;
+
   afficheAlerteDonneesPerso() {
     this.afficheAlerte = true;
-    setTimeout(() => { this.afficheAlerte = false }, 5000);
+    setTimeout(() => {
+      this.afficheAlerte = false
+    }, 5000);
   }
 
   adhesionValide(adh: Adhesion): boolean {
-    return adh.statutActuel.startsWith("Attente licence en ligne")
+    return adh.statutActuel.startsWith("Licence FFBB à compléter")
       || adh.statutActuel.startsWith("Validée")
       || adh.statutActuel.startsWith("Licence générée")
       || adh.statutActuel.startsWith("Retour Comité")
@@ -273,15 +308,15 @@ export class BoardUserComponent implements OnInit {
       "Vous êtes sur le point de supprimer l'adhérent " + adherent.prenom + "<br/>" +
       (adherent.adhesions != undefined && adherent.adhesions.length > 0 ? "Toutes ses adhésions seront également supprimées" : "")
       , "Suppression", true, true, false, "md").then((reponse) => {
-        console.log(reponse)
-        if (reponse == "accepter") {
-          this.acceptSupressAdherent(adherent);
-        }
-        // on close
-      }, (reason) => {
-        console.log(reason)
-        // on dismiss
-      });
+      console.log(reponse)
+      if (reponse == "accepter") {
+        this.acceptSupressAdherent(adherent);
+      }
+      // on close
+    }, (reason) => {
+      console.log(reason)
+      // on dismiss
+    });
   }
 
   acceptSupressAdherent(adherent: Adherent) {
@@ -297,20 +332,51 @@ export class BoardUserComponent implements OnInit {
   }
 
   addAdherent() {
-    this.adherentService.newAdherentDansTribu(this.tribu.uuid).subscribe({
-      next: (data) => {
-        this.tribu.adherents.push(data)
-        this.showSuccess("Utilisteur bien ajouté, complétez le pour lui ajouter une activité")
-        this.openAdherent(data)
+    let adherent = new Adherent();
+    adherent.user = new User();
+    adherent.mineur = false;
+    adherent.completAdhesion = false;
+    adherent.tribuId = this.tribu.uuid;
+    let accord = new Accord()
+    accord.nom = "RGPD";
+    accord.text = this.paramTexts.filter(param => param.paramName == "RGPD")[0].paramValue;
+    accord.text = this.paramTexts.filter(param => param.paramName == "RGPD")[0].paramValue;
+    accord.etat = true;
+    accord.refusable = false;
+    accord.title = "RGPD";
+    accord.valide = "J'accepte l'utilisation de mes données personnelles"
+    adherent.accords.push(accord);
+
+
+    let accordImage = new Accord()
+    accordImage.nom = "DroitImage";
+    accordImage.text = this.paramTexts.filter(param => param.paramName == "DroitImage")[0].paramValue;
+    accordImage.etat = true;
+    accordImage.refusable = true;
+    accordImage.title = "DroitImage";
+    accordImage.valide = "J'accèpte l'utilisation de mon image"
+    accordImage.refus = "Je refuse l'utilisation de mon image";
+    adherent.accords.push(accordImage);
+    this.tribu.adherents.push(adherent)
+    this.openAdherent(adherent)
+  }
+
+  paramTexts: ParamText[] = [];
+
+  getAllText() {
+    this.paramService.getAllText().subscribe(
+      data => {
+        this.paramTexts = data;
+
       },
-      error: (error) => {
-        this.isFailed = true;
-        this.showError(error.message)
+      err => {
+        ;
       }
-    });
+    );
   }
 
   private modalService = inject(NgbModal);
+
   openAdherent(adherent: Adherent) {
 
     const modalRef = this.modalService.open(UserComponent, {
@@ -335,7 +401,5 @@ export class BoardUserComponent implements OnInit {
     });
   }
 
-
- 
 
 }

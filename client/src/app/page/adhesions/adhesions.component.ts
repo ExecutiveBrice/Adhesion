@@ -1,19 +1,47 @@
-import { Component, OnInit } from '@angular/core';
-import { ActiviteDropDown, Adhesion, AdhesionExcel, Document, HoraireDropDown, Notification, Paiement } from 'src/app/models';
-import { AdhesionService } from 'src/app/_services/adhesion.service';
-import { faEarth, faBasketball, faFilterCircleXmark, faFilter, faPen, faEye, faEnvelope, faCircleUser, faFlag, faCircleXmark, faCircleExclamation, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus, faL } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { TokenStorageService } from 'src/app/_services/token-storage.service';
-import { Router } from '@angular/router';
-import { ParamService } from 'src/app/_services/param.service';
-import { ActiviteService } from 'src/app/_services/activite.service';
-import { ExcelService } from 'src/app/_services/excel.service';
-import { FilterAdhesionByPipe } from 'src/app/_helpers/filterAdhesion.pipe';
-import { DatePipe } from '@angular/common';
-import { FilterByPipe } from 'src/app/_helpers/filter.pipe';
-import { AdherentService } from 'src/app/_services/adherent.service';
-import { ToastrService } from 'ngx-toastr';
-const ADHESIONS = 'ADHESIONS';
+import {Component, OnInit} from '@angular/core';
+import {
+  ActiviteDropDown,
+  Adhesion,
+  AdhesionExcel,
+  Document,
+  HoraireDropDown,
+  Notification,
+  Paiement
+} from 'src/app/models';
+import {AdhesionService} from 'src/app/_services/adhesion.service';
+import {
+  faEarth,
+  faBasketball,
+  faFilterCircleXmark,
+  faFilter,
+  faPen,
+  faEye,
+  faEnvelope,
+  faCircleUser,
+  faFlag,
+  faCircleXmark,
+  faCircleExclamation,
+  faBook,
+  faScaleBalanced,
+  faPencilSquare,
+  faSquarePlus,
+  faSquareMinus,
+  faCircleCheck,
+  faUserPlus,
+  faL
+} from '@fortawesome/free-solid-svg-icons';
+import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
+import {TokenStorageService} from 'src/app/_services/token-storage.service';
+import {Router} from '@angular/router';
+import {ParamService} from 'src/app/_services/param.service';
+import {ActiviteService} from 'src/app/_services/activite.service';
+import {ExcelService} from 'src/app/_services/excel.service';
+import {FilterAdhesionByPipe} from 'src/app/_helpers/filterAdhesion.pipe';
+import {DatePipe} from '@angular/common';
+
+import {AdherentService} from 'src/app/_services/adherent.service';
+import {ToastrService} from 'ngx-toastr';
+
 
 @Component({
   selector: 'app-adherents',
@@ -36,14 +64,21 @@ export class AdhesionsComponent implements OnInit {
   faCircleCheck = faCircleCheck;
   faFlag = faFlag;
   adhesions: Adhesion[] = [];
+  adhesionsCopy: Adhesion[] = [];
 
-  ordre: string = 'nom';
-  search: string = "";
-  sens: boolean = false;
-  filtres: Map<string, any> = new Map<string, any>();
+
+  validPaiementSecretariat:boolean|null=null;
+  validDocumentSecretariat:boolean|null=null;
+  statutActuel: string = "";
+  flag:boolean|null=null;
+
+
+
   showAdmin: boolean = false;
   showSecretaire: boolean = false;
   choixSection: string = ""
+  visuelselection: string = "";
+
   constructor(
     private toastr: ToastrService,
     private datePipe: DatePipe,
@@ -56,11 +91,13 @@ export class AdhesionsComponent implements OnInit {
     private modalService: NgbModal,
     public paramService: ParamService,
     public router: Router
-  ) { }
+  ) {
+  }
 
   showSuccess(message: string) {
     this.toastr.info(message, 'Information');
   }
+
   showSecretariat() {
     this.toastr.warning("Le secrétariat validera votre dossier lorsqu'il sera complet", "Secrétariat");
   }
@@ -68,10 +105,10 @@ export class AdhesionsComponent implements OnInit {
   showWarning(message: string) {
     this.toastr.warning(message, 'Attention');
   }
+
   showError(message: string) {
     this.toastr.error("Une erreur est survenue, recharger la page et recommencez. si le problème persiste contactez l'administrateur<br />" + message, 'Erreur');
   }
-
 
 
   ngOnInit(): void {
@@ -81,8 +118,10 @@ export class AdhesionsComponent implements OnInit {
       this.showSecretaire = this.tokenStorageService.getUser().roles.includes('ROLE_SECRETAIRE');
       if (this.tokenStorageService.getUser().username == "alodbasket@free.fr" || this.tokenStorageService.getUser().username == "laurence.basket@yahoo.com" || this.tokenStorageService.getUser().username == "xlcharonnat@yahoo.fr" || this.tokenStorageService.getUser().username == "c.rullie@free.fr") {
         this.choixSection = "activite#Basket"
+        this.visuelselection = "Basket-Tous horaires"
       } else {
         this.choixSection = "activite#Aquagym"
+        this.visuelselection = "Aquagym-Tous horaires"
       }
     } else {
       this.router.navigate(['login']);
@@ -91,16 +130,21 @@ export class AdhesionsComponent implements OnInit {
     this.getActivites()
   }
 
-  loadder:boolean=true
+  loadder: boolean = true
+
   getAdhesion() {
-this.loadder=true
-this.adhesions = []
+    this.loadder = true
+    this.adhesions = []
+    this.adhesionsCopy = []
     this.adhesionService.getAllLiteBysection(this.choixSection).subscribe({
       next: (data) => {
+        console.log("data")
         console.log(data)
+        data.forEach(value => value.nomprenom = value.adherent.nom + value.adherent.prenom)
         this.adhesions = data;
-        this.adhesions.forEach(adh => adh.adherent.nomPrenom = adh.adherent.nom+adh.adherent.prenom)
-        this.loadder=false
+        this.adhesionsCopy = data;
+        this.loadder = false
+        console.log("loadder")
       },
       error: (error) => {
         console.log(error)
@@ -110,6 +154,7 @@ this.adhesions = []
   }
 
   activites: ActiviteDropDown[] = []
+
   getActivites() {
 
     this.activiteService.getAll().subscribe({
@@ -138,18 +183,6 @@ this.adhesions = []
     });
   }
 
-  changeActivite(adhesion: Adhesion, activiteId: number) {
-    this.adhesionService.changeActivite(adhesion.id, activiteId).subscribe({
-      next: (data) => {
-        this.showSuccess("Changement d'activité réussie pour l'adhérent "+adhesion.adherent.prenom +" "+adhesion.adherent.nom)
-        adhesion.activite = data;
-      },
-      error: (error) => {
-        console.log(error)
-        this.showError(error.error.message)
-      }
-    });
-  }
 
   updateFlag(adhesion: Adhesion, statut: boolean) {
     this.adhesionService.updateFlag(adhesion.id, statut).subscribe({
@@ -193,10 +226,11 @@ this.adhesions = []
       }
     });
   }
+
   choisirStatut(adhesion: Adhesion, statutActuel: string) {
     this.adhesionService.choisirStatut(adhesion.id, statutActuel).subscribe({
       next: (data) => {
-        this.showSuccess("Changement de statut de l'adhésion réussie pour l'adhérent "+adhesion.adherent.prenom +" "+adhesion.adherent.nom)
+        this.showSuccess("Changement de statut de l'adhésion réussie pour l'adhérent " + adhesion.adherent.prenom + " " + adhesion.adherent.nom)
         adhesion.statutActuel = data.statutActuel;
         adhesion.derniereModifs = data.derniereModifs
         adhesion.derniereVisites = data.derniereVisites
@@ -230,42 +264,6 @@ this.adhesions = []
   }
 
 
-  addSearch(search: string) {
-    if (search.length > 2) {
-      this.addFiltre('adherent.nomPrenom', search)
-    } else {
-      this.removeFiltre('adherent.nomPrenom')
-    }
-  }
-
-  removeFiltre(nomFiltre: string) {
-
-    if (this.filtres.has(nomFiltre)) {
-      this.filtres.delete(nomFiltre)
-    }
-    this.getAdhesion()
-    this.filtrage()
-  }
-
-  addFiltre(nomFiltre: string, valeurFiltre: any) {
-
-    if (this.filtres.has(nomFiltre)) {
-      this.filtres.delete(nomFiltre)
-    }
-    if (valeurFiltre.length != 0) {
-      this.filtres.set(nomFiltre, valeurFiltre);
-
-    }
-
-    this.filtrage()
-  }
-
-  filtrage() {
-
-    this.adhesions = this.filterAdhesionBy.transform(this.adhesions.map(x => Object.assign({}, x)), this.filtres)
-
-  }
-
 
   dismissSupress() {
     this.modalService.dismissAll();
@@ -276,7 +274,7 @@ this.adhesions = []
     this.modalService.dismissAll();
     this.adhesionService.deleteAdhesion(adhesion.id).subscribe({
       next: (data) => {
-        this.showSuccess("Suppresson de l'adhésion réussie pour l'adhérent "+adhesion.adherent.prenom +" "+adhesion.adherent.nom)
+        this.showSuccess("Suppresson de l'adhésion réussie pour l'adhérent " + adhesion.adherent.prenom + " " + adhesion.adherent.nom)
         this.adhesions = this.adhesions.filter(adh => adh.id != adhesion.id)
       },
       error: (error) => {
@@ -349,9 +347,11 @@ this.adhesions = []
       }
     });
   }
+
   calculSomme(adhesion: Adhesion): number {
     return adhesion.paiements.map(paiement => paiement.montant).reduce((a, b) => a + b, 0)
   }
+
   openEditModal(targetModal: any, doc: Document) {
     this.modalService.open(targetModal, {
       size: 'xl',
@@ -370,16 +370,15 @@ this.adhesions = []
   pdfEditSrc: string = ""
 
 
-
   exportAsXLSX(): void {
     let adhesions: AdhesionExcel[] = []
     this.adhesions.forEach(adhesion => {
       let newAdhesionExcel = new AdhesionExcel;
       if (adhesion.adherent) {
         newAdhesionExcel.nomAdherent = adhesion.adherent.nom
-        newAdhesionExcel.telephone = adhesion.adherent.representant != undefined?adhesion.adherent.representant.telephone:adhesion.adherent.telephone;
+        newAdhesionExcel.telephone = adhesion.adherent.representant != undefined ? adhesion.adherent.representant.telephone : adhesion.adherent.telephone;
         newAdhesionExcel.prenomAdherent = adhesion.adherent.prenom
-        newAdhesionExcel.emailAdherent = adhesion.adherent.representant != undefined?adhesion.adherent.representant.user.username:adhesion.adherent.user.username
+        newAdhesionExcel.emailAdherent = adhesion.adherent.representant != undefined ? adhesion.adherent.representant.user.username : adhesion.adherent.user.username
       }
 
 
@@ -443,9 +442,9 @@ this.adhesions = []
 
   verifyAdhesion(adhesion: Adhesion): boolean {
 
-    let lastVisite = adhesion.derniereVisites.length>0?adhesion.derniereVisites.reduce(function (r, a) {
+    let lastVisite = adhesion.derniereVisites.length > 0 ? adhesion.derniereVisites.reduce(function (r, a) {
       return r.date > a.date ? r : a;
-    }):undefined
+    }) : undefined
 
     if (lastVisite != undefined && lastVisite.user.id == this.tokenStorageService.getUser().id) {
       return false
@@ -457,9 +456,9 @@ this.adhesions = []
 
   verifyAdherent(adhesion: Adhesion): boolean {
 
-    let lastVisite = adhesion.adherent.derniereVisites.length>0?adhesion.adherent?.derniereVisites?.reduce(function (r, a) {
+    let lastVisite = adhesion.adherent.derniereVisites.length > 0 ? adhesion.adherent?.derniereVisites?.reduce(function (r, a) {
       return r.date > a.date ? r : a;
-    }):undefined
+    }) : undefined
 
     if (lastVisite != undefined && lastVisite.user.id == this.tokenStorageService.getUser().id) {
       return false

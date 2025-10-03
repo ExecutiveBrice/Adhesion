@@ -22,7 +22,8 @@ public class AccordServices {
     public static final Map<String, Map<String, String>> ACCORDS = Map.ofEntries(
             entry(REGLEMENT_INTERIEUR, Map.ofEntries(entry("title", "Règlement intérieur"), entry("valide", "J'accèpte le règlement intérieur"), entry("refusable", "false"))),
             entry(ATTESTATION_SANTE, Map.ofEntries(entry("title", "Attestation santé"), entry("valide", "J'atteste de ma bonne santé"), entry("refus", "Je demande un certificat médical"), entry("refusable", "true"))),
-            entry(VIE_CLUB, Map.ofEntries(entry("title", "Charte du club"), entry("valide", "En adhérent, j'accèpte Charte du club"), entry("refusable", "false"))),
+            entry(VIE_CLUB, Map.ofEntries(entry("title", "Charte du club"), entry("valide", "En adhérant, j'accèpte Charte du club"), entry("refusable", "false"))),
+            entry(AMICALE, Map.ofEntries(entry("title", "Charte de l'amicale"), entry("valide", "En adhérant, j'accèpte Charte de l'amicale"), entry("refusable", "false"))),
             entry(AUTORISATION_PARENTALE, Map.ofEntries(entry("title", "Autorisation Parentale"), entry("valide", "Je donne mon autorisation parentale"), entry("refusable", "false"))),
             entry(PRISE_EN_CHARGE, Map.ofEntries(entry("title", "Prise en charge"), entry("valide", "J'accepte la prise en charge de mon enfant"), entry("refus", "Je refuse la prise en charge de mon enfant"),entry("refusable", "true"))),
             entry(RGPD, Map.ofEntries(entry("title", "Autorisation d'utilisation des données personnelles"), entry("valide", "J'accepte l'utilisation de mes données personnelles"), entry("refusable", "false"))),
@@ -74,7 +75,9 @@ public class AccordServices {
             if ("Charte du club".equals(nomAccord)) {
                 nomAccord = "VieClub";
             }
-
+            if ("Charte de l'amicale".equals(nomAccord)) {
+                nomAccord = "Amicale";
+            }
             accord.setNom(nomAccord);
             accord.setText(paramTextRepository.findByParamName(nomAccord).get().getParamValue());
             accord.setRefusable(Boolean.parseBoolean(ACCORDS.get(nomAccord).get("refusable")));

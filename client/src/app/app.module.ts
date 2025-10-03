@@ -44,6 +44,7 @@ import { ExcelService } from './_services/excel.service';
 import { UtilService } from './_services/util.service';
 import { FileService } from './_services/file.service';
 import { SimpleFilterPipe } from './_helpers/simpleFilter.pipe';
+import {OrderSimplePipe} from "./_helpers/sort-simple.pipe";
 
 
 
@@ -71,7 +72,7 @@ import { SimpleFilterPipe } from './_helpers/simpleFilter.pipe';
     SwitchComponent,
     OrderByPipe,
     FilterByPipe,
-    
+
     SimpleFilterPipe
   ],
   imports: [
@@ -91,12 +92,14 @@ import { SimpleFilterPipe } from './_helpers/simpleFilter.pipe';
     ToastrModule.forRoot({
       enableHtml: true,
       timeOut: 10000,
-      closeButton:true,
-      tapToDismiss:true,
+      closeButton: true,
+      tapToDismiss: true,
       progressBar: true,
       positionClass: 'toast-top-left-wide',
       preventDuplicates: true,
     }),
+    OrderSimplePipe,
+    FilterAdhesionByPipe,
   ],
   providers: [authInterceptorProviders,
     NgbModalConfig,
@@ -108,7 +111,7 @@ import { SimpleFilterPipe } from './_helpers/simpleFilter.pipe';
     FileService,
     DatePipe,
     FilterByPipe
-    
+
   ],
   bootstrap: [AppComponent]
 })

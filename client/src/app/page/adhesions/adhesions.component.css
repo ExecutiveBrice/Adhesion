@@ -4,7 +4,11 @@
 }
 
 
-  
+
   .ligne:hover{
     background-color: rgba(188, 219, 205, 255)!important;
+  }
+
+  .colorRed{
+    color: red;
   }

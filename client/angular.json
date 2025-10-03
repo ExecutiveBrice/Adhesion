@@ -42,6 +42,7 @@
           },
           "configurations": {
             "production": {
+              "baseHref": "/adhesion/",
               "budgets": [
                 {
                   "type": "initial",

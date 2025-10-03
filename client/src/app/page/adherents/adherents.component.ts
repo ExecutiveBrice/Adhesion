@@ -14,6 +14,7 @@ import { ActiviteService } from 'src/app/_services/activite.service';
 import { ActivitesNm1 } from 'src/app/models/activitesNm1';
 import { TribuService } from 'src/app/_services/tribu.service';
 import { ToastrService } from 'ngx-toastr';
+import {AdherentFlat} from "../../models/adherentFlat";
 
 @Component({
   selector: 'app-adherents',
@@ -31,8 +32,7 @@ export class AdherentsComponent implements OnInit {
   faSkull = faSkull;
   faEnvelope = faEnvelope;
   faPencilSquare = faPencilSquare;
-  adherents: Adherent[] = [];
-  cloned: Adherent[] = [];
+  adherents: AdherentFlat[] = [];
 
   loadder:boolean=true
   errorMessage = '';
@@ -78,13 +78,7 @@ export class AdherentsComponent implements OnInit {
     this.adherentService.getAllLite().subscribe({
       next: (data) => {
         console.log(data)
-        this.cloned = data.map(x => Object.assign({}, x));
-        this.cloned.forEach(adh => {
-          adh.nomPrenom = adh.nom+adh.prenom
-          adh.activitesNm1.forEach(act =>  adh.activitesNm1Text = " "+act.nom +" " + act.horaire)
-          adh.adhesions.forEach(adhesion =>  adh.activitesText = " "+adhesion.activite?.nom +" " + adhesion.activite?.horaire)
-        })
-        this.filtrage()
+        this.adherents = data;
         this.loadder=false
 
 
@@ -99,46 +93,12 @@ export class AdherentsComponent implements OnInit {
 
   exportAsXLSX(): void {
     console.log(this.adherents)
-    
-    const adherents:Adherent[] = JSON.parse(JSON.stringify((this.adherents)));
-    adherents.forEach(adherent => {
-      adherent.email = (adherent.emailRepresentant && adherent.representant != undefined)?adherent.representant.user.username:adherent.user.username
-      adherent.tel =(adherent.telephoneRepresentant && adherent.representant != undefined)?adherent.representant.telephone:adherent.telephone
-      adherent.adress =(adherent.adresseRepresentant && adherent.representant != undefined)?adherent.representant.adresse +' '+ (adherent.representant.codePostal != null?adherent.representant.codePostal:'') + ' ' + (adherent.representant.ville != null?adherent.representant.ville:'') : adherent.adresse + ' ' + (adherent.codePostal != null?adherent.codePostal:'') + ' ' + (adherent.ville != null?adherent.ville:'');
-    })
-    this.excelService.exportAsExcelFile(adherents, 'adherents');
+
+    this.excelService.exportAsExcelFile(this.adherents, 'adherents');
   }
 
 
-  addSearch(search: string) {
-    if (search.length > 2) {
-      this.addFiltre('nomPrenom', search)
-    } else if (this.filtres.has('nomPrenom')) {
-      this.removeFiltre('nomPrenom')
-    }
-  }
 
-
-  removeFiltre(nomFiltre: string) {
-    if (this.filtres.has(nomFiltre)) {
-      this.filtres.delete(nomFiltre)
-    }
-    this.filtrage()
-  }
-
-  addFiltre(nomFiltre: string, valeurFiltre: any) {
-    if (this.filtres.has(nomFiltre)) {
-      this.filtres.delete(nomFiltre)
-    }
-    if (valeurFiltre.length != 0) {
-      this.filtres.set(nomFiltre, valeurFiltre);
-    }
-    this.filtrage()
-  }
-
-  filtrage() {
-    this.adherents = this.filterByPipe.transform(this.cloned.map(x => Object.assign({}, x)), this.filtres)
-  }
 
   newUser: string = ""
   openModalAddUser(targetModal: any) {

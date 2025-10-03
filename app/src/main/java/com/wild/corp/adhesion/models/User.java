@@ -34,7 +34,7 @@ public class User {
 	@JsonIgnore
 	private String password;
 
-	@ManyToMany
+	@ManyToMany(cascade = CascadeType.ALL)
 	private Set<Role> roles = new HashSet<>();
 
 	private Boolean emailValid;
@@ -46,7 +46,7 @@ public class User {
 	@OneToMany(mappedBy="user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<Notification> notifs = new HashSet<>();
 
-	@OneToMany(mappedBy="user", cascade = CascadeType.ALL)
+	@OneToMany(mappedBy="user", cascade = CascadeType.ALL, orphanRemoval = true)
 	@JsonIgnore
 	private Set<ConfirmationToken> tokens = new HashSet<>();
 

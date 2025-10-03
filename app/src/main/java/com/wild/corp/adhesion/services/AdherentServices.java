@@ -6,6 +6,7 @@ import com.wild.corp.adhesion.models.resources.AdherentFlat;
 import com.wild.corp.adhesion.models.resources.AdherentLite;
 import com.wild.corp.adhesion.repository.*;
 
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,11 +26,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.wild.corp.adhesion.utils.Accords.*;
-import static java.time.LocalDateTime.now;
+
 
 @Service
 @Slf4j
-
+@Transactional
 public class AdherentServices {
 
     @Autowired
@@ -64,13 +65,7 @@ public class AdherentServices {
 
             if ("Tous les adhérents".equals(groupes[1])) {
                 return adherentRepository.findAll().stream().map(adherent -> {
-                            if (adherent.getEmailRepresentant()) {
-                                return adherent.getRepresentant().getUser().getUsername();
-                            }
-                            if (adherent.getUser().getUsername() != null) {
-                                return adherent.getUser().getUsername();
-                            }
-                            return null;
+                            return Boolean.TRUE.equals(adherent.getEmailRepresentant()) && adherent.getRepresentant() != null ? adherent.getRepresentant().getUser().getUsername():adherent.getUser().getUsername();
                         }).filter(Objects::nonNull)
                         .collect(Collectors.toSet());
             }
@@ -89,21 +84,7 @@ public class AdherentServices {
                         .collect(Collectors.toSet());
             }
 
-            if ("Sans certificat médical".equals(groupes[1])) {
-                return adherentRepository.findAll().stream()
-                        .filter(adherent -> adherent.getAdhesions().stream().noneMatch(Adhesion::getValidDocumentSecretariat))
-                        .map(adherent -> {
-                            if (adherent.getEmailRepresentant()) {
-                                return adherent.getRepresentant().getUser().getUsername();
-                            }
-                            if (adherent.getUser().getUsername() != null) {
-                                return adherent.getUser().getUsername();
-                            }
-                            return null;
-                        }).filter(Objects::nonNull)
-                        .collect(Collectors.toSet());
 
-            }
         }
 
         if (groupes[0].equals("activite")) {
@@ -111,13 +92,7 @@ public class AdherentServices {
                     .filter(adherent -> adherent.getAdhesions().stream().anyMatch(adhesion -> activiteServices.findByNom(groupes[1]).contains(adhesion.getActivite())) || adherent.getCours().stream().anyMatch(activite -> activite.
                             equals(activiteServices.findByNom(groupes[1]))))
                     .map(adherent -> {
-                        if (adherent.getEmailRepresentant()) {
-                            return adherent.getRepresentant().getUser().getUsername();
-                        }
-                        if (adherent.getUser().getUsername() != null) {
-                            return adherent.getUser().getUsername();
-                        }
-                        return null;
+                        return Boolean.TRUE.equals(adherent.getEmailRepresentant()) && adherent.getRepresentant() != null ? adherent.getRepresentant().getUser().getUsername():adherent.getUser().getUsername();
                     }).filter(Objects::nonNull)
                     .collect(Collectors.toSet());
 
@@ -127,13 +102,7 @@ public class AdherentServices {
             return adherentRepository.findAll().stream()
                     .filter(adherent -> adherent.getAdhesions().stream().anyMatch(adhesion -> adhesion.getActivite().getId().equals(Long.parseLong(groupes[1]))) || adherent.getCours().stream().anyMatch(activite -> activite.getId().equals(Long.parseLong(groupes[1]))))
                     .map(adherent -> {
-                        if (adherent.getEmailRepresentant()) {
-                            return adherent.getRepresentant().getUser().getUsername();
-                        }
-                        if (adherent.getUser().getUsername() != null) {
-                            return adherent.getUser().getUsername();
-                        }
-                        return null;
+                        return Boolean.TRUE.equals(adherent.getEmailRepresentant()) && adherent.getRepresentant() != null ? adherent.getRepresentant().getUser().getUsername():adherent.getUser().getUsername();
                     }).filter(Objects::nonNull)
                     .collect(Collectors.toSet());
         }
@@ -152,11 +121,42 @@ public class AdherentServices {
     }
 
 
-    public AdherentLite update(AdherentLite adherent) {
+    public AdherentLite update(AdherentLite frontAdherent) {
 
-            Optional<Adherent> indbAdherent = adherentRepository.findById(adherent.getId());
+            Optional<Adherent> indbAdherent = adherentRepository.findById(frontAdherent.getId());
             if (indbAdherent.isPresent()) {
-                fillAdherent(adherent, indbAdherent.get());
+                Adherent dataAdherent = indbAdherent.get();
+                dataAdherent.setNom(frontAdherent.getNom().toUpperCase());
+                dataAdherent.setPrenom(frontAdherent.getPrenom().substring(0, 1).toUpperCase() + frontAdherent.getPrenom()
+                        .substring(1));
+
+                dataAdherent.setGenre(frontAdherent.getGenre());
+                dataAdherent.setNaissance(frontAdherent.getNaissance());
+                dataAdherent.setLieuNaissance(frontAdherent.getLieuNaissance());
+
+                if(!Boolean.TRUE.equals(frontAdherent.getTelephoneRepresentant())){
+                    dataAdherent.setTelephone(frontAdherent.getTelephone());
+                }
+                if(!Boolean.TRUE.equals(frontAdherent.getEmailRepresentant())){
+                    dataAdherent.getUser().setUsername(frontAdherent.getUser().getUsername() != null ? frontAdherent.getUser().getUsername().toLowerCase() : dataAdherent.getUser().getUsername().toLowerCase());
+                }
+                if(!Boolean.TRUE.equals(frontAdherent.getAdresseRepresentant())){
+                    dataAdherent.setAdresse(frontAdherent.getAdresse());
+                    dataAdherent.setCodePostal(frontAdherent.getCodePostal());
+                    dataAdherent.setVille(frontAdherent.getVille());
+                }
+
+                dataAdherent.setMineur(frontAdherent.getMineur());
+                if(frontAdherent.getRepresentant() != null){
+                    dataAdherent.setRepresentant(userServices.adherentServices.getById(frontAdherent.getRepresentant().getId()));
+                }
+
+                dataAdherent.setTelephoneRepresentant(frontAdherent.getTelephoneRepresentant());
+                dataAdherent.setEmailRepresentant(frontAdherent.getEmailRepresentant());
+                dataAdherent.setAdresseRepresentant(frontAdherent.getAdresseRepresentant());
+
+
+                isComplet(dataAdherent);
                 return reduceAdherent(adherentRepository.save(indbAdherent.get()));
             }
 
@@ -166,23 +166,61 @@ public class AdherentServices {
     public void deleteAdherent(Long adherentId) {
         Adherent adherent = adherentRepository.findById(adherentId).get();
 
+
         adherent.getDerniereVisites().clear();
 
         adherent.getDerniereModifs().clear();
 
-        adherent.getAdhesions().forEach(adhesion -> {
-            adhesionServices.deleteAdhesion(adhesion.getId());
-        });
-        User adh = adherent.getUser();
+   adherent.getAdhesions().clear();
 
-        adherent.setUser(null);
-        userServices.deleteuser(adh);
+        if(adherent.getUser() != null){
+            userServices.deleteuser(adherent.getUser());
+        }
 
         adherentRepository.deleteById(adherentId);
 
 
 
     }
+
+    public Adherent saveNewAdherent(AdherentLite newAdherentFront) {
+        Adherent newAdherent = new Adherent();
+        newAdherent.setMineur(newAdherentFront.getMineur());
+        newAdherent.setGenre(newAdherentFront.getGenre());
+        newAdherent.setVille(newAdherentFront.getVille());
+        newAdherent.setCodePostal(newAdherentFront.getCodePostal());
+        newAdherent.setAdresse(newAdherentFront.getAdresse());
+        newAdherent.setTelephone(newAdherentFront.getTelephone());
+        newAdherent.setAdresseRepresentant(newAdherentFront.getAdresseRepresentant());
+        newAdherent.setEmailRepresentant(newAdherentFront.getEmailRepresentant());
+        newAdherent.setTelephoneRepresentant(newAdherentFront.getTelephoneRepresentant());
+
+        newAdherent.setLieuNaissance(newAdherentFront.getLieuNaissance());
+        newAdherent.setNaissance(newAdherentFront.getNaissance());
+        newAdherent.setNom(newAdherentFront.getNom());
+        newAdherent.setPrenom(newAdherentFront.getPrenom());
+        if(newAdherentFront.getRepresentant() != null){
+            newAdherent.setRepresentant(getById(newAdherentFront.getRepresentant().getId()));
+        }
+
+        newAdherent.setTribu(tribuServices.getTribuByUuid(newAdherentFront.getTribuId()));
+
+        if(newAdherentFront.getUser() != null && newAdherentFront.getUser().getUsername() != null){
+            Random random = new Random();
+            String password = random.toString();
+            User newUser = userServices.addNewUser(newAdherentFront.getUser().getUsername().toLowerCase(), password);
+            newAdherent.setUser(newUser);
+
+        }
+        newAdherentFront.getAccords().forEach(accord -> {
+            newAdherent.getAccords().add(new Accord(accord.getNom(),accord.getTitle(), accord.getValide(), accord.getRefus(), accord.getRefusable(), accord.getText()));
+        });
+        isComplet(newAdherent);
+
+        return save(newAdherent);
+    }
+
+
 
     public Adherent save(Adherent adherent) {
         return adherentRepository.save(adherent);
@@ -201,6 +239,8 @@ public class AdherentServices {
         tribuServices.save(tribu);
 
         Adherent adherent = new Adherent();
+        adherent.setPrenom("");
+        adherent.setNom("");
         adherent.setMineur(false);
         adherent.setCompletAdhesion(false);
         adherent.setTribu(tribu);
@@ -218,23 +258,6 @@ public class AdherentServices {
         return adherent;
     }
 
-    public AdherentLite newAdherentDansTribu(String username, String tribuUuid) {
-        UUID tribuId;
-        if (tribuUuid.isBlank()) {
-            User user = userServices.findByEmail(username);
-            tribuId = user.getAdherent().getTribu().getUuid();
-        } else {
-            tribuId = UUID.fromString(tribuUuid);
-        }
-        Adherent adherent = newAdherent(tribuId, false);
-
-        Random random = new Random();
-        String password = random.toString();
-
-        adherent.setUser(userServices.addNewUser(UUID.randomUUID() + "@mailfictif.com", password));
-        save(adherent);
-        return reduceAdherent(adherent);
-    }
 
     private void isComplet(Adherent adherent) {
 
@@ -249,12 +272,13 @@ public class AdherentServices {
                         (adherent.getTelephone() != null || adherent.getRepresentant() != null)
         ) {
             adherent.setCompletAdhesion(true);
-            setActiviteNm1(adherent);
+//            setActiviteNm1(adherent);
         } else {
             adherent.setCompletAdhesion(false);
         }
 
     }
+
 
     public void setActiviteNm1(Adherent adherent){
         if(adherent.getMineur()){
@@ -274,52 +298,7 @@ public class AdherentServices {
 
     }
     public Adherent fillAdherent(AdherentLite frontAdherent, Adherent dataAdherent) {
-        dataAdherent.setNom(frontAdherent.getNom().toUpperCase());
-        dataAdherent.setPrenom(frontAdherent.getPrenom().substring(0, 1).toUpperCase() + frontAdherent.getPrenom()
-                .substring(1));
 
-        dataAdherent.setGenre(frontAdherent.getGenre());
-        dataAdherent.setNaissance(frontAdherent.getNaissance());
-        dataAdherent.setLieuNaissance(frontAdherent.getLieuNaissance());
-
-        if(!Boolean.TRUE.equals(frontAdherent.getTelephoneRepresentant())){
-            dataAdherent.setTelephone(frontAdherent.getTelephone());
-        }
-        if(!Boolean.TRUE.equals(frontAdherent.getEmailRepresentant())){
-            dataAdherent.getUser().setUsername(frontAdherent.getUser().getUsername() != null ? frontAdherent.getUser().getUsername().toLowerCase() : dataAdherent.getUser().getUsername().toLowerCase());
-        }
-        if(!Boolean.TRUE.equals(frontAdherent.getAdresseRepresentant())){
-            dataAdherent.setAdresse(frontAdherent.getAdresse());
-            dataAdherent.setCodePostal(frontAdherent.getCodePostal());
-            dataAdherent.setVille(frontAdherent.getVille());
-        }
-
-        dataAdherent.setMineur(frontAdherent.getMineur());
-        if(frontAdherent.getRepresentant() != null){
-            dataAdherent.setRepresentant(userServices.adherentServices.getById(frontAdherent.getRepresentant().getId()));
-        }
-
-        dataAdherent.setTelephoneRepresentant(frontAdherent.getTelephoneRepresentant());
-        dataAdherent.setEmailRepresentant(frontAdherent.getEmailRepresentant());
-        dataAdherent.setAdresseRepresentant(frontAdherent.getAdresseRepresentant());
-
-
-        Accord frontaccordRgpd = frontAdherent.getAccords().stream().filter(accord -> "RGPD".equals(accord.getNom())).findFirst().get();
-        Accord dataaccordRgpd = dataAdherent.getAccords().stream().filter(accord -> "RGPD".equals(accord.getNom())).findFirst().get();
-        if(dataaccordRgpd.getDatePassage()==null){
-            dataaccordRgpd.setEtat(frontaccordRgpd.getEtat());
-            dataaccordRgpd.setDatePassage(LocalDate.now());
-        }
-
-
-        Accord frontaccordImage = frontAdherent.getAccords().stream().filter(accord -> "DroitImage".equals(accord.getNom())).findFirst().get();
-        Accord dataaccordImage = dataAdherent.getAccords().stream().filter(accord -> "DroitImage".equals(accord.getNom())).findFirst().get();
-        if(dataaccordImage.getDatePassage()==null){
-            dataaccordImage.setEtat(frontaccordImage.getEtat());
-            dataaccordImage.setDatePassage(LocalDate.now());
-        }
-
-        isComplet(dataAdherent);
         return dataAdherent;
     }
 
@@ -370,11 +349,6 @@ public class AdherentServices {
         return adherentRepository.getAllIds();
     }
 
-    public Adherent getBasicById(Long adherentId) {
-        Adherent indbAdherent = adherentRepository.findById(adherentId).get();
-        return indbAdherent;
-    }
-
     public Adherent getById(Long adherentId) {
         Adherent indbAdherent = adherentRepository.findById(adherentId).get();
         return indbAdherent;
@@ -398,7 +372,10 @@ public class AdherentServices {
     }
 
     public List<Adherent> getAll() {
-        List<Adherent> adherents = adherentRepository.findAll();
+        List<Adherent> adherents = adherentRepository.findAll().stream()
+                .sorted(Comparator.comparing(Adherent::getNom)
+                        .thenComparing((Adherent::getPrenom)))
+                .collect(Collectors.toList());;
         return adherents;
     }
     @Autowired
@@ -437,6 +414,14 @@ public class AdherentServices {
             adherent.getAdhesions().forEach(adhesion -> adhesions.append(adhesion.getActivite().getNom() + " " + adhesion.getActivite().getHoraire() + "\n\r"));
             adherentFlat.setAdhesions(adhesions.toString());
 
+            StringBuilder activitesNm1 = new StringBuilder();
+            adherent.getActivitesNm1().forEach(adhesion -> activitesNm1.append(adhesion.getNom() + " " + adhesion.getHoraire() + "\n\r"));
+            adherentFlat.setActivitesNm1(activitesNm1.toString());
+
+            StringBuilder accords = new StringBuilder();
+            adherent.getAccords().forEach(adhesion -> accords.append(adhesion.getNom() + " " + adhesion.getEtat() + "\n\r"));
+            adherentFlat.setAccords(accords.toString());
+
 
             adherentFlat.setId(adherent.getId());
             adherentFlat.setEmail(Boolean.TRUE.equals(adherent.getEmailRepresentant()) && adherent.getRepresentant() != null ? adherent.getRepresentant().getUser().getUsername():adherent.getUser().getUsername());
@@ -447,14 +432,16 @@ public class AdherentServices {
             adherentFlat.setNaissance(adherent.getNaissance());
             adherentFlat.setPrenom(adherent.getPrenom());
             adherentFlat.setNom(adherent.getNom());
-            adherentFlat.setNomPrenom((adherent.getNom() == null ? "zzzz" : adherent.getNom()) + (adherent.getPrenom() == null ? "zzzz" : adherent.getPrenom()));
-            adherentFlat.setAccords(adherent.getAccords());
+            adherentFlat.setNomPrenom((Objects.equals(adherent.getNom(), "") ? "zzzz" : adherent.getNom()) + (Objects.equals(adherent.getPrenom(), "") ? "zzzz" : adherent.getPrenom()));
+            adherentFlat.setLieuNaissance(adherent.getLieuNaissance());
                     adherentFlat.setTribuId(adherent.getTribu().getUuid());
 
             adherentFlats.add(adherentFlat);
         });
 
-            return adherentFlats;
+            return adherentFlats.stream()
+                    .sorted(Comparator.comparing(AdherentFlat::getNomPrenom))
+                    .collect(Collectors.toList());
 
     }
 
@@ -463,7 +450,7 @@ public class AdherentServices {
     }
 
     private AdherentLite reduceAdherent(Adherent adherent) {
-        log.info("reduceAdherent " + adherent.getUser().getUsername() + ", id "+adherent.getId());
+
         StringBuilder activites = new StringBuilder();
         adherent.getAdhesions().forEach(adhesion -> activites.append(adhesion.getActivite().getNom() + " " + adhesion.getActivite().getHoraire() + "\n\r"));
 
@@ -474,7 +461,7 @@ public class AdherentServices {
                 .nom(adherent.getNom())
                 .genre(adherent.getGenre())
                 .completAdhesion(adherent.getCompletAdhesion())
-                .nomPrenom((adherent.getNom() == null ? "zzzz" : adherent.getNom()) + (adherent.getPrenom() == null ? "zzzz" : adherent.getPrenom()))
+                .nomPrenom((Objects.equals(adherent.getNom(), "") ? "zzzz" : adherent.getNom()) + (Objects.equals(adherent.getPrenom(), "") ? "zzzz" : adherent.getPrenom()))
                 .adresse(adherent.getAdresse())
                 .codePostal(adherent.getCodePostal())
                 .ville(adherent.getVille())
@@ -494,9 +481,13 @@ public class AdherentServices {
                 .activites(activites.toString())
                 .lien("www.alod.fr/adhesion/#/inscription/" + adherent.getTribu().getUuid())
                 .build();
-        UserLite userLite = new UserLite();
-        userLite.setUsername(adherent.getUser().getUsername());
-        adherentLite.setUser(userLite);
+        if(adherent.getUser() != null) {
+
+
+            UserLite userLite = new UserLite();
+            userLite.setUsername(adherent.getUser().getUsername());
+            adherentLite.setUser(userLite);
+        }
         return adherentLite;
     }
 
@@ -507,7 +498,7 @@ public class AdherentServices {
                 .nom(adherent.getNom())
                 .genre(adherent.getGenre())
                 .completAdhesion(adherent.getCompletAdhesion())
-                .nomPrenom((adherent.getNom() == null ? "zzzz" : adherent.getNom()) + (adherent.getPrenom() == null ? "zzzz" : adherent.getPrenom()))
+                .nomPrenom((Objects.equals(adherent.getNom(), "") ? "zzzz" : adherent.getNom()) + (Objects.equals(adherent.getPrenom(), "") ? "zzzz" : adherent.getPrenom()))
                 .adresse(adherent.getAdresse())
                 .codePostal(adherent.getCodePostal())
                 .ville(adherent.getVille())
@@ -563,9 +554,17 @@ public class AdherentServices {
 
 
     //Pour la nouvelle année
+    @Transactional
     public void nouvelleAnnee (){
+        List<Adherent> adherents = adherentRepository.findAll();
 
-        adherentRepository.findAll().stream().forEach(adherent -> {
+        //TODO supprimé les adhérents qui n'ont pas d'adhasion NM1 et qui sont de simples adhérents
+//        adherentRepository.deleteAll(adherents.stream().filter(adherent -> adherent.getActivitesNm1().isEmpty() && adherent.getUser().getRoles().stream().anyMatch(role -> !role.getName().equals(ROLE_USER))).toList());
+//        adherentRepository.flush();
+
+        //TODO retirer aussi les résponsables qui n'ont pas d'enfant avec activité NM1
+
+        adherents.stream().forEach(adherent -> {
             List<ActiviteNm1> activitesNm1 = adherent.getActivitesNm1();
             activitesNm1.clear();
             activitesNm1.addAll(adherent.getAdhesions().stream().filter(Adhesion::isValide).map(this::convertAdh).toList());
@@ -589,7 +588,6 @@ public class AdherentServices {
         return activiteNm1;
     }
 
-
     public void cleanNotification(){
 
         List<Adherent> adherents = adherentRepository.findAll();
@@ -597,7 +595,7 @@ public class AdherentServices {
             adherent.setDerniereModifs(null);
             adherent.setDerniereVisites(null);
         });
-
+        adherentRepository.saveAllAndFlush(adherents);
         List<Notification> notifications = notificationRepository.findAll();
         notifications.forEach(notification -> {
             notification.setUser(null);

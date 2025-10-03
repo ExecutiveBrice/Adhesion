@@ -9,7 +9,7 @@ export class Adhesion {
 
   id!: number;
   tarif!: number;
-  activite?: Activite
+  activite!: Activite
   adherent!: Adherent
   paiements!: Paiement[];
   typeReglement!: String;
@@ -28,6 +28,8 @@ export class Adhesion {
   derniereModifs!: Notification[];
   derniereVisites!: Notification[];
   surClassement?: Activite;
+
+  nomprenom!: string;
   constructor() {
 
     this.paiements = [];

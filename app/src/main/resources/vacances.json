@@ -1,0 +1,780 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Explore API",
+    "version": "v2.1",
+    "description": "The Opendatasoft Explore API v2 is organized around REST. It provides access to all the data available through the platform in a coherent, hierarchical way.\n\n- Only the HTTP `GET` method is supported.\n- All API endpoints return JSON.\n- Endpoints are organized in a hierarchical way describing the relative relationship between objects.\n- All responses contain a list of links allowing easy and relevant navigation through the API endpoints.\n- All endpoints use the [Opendatasoft Query Language (ODSQL)](https://help.opendatasoft.com/apis/ods-explore-v2/#section/Opendatasoft-Query-Language-(ODSQL)). This means that, most of the time, parameters work the same way for all endpoints.\n- While the `records` endpoint is subject to a [limited number of returned records](https://help.opendatasoft.com/apis/ods-explore-v2/#tag/Dataset/operation/getRecords), the `exports` endpoint has no limitations.",
+    "contact": {
+      "email": "support@opendatasoft.com"
+    },
+    "license": {
+      "name": "Copyright Opendatasoft",
+      "url": "https://legal.opendatasoft.com/en/terms-of-use.html"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://data.education.gouv.fr/api/explore/v2.1"
+    }
+  ],
+  "security": [
+    {
+      "apikey": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Catalog",
+      "description": "API to enumerate datasets"
+    },
+    {
+      "name": "Dataset",
+      "description": "API to work on records"
+    }
+  ],
+  "paths": {
+    "/catalog/datasets/{dataset_id}/records": {
+      "get": {
+        "summary": "Query dataset records",
+        "operationId": "getRecords",
+        "tags": [
+          "Dataset"
+        ],
+        "description": "Perform a query on dataset records.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/dataset_id"
+          },
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/where"
+          },
+          {
+            "$ref": "#/components/parameters/group_by"
+          },
+          {
+            "$ref": "#/components/parameters/order_by"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/offset"
+          },
+          {
+            "$ref": "#/components/parameters/refine"
+          },
+          {
+            "$ref": "#/components/parameters/exclude"
+          },
+          {
+            "$ref": "#/components/parameters/lang"
+          },
+          {
+            "$ref": "#/components/parameters/timezone"
+          },
+          {
+            "$ref": "#/components/parameters/include_links"
+          },
+          {
+            "$ref": "#/components/parameters/include_app_metas"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Records",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/records"
+                },
+                "examples": {
+                  "records": {
+                    "$ref": "#/components/examples/records-v2.1"
+                  },
+                  "group_by_country": {
+                    "$ref": "#/components/examples/group_by_country-v2.1"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/quota"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/catalog/datasets/{dataset_id}/records/{record_id}": {
+      "get": {
+        "summary": "Read a dataset record",
+        "operationId": "getRecord",
+        "tags": [
+          "Dataset"
+        ],
+        "description": "Reads a single dataset record based on its identifier.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/dataset_id"
+          },
+          {
+            "$ref": "#/components/parameters/record_id"
+          },
+          {
+            "$ref": "#/components/parameters/select"
+          },
+          {
+            "$ref": "#/components/parameters/lang"
+          },
+          {
+            "$ref": "#/components/parameters/timezone"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A single record",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/record"
+                },
+                "examples": {
+                  "record": {
+                    "$ref": "#/components/examples/record-v2.1"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/quota"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "apikey": {
+        "type": "apiKey",
+        "description": "API key to make authenticated requests.",
+        "name": "apikey",
+        "in": "query"
+      }
+    },
+    "parameters": {
+      "select": {
+        "name": "select",
+        "in": "query",
+        "description": "Examples:\n- `select=size` - Example of select, which only return the \"size\" field.\n- `select=size * 2 as bigger_size` - Example of a complex expression with a label, which returns a new field named \"bigger_size\" and containing the double of size field value.\n- `select=dataset_id, fields` - Example of a select in catalog ODSQL query to only retrieve dataset_id and schema of datasets.\n\nA select expression can be used to add, remove or change the fields to return.\nAn expression can be:\n  - a wildcard ('*'): all fields are returned.\n  - A field name: only the specified field is returned.\n  - An include/exclude function: All fields matching the include or exclude expression are included or excluded. This expression can contain wildcard.\n  - A complex expression. The result of the expression is returned. A label can be set for this expression, and in that case, the field will be named after this label.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "where": {
+        "name": "where",
+        "in": "query",
+        "description": "A `where` filter is a text expression performing a simple full-text search that can also include logical operations\n(NOT, AND, OR...) and lots of other functions to perform complex and precise search operations.\n\nFor more information, see [Opendatasoft Query Language (ODSQL)](<https://help.opendatasoft.com/apis/ods-explore-v2/#section/Opendatasoft-Query-Language-(ODSQL)/Where-clause>) reference documentation.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "order_by": {
+        "name": "order_by",
+        "in": "query",
+        "description": "Example: `order_by=sum(age) desc, name asc`\n\nA comma-separated list of field names or aggregations to sort on, followed by an order (`asc` or `desc`).\n\nResults are sorted in ascending order by default. To sort results in descending order, use the `desc` keyword.",
+        "style": "form",
+        "explode": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "limit": {
+        "name": "limit",
+        "in": "query",
+        "description": "Number of items to return.\n\nTo use with the `offset` parameter to implement pagination.\n\nThe maximum possible value depends on whether the query contains a `group_by` clause or not.\n\nFor a query **without** a `group_by`:\n  - the maximum value for `limit` is 100,\n  - `offset+limit` should be less than 10000\n\nFor a query **with** a `group_by`:\n  - the maximum value for `limit` is 20000,\n  - `offset+limit` should be less than 20000\n\n**Note:** If you need more results, please use the /exports endpoint.\n",
+        "schema": {
+          "maximum": 100,
+          "minimum": -1,
+          "type": "integer",
+          "default": 10
+        }
+      },
+      "offset": {
+        "name": "offset",
+        "in": "query",
+        "description": "Index of the first item to return (starting at 0).\n\nTo use with the `limit` parameter to implement pagination.\n\n**Note:** the maximum value depends on the type of query, see the note on `limit` for the details\n",
+        "schema": {
+          "minimum": 0,
+          "type": "integer",
+          "default": 0
+        }
+      },
+      "refine": {
+        "name": "refine",
+        "in": "query",
+        "description": "Example: `refine=modified:2020` - Return only the value `2020` from the `modified` facet.\n\nA facet filter used to limit the result set.\nUsing this parameter, you can refine your query to display only the selected facet value in the response.\n\nRefinement uses the following syntax: `refine=<FACETNAME>:<FACETVALUE>`\n\nFor date, and other hierarchical facets, when refining on one value, all second-level values related to that entry will appear in facets enumeration. For example, after refining on the year 2019, the related second-level month will appear. And when refining on August 2019, the third-level day will appear.\n\n**`refine` must not be confused with a `where` filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.**",
+        "style": "form",
+        "explode": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "exclude": {
+        "name": "exclude",
+        "in": "query",
+        "description": "Examples:\n- `exclude=city:Paris` - Exclude the value `Paris` from the `city` facet. Facets enumeration will display `Paris` as `excluded` without any count information.\n- `exclude=modified:2019/12` - Exclude the value `2019/12` from the `modified` facet. Facets enumeration will display `2020` as `excluded` without any count information.\n\nA facet filter used to exclude a facet value from the result set.\nUsing this parameter, you can filter your query to exclude the selected facet value in the response.\n\n`exclude` uses the following syntax: `exclude=<FACETNAME>:<FACETVALUE>`\n\n**`exclude` must not be confused with a `where` filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.**",
+        "style": "form",
+        "explode": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "lang": {
+        "name": "lang",
+        "in": "query",
+        "description": "A language value.\n\nIf specified, the `lang` value override the default language, which is \"fr\".\nThe language is used to format string, for example in the `date_format` function.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "en",
+            "fr",
+            "nl",
+            "pt",
+            "it",
+            "ar",
+            "de",
+            "es",
+            "ca",
+            "eu",
+            "sv"
+          ]
+        },
+        "style": "form"
+      },
+      "timezone": {
+        "name": "timezone",
+        "in": "query",
+        "description": "Set the timezone for datetime fields.\n\nTimezone IDs are defined by the [Unicode CLDR project](https://github.com/unicode-org/cldr). The list of timezone IDs is available in [timezone.xml](https://github.com/unicode-org/cldr/blob/master/common/bcp47/timezone.xml).",
+        "schema": {
+          "type": "string",
+          "default": "UTC"
+        },
+        "examples": {
+          "UTC": {
+            "summary": "UTC timezone",
+            "value": "UTC"
+          },
+          "Europe/Paris": {
+            "summary": "Paris timezone",
+            "value": "Europe/Paris"
+          },
+          "US/Eastern": {
+            "summary": "Eastern timezone",
+            "value": "US/Eastern"
+          },
+          "Europe/London": {
+            "summary": "London timezone",
+            "value": "Europe/London"
+          },
+          "Europe/Berlin": {
+            "summary": "Berlin timezone",
+            "value": "Europe/Berlin"
+          }
+        }
+      },
+      "group_by": {
+        "name": "group_by",
+        "in": "query",
+        "description": "Example: `group_by=city_field as city`\n\nA group by expression defines a grouping function for an aggregation.\nIt can be:\n - a field name: group result by each value of this field\n - a range function: group result by range\n - a date function: group result by date\n\nIt is possible to specify a custom name with the 'as name' notation.",
+        "style": "form",
+        "explode": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "include_links": {
+        "name": "include_links",
+        "in": "query",
+        "description": "If set to `true`, this parameter will add HATEOAS links in the response.\n",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "include_app_metas": {
+        "name": "include_app_metas",
+        "in": "query",
+        "description": "If set to `true`, this parameter will add application metadata to the response.\n",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "format-catalog": {
+        "name": "format",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "csv",
+            "data.json",
+            "dcat",
+            "dcat_ap_ch",
+            "dcat_ap_de",
+            "dcat_ap_se",
+            "dcat_ap_sp",
+            "dcat_ap_it",
+            "dcat_ap_vl",
+            "dcat_ap_benap",
+            "dublin_core",
+            "json",
+            "rdf",
+            "rss",
+            "ttl",
+            "xlsx"
+          ],
+          "description": "Format specifier for the catalog export.\n`dcat_ap_*` formats are only available upon activation.\nSee [here](#tag/Catalog/operation/listExportFormats) to get the list of available export formats"
+        },
+        "style": "simple"
+      },
+      "limit_export": {
+        "name": "limit",
+        "in": "query",
+        "description": "Number of items to return in export.\n\nUse -1 (default) to retrieve all records\n",
+        "schema": {
+          "minimum": -1,
+          "type": "integer",
+          "default": -1
+        }
+      },
+      "dcat_format": {
+        "name": "dcat_ap_format",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "_ap_ch",
+            "_ap_de",
+            "_ap_se",
+            "_ap_sp",
+            "_ap_it",
+            "_ap_vl",
+            "_ap_benap"
+          ],
+          "description": "DCAT format specifier for the catalog export.\n`dcat_ap_*` formats are only available upon activation."
+        },
+        "style": "simple"
+      },
+      "facet": {
+        "name": "facet",
+        "in": "query",
+        "description": "A facet is a field used for simple filtering (through the `refine` and `exclude` parameters) or exploration (with the `/facets` endpoint).\n\nIt can also be a function such as `facet=facet(name=\"field_name\")` which is identical to `facet=field_name`. But this `facet()` function\ncan also take some optional arguments such as `disjunctive`, `hierarchical`, `separator`, `sort` and `limit`.\n\n* `disjunctive`: a boolean `true/false`, whether multiple values can be selected for the facet\n* `hierarchical`: a boolean `true/false` if the field is hierarchical. The separator must be given as the argument.\n   For instance, you can do `facet=facet(name=\"filepath\", hierarchical=true, separator=\"/\")` to retrieve facets related to this field which might look like `\"/home/user/file.txt\"`\n* `separator`: a string, e.g. `/`, `-`, `;`\n* `sort`: a string which describes how to sort the facets. Possible arguments are `count` and `-count` for all field types, `alphanum` and `-alphanum` for `date`, `datetime` and `text`, `num` and `-num` for `decimal` and `int`\n* `limit`: an integer to limit the number of results\n",
+        "style": "form",
+        "explode": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "dataset_id": {
+        "name": "dataset_id",
+        "in": "path",
+        "description": "The identifier of the dataset to be queried.\n\nYou can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "format-datasets": {
+        "name": "format",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/enum-format-datasets"
+        },
+        "style": "simple"
+      },
+      "use_labels": {
+        "name": "use_labels",
+        "in": "query",
+        "description": "If set to `true`, this parameter will make exports output the label of each field rather than its name.\n\nThis parameter only makes sense for formats that contain a list of the fields in their output.\n",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "compressed": {
+        "name": "compressed",
+        "in": "query",
+        "description": "If set to `true`, this parameter can compress the output file of a specific export format with GZIP, e.g. `.csv.gzip`.\n",
+        "required": false,
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "epsg": {
+        "name": "epsg",
+        "in": "query",
+        "description": "This parameter sets the EPSG code to project shapes into for formats that support geometric features.\n",
+        "schema": {
+          "type": "integer",
+          "default": 4326
+        }
+      },
+      "record_id": {
+        "name": "record_id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "description": "Record identifier"
+      }
+    },
+    "schemas": {
+      "links": {
+        "type": "object",
+        "properties": {
+          "href": {
+            "type": "string",
+            "format": "uri"
+          },
+          "rel": {
+            "type": "string",
+            "enum": [
+              "self",
+              "first",
+              "last",
+              "next",
+              "dataset",
+              "catalog"
+            ]
+          }
+        }
+      },
+      "dataset": {
+        "type": "object",
+        "additionalProperties": {},
+        "properties": {
+          "_links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/links"
+            }
+          },
+          "dataset_id": {
+            "type": "string"
+          },
+          "dataset_uid": {
+            "type": "string",
+            "readOnly": true
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "mimetype": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "has_records": {
+            "type": "boolean"
+          },
+          "data_visible": {
+            "type": "boolean"
+          },
+          "features": {
+            "type": "array",
+            "description": "A map of available features for a dataset, with the fields they apply to.\n",
+            "items": {
+              "type": "string"
+            }
+          },
+          "metas": {
+            "type": "object"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "annotations": {
+                  "type": "object"
+                },
+                "description": {
+                  "type": "string",
+                  "nullable": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "datasets": {
+        "type": "object",
+        "properties": {
+          "total_count": {
+            "type": "integer"
+          },
+          "_links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/links"
+            }
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/dataset"
+            }
+          }
+        }
+      },
+      "enum-format-datasets": {
+        "type": "string",
+        "enum": [
+          "csv",
+          "fgb",
+          "geojson",
+          "gpx",
+          "json",
+          "jsonl",
+          "jsonld",
+          "kml",
+          "n3",
+          "ov2",
+          "parquet",
+          "rdfxml",
+          "shp",
+          "turtle",
+          "xlsx"
+        ]
+      },
+      "facet_value_enumeration": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "value": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          }
+        }
+      },
+      "facet_enumeration": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "facets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/facet_value_enumeration"
+            }
+          }
+        }
+      },
+      "record": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "_timestamp": {
+            "type": "string",
+            "format": "dateTime"
+          },
+          "_size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "_links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/links"
+            }
+          }
+        }
+      },
+      "records": {
+        "type": "object",
+        "properties": {
+          "total_count": {
+            "type": "integer"
+          },
+          "_links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/links"
+            }
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/record"
+            }
+          }
+        }
+      },
+      "attachment": {
+        "type": "object",
+        "properties": {
+          "href": {
+            "type": "string"
+          },
+          "metas": {
+            "type": "object",
+            "properties": {
+              "mime-type": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "responses": {
+      "bad_request": {
+        "description": "Bad Request",
+        "content": {
+          "application/json; charset=utf-8": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "error_code": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "message",
+                "error_code"
+              ]
+            },
+            "examples": {
+              "invalid_odsql": {
+                "value": {
+                  "message": "ODSQL query is malformed: invalid_function() Clause(s) containing the error(s): select.",
+                  "error_code": "ODSQLError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "quota": {
+        "description": "Too many requests",
+        "content": {
+          "application/json; charset=utf-8": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "errorcode": {
+                  "type": "number"
+                },
+                "reset_time": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "limit_time_unit": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "call_limit": {
+                  "type": "number"
+                },
+                "error": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "errorcode",
+                "reset_time",
+                "limit_time_unit",
+                "call_limit",
+                "error"
+              ]
+            },
+            "examples": {
+              "quota_exceeded": {
+                "value": {
+                  "errorcode": 10002,
+                  "reset_time": "2021-01-26T00:00:00Z",
+                  "limit_time_unit": "day",
+                  "call_limit": 10000,
+                  "error": "Too many requests on the domain. Please contact the domain administrator."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

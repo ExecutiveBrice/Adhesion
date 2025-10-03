@@ -22,10 +22,7 @@ import java.nio.file.StandardOpenOption;
 import java.security.Principal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -40,7 +37,8 @@ public class AdhesionServices {
     AdhesionRepository adhesionRepository;
     @Autowired
     PaiementRepository paiementRepository;
-
+    @Autowired
+    PresenceServices presenceServices;
     @Autowired
     NotificationRepository notificationRepository;
     @Autowired
@@ -60,12 +58,21 @@ public class AdhesionServices {
         String[] sections = section.split("#");
 
         if (sections[0].equals("activite")) {
-            return adhesionRepository.findByActiviteNom(sections[1]);
+            return adhesionRepository.findByActiviteNom(sections[1]).stream()
+                    .sorted(Comparator.comparing((Adhesion a) -> a.getAdherent().getNom())
+                            .thenComparing(a -> a.getAdherent().getPrenom()))
+                    .collect(Collectors.toList());
         } else if (sections[0].equals("horaire")) {
             return adhesionRepository.findAll().stream()
-                    .filter(adhesion -> adhesion.getActivite().getId().equals(Long.parseLong(sections[1]))).toList();
+                    .filter(adhesion -> adhesion.getActivite().getId().equals(Long.parseLong(sections[1])))
+                    .sorted(Comparator.comparing((Adhesion a) -> a.getAdherent().getNom())
+                            .thenComparing(a -> a.getAdherent().getPrenom()))
+                    .collect(Collectors.toList());
         } else {
-            List<Adhesion> adhesions = adhesionRepository.findAll();
+            List<Adhesion> adhesions = adhesionRepository.findAll().stream()
+                    .sorted(Comparator.comparing((Adhesion a) -> a.getAdherent().getNom())
+                            .thenComparing(a -> a.getAdherent().getPrenom()))
+                    .collect(Collectors.toList());
             return adhesions;
         }
     }
@@ -78,7 +85,7 @@ public class AdhesionServices {
         return AdhesionLite.builder().id(adhesion.getId())
                 .adherent(AdherentLite.builder()
                         .id(adhesion.getAdherent().getId())
-                        .nomPrenom((adhesion.getAdherent().getNom() == null ? "zzzz" : adhesion.getAdherent().getNom()) + (adhesion.getAdherent().getPrenom() == null ? "zzzz" : adhesion.getAdherent().getPrenom()))
+                        .nomPrenom((Objects.equals(adhesion.getAdherent().getNom(), "") ? "zzzz" : adhesion.getAdherent().getNom()) + (Objects.equals(adhesion.getAdherent().getPrenom(), "") ? "zzzz" : adhesion.getAdherent().getPrenom()))
                         .nom(adhesion.getAdherent().getNom())
                         .prenom(adhesion.getAdherent().getPrenom())
                         .naissance(adhesion.getAdherent().getNaissance())
@@ -239,9 +246,9 @@ public class AdhesionServices {
 
     public Adhesion save(Principal principal, Long adherentId, Long activiteId) {
         Activite activite = activiteServices.getById(activiteId);
-        Adherent adherent = adherentServices.getBasicById(adherentId);
+        Adherent adherent = adherentServices.getById(adherentId);
         Adhesion newAdhesion = new Adhesion();
-
+        newAdhesion.setPosition(0);
         newAdhesion.setRappel(false);
         newAdhesion.setDateAjoutPanier(now());
         newAdhesion.setAdherent(adherent);
@@ -275,7 +282,7 @@ public class AdhesionServices {
         }
 
 
-        if (adherent.getTribu().getAdherents().stream().filter(adh -> adh.getUser().getUsername().equals(principal.getName())).toList().size() == 0) {
+        if (adherent.getTribu().getAdherents().stream().filter(adh -> adh.getUser() != null && adh.getUser().getUsername().equals(principal.getName())).toList().isEmpty()) {
             EmailContent mess = new EmailContent();
 
             mess.setDiffusion(Boolean.TRUE.equals(adherent.getEmailRepresentant()) && adherent.getRepresentant() != null ? adherent.getRepresentant().getUser().getUsername() : adherent.getUser().getUsername());
@@ -298,6 +305,10 @@ public class AdhesionServices {
         if (activite.isVieClub()) {
             newAdhesion.getAccords().add(accordServices.createAccord(VIE_CLUB, null, newAdhesion));
         }
+        if (activite.isCharteAmicale()) {
+            newAdhesion.getAccords().add(accordServices.createAccord(AMICALE, null, newAdhesion));
+        }
+
 
         if (activite.isAutorisationParentale() && newAdhesion.getAdherent().getMineur()) {
             newAdhesion.getAccords().add(accordServices.createAccord(AUTORISATION_PARENTALE, null, newAdhesion));
@@ -353,6 +364,7 @@ public class AdhesionServices {
             adhesion.setStatutActuel(nouveauStatut);
             adhesion.setDateChangementStatut(now());
             adhesionRepository.save(adhesion);
+            presenceServices.fillPresences(adhesion);
 
             byte[] attestation = pdfService.generateSynthese(adhesion.getAdherent());
             Path prePath = this.imageStorageDir.resolve(String.valueOf(adhesion.getAdherent().getId()));

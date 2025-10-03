@@ -1,9 +1,32 @@
 <div class="row">
 
-  <div class="col-md-8 center">
-    <div class="btn-group btn-group-sm col-6" role="group">
-      <button class="btn btn-sm btn-primary" (click)="exportAsXLSX()">Extraction des adhésions</button>
+
+    <div class="btn-group btn-group-sm col-4" role="group">
+      <div ngbDropdown class="d-inline-block larger">
+        <button type="button" class="btn btn-primary larger" id="dropdownBasic1" ngbDropdownToggle>
+          {{visuelselection.length >0?visuelselection:'Activité'}}
+        </button>
+        <div *ngIf="activites.length > 0" ngbDropdownMenu aria-labelledby="dropdownBasic1">
+          <a ngbDropdownItem (click)="choixSection = 'Toutes';  getAdhesion(); visuelselection = 'Toutes les adhésions'">
+            Toutes</a>
+          <div *ngFor="let activite of activites  | orderBy:'nom':false" class="ligne pointer">
+            <a ngbDropdownItem (click)="choixSection = 'activite#'+activite.nom;  getAdhesion(); visuelselection = activite.nom+'-Tous horaires'">
+              <b>{{activite.nom}}</b></a>
+            <div *ngFor="let horaire of activite.horaires">
+              <a ngbDropdownItem (click)="choixSection = 'horaire#'+horaire.id; getAdhesion(); visuelselection = activite.nom+'-'+horaire.nom">
+                {{horaire.nom}}</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
     </div>
+    <div class="btn-group btn-group-sm col-4 center" role="group">
+     <p> {{(adhesions | filterAdhesionBy:validPaiementSecretariat:validDocumentSecretariat:statutActuel:flag).length}} adhésions listées</p>
+    </div>
+  <div class="btn-group btn-group-sm col-4" role="group">
+    <button class="btn btn-sm btn-primary" (click)="exportAsXLSX()">Extraction de ces adhésions</button>
   </div>
 </div>
 
@@ -12,23 +35,7 @@
   <thead>
     <tr>
       <th class="center" scope="col truncate">
-        <div ngbDropdown class="d-inline-block larger">
-          <button type="button" class="btn btn-primary larger" id="dropdownBasic1" ngbDropdownToggle>
-            {{choixSection.length >0?choixSection:'Activité'}}
-          </button>
-          <div *ngIf="activites.length > 0" ngbDropdownMenu aria-labelledby="dropdownBasic1">
-            <a ngbDropdownItem (click)="choixSection = 'Toutes';  getAdhesion()">
-              Toutes</a>
-            <div *ngFor="let activite of activites  | orderBy:'nom':false" class="ligne pointer">
-              <a ngbDropdownItem (click)="choixSection = 'activite#'+activite.nom;  getAdhesion()">
-                <b>{{activite.nom}}</b></a>
-              <div *ngFor="let horaire of activite.horaires">
-                <a ngbDropdownItem (click)="choixSection = 'horaire#'+horaire.id; getAdhesion()">
-                  {{horaire.nom}}</a>
-              </div>
-            </div>
-          </div>
-        </div>
+
 
       </th>
       <th class="center" scope="col">
@@ -36,19 +43,17 @@
       </th>
       <th class="center" scope="col">
 
-        <div *ngIf="!filtres.has('validPaiementSecretariat') " ngbDropdown id="icon">
+        <div ngbDropdown id="icon">
           <div id="dropdownBasic1" ngbDropdownToggle>
-            Paiement <fa-icon [icon]="faFilter" container="body"></fa-icon>
+            Paiement <fa-icon [ngClass]="validPaiementSecretariat!=null?'colorRed':''" [icon]="faFilter" container="body"></fa-icon>
           </div>
           <div ngbDropdownMenu aria-labelledby="dropdownBasic1" style="float:right;">
-            <button ngbDropdownItem (click)="addFiltre('validPaiementSecretariat', true)">Effectué</button>
-            <button ngbDropdownItem (click)="addFiltre('validPaiementSecretariat', false)">Manquant</button>
+            <button ngbDropdownItem (click)="validPaiementSecretariat=true">Effectué</button>
+            <button ngbDropdownItem (click)="validPaiementSecretariat=false">Manquant</button>
+            <button ngbDropdownItem (click)="validPaiementSecretariat=null">Pas de filtre</button>
           </div>
         </div>
 
-        <div *ngIf="filtres.has('validPaiementSecretariat')" (click)="removeFiltre('validPaiementSecretariat')">
-          Paiement <fa-icon [icon]="faFilterCircleXmark" container="body"></fa-icon>
-        </div>
       </th>
 
 
@@ -56,79 +61,75 @@
       <th class="center" scope="col">
 
 
-        <div *ngIf="!filtres.has('validDocumentSecretariat') " ngbDropdown id="icon">
+        <div ngbDropdown id="icon">
           <div id="dropdownBasic1" ngbDropdownToggle>
-            Accord <fa-icon [icon]="faFilter" container="body"></fa-icon>
+            Accord <fa-icon  [ngClass]="validDocumentSecretariat!=null?'colorRed':''" [icon]="faFilter" container="body"></fa-icon>
           </div>
           <div ngbDropdownMenu aria-labelledby="dropdownBasic1" style="float:right;">
-            <button ngbDropdownItem (click)="addFiltre('validDocumentSecretariat', true)">Docs Validés</button>
-            <button ngbDropdownItem (click)="addFiltre('validDocumentSecretariat', false)">Docs Manquants</button>
+            <button ngbDropdownItem (click)="validDocumentSecretariat=true">Docs Validés</button>
+            <button ngbDropdownItem (click)="validDocumentSecretariat=false">Docs Manquants</button>
+            <button ngbDropdownItem (click)="validDocumentSecretariat=null">Pas de filtre</button>
           </div>
         </div>
 
-        <div *ngIf="filtres.has('validDocumentSecretariat')" (click)="removeFiltre('validDocumentSecretariat')">
-          Accord <fa-icon [icon]="faFilterCircleXmark" container="body"></fa-icon>
-        </div>
       </th>
 
       <th class="center" scope="col">
 
-        <div *ngIf="!filtres.has('statutActuel') " ngbDropdown id="icon">
+        <div ngbDropdown id="icon">
           <div id="dropdownBasic1" ngbDropdownToggle>
-            Statut <fa-icon [icon]="faFilter" container="body"></fa-icon>
+            Statut <fa-icon  [ngClass]="statutActuel!=''?'colorRed':''" [icon]="faFilter" container="body"></fa-icon>
           </div>
           <div ngbDropdownMenu aria-labelledby="dropdownBasic1" style="float:right;">
-            <button ngbDropdownItem (click)="addFiltre('statutActuel', 'Attente validation adhérent')">Attente
+            <button ngbDropdownItem (click)="statutActuel='Attente validation adhérent'">Attente
               validation
               adhérent</button>
-            <button ngbDropdownItem (click)="addFiltre('statutActuel', 'Attente validation secrétariat')">Attente
+            <button ngbDropdownItem (click)="statutActuel='Attente validation secrétariat'">Attente
               validation secrétariat</button>
-            <button ngbDropdownItem (click)="addFiltre('statutActuel', 'Attente création licence')">Attente
+            <button ngbDropdownItem (click)="statutActuel='Attente création licence'">Attente
               création licence</button>
             <button ngbDropdownItem
-              (click)="addFiltre('statutActuel', 'Validée, en attente du certificat médical')">Validée, en attente du
+              (click)="statutActuel='Validée, en attente du certificat médical'">Validée, en attente du
               certificat médical</button>
-            <button ngbDropdownItem (click)="addFiltre('statutActuel', 'Validée')">Validée</button>
-            <button ngbDropdownItem (click)="addFiltre('statutActuel', 'Attente licence en ligne')">Attente
-              licence en ligne</button>
-            <button ngbDropdownItem (click)="addFiltre('statutActuel', 'Validée groupement sportif')">Validée groupement
-              sportif</button>
-            <button ngbDropdownItem (click)="addFiltre('statutActuel', 'Licence générée')">Licence générée</button>
-            <button ngbDropdownItem (click)="addFiltre('statutActuel', 'Retour Comité')">Retour Comité</button>
-            <button ngbDropdownItem (click)="addFiltre('statutActuel', 'Licence T')">Licence T</button>
-            <button ngbDropdownItem (click)="addFiltre('statutActuel', 'Sur liste d\'attente')">Sur liste
+            <button ngbDropdownItem (click)="statutActuel='Validée'">Validée</button>
+            <button ngbDropdownItem (click)="statutActuel='Licence FFBB à compléter'">Licence FFBB à compléter</button>
+            <button ngbDropdownItem (click)="statutActuel='Retour ALOD Basket'">Retour ALOD Basket</button>
+            <button ngbDropdownItem (click)="statutActuel='Licence générée'">Licence générée</button>
+            <button ngbDropdownItem (click)="statutActuel='Retour Comité'">Retour Comité</button>
+            <button ngbDropdownItem (click)="statutActuel='Licence T'">Licence T</button>
+            <button ngbDropdownItem (click)="statutActuel='Attente paiement'">Attente paiement</button>
+            <button ngbDropdownItem (click)="statutActuel='Sur liste d\'attente'">Sur liste
               d'attente</button>
-            <button ngbDropdownItem (click)="addFiltre('statutActuel', 'Annulée')">Annulée</button>
+            <button ngbDropdownItem (click)="statutActuel='Annulée'">Annulée</button>
 
 
+            <button ngbDropdownItem (click)="statutActuel=''">Pas de filtre</button>
           </div>
         </div>
 
-        <div *ngIf="filtres.has('statutActuel')" (click)="removeFiltre('statutActuel')">
-          Statut <fa-icon [icon]="faFilterCircleXmark" container="body"></fa-icon>
-        </div>
+
 
 
       </th>
+
 
       <th class="center" scope="col">Remarque</th>
 
       <th class="center" scope="col">
 
 
-        <div *ngIf="!filtres.has('flag') " ngbDropdown id="icon">
+        <div ngbDropdown id="icon">
           <div id="dropdownBasic1" ngbDropdownToggle>
-            Flag <fa-icon [icon]="faFilter" container="body"></fa-icon>
+            Flag <fa-icon  [ngClass]="flag!=null?'colorRed':''" [icon]="faFilter" container="body"></fa-icon>
+
           </div>
           <div ngbDropdownMenu aria-labelledby="dropdownBasic1" style="float:right;">
-            <button ngbDropdownItem (click)="addFiltre('flag', true)">Les flagés</button>
-            <button ngbDropdownItem (click)="addFiltre('flag', false)">Les non flagé</button>
+            <button ngbDropdownItem (click)="flag=true">Les flagés</button>
+            <button ngbDropdownItem (click)="flag=false">Les non flagé</button>
+            <button ngbDropdownItem (click)="flag=null">Pas de filtre</button>
           </div>
         </div>
 
-        <div *ngIf="filtres.has('flag')" (click)="removeFiltre('flag')">
-          Flag <fa-icon [icon]="faFilterCircleXmark" container="body"></fa-icon>
-        </div>
 
       </th>
 
@@ -137,29 +138,9 @@
   <div *ngIf="loadder" class="spinner-border text-info"></div>
 
   <tbody *ngIf="adhesions.length > 0">
-    <tr *ngFor="let adhesion of adhesions  | orderBy:'adherent.nomPrenom':false ">
+    <tr *ngFor="let adhesion of adhesions | filterAdhesionBy:validPaiementSecretariat:validDocumentSecretariat:statutActuel:flag ">
       <td width="10%" class="truncate">
-        <ng-template #tipsAdhesionDelete><b>icons</b><br />
-          <fa-icon [icon]="faSquareMinus"></fa-icon> supprime l'adhésion quel que soit son statut
-        </ng-template>
-        <fa-icon *ngIf="showAdmin || showSecretaire" class="pointer fa-2xl" (click)="openModal(confirmModal, adhesion)"
-          [ngbTooltip]="tipsAdhesionDelete" [icon]="faSquareMinus"></fa-icon>
         {{adhesion.activite.nom}}<br />{{adhesion.activite.horaire}}
-
-        <div width="20%" *ngIf="showAdmin || showSecretaire" ngbDropdown>
-          <div id="dropdownBasic1" ngbDropdownToggle>
-            <fa-icon [icon]="faSquarePlus" container="body"></fa-icon>
-          </div>
-          <div *ngIf="activites.length > 0" ngbDropdownMenu aria-labelledby="dropdownBasic1">
-            <div *ngFor="let activite of activites  | orderBy:'nom':false" class="ligne pointer">
-              <b>{{activite.nom}}</b>
-              <div *ngFor="let horaire of activite.horaires">
-                <a ngbDropdownItem (click)="changeActivite(adhesion, horaire.id)">
-                  {{horaire.nom}}</a>
-              </div>
-            </div>
-          </div>
-        </div>
       </td>
 
       <td width="20%">
@@ -249,10 +230,8 @@
               validation secrétariat</button>
             <button ngbDropdownItem (click)="choisirStatut(adhesion, 'Attente création licence')">Attente
               création licence</button>
-            <button ngbDropdownItem (click)="choisirStatut(adhesion,'Attente licence en ligne')">Attente
-              licence en ligne</button>
-            <button ngbDropdownItem (click)="choisirStatut(adhesion,'Validée groupement sportif')">Validée groupement
-              sportif</button>
+            <button ngbDropdownItem (click)="choisirStatut(adhesion,'Licence FFBB à compléter')">Licence FFBB à compléter</button>
+            <button ngbDropdownItem (click)="choisirStatut(adhesion,'Retour ALOD Basket')">Retour ALOD Basket</button>
             <button ngbDropdownItem (click)="choisirStatut(adhesion,'Licence générée')">Licence générée</button>
             <button ngbDropdownItem (click)="choisirStatut(adhesion,'Retour Comité')">Retour Comité</button>
             <button ngbDropdownItem (click)="choisirStatut(adhesion,'Licence T')">Licence T</button>
@@ -261,13 +240,12 @@
             <button ngbDropdownItem (click)="choisirStatut(adhesion,'Annulée')">Annulée</button>
           </div>
         </div>
-
-        <br />depuis le {{adhesion.dateChangementStatut!=null?adhesion.dateChangementStatut:adhesion.dateAjoutPanier}}
-
-
+        <div>
+{{adhesion.dateChangementStatut}}
+        </div>
       </td>
       <td width="10%">
-        <textarea [(ngModel)]="adhesion.remarqueSecretariat" id="story" name="story" rows="2" cols="20"
+        <textarea [(ngModel)]="adhesion.remarqueSecretariat"  rows="2" cols="20"
           placeholder="Note..." (blur)='enregistrerRemarque(adhesion)'>
 
           </textarea>
@@ -381,7 +359,9 @@
                       </div>
                       <div ngbDropdownItem
                         (click)="paiement.typeReglement = 'CB'; updatePaiement(selectedAdhesion,paiement)">CB</div>
-                      <div ngbDropdownItem
+                        <div ngbDropdownItem
+                        (click)="paiement.typeReglement = 'Intermarché'; updatePaiement(selectedAdhesion,paiement)">Intermarché</div>
+                        <div ngbDropdownItem
                         (click)="paiement.typeReglement = 'Autre'; updatePaiement(selectedAdhesion,paiement)">Autre
                         paiement</div>
                     </div>

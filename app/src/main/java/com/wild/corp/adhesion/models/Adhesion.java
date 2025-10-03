@@ -69,7 +69,7 @@ public class Adhesion {
     private Activite activite;
 
     @ManyToOne
-    @JsonIgnoreProperties({"adhesions", "profs"})
+    @JsonIgnoreProperties({"adhesions", "profs", "sousClassement"})
     private Activite surClassement;
 
     @ManyToOne
@@ -77,9 +77,13 @@ public class Adhesion {
     @ToString.Exclude
     private Adherent adherent;
 
+    @OneToMany(mappedBy = "adhesion", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"adhesion"})
+    private List<Presence> presences = new ArrayList<>();
+
     private static final List<String> list_valid = List.of(Status.VALIDEE.label, Status.ATTENTE_CERFTIF.label, Status.LICENCE_T.label, Status.LICENCE_GENEREE.label, Status.VALIDEE_GROUPEMENT_SPORTIF.label);
     private static final List<String> list_encours = List.of(Status.ATTENTE_ADHERENT.label, Status.ATTENTE_SECRETARIAT.label, Status.ATTENTE_LICENCE_EN_LIGNE.label);
-    private static final List<String> list_attente = List.of(Status.LISTE_ATTENTE.label);
+    private static final List<String> list_attente = List.of(Status.LISTE_ATTENTE.label, Status.RETOUR_ALOD.label, Status.RETOUR_COMITE.label);
 
     public boolean isValide(){
         return list_valid.contains(this.statutActuel);

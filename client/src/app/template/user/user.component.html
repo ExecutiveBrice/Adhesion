@@ -166,6 +166,8 @@
               </div>
 
               <div class="form-group">
+                <div *ngIf="adherent.mineur && tribu.adherents.length == 1"  class="orange"><b>Le premier adhérent doit être majeur</b><span
+                  class="orange" container="body">*</span></div>
                 <label for="naissance">Date de naissance <span class="orange" container="body">*</span></label>
                 <input type="date" class="form-control" name="naissance" [(ngModel)]="adherent.naissance"
                   (change)="udpadteMineur(adherent)" #naissance="ngModel" required />
@@ -228,13 +230,12 @@
 
               <div class="form-group">
 
-                <div *ngIf="adherent.mineur"  class="orange"><b>{{adherent.prenom}} est mineur, il faut lui désigner un représentant</b><span
+                <div *ngIf="adherent.mineur && tribu.adherents.length > 1"  class="orange"><b>{{adherent.prenom}} est mineur, il faut lui désigner un représentant</b><span
                     class="orange" container="body">*</span></div>
 
-                <div *ngIf="adherent.mineur" ngbDropdown class="d-inline-block larger">
+                <div *ngIf="adherent.mineur  && tribu.adherents.length > 1" ngbDropdown class="d-inline-block larger">
                   <button type="button" class="btn btn-primary larger" id="dropdownBasic1" ngbDropdownToggle>
-                    {{adherent.representant?adherent.representant.prenom+' '+adherent.representant.nom:'Choisir un
-                    représentant'}}
+                    {{adherent.representant?adherent.representant.prenom+' '+adherent.representant.nom:'Choisir un représentant'}}
                   </button>
 
                   <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
@@ -248,11 +249,10 @@
                   </div>
                 </div>
 
-                <div *ngIf="!adherent.mineur" ngbDropdown class="d-inline-block larger">
+                <div *ngIf="!adherent.mineur  && tribu.adherents.length > 1" ngbDropdown class="d-inline-block larger">
 
                   <button *ngIf="!adherent.mineur" type="button" class="btn btn-primary larger" id="dropdownBasic1" ngbDropdownToggle>
-                    {{adherent.representant?adherent.representant.prenom+' '+adherent.representant.nom:'Choisir un
-                    contact référent adulte'}}
+                    {{adherent.representant?adherent.representant.prenom+' '+adherent.representant.nom:'Choisir un contact référent adulte'}}
                   </button>
                   <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
                     <div *ngFor="let adulte of adultes | orderBy:'nom':false" class="ligne pointer">
@@ -449,6 +449,22 @@
                     *ngIf="adhesion.statutActuel != 'Validée' || adhesion.statutActuel != 'Licence générée' || adhesion.statutActuel != 'Licence T' "
                     class="pointer" [icon]="faSquareMinus" (click)="suppressionAdhesionModal(adhesion)"
                     container="body"></fa-icon>
+
+
+                      <div  *ngIf="showAdmin || showSecretaire" ngbDropdown>
+                      <div id="dropdownBasic1" ngbDropdownToggle>
+                        <fa-icon [icon]="faSquarePlus" container="body"></fa-icon>
+                      </div>
+                      <div *ngIf="activites.length > 0" ngbDropdownMenu aria-labelledby="dropdownBasic1">
+                        <div *ngFor="let activite of activitesListe  | orderBy:'nom':false" class="ligne pointer">
+                          <b>{{activite.nom}}</b>
+                          <div *ngFor="let horaire of activite.horaires">
+                            <a ngbDropdownItem (click)="changeActivite(adhesion, horaire.id)">
+                              {{horaire.nom}}</a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                 </div>
                 <div class="col-4 ">
 

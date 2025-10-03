@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { Activite, Adherent, ActiviteDropDown, HoraireDropDown } from '../models';
+import { Seance } from '../models/seance';
 
 const API_URL = environment.server + '/activite/';
 
@@ -11,6 +12,11 @@ const API_URL = environment.server + '/activite/';
 })
 export class ActiviteService {
   constructor(private http: HttpClient) { }
+
+
+  getSeancesDuJour(): Observable<Seance[]> {
+    return this.http.get<Seance[]>(API_URL + 'seancesDuJour', { responseType: 'json' });
+  }
 
   getAll(): Observable<Activite[]> {
     return this.http.get<Activite[]>(API_URL + 'all', { responseType: 'json' });

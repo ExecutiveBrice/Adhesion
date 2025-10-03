@@ -6,11 +6,13 @@ import com.wild.corp.adhesion.models.ParamText;
 import com.wild.corp.adhesion.services.ParamBooleanServices;
 import com.wild.corp.adhesion.services.ParamNumberServices;
 import com.wild.corp.adhesion.services.ParamTextServices;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/param")
@@ -51,6 +53,13 @@ public class ParamController {
 	public ResponseEntity<?> saveBoolean(@RequestBody ParamBoolean param) {
 		return ResponseEntity.ok(paramBooleanServices.save(param));
 	}
+
+	@GetMapping("/notification")
+	public ResponseEntity<?> notification(@RequestBody Object param) {
+		log.error(param.toString());
+		return ResponseEntity.ok(param.toString());
+	}
+
 
 	@GetMapping("/allNumber")
 	public ResponseEntity<?> getAllNumber() {

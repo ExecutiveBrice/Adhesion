@@ -2,9 +2,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MailService } from '../../_services/mail.service';
 import { DomSanitizer } from '@angular/platform-browser';
-import { Activite, ActiviteDropDown, Adherent, Email, HoraireDropDown } from '../../models';
+import {  ActiviteDropDown, Adherent, Email, HoraireDropDown } from '../../models';
 import { Router, ActivatedRoute } from '@angular/router';
-import { interval } from 'rxjs';
 import { Editor, Toolbar, toHTML } from 'ngx-editor';
 import { ActiviteService } from 'src/app/_services/activite.service';
 import { AdherentService } from 'src/app/_services/adherent.service';
@@ -18,6 +17,7 @@ import { ToastrService } from 'ngx-toastr';
 })
 
 export class MaillingComponent implements OnInit, OnDestroy {
+  isMail: boolean = true;
   inProgress: boolean = false;
   errorMailingList: String[] = [];
   mailIncomplet: boolean = false;
@@ -26,10 +26,11 @@ export class MaillingComponent implements OnInit, OnDestroy {
   subject: string = "";
   timer: any;
   choixMailing: string = "";
+  visuelselection: string = "";
   isFailed = false;
   errorMessage = '';
   activites: ActiviteDropDown[] = []
-
+  template: number = 0;
 
   toolbar: Toolbar = [
     ['bold', 'italic'],
@@ -43,7 +44,6 @@ export class MaillingComponent implements OnInit, OnDestroy {
   ];
 
 
-  selectedAdherent!: Adherent;
   constructor(
     private toastr: ToastrService,
     private adherentService: AdherentService,
@@ -56,26 +56,10 @@ export class MaillingComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
 
-    let adherentId = this.route.snapshot.paramMap.get('adherentId');
 
-    if (adherentId && !isNaN(Number.parseInt(adherentId))) {
-      console.log(adherentId)
-      this.adherentService.getById(Number.parseInt(adherentId)).subscribe(
-        data => {
-          console.log(data)
-          this.selectedAdherent = data;
-          this.isFailed = false;
-        },
-        err => {
-          this.isFailed = true;
-          this.errorMessage = err.message
-
-        }
-      );
-    }
-    this.timer = setInterval(() => {
-      this.onTimeOut();
-    }, 1000);
+//    this.timer = setInterval(() => {
+//      this.onTimeOut();
+//    }, 1000);
     this.getActivites()
   }
 
@@ -115,6 +99,19 @@ export class MaillingComponent implements OnInit, OnDestroy {
     this.editor.destroy();
   }
 
+  envoiTemplate() {
+    this.mailService.sendTemplate(this.choixMailing, this.template)
+      .subscribe({
+        next: (data) => {
+          this.showWarning("Votre message est à bien été envoyé")
+          this.isFailed = false;
+        },
+        error: (error) => {
+          this.isFailed = true;
+          this.errorMessage = error.message
+        }
+      });
+  }
 
   envoiMail(subject: string) {
     console.log(subject)
@@ -128,7 +125,7 @@ export class MaillingComponent implements OnInit, OnDestroy {
       let email = new Email();
       email.subject = subject;
       email.text = toHTML(this.html);
-      email.diffusion = this.selectedAdherent.id != 0 ? this.selectedAdherent.user.username : this.choixMailing;
+      email.diffusion = this.choixMailing;
       this.mailService.sendMail(email)
         .subscribe({
           next: (data) => {

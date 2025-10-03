@@ -6,6 +6,7 @@ import { AdherentService } from 'src/app/_services/adherent.service';
 import { ActiviteService } from 'src/app/_services/activite.service';
 import { faCircleQuestion, faEnvelope, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { ToastrService } from 'ngx-toastr';
+import {DayOfWeek} from "./dayOfWeek";
 
 @Component({
   selector: 'modal',
@@ -77,6 +78,7 @@ export class ModalActivite implements OnInit {
         this.showError(err.message)
       }
     );
+
   }
 
   showSucces(message: string) {
@@ -88,5 +90,10 @@ export class ModalActivite implements OnInit {
   showError(message: string) {
     this.toastr.error("Une erreur est survenue, recharger la page et recommencez. si le problème persiste contactez l'administrateur<br />" + message, 'Erreur');
   }
+
+   getEnumKeys<DayOfWeek>(): string[] {
+    return Object.keys(DayOfWeek).filter(k => isNaN(Number(k)));
+  }
+  protected readonly DayOfWeek = DayOfWeek;
 }
 

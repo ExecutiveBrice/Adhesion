@@ -5,6 +5,7 @@ import com.wild.corp.adhesion.models.User;
 import com.wild.corp.adhesion.repository.AdherentRepository;
 import com.wild.corp.adhesion.services.UserServices;
 import jakarta.websocket.server.PathParam;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/user")
+@Slf4j
 public class UserController {
 
 @Autowired
@@ -22,6 +24,13 @@ UserServices userServices;
 
 	@Autowired
 	AdherentRepository adherentRepository;
+
+
+	@GetMapping("/seancesDuJour")
+	public ResponseEntity<?> getSeancesDuJour(Authentication principal) {
+		log.info("getAllCours by " + principal.getName() );
+		return ResponseEntity.ok(userServices.getSeancesDuJourForUser(principal.getName()));
+	}
 
 
 	@GetMapping("/connecteduser")

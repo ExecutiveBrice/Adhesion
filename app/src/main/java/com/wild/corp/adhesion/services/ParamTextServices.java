@@ -95,7 +95,19 @@ public class ParamTextServices {
                             "vous pouvez valider cet accord d'attestation de votre bonne santé.<br>" +
                             "Sinon refusez le pour signifier au secrétariat que vous devrez fournir un certificat médical<br>").build());
         }
+        if(!paramTextRepository.existsByParamName(AMICALE)) {
+            paramTextRepository.save(ParamText.builder()
+                    .paramName(AMICALE)
+                    .paramValue("L'ALOD est une association Loi 1901 qui vise à permettre à tous<br />" +
+                            "de pratiquer le sport, des loisirs et d’accéder à la culture à son niveau.<br />" +
+                            "Pour que l'année se déroule dans de bonnes conditions pour tous, il est nécéssaire " +
+                            "1- d'être à jour de ses cotisations<br />" +
+                            "2- de respecter les règles élémentaires de politesse et de respect<br />" +
+                            "3- de s'investir dans l'associaition<br />" +
 
+                            "<br />" +
+                            "<a href=\"https://alod.fr/wp-content/uploads/2025/05/proposition-de-charte-de-ladherent-ALOD.pdf\" target=\"_blank\">Charte de l'ALOD</a><br>").build());
+        }
         if(!paramTextRepository.existsByParamName(VIE_CLUB)) {
             paramTextRepository.save(ParamText.builder()
                     .paramName(VIE_CLUB)

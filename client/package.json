@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "ng serve --serve-path /adhesion/",
     "build": "ng build",
-    "build:production": "ng build --base-href /adhesion/ --aot --configuration=production",
-    "build:integration": "ng build --base-href /adhesion/ --aot --configuration=integration",
+    "build:production": "ng build --base-href /adhesion/ --configuration=production",
+    "build:integration": "ng build --base-href /adhesion/ --configuration=integration",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },

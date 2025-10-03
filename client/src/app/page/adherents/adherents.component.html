@@ -59,18 +59,7 @@
   </div>
   <div class="col-6 center">
 
-    <div class="btn-group btn-group-sm col-6" role="group">
-      <div type='button' *ngIf="filtres.get('mineur')!=true" class="btn btn-block btn-secondary"
-        (click)="addFiltre('mineur', true)">Mineur</div>
-      <div type='button' *ngIf="filtres.get('mineur')==true" class="btn btn-block btn-danger"
-        (click)="removeFiltre('mineur')">Mineur</div>
 
-      <div type='button' *ngIf="filtres.get('mineur')!=false" class="btn btn-block btn-secondary"
-        (click)="addFiltre('mineur', false)">Majeur</div>
-      <div type='button' *ngIf="filtres.get('mineur')==false" class="btn btn-block btn-danger"
-        (click)="removeFiltre('mineur')">Majeur</div>
-
-    </div>
 
 
   </div>
@@ -97,45 +86,38 @@
       </thead>
       <div *ngIf="loadder" class="spinner-border text-info"></div>
       <tbody *ngIf="!loadder">
-        <tr *ngFor="let adherent of adherents  | orderBy:'nomPrenom':false">
+        <tr *ngFor="let adherent of adherents ">
           <td class="center">
-            <fa-icon class="fa-2xl pointer" (click)="opennewTab('#/inscription/'+adherent.tribu.uuid)" [icon]="faUsersRays"></fa-icon>
+            <fa-icon class="fa-2xl pointer" (click)="opennewTab('#/inscription/'+adherent.tribuId)" [icon]="faUsersRays"></fa-icon>
           </td>
           <td>
             {{adherent.nom}} {{adherent.prenom}}<br />
-            {{adherent.emailRepresentant && adherent.representant != undefined?adherent.representant.user.username:adherent.user.username}}
+            {{adherent.email}}
           </td>
           <td>
-            {{adherent.telephoneRepresentant && adherent.representant != undefined?adherent.representant.telephone:adherent.telephone}}
+            {{adherent.telephone}}
           </td>
           <td>
-            {{adherent.adresseRepresentant && adherent.representant != undefined?adherent.representant.adresse:adherent.adresse}}
+            {{adherent.adresse}}
           </td>
           <td>
             {{adherent.naissance}}<br />
             {{adherent.lieuNaissance}}
           </td>
           <td>
-            <div *ngFor="let accord of adherent.accords | orderBy:'id':false ">
-              {{accord.nom}}
-              <fa-icon *ngIf="accord.etat == true" class="green" [icon]="faCircleCheck"></fa-icon>
-              <fa-icon *ngIf="accord.etat == false" class="orange" [icon]="faCircleXmark"></fa-icon>
-            </div>
+ {{adherent.accords}}
           </td>
 
           <td>
-            <div *ngFor="let adhesion of adherent.adhesions | orderBy:'id':false ">
-              {{adhesion.activite.nom}} {{adhesion.activite.horaire}}<br/>
-
-            </div>
 
 
+            {{adherent.adhesions}}
           </td>
           <td>
-            <div *ngFor="let activiteNm1 of adherent.activitesNm1 | orderBy:'id':false ">
-              {{activiteNm1.nom}} {{activiteNm1.horaire}}<br/>
 
-            </div>
+              {{adherent.activitesNm1}}
+
+
 
 
           </td>

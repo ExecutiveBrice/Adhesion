@@ -5,7 +5,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.DayOfWeek;
+import java.time.MonthDay;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 
@@ -52,6 +56,12 @@ public class Activite {
 
     private boolean vieClub;
 
+    private boolean charteAmicale;
+
+
+    private DayOfWeek jour;
+
+
     private boolean certificatMedical;
 
     private boolean complete;
@@ -81,4 +91,9 @@ public class Activite {
     @ManyToMany(mappedBy="cours", cascade = CascadeType.ALL)
     @JsonIgnoreProperties({"cours", "accords", "adhesions", "activitesNm1", "user", "tribu", "derniereModifs", "derniereVisites"})
     private Set<Adherent> profs = new HashSet<>();
+
+    @OneToMany(mappedBy = "activite", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Seance> seances = new ArrayList<>();
+
 }

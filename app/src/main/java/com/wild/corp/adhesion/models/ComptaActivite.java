@@ -24,6 +24,7 @@ public class ComptaActivite {
 
     private Integer espece =0;
 
-    private Integer autre =0;
+    private Integer intermarche =0;
 
+    private Integer autre =0;
 }

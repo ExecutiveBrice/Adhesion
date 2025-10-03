@@ -3,7 +3,20 @@ import { NgbModalConfig, NgbModal, NgbActiveModal } from '@ng-bootstrap/ng-boots
 import { ActiviteService } from 'src/app/_services/activite.service';
 import { Activite, Adherent, AdherentLite } from 'src/app/models';
 import { FormGroup, FormBuilder } from '@angular/forms';
-import { faCircleQuestion,faEnvelope, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import {
+  faCircleQuestion,
+  faEnvelope,
+  faCircleXmark,
+  faCloudDownloadAlt,
+  faBook,
+  faScaleBalanced,
+  faPencilSquare,
+  faSquarePlus,
+  faSquareMinus,
+  faCircleCheck,
+  faUserPlus,
+  faCartPlus
+} from '@fortawesome/free-solid-svg-icons';
 import { AdherentService } from 'src/app/_services/adherent.service';
 import { ParamService } from 'src/app/_services/param.service';
 import { TokenStorageService } from 'src/app/_services/token-storage.service';
@@ -24,7 +37,7 @@ export class ActivitesComponent implements OnInit {
   faCloudDownloadAlt = faCloudDownloadAlt;
   faScaleBalanced = faScaleBalanced;
   faBook = faBook;
-  faUserPlus = faUserPlus;
+  faCartPlus = faCartPlus;
   faCircleCheck = faCircleCheck;
   faSquareMinus = faSquareMinus;
   faPencilSquare = faPencilSquare;
@@ -88,7 +101,7 @@ export class ActivitesComponent implements OnInit {
     });
   }
 
-  
+
 
 
 

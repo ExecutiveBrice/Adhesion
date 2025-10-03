@@ -8,7 +8,7 @@ export class Activite {
   groupe!: string;
   groupeFiltre!: string;
   tarif!: number;
-
+  jour!: string;
   ageMin!: number;
   ageMax!: number;
   genre!: string;
@@ -26,6 +26,7 @@ export class Activite {
   autorisationParentale!: boolean;
   certificatMedical!: boolean;
   vieClub!: boolean;
+  charteAmicale!: boolean;
   complete!: boolean;
   reinscription!: boolean;
 
@@ -41,7 +42,7 @@ export class Activite {
     this.horaire = 'dimanche matin'
     this.groupe = 'ALOD_G'
     this.tarif = 200
-    
+
     this.nbPlaces = 10;
     this.ageMin = 16;
     this.ageMax = 99;

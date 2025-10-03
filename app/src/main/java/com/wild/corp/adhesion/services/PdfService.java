@@ -59,7 +59,7 @@ public class PdfService {
         }else{
             corps.add("est inscrit"+ (adherent.getGenre().equals("Masculin")?"":"e ")+" au cours de "+ adherent.getAdhesions().stream().findFirst().get().getActivite().getNom()+ " " + adherent.getAdhesions().stream().findFirst().get().getActivite().getHoraire());
         }
-        corps.add("pour l'année scolaire 2024/2025");
+        corps.add("pour l'année scolaire 2025/2026");
         corps.add("et est à jour de sa cotisation qui s’élève à " + total + "€");
         cfmPrint.put("corps", corps);
 

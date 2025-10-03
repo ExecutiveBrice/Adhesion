@@ -8,10 +8,10 @@ export class ActivitesNm1 {
   groupeFiltre!: string;
   tarif!: number;
   horaire!: string;
-  
+
   salle!: string;
   tribu!:Tribu
-  
+
   constructor(){
 
 

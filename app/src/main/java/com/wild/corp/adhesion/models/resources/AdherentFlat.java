@@ -34,12 +34,12 @@ public class AdherentFlat {
 
     private String adhesions;
 
+    private String accords;
+    private String activitesNm1;
 
     private UUID tribuId;
 
 
-
-    private List<Accord> accords = new ArrayList<>();
 
 
 }

@@ -131,7 +131,7 @@ export class UserComponent implements OnInit {
 
 
     this.adultes = this.tribu.adherents.filter(adh => adh.mineur == false && adh.representant == null && adh.id != this.adherent.id);
-    this.adherent.user.username = this.adherent.user.username.endsWith('mailfictif.com') ? '' : this.adherent.user.username;
+
     if (this.isRepresentant) {
       this.adherent.mineur = false;
     }
@@ -143,6 +143,7 @@ export class UserComponent implements OnInit {
     }
 
     this.activiteService.fillObjects(this.activites, this.activitesListe, this.adherent);
+    console.log(this.activites)
     this.fillFiles();
   }
 
@@ -185,6 +186,18 @@ export class UserComponent implements OnInit {
     });
   }
 
+  changeActivite(adhesion: Adhesion, activiteId: number) {
+    this.adhesionService.changeActivite(adhesion.id, activiteId).subscribe({
+      next: (data) => {
+        this.showSuccess("Changement d'activité réussie pour l'adhérent "+this.adherent.prenom +" "+this.adherent.nom)
+        adhesion.activite = data;
+      },
+      error: (error) => {
+        console.log(error)
+        this.showError(error.error.message)
+      }
+    });
+  }
 
   choixActivites(adherent: Adherent) {
     console.log(this.activitesListe)
@@ -213,12 +226,18 @@ export class UserComponent implements OnInit {
   }
 
   onSubmit(adherent: Adherent): void {
-
-    if (adherent.mineur && !adherent.representant) {
+    console.log(adherent)
+    if(adherent.mineur && this.tribu.adherents.length == 1){
+      this.toastr.error("Le premier adhérent doit être majeur", 'Erreur')
+    }else if (adherent.mineur && !adherent.representant) {
       this.toastr.error("L'adhérent mineur doit avoir un représentant majeur", 'Erreur')
     } else {
+      console.log(adherent)
       adherent.telephone = this.cleaning(adherent.telephone)
-      adherent.user.username = this.cleaning(adherent.user.username)
+      if(adherent.user != null){
+        adherent.user.username = this.cleaning(adherent.user.username)
+      }
+
       this.adherentService.update(adherent).subscribe(
         data => {
           this.showSuccess("L'adhérent à bien été mis à jour")
@@ -434,7 +453,7 @@ export class UserComponent implements OnInit {
 
 
   adhesionValide(adh: Adhesion): boolean {
-    return adh.statutActuel.startsWith("Attente licence en ligne")
+    return adh.statutActuel.startsWith("Licence FFBB à compléter")
       || adh.statutActuel.startsWith("Validée")
       || adh.statutActuel.startsWith("Licence générée")
       || adh.statutActuel.startsWith("Retour Comité")

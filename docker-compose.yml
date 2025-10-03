@@ -38,6 +38,7 @@ services:
       - MJ_MAIL=${MJ_MAIL}
       - MJ_APIKEY_PUBLIC=${MJ_APIKEY_PUBLIC}
       - MJ_APIKEY_PRIVATE=${MJ_APIKEY_PRIVATE}
+      - BREVO_APIKEY_PRIVATE=${BREVO_APIKEY_PRIVATE}
     expose:
       - "8000"
     networks:
@@ -56,7 +57,7 @@ services:
       - "traefik.http.routers.app_adhesion.tls.certresolver=myresolver"
 
   db_adhesion:
-    image: postgres:14.1-alpine
+    image: postgres:17.6-alpine
     container_name: db_adhesion
     environment:
       - POSTGRES_USER=${DB_USER}

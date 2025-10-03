@@ -105,14 +105,8 @@
         </tbody>
       </table>
 
-
-      <iframe *ngIf="helloassoAlod" id="haWidget" allowtransparency="true" scrolling="auto"
-        src="https://www.helloasso.com/associations/alod/adhesions/alod-2024-2025/widget"
-        style="width: 100%; height: 750px; border: none;"></iframe>
-
-      <iframe *ngIf="helloassoAlod3X" id="haWidget" allowtransparency="true" scrolling="auto"
-        src="https://www.helloasso.com/associations/alod/adhesions/alod-2024-2025-paiement-en-3-fois/widget"
-        style="width: 100%; height: 750px; border: none;"></iframe>
+      <iframe *ngIf="helloassoAlod" id="haWidget" allowtransparency="true" src="https://www.helloasso.com/associations/alod/adhesions/alod-2025-2026/widget" style="width: 100%; border: none;" onload="window.addEventListener( 'message', e => { const dataHeight = e.data.height; const haWidgetElement = document.getElementById('haWidget'); haWidgetElement.height = dataHeight + 'px'; } )" ></iframe>
+      <iframe  *ngIf="helloassoAlod3X" id="haWidget3x" allowtransparency="true" src="https://www.helloasso.com/associations/alod/adhesions/alod-2025-2026-paiement-en-3-fois/widget" style="width: 100%; border: none;" onload="window.addEventListener( 'message', e => { const dataHeight = e.data.height; const haWidgetElement = document.getElementById('haWidget'); haWidgetElement.height = dataHeight + 'px'; } )" ></iframe>
 
 
       <div *ngIf="totalRestantDu != 0 && showHelloAsso && !majoration" type='button'
@@ -125,18 +119,9 @@
 
 
 
+      <iframe *ngIf="helloassoAlodMajoration" id="haWidget" allowtransparency="true" src="https://www.helloasso.com/associations/alod/adhesions/alod-reinscription-2025-2026/widget" style="width: 100%; border: none;" onload="window.addEventListener( 'message', e => { const dataHeight = e.data.height; const haWidgetElement = document.getElementById('haWidget'); haWidgetElement.height = dataHeight + 'px'; } )" ></iframe>
 
-
-
-
-
-      <iframe *ngIf="helloassoAlodMajoration" id="haWidget" allowtransparency="true"
-        src="https://www.helloasso.com/associations/alod/adhesions/alod-reinscription-2024-2025/widget-bouton"
-        style="width: 100%; height: 70px; border: none;"></iframe>
-
-      <iframe *ngIf="helloassoAlod3XMajoration" id="haWidget" allowtransparency="true"
-        src="https://www.helloasso.com/associations/alod/adhesions/alod-reinscription-2024-2025-paiement-en-3-fois/widget-bouton"
-        style="width: 100%; height: 70px; border: none;"></iframe>
+      <iframe *ngIf="helloassoAlod3XMajoration" id="haWidget3x" allowtransparency="true" src="https://www.helloasso.com/associations/alod/adhesions/alod-reinscription-2025-2026-paiement-en-3-fois/widget" style="width: 100%; border: none;" onload="window.addEventListener( 'message', e => { const dataHeight = e.data.height; const haWidgetElement = document.getElementById('haWidget'); haWidgetElement.height = dataHeight + 'px'; } )" ></iframe>
 
       <div *ngIf="totalRestantDu != 0 && showHelloAsso && majoration" type='button'
         class="btn btn-primary alod btn-independent" (click)="helloassoAlodMajoration = !helloassoAlodMajoration">

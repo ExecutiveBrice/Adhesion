@@ -1,116 +1,101 @@
 <div class="container">
 
-  <div class="form-group" *ngIf="isFailed">
+  <div *ngIf="isFailed" class="form-group">
     <div class="alert alert-danger" role="alert">
       Il y a eu un problème lors de l'envoie du message: {{ errorMessage }}
     </div>
   </div>
 
 
-  <div class="form-group" *ngIf="mailIncomplet">
+  <div *ngIf="mailIncomplet" class="form-group">
     <div class="alert alert-danger" role="alert">
       Le mail n'est pas complet l'objet doit avoir au moins 5 lettres et le corps du message au moins 20 lettres
     </div>
   </div>
-  <div class="form-group" *ngIf="inProgress">
+  <div *ngIf="inProgress" class="form-group">
     <div class="alert alert-danger" role="alert">
       Envoi de mail en cours, veuillez patienter
     </div>
   </div>
 
 
-  <div *ngIf="selectedAdherent == undefined || selectedAdherent.id == undefined" class="larger">
+  <div class="larger">
 
 
-
-    <div ngbDropdown class="d-inline-block larger">
-      <button type="button" class="btn btn-primary larger" id="dropdownBasic1" ngbDropdownToggle>
-        {{choixMailing.length >0?choixMailing:'Mailing liste'}}
+    <div class="d-inline-block " ngbDropdown>
+      <button class="btn btn-primary larger" id="dropdownBasic1" ngbDropdownToggle type="button">
+        {{ visuelselection.length > 0 ? visuelselection : 'Mailing liste' }}
       </button>
 
-      <div  *ngIf="activites.length > 0" ngbDropdownMenu aria-labelledby="dropdownBasic1">
+      <div *ngIf="activites.length > 0" aria-labelledby="dropdownBasic1" ngbDropdownMenu>
 
-        <a ngbDropdownItem (click)="choixMailing = 'groupe#Tous les adhérents'">
+        <a (click)="choixMailing = 'groupe#Tous les adhérents'; visuelselection= 'Tous les adhérents'" ngbDropdownItem>
           Tous les adhérents</a>
-        <a ngbDropdownItem (click)="choixMailing = 'groupe#Les administrateurs'">
+        <a (click)="choixMailing = 'groupe#Les administrateurs'; visuelselection= 'Les administrateurs'"
+           ngbDropdownItem>
           Les administrateurs</a>
-        <a ngbDropdownItem (click)="choixMailing = 'groupe#Les membres du bureau'">
+        <a (click)="choixMailing = 'groupe#Les membres du bureau'; visuelselection= 'Les membres du bureau'"
+           ngbDropdownItem>
           Les membres du bureau</a>
-        <a ngbDropdownItem (click)="choixMailing = 'groupe#Sans certificat médical'">
-          Sans certificat médical</a>
         <div class="dropdown-divider"></div>
 
 
-
-
         <div *ngFor="let activite of activites  | orderBy:'nom':false" class="ligne pointer">
-          <a ngbDropdownItem (click)="choixMailing = 'activite#'+activite.nom">
-            <b>{{activite.nom}}</b></a>
+          <a (click)="choixMailing = 'activite#'+activite.nom; visuelselection= activite.nom + ' - Tous les horaires'"
+             ngbDropdownItem>
+            <b>{{ activite.nom }}</b></a>
           <div *ngFor="let horaire of activite.horaires">
-            <a ngbDropdownItem (click)="choixMailing = 'horaire#'+horaire.id">
-              {{horaire.nom}}</a>
-      
+            <a (click)="choixMailing = 'horaire#'+horaire.id; visuelselection= activite.nom + ' - ' + horaire.nom"
+               ngbDropdownItem>
+              {{ horaire.nom }}</a>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-group btn-group-sm " role="group">
+        <div (click)="isMail=true" [ngClass]="isMail? 'btn-primary' : 'btn-pomme'" class="btn btn-block"
+             type='button'>Envoyer un mail manuel
+        </div>
+        <div (click)="isMail=false;template=2" [ngClass]="!isMail? 'btn-primary' : 'btn-pomme'" class="btn btn-block"
+             type='button'>Envoyer la newsletter
         </div>
       </div>
     </div>
+
+
   </div>
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  <div *ngIf="selectedAdherent && selectedAdherent.id != 0">
-    <h3>Le mail sera envoyé à : {{selectedAdherent.prenom}} {{selectedAdherent.nom}} - {{selectedAdherent.user.username}}
-    </h3>
-  </div>
-
-
-</div>
-
-
-
-
-
-<div class="row">
-  <div class="col-sm-12 ">
-    <div class="input-group mb-3 input-group-lg">
-      <div class="input-group-prepend">
-        <span class="input-group-text">Objet : </span>
+  <div *ngIf="isMail" class="row">
+    <div class="col-sm-12 ">
+      <div class="input-group mb-3 input-group-lg">
+        <div class="input-group-prepend">
+          <span class="input-group-text">Objet : </span>
+        </div>
+        <input [(ngModel)]="subject" class="form-control" type="text">
       </div>
-      <input type="text" [(ngModel)]="subject" class="form-control">
+    </div>
+    <div class="col-sm-12">
+
+      <div class="NgxEditor__Wrapper mb-3">
+        <ngx-editor-menu [editor]="editor" [toolbar]="toolbar"></ngx-editor-menu>
+        <ngx-editor [(ngModel)]="html" [disabled]="false" [editor]="editor"
+                    [placeholder]="'Votre message ici...'"></ngx-editor>
+      </div>
+    </div>
+    <div class="col-sm-12">
+      <button (click)="envoiMail(subject)" [disabled]="inProgress" class="btn btn-block btn-primary">
+        Envoyer ce message
+      </button>
     </div>
   </div>
-  <div class="col-sm-12 ">
 
-    <div class="NgxEditor__Wrapper mb-3">
-      <ngx-editor-menu [editor]="editor" [toolbar]="toolbar"> </ngx-editor-menu>
-      <ngx-editor [editor]="editor" [(ngModel)]="html" [disabled]="false"
-        [placeholder]="'Votre message ici...'"></ngx-editor>
+  <div *ngIf="!isMail" class="row">
+    <div class="col-sm-12">
+      <button (click)="envoiTemplate()" [disabled]="inProgress" class="btn btn-block btn-primary">
+        Envoyer la newsletter à la liste de diffusion
+      </button>
     </div>
   </div>
-  <div class="col-sm-12 ">
-    <button [disabled]="inProgress" class="btn btn-block btn-primary" (click)="envoiMail(subject)">
-      Envoyer ce message</button>
-
-  </div>
-</div>
-
 </div>

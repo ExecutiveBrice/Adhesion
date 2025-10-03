@@ -1,5 +1,3 @@
-import { Accord } from "./accord";
-
 
 export class AdherentFlat {
   id!: number;
@@ -11,19 +9,11 @@ export class AdherentFlat {
   email!: string;
   telephone!: string;
 
-
-  accords!: Accord[];
+  activitesNm1!: string;
+  accords!: string;
   adhesions!: string
   lieuNaissance!: string;
   naissance!: string;
   tribuId!: number;
- 
-  constructor() {
-
-    this.accords = [];
-
-  }
-
-
 
 }

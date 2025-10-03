@@ -14,4 +14,9 @@ public class EmailContent {
     private String subject;
     private String text;
 
+    public EmailContent(String diffusion, String subject, String text) {
+        this.diffusion = diffusion;
+        this.subject = subject;
+        this.text = text;
+    }
 }

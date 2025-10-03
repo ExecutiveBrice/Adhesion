@@ -13,6 +13,11 @@ export class MailService {
     private http: HttpClient
   ) { }
 
+  sendTemplate(groupeName:string, templateId: number) {
+    let params = new HttpParams().set('groupeName', '' + groupeName + '').set('templateId', '' + templateId + '');
+    return this.http.post(this.apiUrl + "/sendTemplate", {}, {params, responseType: 'json' })
+  }
+  
   sendMail(email: Email) {
     return this.http.post(this.apiUrl + "/", email, { responseType: 'json' })
   }
