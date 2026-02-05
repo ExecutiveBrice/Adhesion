@@ -3,6 +3,8 @@ package com.wild.corp.adhesion.controllers;
 import com.wild.corp.adhesion.models.Adherent;
 import com.wild.corp.adhesion.models.User;
 import com.wild.corp.adhesion.models.UserDetails;
+import com.wild.corp.adhesion.security.jwt.SurrogateAuthenticationToken;
+import com.wild.corp.adhesion.services.SurrogateService;
 import com.wild.corp.adhesion.services.UserDetailsService;
 import com.wild.corp.adhesion.services.UserServices;
 import com.wild.corp.adhesion.security.jwt.JwtUtils;
@@ -12,6 +14,7 @@ import com.wild.corp.adhesion.security.payload.response.JwtResponse;
 import com.wild.corp.adhesion.security.payload.response.MessageResponse;
 import jakarta.validation.Valid;
 import jakarta.websocket.server.PathParam;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,6 +28,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/auth")
@@ -37,6 +41,8 @@ public class AuthController {
 	JwtUtils jwtUtils;
 	@Autowired
 	PasswordEncoder encoder;
+	@Autowired
+	SurrogateService surrogateService;
 
 	@PostMapping("/signin")
 	public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
@@ -113,5 +119,38 @@ public class AuthController {
 	public ResponseEntity<?> changePassword(@PathParam("token") String token, @RequestBody SignupRequest signUpRequest) {
 		userServices.changePassword(token, signUpRequest.getPassword());
 		return ResponseEntity.ok("Réinitialisation du mot de passe réussie");
+	}
+
+
+
+
+
+	@PostMapping("/impersonate/{username}")
+	public ResponseEntity<?> impersonate(@PathVariable String username, Authentication currentAuth) {
+		log.info("impersonate "+username);
+		Authentication surrogateAuth = surrogateService.impersonate(currentAuth, username);
+		SecurityContextHolder.getContext().setAuthentication(surrogateAuth);
+		String jwt = jwtUtils.generateJwtToken(surrogateAuth);
+
+		UserDetails userDetails = (UserDetails) surrogateAuth.getPrincipal();
+		List<String> roles = userDetails.getAuthorities().stream()
+				.map(item -> item.getAuthority())
+				.collect(Collectors.toList());
+
+		return ResponseEntity.ok(new JwtResponse(jwt,
+				userDetails.getId(),
+				userDetails.getUsername().toLowerCase(),
+				userDetails.isEnabled(),
+				roles));
+	}
+
+	@PostMapping("/impersonate/stop")
+	public String stopImpersonation(Authentication currentAuth) {
+		if (currentAuth instanceof SurrogateAuthenticationToken sat) {
+			Authentication real = (Authentication) sat.getRealPrincipal();
+			SecurityContextHolder.getContext().setAuthentication(real);
+			return "Retour à " + real.getName();
+		}
+		return "Aucune impersonation active.";
 	}
 }

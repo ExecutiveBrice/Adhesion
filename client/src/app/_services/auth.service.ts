@@ -12,6 +12,12 @@ const AUTH_API = environment.server+'/auth/';
 export class AuthService {
   constructor(private http: HttpClient) { }
 
+
+  impersonate(username: string): Observable<any> {
+    return this.http.post(AUTH_API+'impersonate/'+username, {},{ responseType: 'json' });
+  }
+
+
   login(username: string, password: string): Observable<any> {
     return this.http.post(AUTH_API + 'signin', {
       username,
@@ -24,19 +30,19 @@ export class AuthService {
     return this.http.post(AUTH_API + 'changePassword', {password},{params,  responseType: 'text' });
   }
 
-  
+
   userExist(username: string): Observable<any> {
     return this.http.post(AUTH_API + 'userExist', {
       username
     },{ responseType: 'text' });
-  
+
   }
 
   reinitPassword(username: string): Observable<any> {
     return this.http.post(AUTH_API + 'reinitPassword', {
       username
     },{ responseType: 'json' });
-  
+
   }
   registerAnonymous(email: string): Observable<Adherent> {
     let params = new HttpParams().set('email', '' + email + '');
@@ -50,4 +56,6 @@ export class AuthService {
       password
     },{ responseType: 'json' });
   }
+
+
 }

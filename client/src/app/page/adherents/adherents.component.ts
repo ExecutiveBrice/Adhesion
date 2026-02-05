@@ -36,22 +36,18 @@ export class AdherentsComponent implements OnInit {
 
   loadder:boolean=true
   errorMessage = '';
-  ordre: string = 'nom';
-  search: string = "";
+
   type: string = 'Mineur';
-  sens: boolean = false;
   showAdmin: boolean = false;
   showSecretaire: boolean = false;
-  filtres: Map<string, any> = new Map<string, any>();
-  subscription = new Subscription()
+
   activitesListe: ActiviteDropDown[] = [];
   activites: Activite[] = []
   constructor(
     private toastr: ToastrService,
     public activiteService: ActiviteService,
     public tribuService: TribuService,
-    private filterByPipe: FilterAdhesionByPipe,
-    private excelService: ExcelService,
+
     private authService: AuthService,
     private adherentService: AdherentService,
     private tokenStorageService: TokenStorageService,
@@ -89,12 +85,6 @@ export class AdherentsComponent implements OnInit {
       }
     })
     this.activiteService.fillObjects(this.activites, this.activitesListe, undefined);
-  }
-
-  exportAsXLSX(): void {
-    console.log(this.adherents)
-
-    this.excelService.exportAsExcelFile(this.adherents, 'adherents');
   }
 
 

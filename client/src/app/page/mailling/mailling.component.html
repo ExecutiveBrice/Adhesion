@@ -1,101 +1,105 @@
-<div class="container">
+<div class="row">
 
-  <div *ngIf="isFailed" class="form-group">
-    <div class="alert alert-danger" role="alert">
-      Il y a eu un problème lors de l'envoie du message: {{ errorMessage }}
-    </div>
+  <div class="col-4">
+    @for (groupe of maillingListe.controls | orderObjectBy:"value.ordre":false;track $index){
+      <label class="checkbox">
+        <input type="checkbox" [formControl]="getControl(groupe)" (change)="selectGroupe(groupe)" />
+        <span><b>{{groupe.get('text')?.value}}</b></span>
+      </label>
+      @for (horaire of groupe.get('horaires')?.controls | orderObjectBy:"value.ordre":false;track $index){
+        <label class="indentation checkbox">
+          <input type="checkbox" [formControl]="getControl(horaire)" (change)="evaluateMailing(groupe, horaire)" />
+          <span >{{horaire.get('text')?.value}}</span>
+        </label>
+      }
+    }
+
+
   </div>
-
-
-  <div *ngIf="mailIncomplet" class="form-group">
-    <div class="alert alert-danger" role="alert">
-      Le mail n'est pas complet l'objet doit avoir au moins 5 lettres et le corps du message au moins 20 lettres
-    </div>
-  </div>
-  <div *ngIf="inProgress" class="form-group">
-    <div class="alert alert-danger" role="alert">
-      Envoi de mail en cours, veuillez patienter
-    </div>
-  </div>
-
-
-  <div class="larger">
-
-
-    <div class="d-inline-block " ngbDropdown>
-      <button class="btn btn-primary larger" id="dropdownBasic1" ngbDropdownToggle type="button">
-        {{ visuelselection.length > 0 ? visuelselection : 'Mailing liste' }}
-      </button>
-
-      <div *ngIf="activites.length > 0" aria-labelledby="dropdownBasic1" ngbDropdownMenu>
-
-        <a (click)="choixMailing = 'groupe#Tous les adhérents'; visuelselection= 'Tous les adhérents'" ngbDropdownItem>
-          Tous les adhérents</a>
-        <a (click)="choixMailing = 'groupe#Les administrateurs'; visuelselection= 'Les administrateurs'"
-           ngbDropdownItem>
-          Les administrateurs</a>
-        <a (click)="choixMailing = 'groupe#Les membres du bureau'; visuelselection= 'Les membres du bureau'"
-           ngbDropdownItem>
-          Les membres du bureau</a>
-        <div class="dropdown-divider"></div>
-
-
-        <div *ngFor="let activite of activites  | orderBy:'nom':false" class="ligne pointer">
-          <a (click)="choixMailing = 'activite#'+activite.nom; visuelselection= activite.nom + ' - Tous les horaires'"
-             ngbDropdownItem>
-            <b>{{ activite.nom }}</b></a>
-          <div *ngFor="let horaire of activite.horaires">
-            <a (click)="choixMailing = 'horaire#'+horaire.id; visuelselection= activite.nom + ' - ' + horaire.nom"
-               ngbDropdownItem>
-              {{ horaire.nom }}</a>
-
-          </div>
-        </div>
+  <div class="col-4">
+    <div class="btn-group btn-group-sm " role="group">
+      <div (click)="template=0" [ngClass]="template==0? 'btn-primary' : 'btn-pomme'" class="btn btn-block"
+           type='button'>Un mail manuel
       </div>
-
-      <div class="btn-group btn-group-sm " role="group">
-        <div (click)="isMail=true" [ngClass]="isMail? 'btn-primary' : 'btn-pomme'" class="btn btn-block"
-             type='button'>Envoyer un mail manuel
-        </div>
-        <div (click)="isMail=false;template=2" [ngClass]="!isMail? 'btn-primary' : 'btn-pomme'" class="btn btn-block"
-             type='button'>Envoyer la newsletter
-        </div>
+      <div (click)="template=2" [ngClass]="template==2? 'btn-primary' : 'btn-pomme'" class="btn btn-block"
+           type='button'>Le template Brevo n°2 : newsletter
+      </div>
+      <div (click)="template=6" [ngClass]="template==6? 'btn-primary' : 'btn-pomme'" class="btn btn-block"
+           type='button'>Le template Brevo n°6 : Convocation AG
       </div>
     </div>
 
 
-  </div>
+    <div *ngIf="template==0" class="row">
+      <div class="col-sm-12 ">
+        <div class="form-group">
+          <label for="prenom">Objet : <span class="orange" container="body">*</span></label>
+          <input type="text" class="form-control" name="prenom" [(ngModel)]="subject" required
+                 minlength="10" maxlength="255" />
 
-
-  <div *ngIf="isMail" class="row">
-    <div class="col-sm-12 ">
-      <div class="input-group mb-3 input-group-lg">
-        <div class="input-group-prepend">
-          <span class="input-group-text">Objet : </span>
         </div>
-        <input [(ngModel)]="subject" class="form-control" type="text">
       </div>
-    </div>
-    <div class="col-sm-12">
+      <div class="col-sm-12">
 
-      <div class="NgxEditor__Wrapper mb-3">
-        <ngx-editor-menu [editor]="editor" [toolbar]="toolbar"></ngx-editor-menu>
-        <ngx-editor [(ngModel)]="html" [disabled]="false" [editor]="editor"
-                    [placeholder]="'Votre message ici...'"></ngx-editor>
+
+          <angular-editor  [config]="editorConfig" [(ngModel)]="content"></angular-editor>
+
+      </div>
+      <div class="col-sm-12">
+        <button (click)="envoiMail(subject)" [disabled]="inProgress" class="btn btn-block btn-primary">
+          Envoyer ce message à la liste de diffusion
+        </button>
       </div>
     </div>
-    <div class="col-sm-12">
-      <button (click)="envoiMail(subject)" [disabled]="inProgress" class="btn btn-block btn-primary">
-        Envoyer ce message
-      </button>
+
+    <div *ngIf="template!=0" class="row">
+      <div class="col-sm-12">
+        <button (click)="envoiTemplate()" [disabled]="inProgress" class="btn btn-block btn-primary">
+          Envoyer ce template à la liste de diffusion
+        </button>
+      </div>
     </div>
   </div>
+  <div class="col-4">
 
-  <div *ngIf="!isMail" class="row">
-    <div class="col-sm-12">
-      <button (click)="envoiTemplate()" [disabled]="inProgress" class="btn btn-block btn-primary">
-        Envoyer la newsletter à la liste de diffusion
-      </button>
-    </div>
+    <table>
+      <thead>
+      <tr>
+        <th class="center">
+          Date d'envoi
+
+        </th>
+        <th class="center">
+          Objet
+
+        </th>
+        <th class="center">
+          Maling Liste
+        </th>
+        <th class="center">
+          Réussis/Echoués
+        </th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr
+        *ngFor="let historique of historiques">
+        <td>
+          {{ historique.dateEnvoi | date:'EEEE, MMMM d, y, hh:mm' }}
+        </td>
+        <td>
+          {{ historique.subject }}
+        </td>
+        <td>
+          {{ historique.listing }}
+        </td>
+        <td>
+          {{ historique.nombre }}/{{ historique.echecs }}
+        </td>
+
+      </tr>
+      </tbody>
+    </table>
+
   </div>
 </div>

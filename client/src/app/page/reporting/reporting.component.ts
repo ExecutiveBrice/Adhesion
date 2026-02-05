@@ -3,6 +3,11 @@ import { TokenStorageService } from '../../_services/token-storage.service';
 import Chart from 'chart.js/auto';
 import { ReportingService } from 'src/app/_services/reporting.service';
 import { ReportingActivite } from 'src/app/models';
+import {ExcelService} from "../../_services/excel.service";
+import {AuthService} from "../../_services/auth.service";
+import {AdherentService} from "../../_services/adherent.service";
+import {HttpErrorResponse} from "@angular/common/http";
+import {ToastrService} from "ngx-toastr";
 
 
 @Component({
@@ -31,7 +36,11 @@ export class ReportingComponent implements OnInit {
   totalCotisG: number = 0
 
 
-  constructor(private reportingService: ReportingService) { }
+  constructor(
+    private toastr: ToastrService,
+    private excelService: ExcelService,
+    private adherentService: AdherentService,
+    private reportingService: ReportingService) { }
 
   ngOnInit(): void {
 
@@ -126,4 +135,21 @@ export class ReportingComponent implements OnInit {
   initiee: number[] = []
   payee: number[] = []
   validee: number[] = []
+
+  loader:boolean = false;
+  exportAsXLSX(): void {
+    this.loader = true;
+    this.adherentService.getAllExportLite().subscribe({
+      next: (data) => {
+        this.loader = false;
+        this.excelService.exportAsExcelFile(data, 'adherents');
+      },
+      error: (error:HttpErrorResponse) => {
+        console.log(error)
+        this.toastr.error("Une erreur est survenue, recharger la page et recommencez. si le problème persiste contactez l'administrateur<br />" + error.message, 'Erreur');
+      }
+    })
+
+  }
+
 }

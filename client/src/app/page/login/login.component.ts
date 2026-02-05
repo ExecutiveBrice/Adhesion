@@ -60,7 +60,7 @@ export class LoginComponent implements OnInit {
         this.textMaintenance = data.filter(param => param.paramName == "Text_Maintenance")[0].paramValue;
 
         this.textRGPD = data.filter(param => param.paramName == "RGPD")[0].paramValue;
-        
+
       },
       error: (error) => {
       }
@@ -146,6 +146,7 @@ export class LoginComponent implements OnInit {
     if (this.userExist) {
       this.authService.login(username, password).subscribe(
         data => {
+          console.log(data)
           this.tokenStorage.saveToken(data.token);
           this.tokenStorage.saveUser(data);
 

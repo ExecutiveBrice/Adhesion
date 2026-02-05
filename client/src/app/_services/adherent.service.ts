@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { Accord, ActiviteLite, Adherent, AdherentLite, Document, Notification } from '../models';
 import {AdherentFlat} from "../models/adherentFlat";
+import {AdherentExport} from "../models/adherentExport";
 
 const API_URL = environment.server+'/adherent/';
 
@@ -63,6 +64,11 @@ export class AdherentService {
   getAllLite(): Observable<AdherentFlat[]> {
     return this.http.get<AdherentFlat[]>(API_URL + 'allFlat', { responseType: 'json' });
   }
+
+  getAllExportLite(): Observable<AdherentExport[]> {
+    return this.http.get<AdherentExport[]>(API_URL + 'allExportLite', { responseType: 'json' });
+  }
+
 
   getAllCours(): Observable<ActiviteLite[]> {
     return this.http.get<ActiviteLite[]>(API_URL + 'getAllCours', { responseType: 'json' });

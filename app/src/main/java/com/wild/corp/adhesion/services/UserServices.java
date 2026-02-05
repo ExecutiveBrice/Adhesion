@@ -73,7 +73,7 @@ public class UserServices {
         adherentServices.save(adherent);
 
         EmailContent mess = new EmailContent();
-        mess.setDiffusion(user.getUsername());
+        mess.getDestinataires().add(user.getUsername());
         mess.setSubject("Inscription ALOD");
         mess.setText("Bonjour,<br>" +
                 "Notre secrétariat vous à ajouté manuellement dans notre outil de suivi des adhésions,<br>" +
@@ -140,7 +140,7 @@ public class UserServices {
         cft.setConfirmationToken(uuid);
         cft.setType("ConfirmationEmail");
         EmailContent mess = new EmailContent();
-        mess.setDiffusion(user.getUsername());
+        mess.getDestinataires().add(user.getUsername());
         mess.setSubject("Confirmation Email");
         mess.setText("Bonjour,<br>" +
                 "Ceci est le <a href=https://" + serverName + "/api_adhesion/auth/confirmEmail/" + uuid + ">lien de confirmation de votre adresse mail</a><br><br>" +
@@ -171,14 +171,13 @@ public class UserServices {
         confirmationTokenService.saveConfirmationToken(cft);
 
         EmailContent mess = new EmailContent();
-        mess.setDiffusion(user.getUsername());
+        mess.getDestinataires().add(user.getUsername());
         mess.setSubject("Réinitialisation du mot de passe");
         mess.setText("Bonjour,<br>" +
                 "Ceci est le <a href=https://" + serverName + "/adhesion/#/resetPassword/" + uuid + ">lien de renouvellement de votre mot de passe</a><br>" +
                 "Cordialement,<br>" +
                 "l'équipe de l'ALOD");
 
-        log.info(mess.getDiffusion());
         emailService.sendMessage(mess);
         return cft;
     }

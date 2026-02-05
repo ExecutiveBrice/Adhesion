@@ -1,22 +1,20 @@
 package com.wild.corp.adhesion.models;
 
 
+import com.wild.corp.adhesion.models.resources.Groupe;
 import lombok.*;
 
-@Getter
-@Setter
-@ToString
-@RequiredArgsConstructor
+import java.util.ArrayList;
+import java.util.List;
+
+@Data
 @EqualsAndHashCode
+@NoArgsConstructor
 public class EmailContent {
 
-    private String diffusion;
+    private List<Groupe> diffusion = new ArrayList<>();
+    private List<String> destinataires = new ArrayList<>();
     private String subject;
     private String text;
 
-    public EmailContent(String diffusion, String subject, String text) {
-        this.diffusion = diffusion;
-        this.subject = subject;
-        this.text = text;
-    }
 }

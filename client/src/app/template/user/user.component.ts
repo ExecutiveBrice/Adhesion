@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, Input } from '@angular/core';
-import { Accord, Activite, ActiviteDropDown, Adherent, Adhesion, Document, HoraireDropDown, Tribu } from '../../models';
+import { Accord, Activite, ActiviteDropDown, Adherent, Adhesion, Document, Tribu } from '../../models';
 
 import { ActiviteService } from '../../_services/activite.service';
 import { AdherentService } from 'src/app/_services/adherent.service';

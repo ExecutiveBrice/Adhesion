@@ -25,9 +25,7 @@
     <div class="btn-group btn-group-sm col-4 center" role="group">
      <p> {{(adhesions | filterAdhesionBy:validPaiementSecretariat:validDocumentSecretariat:statutActuel:flag).length}} adhésions listées</p>
     </div>
-  <div class="btn-group btn-group-sm col-4" role="group">
-    <button class="btn btn-sm btn-primary" (click)="exportAsXLSX()">Extraction de ces adhésions</button>
-  </div>
+
 </div>
 
 

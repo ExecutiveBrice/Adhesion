@@ -1,11 +1,13 @@
+import {Groupe} from "./groupe";
+
 export class Email {
 
-  diffusion!: string;
+  diffusion!: Groupe[];
   subject!:string;
   text!:string;
 
   constructor(){
-    this.diffusion = "all";
+    this.diffusion = [];
     this.subject = "";
     this.text = "";
   }

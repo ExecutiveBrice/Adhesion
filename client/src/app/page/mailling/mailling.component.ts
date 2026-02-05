@@ -1,14 +1,15 @@
+import {Component, OnDestroy, OnInit} from '@angular/core';
+import {MailService} from '../../_services/mail.service';
+import {DomSanitizer} from '@angular/platform-browser';
+import {Activite, Email, Groupe} from '../../models';
+import {Router, ActivatedRoute} from '@angular/router';
 
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { MailService } from '../../_services/mail.service';
-import { DomSanitizer } from '@angular/platform-browser';
-import {  ActiviteDropDown, Adherent, Email, HoraireDropDown } from '../../models';
-import { Router, ActivatedRoute } from '@angular/router';
-import { Editor, Toolbar, toHTML } from 'ngx-editor';
-import { ActiviteService } from 'src/app/_services/activite.service';
-import { AdherentService } from 'src/app/_services/adherent.service';
-import { ParamService } from 'src/app/_services/param.service';
-import { ToastrService } from 'ngx-toastr';
+import {ActiviteService} from 'src/app/_services/activite.service';
+import {ParamService} from 'src/app/_services/param.service';
+import {ToastrService} from 'ngx-toastr';
+import {Historique} from "../../models/historique";
+
+import {FormArray, FormBuilder, FormControl, FormGroup} from '@angular/forms';
 
 @Component({
   selector: 'app-mailling',
@@ -16,152 +17,253 @@ import { ToastrService } from 'ngx-toastr';
   styleUrls: ['./mailling.component.scss']
 })
 
-export class MaillingComponent implements OnInit, OnDestroy {
-  isMail: boolean = true;
+export class MaillingComponent implements OnInit {
+
   inProgress: boolean = false;
-  errorMailingList: String[] = [];
-  mailIncomplet: boolean = false;
-  editor: Editor = new Editor;
-  html: object = {}
+  maillingListe!: FormArray;
   subject: string = "";
-  timer: any;
-  choixMailing: string = "";
-  visuelselection: string = "";
-  isFailed = false;
-  errorMessage = '';
-  activites: ActiviteDropDown[] = []
+
+
   template: number = 0;
+  historiques: Historique[] = []
 
-  toolbar: Toolbar = [
-    ['bold', 'italic'],
-    ['underline', 'strike'],
-    ['code', 'blockquote'],
-    ['ordered_list', 'bullet_list'],
-    [{ heading: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] }],
-    ['link', 'image'],
-    ['text_color', 'background_color'],
-    ['align_left', 'align_center', 'align_right', 'align_justify'],
-  ];
+  content = '<p>Bonjour 👋</p>';
 
+  editorConfig = {
+    minHeight: '400px',
+    editable: true,
+    spellcheck: true,
+    placeholder: 'Écris ton mail ici…',
+    imageResizeSensitivity: 10,
+    toolbar: [
+      'bold',
+      'italic',
+      'underline',
+      'strikeThrough',
+      'orderedList',
+      'unorderedList',
+      'link',
+      'image', // 👈 bouton image
+      'html'
+    ],
+
+
+  };
 
   constructor(
     private toastr: ToastrService,
-    private adherentService: AdherentService,
+    public fb: FormBuilder,
     public activiteService: ActiviteService,
-    public route: ActivatedRoute,
     public router: Router,
     public mailService: MailService,
-    public sanitizer: DomSanitizer,
-    public paramService: ParamService) { }
-
-  ngOnInit(): void {
-
-
-//    this.timer = setInterval(() => {
-//      this.onTimeOut();
-//    }, 1000);
-    this.getActivites()
+    public paramService: ParamService) {
   }
 
 
+
+  ngOnInit(): void {
+    this.maillingListe = this.fb.array([])
+    const horairesForm: FormArray = this.fb.array([])
+    const adherentForm: FormGroup = this.fb.group({
+      ordre: [1, []],
+      id: [1, []],
+      nom: ['adherent', []],
+      text: ['Tous les adherents', []],
+      bold: [false, []],
+      indent: [false, []],
+      checked: [false, []]
+    });
+    horairesForm.push(adherentForm)
+
+    const bureauForm: FormGroup = this.fb.group({
+      ordre: [2, []],
+      id: [4, []],
+      nom: ['bureau', []],
+      text: ['Les membres du bureau', []],
+      bold: [false, []],
+      indent: [false, []],
+      checked: [false, []]
+    });
+    horairesForm.push(bureauForm)
+    const caForm: FormGroup = this.fb.group({
+      ordre: [3, []],
+      id: [5, []],
+      nom: ['conseilAdministration', []],
+      text: ['Les membres du conseil d\'administration', []],
+      bold: [false, []],
+      indent: [false, []],
+      checked: [false, []]
+    });
+    horairesForm.push(caForm)
+    const profForm: FormGroup = this.fb.group({
+      ordre: [4, []],
+      id: [3, []],
+      nom: ['prof', []],
+      text: ['Les profs et encadrants des sections', []],
+      bold: [false, []],
+      indent: [false, []],
+      checked: [false, []]
+    });
+    horairesForm.push(profForm)
+
+    const activiteForm: FormGroup = this.fb.group({
+      ordre: [0, []],
+      id: [0, []],
+      nom: ['role', []],
+      text: ['Role', []],
+      bold: [true, []],
+      indent: [false, []],
+      checked: [false, []],
+      horaires: horairesForm
+    });
+    this.maillingListe.push(activiteForm)
+
+    this.getActivites()
+    this.getHistorique()
+  }
+
+  selectGroupe(formGroup: FormGroup) {
+    if (formGroup.get('checked')?.value) {
+      const horaires: FormArray<FormGroup> = formGroup.get('horaires') as FormArray<FormGroup>
+      horaires.controls.forEach(value => value.get('checked')?.setValue(true))
+
+    } else {
+      const horaires: FormArray<FormGroup> = formGroup.get('horaires') as FormArray<FormGroup>
+      horaires.controls.forEach(value => value.get('checked')?.setValue(false))
+
+    }
+  }
+
+  evaluateMailing(formGroup: FormGroup, controle: FormGroup) {
+    if (!controle.get('checked')?.value) {
+      formGroup.get('checked')?.setValue(false)
+    }else{
+      const horaires = formGroup.get('horaires') as FormArray<FormGroup>
+      if(horaires.controls.filter(value => !value.get('checked')?.value).length == 0) {
+        formGroup.get('checked')?.setValue(true)
+      }
+    }
+  }
+
+  getControl(formGroup: any) {
+    return formGroup.get('checked') as FormControl;
+  }
 
   getActivites() {
     this.activiteService.getAll().subscribe(
       data => {
-        data.forEach(act => {
+        const listeActivite = data.reduce<Record<string, Activite[]>>((acc, item) => {
+          (acc[item.nom] ??= []).push(item);
+          return acc;
+        }, {});
+        let ordre = 5
+        for (let listeActiviteKey in listeActivite) {
 
-          if (this.activites.filter(activiteDropDown => activiteDropDown.nom == act.nom).length > 0) {
-            let horaireDropDown = new HoraireDropDown
-            horaireDropDown.id = act.id
-            horaireDropDown.nom = act.horaire
-            this.activites.filter(activiteDropDown => activiteDropDown.nom == act.nom)[0].horaires.push(horaireDropDown)
-          } else {
-            let activiteDropDown = new ActiviteDropDown()
-            activiteDropDown.nom = act.nom
-            let horaireDropDown = new HoraireDropDown
-            horaireDropDown.id = act.id
-            horaireDropDown.nom = act.horaire
-            activiteDropDown.horaires.push(horaireDropDown)
-            this.activites.push(activiteDropDown)
-          }
-        });
+          const horairesForm: FormArray = this.fb.array([])
+          listeActivite[listeActiviteKey].forEach(act => {
+
+            const horaireForm: FormGroup = this.fb.group({
+              ordre: [ordre, []],
+              id: [act.id, []],
+              nom: [act.horaire, []],
+              text: [act.horaire, []],
+              bold: [false, []],
+              indent: [true, []],
+              checked: [false, []]
+            });
+            horairesForm.push(horaireForm)
+
+            ordre++;
+          });
+          const activiteForm: FormGroup = this.fb.group({
+            ordre: [ordre, []],
+            id: [0, []],
+            nom: [listeActiviteKey, []],
+            text: [listeActiviteKey, []],
+            bold: [true, []],
+            indent: [false, []],
+            checked: [false, []],
+            horaires: horairesForm
+          });
+          this.maillingListe.push(activiteForm)
+        }
       },
       err => {
-        this.isFailed = true;
-        this.errorMessage = err.message
+        console.log(err)
       }
     );
   }
 
-  // make sure to destory the editor
-  ngOnDestroy(): void {
-    clearInterval(this.timer);
-    this.editor.destroy();
+  getHistorique() {
+    this.mailService.getHistorique()
+      .subscribe({
+        next: (data) => {
+          this.historiques = data
+        },
+        error: (error) => {
+          console.log(error)
+        }
+      });
   }
 
   envoiTemplate() {
-    this.mailService.sendTemplate(this.choixMailing, this.template)
+    console.log(this.maillingListe.getRawValue())
+    this.inProgress = true;
+    this.showWarning("Envoi de mail en cours, veuillez patienter")
+    this.mailService.sendTemplate(this.maillingListe.getRawValue(), this.template)
       .subscribe({
-        next: (data) => {
+        next: (newHistorique) => {
+          this.historiques.push(newHistorique);
           this.showWarning("Votre message est à bien été envoyé")
-          this.isFailed = false;
+
+          this.inProgress = false;
         },
         error: (error) => {
-          this.isFailed = true;
-          this.errorMessage = error.message
+
+          this.inProgress = false;
+          this.showError("Il y a eu un problème lors de l'envoie du message: "+error.message)
+
         }
       });
   }
 
   envoiMail(subject: string) {
-    console.log(subject)
-    this.showWarning("Votre message est en cours de préparation")
-    if (subject == undefined || subject.length < 5 || this.html == undefined || toHTML(this.html).length < 20) {
-      this.mailIncomplet = true;
-      setTimeout(() => {
-        this.mailIncomplet = false;
-      }, 5000);
+
+    if (subject == undefined || subject.length < 5 || this.content == undefined || this.content.length < 20) {
+      this.showWarning("Le mail n'est pas complet l'objet doit avoir au moins 5 lettres et le corps du message au moins 20 lettres")
     } else {
+      this.inProgress = true;
+      this.showWarning("Envoi de mail en cours, veuillez patienter")
       let email = new Email();
       email.subject = subject;
-      email.text = toHTML(this.html);
-      email.diffusion = this.choixMailing;
+      email.text = this.content;
+      email.diffusion = this.maillingListe.getRawValue() as Groupe[];
       this.mailService.sendMail(email)
         .subscribe({
-          next: (data) => {
-            this.showWarning("Votre message est à bien été envoyé")
-            this.isFailed = false;
+          next: (newHistorique) => {
+            this.historiques.push(newHistorique);
+            this.showSucces("Votre message est à bien été envoyé")
+            this.inProgress = false;
           },
           error: (error) => {
-            this.isFailed = true;
-            this.errorMessage = error.message
+            this.inProgress = false;
+            this.showError("Il y a eu un problème lors de l'envoie du message: "+error.message)
           }
         });
     }
   }
 
 
-  onTimeOut() {
-    this.mailService.isInProgress()
-      .subscribe({
-        next: (response) => {
-          this.inProgress = response;
-          this.isFailed = false;
-        },
-        error: (error) => {
-          this.isFailed = true;
-          this.errorMessage = error.message
-        }
-      });
-  }
 
 
   showSucces(message: string) {
     this.toastr.success(message, 'Bravo!');
   }
+
   showWarning(message: string) {
     this.toastr.warning(message, 'Attention!');
   }
+
   showError(message: string) {
     this.toastr.error("Une erreur est survenue, recharger la page et recommencez. si le problème persiste contactez l'administrateur<br />" + message, 'Erreur');
   }

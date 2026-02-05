@@ -12,7 +12,7 @@ import java.util.List;
 public interface AdherentRepository extends JpaRepository<Adherent, Long> {
 
     @Query(value = "SELECT adherents.* From adherents, users, users_roles WHERE adherents.user_id = users.id and users.id = users_roles.user_id and users_roles.roles_id = :roleId", nativeQuery = true)
-    List<Adherent> findByUserRoleId(@Param("roleId") Integer roleId);
+    List<Adherent> findByUserRoleId(@Param("roleId") Long roleId);
     @Query("select a.id from Adherent a")
     List<Long> getAllIds();
 

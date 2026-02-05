@@ -9,30 +9,30 @@
     <name>Adhesion</name>
 
     <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.3</version>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-parent</artifactId>
+        <version>2025.0.1</version>
         <relativePath/>
     </parent>
     <properties>
-        <java.version>17</java.version>
+        <java.version>21</java.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>com.brevo</groupId>
             <artifactId>brevo</artifactId>
-            <version>1.0.0</version>
+            <version>1.1.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
-            <version>3.2.3</version>
+
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
-            <version>3.2.3</version>
+
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -41,7 +41,7 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-            <version>3.2.3</version>
+
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -145,28 +145,57 @@
                     <layout>JAR</layout>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>7.12.0</version>
+                <executions>
+                    <execution>
+                        <id>ApiHelloasso</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <!-- Chemin vers api-farmeo.json -->
+                            <inputSpec>${project.basedir}/src/main/resources/helloasso.json</inputSpec>
+                            <!-- Générateur 'spring' + Feign Spring Cloud -->
+                            <generatorName>spring</generatorName>
+                            <output>${project.build.directory}/generated-sources/clientHelloasso</output>
 
-<!--            <plugin>-->
-<!--                <groupId>org.openapitools</groupId>-->
-<!--                <artifactId>openapi-generator-maven-plugin</artifactId>-->
-<!--                <version>7.12.0</version>-->
-<!--                <executions>-->
-<!--                    <execution>-->
-<!--                        <goals>-->
-<!--                            <goal>generate</goal>-->
-<!--                        </goals>-->
-<!--                        <configuration>-->
-<!--                            <inputSpec>${project.basedir}/src/main/resources/vacances.json</inputSpec>-->
-<!--                            <generatorName>spring</generatorName>-->
+                            <!-- Si on veut que ça écrase le code si l'API change -->
+                            <skipOverwrite>false</skipOverwrite>
+
+                            <!-- Les packages où seront générées les APIs et les models -->
+                            <apiPackage>org.wild.corp.adhesion.client.helloasso.api</apiPackage>
+                            <modelPackage>org.wild.corp.adhesion.client.helloasso.model</modelPackage>
+                            <configOptions>
+                                <useTags>true</useTags>
+                                <!-- Librairie Feign Spring Cloud -->
+                                <library>spring-cloud</library>
+                                <!-- Générer uniquement des interfaces, pas de controllers -->
+                                <interfaceOnly>true</interfaceOnly>
+                                <!-- Ne génère pas d'impl par défaut -->
+                                <skipDefaultInterface>true</skipDefaultInterface>
+                                <!-- On utilise Jakarta EE (pour Spring Boot 3 / Java 21) -->
+                                <useJakartaEe>true</useJakartaEe>
+                            </configOptions>
+                            <typeMappings>
+                                <typeMapping>DateTime=LocalDateTime</typeMapping>
+                                <typeMapping>Date=LocalDate</typeMapping>
+                            </typeMappings>
+                            <importMappings>
+                                <importMapping>LocalDateTime=java.time.LocalDateTime</importMapping>
+                                <importMapping>LocalDate=java.time.LocalDate</importMapping>
+                            </importMappings>
+                        </configuration>
+                    </execution>
 
 
-<!--                            <configOptions>-->
-<!--                                <useSpringBoot3>true</useSpringBoot3>-->
-<!--                            </configOptions>-->
-<!--                        </configuration>-->
-<!--                    </execution>-->
-<!--                </executions>-->
-<!--            </plugin>-->
+
+
+                </executions>
+            </plugin>
         </plugins>
 
     </build>

@@ -1,4 +1,4 @@
-FROM openjdk:17-alpine
+FROM alpine/java:21
 # copy the packaged jar file into our docker image
 COPY ./adhesion.jar /adhesion.jar
 COPY ./application.yml /resources/application.yml

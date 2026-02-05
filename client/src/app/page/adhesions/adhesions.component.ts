@@ -138,13 +138,11 @@ export class AdhesionsComponent implements OnInit {
     this.adhesionsCopy = []
     this.adhesionService.getAllLiteBysection(this.choixSection).subscribe({
       next: (data) => {
-        console.log("data")
         console.log(data)
         data.forEach(value => value.nomprenom = value.adherent.nom + value.adherent.prenom)
         this.adhesions = data;
         this.adhesionsCopy = data;
         this.loadder = false
-        console.log("loadder")
       },
       error: (error) => {
         console.log(error)
@@ -370,47 +368,6 @@ export class AdhesionsComponent implements OnInit {
   pdfEditSrc: string = ""
 
 
-  exportAsXLSX(): void {
-    let adhesions: AdhesionExcel[] = []
-    this.adhesions.forEach(adhesion => {
-      let newAdhesionExcel = new AdhesionExcel;
-      if (adhesion.adherent) {
-        newAdhesionExcel.nomAdherent = adhesion.adherent.nom
-        newAdhesionExcel.telephone = adhesion.adherent.representant != undefined ? adhesion.adherent.representant.telephone : adhesion.adherent.telephone;
-        newAdhesionExcel.prenomAdherent = adhesion.adherent.prenom
-        newAdhesionExcel.emailAdherent = adhesion.adherent.representant != undefined ? adhesion.adherent.representant.user.username : adhesion.adherent.user.username
-      }
-
-
-      if (adhesion.activite) {
-        newAdhesionExcel.nomActivite = adhesion.activite.nom + " " + adhesion.activite.horaire
-      }
-      newAdhesionExcel.statutActuel = adhesion.statutActuel
-
-      if (adhesion.paiements[0]) {
-        newAdhesionExcel.dateReglement1 = adhesion.paiements[0].dateReglement
-        newAdhesionExcel.typeReglement1 = adhesion.paiements[0].typeReglement
-        newAdhesionExcel.paiement1 = adhesion.paiements[0].montant
-      }
-      if (adhesion.paiements[1]) {
-        newAdhesionExcel.dateReglement2 = adhesion.paiements[1].dateReglement
-        newAdhesionExcel.typeReglement2 = adhesion.paiements[1].typeReglement
-        newAdhesionExcel.paiement2 = adhesion.paiements[1].montant
-      }
-      if (adhesion.paiements[2]) {
-        newAdhesionExcel.dateReglement3 = adhesion.paiements[2].dateReglement
-        newAdhesionExcel.typeReglement3 = adhesion.paiements[2].typeReglement
-        newAdhesionExcel.paiement3 = adhesion.paiements[2].montant
-      }
-      newAdhesionExcel.flag = adhesion.flag
-      newAdhesionExcel.remarqueSecretariat = adhesion.remarqueSecretariat
-      newAdhesionExcel.validDocumentSecretariat = adhesion.validDocumentSecretariat
-      newAdhesionExcel.validPaiementSecretariat = adhesion.validPaiementSecretariat
-
-      adhesions.push(newAdhesionExcel)
-    })
-    this.excelService.exportAsExcelFile(adhesions, 'adhesions');
-  }
 
 
   updateVisiteAdhesion(adhesion: Adhesion) {

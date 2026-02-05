@@ -1,7 +1,12 @@
 <div class="container">
+  @if (loader){
+    <div class="spinner-border text-info"></div>
+  } @else {
+    <button class="btn btn-sm btn-primary" (click)="exportAsXLSX()">Extraction des adherents</button>
 
+  }
   <div class="row">
-    
+
 
 
     <div class="col-6">

@@ -6,6 +6,8 @@ import { ParamBoolean, ParamNumber, ParamText, UserLite } from 'src/app/models';
 import { Observable } from 'rxjs';
 import { faEnvelope, faCircleQuestion, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { AdherentService } from 'src/app/_services/adherent.service';
+import {AuthService} from "../../_services/auth.service";
+import {TokenStorageService} from "../../_services/token-storage.service";
 
 
 
@@ -28,7 +30,9 @@ export class BoardAdminComponent implements OnInit {
   secretairesLite: UserLite[] = [];
   profsLite: UserLite[] = [];
   comptablesLite: UserLite[] = [];
-  constructor(private paramService: ParamService, private userService: UserService,  private adherentService: AdherentService) { }
+
+
+  constructor(    private tokenStorage: TokenStorageService,private authService: AuthService, private paramService: ParamService, private userService: UserService,  private adherentService: AdherentService) { }
 
   ngOnInit(): void {
     this.getAllBoolean()
@@ -51,6 +55,20 @@ console.log(data)
         this.comptablesLite = data.filter(adh => adh.roles.filter(role => role.name === 'ROLE_COMPTABLE').length > 0)
       },
       err => {
+
+      }
+    );
+  }
+
+
+  impersonate(email: string) {
+    this.authService.impersonate(email).subscribe(
+      data => {
+        console.log(data)
+        this.tokenStorage.saveToken(data.token);
+        this.tokenStorage.saveUser(data);
+      },
+      err => {
         ;
       }
     );
@@ -59,7 +77,7 @@ console.log(data)
   grantUser(email: string, role: string) {
     this.userService.grantUser(role, email).subscribe(
       data => {
-        
+
         this.fillLists()
       },
       err => {
@@ -71,7 +89,7 @@ console.log(data)
   unGrantUser(email: string, role: string) {
     this.userService.unGrantUser(role, email).subscribe(
       data => {
-        
+
         this.fillLists()
       },
       err => {
@@ -83,7 +101,7 @@ console.log(data)
   updateParamText(param: ParamText) {
     this.paramService.saveText(param).subscribe(
       data => {
-        
+
       },
       err => {
         ;
@@ -103,7 +121,7 @@ console.log(data)
   updateParamNumber(param: ParamNumber) {
     this.paramService.saveNumber(param).subscribe(
       data => {
-        
+
       },
       err => {
         ;
@@ -128,7 +146,7 @@ console.log(data)
     this.paramService.getAllText().subscribe(
       data => {
         this.paramTexts = data;
-        
+
       },
       err => {
         ;
@@ -140,7 +158,7 @@ console.log(data)
     this.paramService.getAllNumber().subscribe(
       data => {
         this.paramNumbers = data;
-        
+
       },
       err => {
         ;
@@ -153,7 +171,7 @@ console.log(data)
     this.adherentService.nouvelleAnnee().subscribe(
       data => {
       console.log(data)
-        
+
       },
       err => {
         ;

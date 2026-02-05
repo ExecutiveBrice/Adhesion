@@ -64,7 +64,6 @@ public class WebSecurityConfig{
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth ->
                         auth.requestMatchers("/auth/**").permitAll()
-                                .requestMatchers("/email/**").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/param/**").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/adherent/**").permitAll()
                                 .requestMatchers(HttpMethod.OPTIONS,"/**").permitAll()

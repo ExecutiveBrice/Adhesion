@@ -1,5 +1,5 @@
 <div class="row">
-  
+
   <!--div class="col-md-12">
     <div type='button' class="btn btn-block btn-primary" (click)="nouvelleAnnee()">Nouvelle Annee</div>
   </div-->
@@ -59,6 +59,22 @@
   </div>
   <div class="col-md-6">
     <div class="card card-container">
+      <h2>Impersonnate</h2>
+      <div ngbDropdown class="col-md-12 ">
+        <button type="button" class="btn btn-block btn-primary" id="dropdownBasic1" ngbDropdownToggle>
+          Prendre la place de l'utilisateur
+        </button>
+        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+          <div ngbDropdownItem *ngFor="let user of usersLite  | orderBy:'nom':false"
+               (click)="impersonate(user.username)"> {{user.adherent}}</div>
+        </div>
+
+
+      </div>
+
+
+
+
       <h2>Roles des utilisateurs</h2>
       <div ngbDropdown class="col-md-12 ">
         <button type="button" class="btn btn-block btn-primary" id="dropdownBasic1" ngbDropdownToggle>
@@ -153,7 +169,7 @@
       </div>
 
 
-      
+
       <div ngbDropdown class="d-inline-block col-md-12 ">
         <button type="button" class="btn btn-block btn-primary" id="dropdownBasic1" ngbDropdownToggle>
           Ajouter en tant que Prof de l'ALOD

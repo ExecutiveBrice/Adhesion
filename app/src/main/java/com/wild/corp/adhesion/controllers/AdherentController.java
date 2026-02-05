@@ -122,7 +122,12 @@ public class AdherentController {
         log.info("getAllFlat by " + principal.getName());
         return ResponseEntity.ok(adherentServices.getAllFlat());
     }
-
+    @GetMapping("/allExportLite")
+    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+    public ResponseEntity<?> getAllExportLite(Authentication principal) {
+        log.info("getAllExportLite by " + principal.getName());
+        return ResponseEntity.ok(adherentServices.getAllExportFlat());
+    }
     @GetMapping("/allLite")
     @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
     public ResponseEntity<?> getAllLite(Authentication principal) {
@@ -139,7 +144,7 @@ public class AdherentController {
 
     @GetMapping("/getAllCours")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> getAllCours(Authentication principal) {
+    public ResponseEntity<?> getAllCours(Authentication principal, Authentication currentAuth) {
         log.info("getAllCours by " + principal.getName());
         return ResponseEntity.ok(adherentServices.getAllCours(principal.getName()));
     }
@@ -153,7 +158,7 @@ public class AdherentController {
 
     @GetMapping("/getByRole")
     @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
-    public ResponseEntity<?> getByRole(Authentication principal, @PathParam("roleId") Integer roleId) {
+    public ResponseEntity<?> getByRole(Authentication principal, @PathParam("roleId") Long roleId) {
         log.info("getByRole by " + principal.getName() + " for roleId id " + roleId);
         return ResponseEntity.ok(adherentServices.getByRole(roleId));
     }

@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { FormsModule } from '@angular/forms';
+import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { NgbModule, NgbDatepickerModule, NgbCollapseModule, NgbTooltipModule, NgbModalConfig, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AppRoutingModule } from './app-routing.module';
@@ -14,7 +14,8 @@ import { ActivitesComponent } from './page/activites/activites.component';
 import { BoardUserComponent } from './page/board-user/board-user.component';
 import { AdhesionsComponent } from './page/adhesions/adhesions.component';
 import { ComptaComponent } from './page/compta/compta.component';
-import { ContactComponent } from './page/contact/contact.component';
+import { LOCALE_ID } from '@angular/core';
+
 import { ModalComponent } from './template/modal/modal.component';
 import { ModalPDFComponent } from './template/modal-pdf/modal-pdf.component';
 import { ModalChoixActivite } from './template/modal-choixactivite/modal.choixactivite';
@@ -32,21 +33,26 @@ import { FilterByPipe} from "./_helpers/filter.pipe";
 import { FilterAdhesionByPipe} from "./_helpers/filterAdhesion.pipe";
 
 import { authInterceptorProviders } from './_helpers/auth.interceptor';
-import { NgxEditorModule } from 'ngx-editor';
+
 import { MaillingComponent } from './page/mailling/mailling.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { MaintenanceComponent } from './page/maintenance/maintenance.component';
 import { ParamTransmissionService } from './_helpers/transmission.service';
 import { ReportingComponent } from './page/reporting/reporting.component';
-import { DatePipe } from '@angular/common';
+import { DatePipe, registerLocaleData } from '@angular/common';
+
+import { AngularEditorModule } from '@wfpena/angular-wysiwyg';
+
+
 import { ProfsComponent } from './page/profs/profs.component';
 import { ExcelService } from './_services/excel.service';
 import { UtilService } from './_services/util.service';
 import { FileService } from './_services/file.service';
 import { SimpleFilterPipe } from './_helpers/simpleFilter.pipe';
 import {OrderSimplePipe} from "./_helpers/sort-simple.pipe";
-
-
+import {OrderObjectByPipe} from "./_helpers/sortObject.pipe";
+import localeFr from '@angular/common/locales/fr';
+registerLocaleData(localeFr);
 
 @NgModule({
   declarations: [
@@ -60,7 +66,6 @@ import {OrderSimplePipe} from "./_helpers/sort-simple.pipe";
     MaillingComponent,
     AdhesionsComponent,
     MaintenanceComponent,
-    ContactComponent,
     ReportingComponent,
     ProfsComponent,
     ComptaComponent,
@@ -84,11 +89,12 @@ import {OrderSimplePipe} from "./_helpers/sort-simple.pipe";
     NgbCollapseModule,
     NgbTooltipModule,
     HttpClientModule,
-    NgxEditorModule,
+
     BrowserAnimationsModule,
     NgxExtendedPdfViewerModule,
     FontAwesomeModule,
     ngfModule,
+    AngularEditorModule,
     ToastrModule.forRoot({
       enableHtml: true,
       timeOut: 10000,
@@ -98,10 +104,14 @@ import {OrderSimplePipe} from "./_helpers/sort-simple.pipe";
       positionClass: 'toast-top-left-wide',
       preventDuplicates: true,
     }),
+
     OrderSimplePipe,
     FilterAdhesionByPipe,
+    ReactiveFormsModule,
+    OrderObjectByPipe,
   ],
-  providers: [authInterceptorProviders,
+  providers: [{ provide: LOCALE_ID, useValue: "fr-FR" },
+    authInterceptorProviders,
     NgbModalConfig,
     NgbModal,
     ParamTransmissionService,
@@ -115,4 +125,5 @@ import {OrderSimplePipe} from "./_helpers/sort-simple.pipe";
   ],
   bootstrap: [AppComponent]
 })
+
 export class AppModule { }

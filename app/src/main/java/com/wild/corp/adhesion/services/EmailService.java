@@ -5,18 +5,14 @@ import brevo.Configuration;
 import brevo.auth.ApiKeyAuth;
 import brevoApi.TransactionalEmailsApi;
 import brevoModel.*;
-import com.mailjet.client.ClientOptions;
-import com.mailjet.client.MailjetClient;
-import com.mailjet.client.MailjetRequest;
-import com.mailjet.client.MailjetResponse;
-import com.mailjet.client.errors.MailjetException;
-import com.mailjet.client.resource.Emailv31;
 import com.wild.corp.adhesion.models.Adhesion;
 import com.wild.corp.adhesion.models.EmailContent;
+import com.wild.corp.adhesion.models.Historique;
+import com.wild.corp.adhesion.models.resources.Groupe;
+import com.wild.corp.adhesion.models.resources.Horaire;
+import com.wild.corp.adhesion.repository.HistoriqueRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
@@ -28,9 +24,10 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 
 @RequiredArgsConstructor
@@ -38,9 +35,10 @@ import java.util.regex.Pattern;
 @Slf4j
 public class EmailService {
 
-    private Boolean inProgress = false;
-
-    private Integer restant;
+    private Integer echecs;
+    private Integer reussis;
+    @Autowired
+    private HistoriqueRepository historiqueRepository;
 
     @Autowired
     private AdherentServices adherentServices;
@@ -51,36 +49,59 @@ public class EmailService {
     @Autowired
     private Environment environment;
 
-    public void sendMessage(EmailContent mail) {
-        inProgress = true;
+    public Historique sendMessage(EmailContent mail) {
+        Historique historique = null;
+        List<String> listMail = new ArrayList<>();
+        if(!mail.getDiffusion().isEmpty()) {
+            adherentServices.findByGroup(mail.getDiffusion(), listMail);
+        }else {
+            listMail.addAll(mail.getDestinataires());
+        }
+        log.info("mailling {}",listMail);
 
-        log.info("singleMessage");
-        //mail.setDiffusion("brice_morel@hotmail.com");
-        singleMessage(mail, null, false);
-
-        restant = 0;
-        Set<String> listMail = adherentServices.findByGroup(mail.getDiffusion());
-
-        if (listMail != null ) {
+        if (!listMail.isEmpty()) {
+            echecs = 0;
+            reussis = 0;
             listMail.forEach(email -> {
-
                 if (patternMatches(email, "^(?=.{1,64}@)[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*@[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$")) {
-
-                    log.info(email);
-                    singleMessage(new EmailContent(email, mail.getSubject(), mail.getText()),null, false);
-                    restant++;
+                    singleMessage(listMail, mail,null, false);
+                    reussis++;
                 } else {
+                    echecs++;
                     log.error("email invalide " + email);
                 }
             });
+            if(!mail.getDiffusion().isEmpty()) {
+                List<String> resultats = mail.getDiffusion().stream()
+                        .flatMap(groupe -> {
+                            if (groupe.getChecked()) {
+                                // Groupe coché → on retourne son nom
+                                return Stream.of(groupe.getNom());
+                            } else {
+                                // Groupe non coché → on retourne les horaires cochés
+                                return groupe.getHoraires().stream()
+                                        .filter(Horaire::getChecked)
+                                        .map(Horaire::getNom);
+                            }
+                        })
+                        .toList();
+                historique = new Historique(resultats.toString(), mail.getSubject(), echecs,reussis, LocalDateTime.now());
+                historiqueRepository.save(historique);
+            }
+
+            log.info("nombre de mails envoyés " + reussis);
+
+        }else{
+            log.info("singleMessage");
+            singleMessage(mail.getDestinataires(), mail, null, false);
         }
-        log.info("nombre de mails envoyés " + restant);
-        inProgress = false;
+
+        return historique;
     }
 
     public void sendAutoMail(Adhesion adhesion, String sujetName, String corpsName, boolean attachement) {
         EmailContent mail = new EmailContent();
-        mail.setDiffusion(Boolean.TRUE.equals(adhesion.getAdherent().getEmailRepresentant()) && adhesion.getAdherent().getRepresentant() != null ? adhesion.getAdherent().getRepresentant().getUser().getUsername() : adhesion.getAdherent().getUser().getUsername());
+        mail.getDestinataires().add(Boolean.TRUE.equals(adhesion.getAdherent().getEmailRepresentant()) && adhesion.getAdherent().getRepresentant() != null ? adhesion.getAdherent().getRepresentant().getUser().getUsername() : adhesion.getAdherent().getUser().getUsername());
         String sujet = paramTextServices.getParamValue(sujetName);
         sujet = sujet.replaceAll("#activite#", adhesion.getActivite().getNom());
         mail.setSubject(sujet);
@@ -91,71 +112,15 @@ public class EmailService {
         corps = corps.replaceAll("#nom#", adhesion.getAdherent().getNom());
         mail.setText(corps);
 
-        singleMessage(mail, adhesion, attachement);
+        singleMessage(mail.getDestinataires(), mail, adhesion, attachement);
     }
 
     @Value("${image-storage-dir}")
     private Path imageStorageDir;
 
-    public void singleMessageOld(EmailContent mail, Adhesion adhesion, boolean attachement) {
-
-        MailjetClient client;
-        MailjetRequest request;
-        MailjetResponse response;
-        final ClientOptions clientOptions = ClientOptions
-                .builder()
-                .apiKey(System.getenv("MJ_APIKEY_PUBLIC"))
-                .apiSecretKey(System.getenv("MJ_APIKEY_PRIVATE"))
-                .build();
-
-        try {
-
-            JSONObject email = new JSONObject()
-                    .put(Emailv31.Message.FROM, new JSONObject()
-                            .put("Email", System.getenv("MJ_MAIL")))
-                    .put(Emailv31.Message.TO, new JSONArray()
-                            .put(new JSONObject().put(Emailv31.Message.EMAIL, mail.getDiffusion()))
-                    )
-                    .put(Emailv31.Message.SUBJECT, mail.getSubject())
-                    .put(Emailv31.Message.HTMLPART, mail.getText());
-
-            if (attachement) {
-                Path prePath = this.imageStorageDir.resolve(String.valueOf(adhesion.getAdherent().getId()));
-                if (!Files.exists(prePath)) {
-                    Files.createDirectories(prePath);
-                }
-
-                final Path targetPath = prePath.resolve("Attestation_ALOD_" + adhesion.getAdherent().getPrenom() + "_" + adhesion.getAdherent().getNom() + ".pdf");
-
-                byte[] inFileBytes = Files.readAllBytes(targetPath);
-                String encoded = Base64.getEncoder().encodeToString(inFileBytes);
-
-                JSONArray fileAttachement = new JSONArray()
-                        .put(new JSONObject()
-                                .put("ContentType", "application/pdf")
-                                .put("Filename", targetPath.getFileName())
-                                .put("Base64Content", encoded));
 
 
-                email.put(Emailv31.Message.ATTACHMENTS, fileAttachement);
-            }
-
-            client = new MailjetClient(clientOptions);
-            request = new MailjetRequest(Emailv31.resource)
-                    .property(Emailv31.MESSAGES, new JSONArray()
-                            .put(email));
-
-            response = client.post(request);
-            log.info(response.getRawResponseContent());
-        } catch (IOException | MailjetException e) {
-            log.error("create mail MessagingException " + e);
-        }
-
-        inProgress = false;
-    }
-
-
-    public void singleMessage(EmailContent mail, Adhesion adhesion, boolean attachement) {
+    public void singleMessage(List<String> destinataires, EmailContent mail, Adhesion adhesion, boolean attachement) {
 
         Properties prop = new Properties();
         prop.put("mail.debug", "false");
@@ -181,10 +146,11 @@ public class EmailService {
             sender.setEmail("adhesion@alod.fr");
             sender.setName("ALOD");
             List<SendSmtpEmailTo> toList = new ArrayList<>();
-            SendSmtpEmailTo to = new SendSmtpEmailTo();
-            to.setEmail(mail.getDiffusion());
-
-            toList.add(to);
+            destinataires.forEach(destinataire -> {
+                SendSmtpEmailTo to = new SendSmtpEmailTo();
+                to.setEmail(destinataire);
+                toList.add(to);
+            });
 
             SendSmtpEmailReplyTo replyTo = new SendSmtpEmailReplyTo();
             replyTo.setEmail("adhesion@alod.fr");
@@ -246,35 +212,46 @@ public class EmailService {
                 .matches();
     }
 
-    public void diffusionTemplate(String groupeName, Long templateId) {
-        log.info(groupeName);
-        inProgress = true;
-        restant = 0;
-        Set<String> listMail = adherentServices.findByGroup(groupeName);
+    public Historique diffusionTemplate(List<Groupe> maillingListe, Long templateId) {
+        Historique historique = null;
+        echecs = 0;
+        reussis = 0;
+        List<String> listMail = new ArrayList<>();
+        adherentServices.findByGroup(maillingListe, listMail);
 
-        if (listMail != null && templateId != 0) {
+        if (!listMail.isEmpty() && templateId != 0) {
             listMail.forEach(email -> {
 
                 if (patternMatches(email, "^(?=.{1,64}@)[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*@[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$")) {
 
                     log.info(email);
                     sendTemplate(email, templateId);
-                    restant++;
+                    reussis++;
                 } else {
+                    echecs++;
                     log.error("email invalide " + email);
                 }
             });
+
+            List<String> resultats = maillingListe.stream()
+                    .flatMap(groupe -> {
+                        if (groupe.getChecked()) {
+                            // Groupe coché → on retourne son nom
+                            return Stream.of(groupe.getNom());
+                        } else {
+                            // Groupe non coché → on retourne les horaires cochés
+                            return groupe.getHoraires().stream()
+                                    .filter(Horaire::getChecked)
+                                    .map(Horaire::getNom);
+                        }
+                    })
+                    .toList();
+            historique = new Historique(resultats.toString(), "Brevo Template n°"+templateId, echecs,reussis, LocalDateTime.now());
+
         }
-        log.info("nombre de mails envoyés " + restant);
-        inProgress = false;
-    }
-
-    public Boolean isInProgress() {
-        return inProgress;
-    }
-
-    public Integer getRestant() {
-        return restant;
+        log.info("nombre de mails envoyés " + reussis);
+        historiqueRepository.save(historique);
+        return historique;
     }
 
 
@@ -322,7 +299,8 @@ public class EmailService {
             CreateSmtpEmail response = api.sendTransacEmail(sendSmtpEmail);
             log.info(response.toString());
         } catch (Exception e) {
-            log.warn("Exception occurred:- " + e.getMessage());
+
+            log.warn("Exception occurred: " + e.getMessage());
         }
     }
 

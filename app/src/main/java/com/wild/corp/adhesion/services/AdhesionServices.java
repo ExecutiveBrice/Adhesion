@@ -285,7 +285,7 @@ public class AdhesionServices {
         if (adherent.getTribu().getAdherents().stream().filter(adh -> adh.getUser() != null && adh.getUser().getUsername().equals(principal.getName())).toList().isEmpty()) {
             EmailContent mess = new EmailContent();
 
-            mess.setDiffusion(Boolean.TRUE.equals(adherent.getEmailRepresentant()) && adherent.getRepresentant() != null ? adherent.getRepresentant().getUser().getUsername() : adherent.getUser().getUsername());
+            mess.getDestinataires().add(Boolean.TRUE.equals(adherent.getEmailRepresentant()) && adherent.getRepresentant() != null ? adherent.getRepresentant().getUser().getUsername() : adherent.getUser().getUsername());
             mess.setSubject("Nouvelle activitée a valider");
             mess.setText("Bonjour,<br>" +
                     "Vous pouvez dès maintenant valider votre nouvelle adhésion au " + activite.getNom() + "<br><br>" +

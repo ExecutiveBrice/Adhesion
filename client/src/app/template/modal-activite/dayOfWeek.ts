@@ -1,8 +1,10 @@
 export enum DayOfWeek{
 
-  Lundi,
-  Mardi,
-  Mercredi,
-  Jeudi,
-  Vendredi
+  MONDAY,
+  TUESDAY,
+  WEDNESDAY,
+  THURSDAY,
+  FRIDAY,
+  SATURDAY,
+  SUNDAY
 }

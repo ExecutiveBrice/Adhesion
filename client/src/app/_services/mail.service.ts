@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from "@angular/common/http";
-import { Email } from '../models';
+import {Email, Groupe} from '../models';
 import { environment } from 'src/environments/environment';
+import {Historique} from "../models/historique";
 
 @Injectable({
   providedIn: 'root'
@@ -13,27 +14,22 @@ export class MailService {
     private http: HttpClient
   ) { }
 
-  sendTemplate(groupeName:string, templateId: number) {
-    let params = new HttpParams().set('groupeName', '' + groupeName + '').set('templateId', '' + templateId + '');
-    return this.http.post(this.apiUrl + "/sendTemplate", {}, {params, responseType: 'json' })
+  sendTemplate(maillingListe:Groupe[], templateId: number) {
+    let params = new HttpParams().set('templateId', '' + templateId + '');
+    return this.http.post<Historique>(this.apiUrl + "/sendTemplate", maillingListe, {params, responseType: 'json' })
   }
-  
+
+
   sendMail(email: Email) {
-    return this.http.post(this.apiUrl + "/", email, { responseType: 'json' })
+    return this.http.post<Historique>(this.apiUrl + "/", email, { responseType: 'json' })
   }
 
   isInProgress() {
     return this.http.get<boolean>(this.apiUrl + "/isInProgress", { responseType: 'json' })
   }
 
-  getRestant() {
-    return this.http.get<number>(this.apiUrl + "/getRestant", { responseType: 'json' })
-  }
 
-  getTotal(mailling:string) {
-    let params = new HttpParams().set('mailling', '' + mailling + '');
-    return this.http.get<number>(this.apiUrl + "/getTotal", {params, responseType: 'json' })
+  getHistorique() {
+    return this.http.get<Historique[]>(this.apiUrl + "/historique", { responseType: 'json' })
   }
-
-  
 }

@@ -2,8 +2,10 @@ package com.wild.corp.adhesion.services;
 
 
 import com.wild.corp.adhesion.models.*;
+import com.wild.corp.adhesion.models.resources.AdherentExport;
 import com.wild.corp.adhesion.models.resources.AdherentFlat;
 import com.wild.corp.adhesion.models.resources.AdherentLite;
+import com.wild.corp.adhesion.models.resources.Groupe;
 import com.wild.corp.adhesion.repository.*;
 
 import jakarta.transaction.Transactional;
@@ -38,15 +40,11 @@ public class AdherentServices {
     @Autowired
     AdherentRepository adherentRepository;
     @Autowired
-    ActiviteNm1Repository activiteNm1Repository;
-    @Autowired
     AdhesionRepository adhesionRepository;
     @Autowired
     AccordServices accordServices;
     @Autowired
     AdhesionServices adhesionServices;
-    @Autowired
-    RoleRepository roleRepository;
     @Autowired
     ActiviteServices activiteServices;
     @Autowired
@@ -57,57 +55,41 @@ public class AdherentServices {
 
 
 
-    public Set<String> findByGroup(String groupe) {
-        Set<String> listDiffusion = null;
-        String[] groupes = groupe.split("#");
+    public void findByGroup(List<Groupe> maillingListe, List<String> mailling) {
+        log.info("findByGroup Role");
+        maillingListe.forEach(groupe -> {
+            if(groupe.getNom().equals("role")){
+                groupe.getHoraires().forEach(horaire -> {
+                    if(horaire.getChecked()){
+                            mailling.addAll( adherentRepository.findByUserRoleId(horaire.getId()).stream().map(adherent -> {
+                                        return Boolean.TRUE.equals(adherent.getEmailRepresentant()) && adherent.getRepresentant() != null ? adherent.getRepresentant().getUser().getUsername():adherent.getUser().getUsername();
+                                    }).filter(Objects::nonNull)
+                                    .collect(Collectors.toSet()));
 
-        if (groupes[0].equals("groupe")) {
+                    }
+                });
+            }
 
-            if ("Tous les adhérents".equals(groupes[1])) {
-                return adherentRepository.findAll().stream().map(adherent -> {
-                            return Boolean.TRUE.equals(adherent.getEmailRepresentant()) && adherent.getRepresentant() != null ? adherent.getRepresentant().getUser().getUsername():adherent.getUser().getUsername();
+            if(groupe.getChecked()){
+                log.info("findByGroup Activite {}", groupe.getNom());
+                mailling.addAll( activiteServices.findByNom(groupe.getNom()).stream().flatMap(activite -> activite.getAdhesions().stream().map(adhesion -> {
+                            return Boolean.TRUE.equals(adhesion.getAdherent().getEmailRepresentant()) && adhesion.getAdherent().getRepresentant() != null ? adhesion.getAdherent().getRepresentant().getUser().getUsername():adhesion.getAdherent().getUser().getUsername();
+                        }).filter(Objects::nonNull))
+                        .collect(Collectors.toSet()));
+
+            }else {
+                groupe.getHoraires().forEach(horaire -> {
+                    if(horaire.getChecked()){
+                        log.info("findByGroup Horaire {}", horaire.getNom());
+                mailling.addAll( activiteServices.getById(horaire.getId()).getAdhesions().stream().map(adhesion -> {
+                            return Boolean.TRUE.equals(adhesion.getAdherent().getEmailRepresentant()) && adhesion.getAdherent().getRepresentant() != null ? adhesion.getAdherent().getRepresentant().getUser().getUsername():adhesion.getAdherent().getUser().getUsername();
                         }).filter(Objects::nonNull)
-                        .collect(Collectors.toSet());
+                        .collect(Collectors.toSet()));
+                    }
+                });
             }
+        });
 
-            if ("Les membres du bureau".equals(groupes[1])) {
-                return userServices.findAll().stream()
-                        .filter(user -> user.getRoles().contains(roleRepository.findByName(ERole.ROLE_BUREAU)))
-                        .map(User::getUsername)
-                        .collect(Collectors.toSet());
-            }
-
-            if ("Les administrateurs".equals(groupes[1])) {
-                return userServices.findAll().stream()
-                        .filter(user -> user.getRoles().contains(roleRepository.findByName(ERole.ROLE_ADMINISTRATEUR)))
-                        .map(User::getUsername)
-                        .collect(Collectors.toSet());
-            }
-
-
-        }
-
-        if (groupes[0].equals("activite")) {
-            return adherentRepository.findAll().stream()
-                    .filter(adherent -> adherent.getAdhesions().stream().anyMatch(adhesion -> activiteServices.findByNom(groupes[1]).contains(adhesion.getActivite())) || adherent.getCours().stream().anyMatch(activite -> activite.
-                            equals(activiteServices.findByNom(groupes[1]))))
-                    .map(adherent -> {
-                        return Boolean.TRUE.equals(adherent.getEmailRepresentant()) && adherent.getRepresentant() != null ? adherent.getRepresentant().getUser().getUsername():adherent.getUser().getUsername();
-                    }).filter(Objects::nonNull)
-                    .collect(Collectors.toSet());
-
-        }
-
-        if (groupes[0].equals("horaire")) {
-            return adherentRepository.findAll().stream()
-                    .filter(adherent -> adherent.getAdhesions().stream().anyMatch(adhesion -> adhesion.getActivite().getId().equals(Long.parseLong(groupes[1]))) || adherent.getCours().stream().anyMatch(activite -> activite.getId().equals(Long.parseLong(groupes[1]))))
-                    .map(adherent -> {
-                        return Boolean.TRUE.equals(adherent.getEmailRepresentant()) && adherent.getRepresentant() != null ? adherent.getRepresentant().getUser().getUsername():adherent.getUser().getUsername();
-                    }).filter(Objects::nonNull)
-                    .collect(Collectors.toSet());
-        }
-
-        return null;
     }
 
     public AdherentLite changeTribu(Long referentId, Long adherentId) {
@@ -326,7 +308,7 @@ public class AdherentServices {
                 .nom(adhesion.getAdherent().getNom())
                 .accords(adhesion.getAccords())
                 .telephone(adhesion.getAdherent().getTelephone())
-                .email(adhesion.getAdherent().getUser().getUsername())
+                .email(Boolean.TRUE.equals(adhesion.getAdherent().getEmailRepresentant()) && adhesion.getAdherent().getRepresentant() != null ? adhesion.getAdherent().getRepresentant().getUser().getUsername():adhesion.getAdherent().getUser().getUsername())
                 .mineur(adhesion.getAdherent().getMineur())
                 .naissance((adhesion.getAdherent().getNaissance()))
                 .representant(adhesion.getAdherent().getRepresentant() != null?reduceAdherent(adhesion.getAdherent().getRepresentant()):null)
@@ -401,7 +383,58 @@ public class AdherentServices {
             throw new RuntimeException(e);
         }
     }
+    public List<AdherentExport> getAllExportFlat() {
+        List<AdherentExport> adherentExports = new ArrayList<>();
+        List<Adherent> adherents = adherentRepository.findAll();
 
+        adherents.forEach(adherent -> {
+            List<Adhesion> tmpAdhesions = adherent.getAdhesions().stream().filter(Adhesion::isValide).toList();
+            if(!tmpAdhesions.isEmpty()) {
+            AdherentExport adherentExport = new AdherentExport();
+
+            adherentExport.setId(adherent.getId());
+            adherentExport.setPrenom(adherent.getPrenom());
+            adherentExport.setNom(adherent.getNom());
+            adherentExport.setGenre(adherent.getGenre());
+            adherentExport.setLieuNaissance(adherent.getLieuNaissance());
+            adherentExport.setNaissance(adherent.getNaissance());
+
+            adherentExport.setAdresse(Boolean.TRUE.equals(adherent.getAdresseRepresentant()) && adherent.getRepresentant() != null ?
+                    adherent.getRepresentant().getAdresse():                    adherent.getAdresse());
+            adherentExport.setCp(Boolean.TRUE.equals(adherent.getAdresseRepresentant()) && adherent.getRepresentant() != null ?
+                    adherent.getRepresentant().getCodePostal() : adherent.getCodePostal());
+            adherentExport.setVille(Boolean.TRUE.equals(adherent.getAdresseRepresentant()) && adherent.getRepresentant() != null ?
+                   adherent.getRepresentant().getVille():adherent.getVille());
+            adherentExport.setEmail(Boolean.TRUE.equals(adherent.getEmailRepresentant()) && adherent.getRepresentant() != null ? adherent.getRepresentant().getUser().getUsername():adherent.getUser().getUsername());
+
+            adherentExport.setMajorite(adherent.getMineur()?"Mineur":"Majeur");
+
+
+            adherentExport.setActivite1(tmpAdhesions.get(0).getActivite().getNom() + " " + tmpAdhesions.get(0).getActivite().getHoraire());
+
+            if(tmpAdhesions.size() > 1) {
+            adherentExport.setActivite2(tmpAdhesions.get(1).getActivite().getNom() + " " +  tmpAdhesions.get(1).getActivite().getHoraire());
+            }
+            if(tmpAdhesions.size() > 2) {
+            adherentExport.setActivite3(tmpAdhesions.get(2).getActivite().getNom() + " " +  tmpAdhesions.get(2).getActivite().getHoraire());
+            }
+            if(tmpAdhesions.size() > 3) {
+            adherentExport.setActivite4(tmpAdhesions.get(3).getActivite().getNom() + " " +  tmpAdhesions.get(3).getActivite().getHoraire());
+            }
+            if(tmpAdhesions.size() > 4) {
+                adherentExport.setActivite5(tmpAdhesions.get(4).getActivite().getNom() + " " + tmpAdhesions.get(4).getActivite().getHoraire());
+            }
+
+
+            adherentExports.add(adherentExport);
+            }
+        });
+
+        return adherentExports.stream()
+                .sorted(Comparator.comparing(AdherentExport::getActivite1))
+                .collect(Collectors.toList());
+
+    }
     public List<AdherentFlat> getAllFlat() {
         List<AdherentFlat> adherentFlats = new ArrayList<>();
         List<Adherent> adherents = adherentRepository.findAll();
@@ -445,7 +478,7 @@ public class AdherentServices {
 
     }
 
-    public List<AdherentLite> getByRole(Integer roleId) {
+    public List<AdherentLite> getByRole(Long roleId) {
         return adherentRepository.findByUserRoleId(roleId).stream().map(this::reduceAdherent).collect(Collectors.toList());
     }
 
@@ -502,7 +535,7 @@ public class AdherentServices {
                 .adresse(adherent.getAdresse())
                 .codePostal(adherent.getCodePostal())
                 .ville(adherent.getVille())
-                .email(adherent.getUser().getUsername())
+                .email(Boolean.TRUE.equals(adherent.getEmailRepresentant()) && adherent.getRepresentant() != null ? adherent.getRepresentant().getUser().getUsername():adherent.getUser().getUsername())
                 .telephone(adherent.getTelephone())
                 .mineur(adherent.getMineur())
                 .telephoneRepresentant(adherent.getTelephoneRepresentant())
