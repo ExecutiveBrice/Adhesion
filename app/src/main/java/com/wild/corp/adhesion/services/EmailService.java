@@ -64,7 +64,7 @@ public class EmailService {
             reussis = 0;
             listMail.forEach(email -> {
                 if (patternMatches(email, "^(?=.{1,64}@)[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*@[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$")) {
-                    singleMessage(listMail, mail,null, false);
+                    singleMessage(List.of(email), mail,null, false);
                     reussis++;
                 } else {
                     echecs++;
@@ -160,9 +160,7 @@ public class EmailService {
             sendSmtpEmail.setSender(sender);
             sendSmtpEmail.setTo(toList);
 
-            String htmlTemplate = loadHtmlTemplateFromResources("templateALOD.html");
-            htmlTemplate = htmlTemplate.replace("&&&TO_REPLACE&&&", mail.getText());
-            sendSmtpEmail.setHtmlContent(htmlTemplate);
+            sendSmtpEmail.setHtmlContent(mail.getText());
 
             sendSmtpEmail.setSubject(mail.getSubject());
             sendSmtpEmail.setReplyTo(replyTo);
@@ -186,8 +184,8 @@ public class EmailService {
             }
 
 
-            CreateSmtpEmail response = api.sendTransacEmail(sendSmtpEmail);
-            log.info(response.toString());
+//            CreateSmtpEmail response = api.sendTransacEmail(sendSmtpEmail);
+//            log.info(response.toString());
         } catch (Exception e) {
             log.warn("Exception occurred:- " + e.getMessage());
         }
