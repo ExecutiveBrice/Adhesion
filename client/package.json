@@ -32,7 +32,7 @@
     "file-saver": "^2.0.5",
     "font-awesome": "^4.7.0",
     "jquery": "^3.7.1",
-    "jspdf": "4.1.0",
+    "jspdf": "4.2.0",
     "ngx-extended-pdf-viewer": "^19.4.0-alpha.2",
     "ngx-toastr": "^18.0.0",
     "popper.js": "^1.16.1",
