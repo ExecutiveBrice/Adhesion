@@ -4,14 +4,16 @@ import com.wild.corp.adhesion.config.HelloAssoProperties;
 import com.wild.corp.adhesion.models.Adhesion;
 import com.wild.corp.adhesion.models.helloasso.HelloAssoCheckoutRequest;
 import com.wild.corp.adhesion.models.helloasso.HelloAssoCheckoutResponse;
+import com.wild.corp.adhesion.models.helloasso.HelloAssoTokenResponse;
 import com.wild.corp.adhesion.repository.AdhesionRepository;
+import com.wild.corp.adhesion.services.helloasso.HelloAssoAuthClient;
+import com.wild.corp.adhesion.services.helloasso.HelloAssoCheckoutClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
@@ -25,7 +27,8 @@ public class HelloAssoService {
 
     private final HelloAssoProperties properties;
     private final AdhesionRepository adhesionRepository;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final HelloAssoAuthClient helloAssoAuthClient;
+    private final HelloAssoCheckoutClient helloAssoCheckoutClient;
 
     private String accessToken;
     private Instant tokenExpiresAt;
@@ -45,19 +48,11 @@ public class HelloAssoService {
         body.put("containsDonation", false);
         body.put("metadata", Map.of("adhesionId", adhesion.getId()));
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(getAccessToken());
-
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
-
-        String url = properties.getBaseUrl() + "/organizations/" + properties.getOrganizationSlug() + "/checkout-intents";
-        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
-
-        Map<String, Object> payload = response.getBody();
-        if (payload == null) {
-            throw new IllegalStateException("HelloAsso response is empty");
-        }
+        Map<String, Object> payload = helloAssoCheckoutClient.createCheckoutIntent(
+                bearerToken(),
+                properties.getOrganizationSlug(),
+                body
+        );
 
         Number id = (Number) payload.get("id");
         String redirectUrl = (String) payload.get("redirectUrl");
@@ -69,13 +64,15 @@ public class HelloAssoService {
     }
 
     public Map<String, Object> getCheckoutIntent(Integer checkoutIntentId) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(getAccessToken());
+        return helloAssoCheckoutClient.getCheckoutIntent(
+                bearerToken(),
+                properties.getOrganizationSlug(),
+                checkoutIntentId
+        );
+    }
 
-        HttpEntity<Void> entity = new HttpEntity<>(headers);
-        String url = properties.getBaseUrl() + "/organizations/" + properties.getOrganizationSlug() + "/checkout-intents/" + checkoutIntentId;
-        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
-        return response.getBody();
+    private String bearerToken() {
+        return "Bearer " + getAccessToken();
     }
 
     private synchronized String getAccessToken() {
@@ -84,30 +81,24 @@ public class HelloAssoService {
             return accessToken;
         }
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
         form.add("grant_type", "client_credentials");
         form.add("client_id", properties.getClientId());
         form.add("client_secret", properties.getClientSecret());
 
-        HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(form, headers);
-
-        ResponseEntity<Map> response = restTemplate.exchange(properties.getOauthUrl(), HttpMethod.POST, entity, Map.class);
-
-        Map<String, Object> payload = response.getBody();
-        if (payload == null || payload.get("access_token") == null) {
+        HelloAssoTokenResponse tokenResponse = helloAssoAuthClient.getAccessToken(form);
+        if (tokenResponse == null || tokenResponse.getAccessToken() == null) {
             throw new IllegalStateException("Unable to retrieve HelloAsso access token");
         }
 
-        accessToken = payload.get("access_token").toString();
-        int expiresIn = ((Number) payload.getOrDefault("expires_in", 3600)).intValue();
+        accessToken = tokenResponse.getAccessToken();
+        int expiresIn = tokenResponse.getExpiresIn() == null ? 3600 : tokenResponse.getExpiresIn();
         tokenExpiresAt = Instant.now().plusSeconds(Math.max(60, expiresIn - 30L));
 
         log.info("HelloAsso access token refreshed, expires in {} seconds", expiresIn);
         return accessToken;
     }
+
     private void validateConfiguration() {
         if (properties.getOrganizationSlug() == null || properties.getOrganizationSlug().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "HELLOASSO_ORGANIZATION_SLUG is missing");
@@ -119,5 +110,4 @@ public class HelloAssoService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "HELLOASSO_CLIENT_SECRET is missing");
         }
     }
-
 }
