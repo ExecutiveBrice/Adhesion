@@ -6,19 +6,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.wild.corp.adhesion.client.helloasso.api.CheckoutIntentsManagementApi;
 
 import java.util.Map;
 
 @FeignClient(name = "helloAssoCheckoutClient", url = "${helloasso.base-url}")
-public interface HelloAssoCheckoutClient {
+public interface HelloAssoCheckoutClient extends CheckoutIntentsManagementApi {
 
-    @PostMapping("/organizations/{organizationSlug}/checkout-intents")
-    Map<String, Object> createCheckoutIntent(@RequestHeader("Authorization") String authorization,
-                                             @PathVariable String organizationSlug,
-                                             @RequestBody Map<String, Object> body);
 
-    @GetMapping("/organizations/{organizationSlug}/checkout-intents/{checkoutIntentId}")
-    Map<String, Object> getCheckoutIntent(@RequestHeader("Authorization") String authorization,
-                                          @PathVariable String organizationSlug,
-                                          @PathVariable Integer checkoutIntentId);
 }

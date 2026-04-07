@@ -30,8 +30,8 @@ server:
 
 image-storage-dir: C:\Users\PC\Documents\ProjetsDev\Adhesion
 helloasso:
-  base-url: ${HELLOASSO_BASE_URL:https://api.helloasso.com/v5}
-  oauth-url: ${HELLOASSO_OAUTH_URL:https://api.helloasso.com/oauth2/token}
-  organization-slug: ${HELLOASSO_ORGANIZATION_SLUG:}
+  base-url: ${HELLOASSO_BASE_URL:https://api.helloasso-sandbox.com/v5}
+  oauth-url: ${HELLOASSO_OAUTH_URL:https://api.helloasso-sandbox.com/oauth2/token}
+  organization-slug: ${HELLOASSO_ORGANIZATION_SLUG:"ALOD"}
   client-id: ${HELLOASSO_CLIENT_ID:}
   client-secret: ${HELLOASSO_CLIENT_SECRET:}

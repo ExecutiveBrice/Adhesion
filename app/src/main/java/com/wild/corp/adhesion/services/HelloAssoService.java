@@ -11,10 +11,14 @@ import com.wild.corp.adhesion.services.helloasso.HelloAssoCheckoutClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.server.ResponseStatusException;
+import org.wild.corp.adhesion.client.helloasso.model.HelloAssoApiV5CommonModelsCartsCheckoutIntentResponse;
+import org.wild.corp.adhesion.client.helloasso.model.HelloAssoApiV5CommonModelsCartsInitCheckoutBody;
+import org.wild.corp.adhesion.client.helloasso.model.HelloAssoApiV5CommonModelsCartsInitCheckoutResponse;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -37,25 +41,24 @@ public class HelloAssoService {
         Adhesion adhesion = adhesionRepository.findById(request.getAdhesionId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Adhesion not found: " + request.getAdhesionId()));
 
-        Map<String, Object> body = new HashMap<>();
+        HelloAssoApiV5CommonModelsCartsInitCheckoutBody body = new HelloAssoApiV5CommonModelsCartsInitCheckoutBody();
         int amountInCents = adhesion.getTarif() * 100;
-        body.put("totalAmount", amountInCents);
-        body.put("initialAmount", amountInCents);
-        body.put("itemName", "Adhesion " + adhesion.getActivite().getNom() + " #" + adhesion.getId());
-        body.put("backUrl", request.getBackUrl());
-        body.put("errorUrl", request.getErrorUrl());
-        body.put("returnUrl", request.getReturnUrl());
-        body.put("containsDonation", false);
-        body.put("metadata", Map.of("adhesionId", adhesion.getId()));
+        body.setTotalAmount(amountInCents);
+        body.setInitialAmount(amountInCents);
+        body.setItemName("Adhesion " + adhesion.getActivite().getNom() + " #" + adhesion.getId());
+        body.setBackUrl(request.getBackUrl());
+        body.setErrorUrl(request.getErrorUrl());
+        body.setReturnUrl(request.getReturnUrl());
+        body.setContainsDonation( false);
+        body.setMetadata((org.openapitools.jackson.nullable.JsonNullable<Object>) Map.of("adhesionId", adhesion.getId()));
 
-        Map<String, Object> payload = helloAssoCheckoutClient.createCheckoutIntent(
-                bearerToken(),
+        ResponseEntity<HelloAssoApiV5CommonModelsCartsInitCheckoutResponse> response = helloAssoCheckoutClient.organizationsOrganizationSlugCheckoutIntentsPost(
                 properties.getOrganizationSlug(),
                 body
         );
 
-        Number id = (Number) payload.get("id");
-        String redirectUrl = (String) payload.get("redirectUrl");
+        Number id = response.getBody().getId();
+        String redirectUrl = response.getBody().getRedirectUrl();
 
         return HelloAssoCheckoutResponse.builder()
                 .checkoutIntentId(id == null ? null : id.intValue())
@@ -63,12 +66,13 @@ public class HelloAssoService {
                 .build();
     }
 
-    public Map<String, Object> getCheckoutIntent(Integer checkoutIntentId) {
-        return helloAssoCheckoutClient.getCheckoutIntent(
-                bearerToken(),
+    public HelloAssoApiV5CommonModelsCartsCheckoutIntentResponse getCheckoutIntent(Integer checkoutIntentId) {
+        ResponseEntity<HelloAssoApiV5CommonModelsCartsCheckoutIntentResponse> response = helloAssoCheckoutClient.organizationsOrganizationSlugCheckoutIntentsCheckoutIntentIdGet(
                 properties.getOrganizationSlug(),
-                checkoutIntentId
+                checkoutIntentId,
+                false
         );
+        return response.getBody();
     }
 
     private String bearerToken() {

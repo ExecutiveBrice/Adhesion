@@ -11,8 +11,8 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "helloasso")
 public class HelloAssoProperties {
 
-    private String baseUrl = "https://api.helloasso.com/v5";
-    private String oauthUrl = "https://api.helloasso.com/oauth2/token";
+    private String baseUrl ;
+    private String oauthUrl;
     private String organizationSlug;
     private String clientId;
     private String clientSecret;

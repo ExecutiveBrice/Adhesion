@@ -30,7 +30,7 @@ public class HelloAssoController {
 
     @GetMapping("/checkout-intents/{checkoutIntentId}")
     @PreAuthorize("hasRole('USER') or hasRole('SECRETAIRE') or hasRole('ADMIN')")
-    public ResponseEntity<Map<String, Object>> getCheckoutIntent(Authentication principal, @PathVariable Integer checkoutIntentId) {
+    public ResponseEntity<?> getCheckoutIntent(Authentication principal, @PathVariable Integer checkoutIntentId) {
         log.info("getCheckoutIntent by {} for checkoutIntentId={}", principal.getName(), checkoutIntentId);
         return ResponseEntity.ok(helloAssoService.getCheckoutIntent(checkoutIntentId));
     }
