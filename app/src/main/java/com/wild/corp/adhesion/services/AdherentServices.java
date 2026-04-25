@@ -27,6 +27,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.wild.corp.adhesion.models.ERole.*;
 import static com.wild.corp.adhesion.utils.Accords.*;
 
 
@@ -591,9 +592,10 @@ public class AdherentServices {
     public void nouvelleAnnee (){
         List<Adherent> adherents = adherentRepository.findAll();
 
-        //TODO supprimé les adhérents qui n'ont pas d'adhasion NM1 et qui sont de simples adhérents
-//        adherentRepository.deleteAll(adherents.stream().filter(adherent -> adherent.getActivitesNm1().isEmpty() && adherent.getUser().getRoles().stream().anyMatch(role -> !role.getName().equals(ROLE_USER))).toList());
-//        adherentRepository.flush();
+        //TODO supprimer les adhérents qui n'ont pas d'adhesion NM1 et qui sont de simples adhérents
+        adherentRepository.deleteAll(adherents.stream().filter(adherent -> adherent.getActivitesNm1().isEmpty() && adherent.getRepresentant() != null && adherent.getUser().getRoles().stream().noneMatch(role -> role.getName().equals(ROLE_ADMIN) || role.getName().equals(ROLE_BUREAU) ||role.getName().equals(ROLE_ADMINISTRATEUR) || role.getName().equals(ROLE_COMPTABLE)  || role.getName().equals(ROLE_SECRETAIRE))).toList());
+
+        adherentRepository.flush();
 
         //TODO retirer aussi les résponsables qui n'ont pas d'enfant avec activité NM1
 
