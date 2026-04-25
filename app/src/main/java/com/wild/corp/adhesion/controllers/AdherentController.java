@@ -28,11 +28,11 @@ public class AdherentController {
     @Autowired
     UserServices userServices;
 
-//    @GetMapping("/nouvelleAnnee")
-//    public ResponseEntity<?> nouvelleAnnee() {
-//        adherentServices.nouvelleAnnee();
-//        return ResponseEntity.ok("nouvelleAnnee");
-//    }
+    @GetMapping("/nouvelleAnnee")
+    public ResponseEntity<?> nouvelleAnnee() {
+        adherentServices.nouvelleAnnee();
+        return ResponseEntity.ok("nouvelleAnnee");
+    }
 //
 //    @GetMapping("/refreshAccords")
 //    public ResponseEntity<?> refreshAccords() {
