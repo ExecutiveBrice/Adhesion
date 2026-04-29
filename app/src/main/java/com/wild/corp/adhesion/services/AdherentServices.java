@@ -584,6 +584,27 @@ public class AdherentServices {
 
     }
 
+    private boolean hasSimpleAdherent(Adherent adherent) {
+        return adherent.getRepresentant() != null
+                && !hasAdministrativeRole(adherent)
+                && (adherent.getActivitesNm1().isEmpty() && adherent.getAdhesions().stream().noneMatch(Adhesion::isValide));
+    }
+
+    private boolean hasAloneAdherent(Adherent adherent, Set<Long> idsRepresentants) {
+        return !hasAdministrativeRole(adherent)
+                && !idsRepresentants.contains(adherent.getId())
+                && (adherent.getActivitesNm1().isEmpty() && adherent.getAdhesions().stream().noneMatch(Adhesion::isValide));
+    }
+
+    private boolean hasAdministrativeRole(Adherent adherent) {
+        return adherent.getUser().getRoles().stream().anyMatch(role ->
+                role.getName().equals(ROLE_ADMIN)
+                        || role.getName().equals(ROLE_BUREAU)
+                        || role.getName().equals(ROLE_ADMINISTRATEUR)
+                        || role.getName().equals(ROLE_COMPTABLE)
+                        || role.getName().equals(ROLE_SECRETAIRE)
+        );
+    }
 
 
 
@@ -592,13 +613,28 @@ public class AdherentServices {
     public void nouvelleAnnee (){
         List<Adherent> adherents = adherentRepository.findAll();
 
-        //TODO supprimer les adhérents qui n'ont pas d'adhesion NM1 et qui sont de simples adhérents
-        adherentRepository.deleteAll(adherents.stream().filter(adherent -> adherent.getActivitesNm1().isEmpty() && adherent.getRepresentant() != null && adherent.getUser().getRoles().stream().noneMatch(role -> role.getName().equals(ROLE_ADMIN) || role.getName().equals(ROLE_BUREAU) ||role.getName().equals(ROLE_ADMINISTRATEUR) || role.getName().equals(ROLE_COMPTABLE)  || role.getName().equals(ROLE_SECRETAIRE))).toList());
+        //on supprime les adhérents avec représentant qui n'avaient pas d'activité ni d'activité NM1
+        adherentRepository.deleteAll(adherents.stream()
+                .filter(adherent -> hasSimpleAdherent(adherent))
+                .toList());
 
         adherentRepository.flush();
 
-        //TODO retirer aussi les résponsables qui n'ont pas d'enfant avec activité NM1
+        Set<Long> idsRepresentants = adherents.stream()
+                .map(Adherent::getRepresentant)
+                .filter(Objects::nonNull)
+                .map(Adherent::getId)
+                .collect(Collectors.toSet());
 
+        //on supprime les adhérents qui ne sont pas des représentants qui n'avaient pas d'activité ni d'activité NM1
+        adherentRepository.deleteAll(adherents.stream()
+                .filter(adherent -> hasAloneAdherent(adherent, idsRepresentants))
+                .toList());
+
+        adherentRepository.flush();
+
+
+        // on transforme les adhésions en adhésions NM1
         adherents.stream().forEach(adherent -> {
             List<ActiviteNm1> activitesNm1 = adherent.getActivitesNm1();
             activitesNm1.clear();
