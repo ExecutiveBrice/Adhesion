@@ -621,6 +621,7 @@ public class AdherentServices {
         adherentRepository.flush();
 
         Set<Long> idsRepresentants = adherents.stream()
+
                 .map(Adherent::getRepresentant)
                 .filter(Objects::nonNull)
                 .map(Adherent::getId)
