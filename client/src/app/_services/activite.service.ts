@@ -13,7 +13,6 @@ const API_URL = environment.server + '/activite/';
 export class ActiviteService {
   constructor(private http: HttpClient) { }
 
-
   getSeancesDuJour(): Observable<Seance[]> {
     return this.http.get<Seance[]>(API_URL + 'seancesDuJour', { responseType: 'json' });
   }
@@ -63,28 +62,29 @@ export class ActiviteService {
                   }
                 })
               }))
-              
+
               let horaireDropDown = new HoraireDropDown
               horaireDropDown.id = act.id
               horaireDropDown.nom = act.horaire
+
+              //Gerer la possiblité de reinscrire
               if(!act.reinscription){
-                horaireDropDown.reinscription = act.reinscription;
+                horaireDropDown.reinscription = true;
               }else if(adherent != undefined ){
-                horaireDropDown.reinscription =  !(adherent.activitesNm1.find(activiteNm1 => activiteNm1.nom == activiteDropDown.nom) != undefined)
+                if(act.globaleSpecifique){
+                  horaireDropDown.reinscription =  adherent.activitesNm1.map(value => value.activiteId).includes(act.id);
+                }else {
+                  horaireDropDown.reinscription =  adherent.activitesNm1.find(activiteNm1 => activiteNm1.nom == activiteDropDown.nom) != undefined
+                }
               }
               horaireDropDown.complete = act.complete
               activiteDropDown.horaires.push(horaireDropDown)
-
             }
-         
         });
-
       },
-      error => {
+        error => {
         console.log(error)
       }
     );
   }
 }
-
-

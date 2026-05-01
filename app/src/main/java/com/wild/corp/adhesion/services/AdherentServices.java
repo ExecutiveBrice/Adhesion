@@ -584,6 +584,31 @@ public class AdherentServices {
 
     }
 
+    private boolean hasSimpleAdherent(Adherent adherent) {
+        return adherent.getRepresentant() != null
+                && !hasAdministrativeRole(adherent)
+                && (adherent.getActivitesNm1().isEmpty() && adherent.getAdhesions().stream().noneMatch(Adhesion::isValide));
+    }
+
+    private boolean hasAloneAdherent(Adherent adherent, Set<Long> idsRepresentants) {
+        return !hasAdministrativeRole(adherent)
+                && !idsRepresentants.contains(adherent.getId())
+                && (adherent.getActivitesNm1().isEmpty() && adherent.getAdhesions().stream().noneMatch(Adhesion::isValide));
+    }
+
+    private boolean hasAdministrativeRole(Adherent adherent) {
+        if (adherent.getUser() != null) {
+            return adherent.getUser().getRoles().stream().anyMatch(role ->
+                    role.getName().equals(ROLE_ADMIN)
+                            || role.getName().equals(ROLE_BUREAU)
+                            || role.getName().equals(ROLE_ADMINISTRATEUR)
+                            || role.getName().equals(ROLE_COMPTABLE)
+                            || role.getName().equals(ROLE_SECRETAIRE)
+                            || role.getName().equals(ROLE_PROF)
+            );
+        }
+        return false;
+    }
 
 
 
@@ -591,15 +616,32 @@ public class AdherentServices {
     @Transactional
     public void nouvelleAnnee (){
         List<Adherent> adherents = adherentRepository.findAll();
+log.info("Récupération des adhérents {}", adherents.size());
+        //on supprime les adhérents avec représentant qui n'avaient pas d'activité ni d'activité NM1
+        adherentRepository.deleteAll(adherents.stream()
+                .filter(this::hasSimpleAdherent)
+                .toList());
 
-        //TODO supprimer les adhérents qui n'ont pas d'adhesion NM1 et qui sont de simples adhérents
-        adherentRepository.deleteAll(adherents.stream().filter(adherent -> adherent.getActivitesNm1().isEmpty() && adherent.getRepresentant() != null && adherent.getUser().getRoles().stream().noneMatch(role -> role.getName().equals(ROLE_ADMIN) || role.getName().equals(ROLE_BUREAU) ||role.getName().equals(ROLE_ADMINISTRATEUR) || role.getName().equals(ROLE_COMPTABLE)  || role.getName().equals(ROLE_SECRETAIRE))).toList());
+        adherentRepository.flush();
+        List<Adherent> adherents2 = adherentRepository.findAll();
+        log.info("Récupération des adhérents après premier nettoyage {}", adherents.size());
+        Set<Long> idsRepresentants = adherents2.stream()
+                .map(Adherent::getRepresentant)
+                .filter(Objects::nonNull)
+                .map(Adherent::getId)
+                .collect(Collectors.toSet());
+
+        //on supprime les adhérents qui ne sont pas des représentants qui n'avaient pas d'activité ni d'activité NM1
+        adherentRepository.deleteAll(adherents2.stream()
+                .filter(adherent -> hasAloneAdherent(adherent, idsRepresentants))
+                .toList());
 
         adherentRepository.flush();
 
-        //TODO retirer aussi les résponsables qui n'ont pas d'enfant avec activité NM1
-
-        adherents.stream().forEach(adherent -> {
+        List<Adherent> adherents3 = adherentRepository.findAll();
+        log.info("Récupération des adhérents après second nettoyage {}", adherents3.size());
+        // on transforme les adhésions en adhésions NM1
+        adherents3.stream().forEach(adherent -> {
             List<ActiviteNm1> activitesNm1 = adherent.getActivitesNm1();
             activitesNm1.clear();
             activitesNm1.addAll(adherent.getAdhesions().stream().filter(Adhesion::isValide).map(this::convertAdh).toList());
@@ -608,11 +650,12 @@ public class AdherentServices {
             adherent.getAdhesions().removeAll(adherent.getAdhesions());
             adherentRepository.save(adherent);
         });
-
+        log.info("Fin de la mise a jour des adhésions");
     }
 
     public ActiviteNm1 convertAdh(Adhesion adhesion){
         ActiviteNm1 activiteNm1 = new ActiviteNm1();
+        activiteNm1.setActiviteId(adhesion.getActivite().getId());
         activiteNm1.setAdherent(adhesion.getAdherent());
         activiteNm1.setNom(adhesion.getActivite().getNom());
         activiteNm1.setHoraire(adhesion.getActivite().getHoraire());

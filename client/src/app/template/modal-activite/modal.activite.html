@@ -111,7 +111,16 @@
         </div>
 
       </div>
+      <div class="form-group">
+        <div class="form-check form-switch">
+          <input class="form-check-input big-checkbox" [(ngModel)]="activite.globaleSpecifique"
+                 type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+          Globale/Spécifique <fa-icon *ngIf="activite.globaleSpecifique" class="green"
+                                 [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!activite.globaleSpecifique" class="orange"
+                                                                           [icon]="faCircleXmark"></fa-icon>
+        </div>
 
+      </div>
       <div class="form-group">
         <div class="form-check form-switch">
           <input class="form-check-input big-checkbox" [(ngModel)]="activite.complete"
