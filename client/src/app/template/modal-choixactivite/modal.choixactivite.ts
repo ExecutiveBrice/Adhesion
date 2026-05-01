@@ -16,7 +16,7 @@ export class ModalChoixActivite {
   secretaire!: boolean;
   @Input()
   admin!: boolean;
-  
+
   opennewTab(page : string){
 
     window.open(page, '_blank');

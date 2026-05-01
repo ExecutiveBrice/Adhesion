@@ -50,6 +50,8 @@ public class Activite {
 
     private Boolean reinscription;
 
+    private Boolean globaleSpecifique;
+
     private boolean priseEnCharge;
 
     private boolean autorisationParentale;

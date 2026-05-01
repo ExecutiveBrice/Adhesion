@@ -14,6 +14,7 @@ public class ActiviteNm1 {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private Long activiteId;
     private String groupe;
     private String groupeFiltre;
     private String nom;

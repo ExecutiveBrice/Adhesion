@@ -29,6 +29,7 @@ export class Activite {
   charteAmicale!: boolean;
   complete!: boolean;
   reinscription!: boolean;
+  globaleSpecifique!: boolean;
 
   dureeVieCertif!: number;
 
@@ -52,7 +53,7 @@ export class Activite {
     this.certificatMedical = false;
     this.vieClub = false;
     this.complete = false;
-    this.reinscription = false;
-
+    this.reinscription= false;
+    this.globaleSpecifique = false;
   }
 }

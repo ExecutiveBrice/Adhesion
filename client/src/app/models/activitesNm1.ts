@@ -3,6 +3,7 @@ import { Tribu } from "./tribu";
 export class ActivitesNm1 {
 
   id!: number;
+  activiteId!: number;
   nom!: string;
   groupe!: string;
   groupeFiltre!: string;

@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/adherent")
 @Slf4j
-@Transactional
 public class AdherentController {
 
     @Autowired
