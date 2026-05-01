@@ -1,5 +1,5 @@
 import { Component, inject, Input } from '@angular/core'
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap'
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap/modal'
 import { FileService } from 'src/app/_services/file.service';
 import { Document } from 'src/app/models';
 
@@ -14,6 +14,7 @@ export let pdfDefaultOptions = {
 
 @Component({
   selector: 'modal-pdf',
+  standalone: false,
   templateUrl: './modal-pdf.component.html',
   styleUrls: ['./modal-pdf.component.css']
 })

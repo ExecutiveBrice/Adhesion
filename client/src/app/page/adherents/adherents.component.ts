@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { AdherentService } from '../../_services/adherent.service';
 import { Activite, ActiviteDropDown, Adherent } from 'src/app/models';
 import { faPen, faUsersRays, faSkull, faUsers, faEnvelope, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap/modal';
 import { TokenStorageService } from 'src/app/_services/token-storage.service';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -18,6 +18,7 @@ import {AdherentFlat} from "../../models/adherentFlat";
 
 @Component({
   selector: 'app-adherents',
+  standalone: false,
   templateUrl: './adherents.component.html',
   styleUrls: ['./adherents.component.css']
 })

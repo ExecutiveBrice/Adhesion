@@ -1,46 +1,54 @@
 <div class="container">
   <div class="row">
-    <div *ngIf="maintenance" class="col-md-12">
-      <div class="card card-container">
-        <div *ngIf="maintenance && textMaintenance.length > 1" >
-          <div [innerHTML]="textMaintenance"></div>
+    @if (maintenance) {
+      <div class="col-md-12">
+        <div class="card card-container">
+          @if (maintenance && textMaintenance.length > 1) {
+            <div >
+              <div [innerHTML]="textMaintenance"></div>
+            </div>
+          }
+          @if (maintenance && textMaintenance.length < 1) {
+            <div>
+              <strong>Site en maintenance</strong><br>
+              Veuillez nous excuser pour la gène occasionnée
+            </div>
+          }
         </div>
-        <div *ngIf="maintenance && textMaintenance.length < 1">
-          <strong>Site en maintenance</strong><br>
-          Veuillez nous excuser pour la gène occasionnée
-        </div>
-
       </div>
-    </div>
+    }
 
 
     <div class="col-md-6">
-      <div *ngIf="messageConnexion" class="card card-container right">
-        <div [innerHTML]="messageConnexion"></div>
-      </div>
-      <div *ngIf="!userExist && messageInscription && inscriptionOpen" class="card card-container right">
-        <div [innerHTML]="messageInscription"></div>
-        <button class="btn btn-danger btn-block" (click)="newInscription = true">
-          Formulaire d'inscription
-        </button>
-        <button class="btn btn-primary btn-block" (click)="newInscription = false">
-          Formulaire de connexion
-        </button>
-      </div>
-      <div *ngIf="!userExist && !inscriptionOpen" class="card card-container right">
-        <div>
-          <font color="red"><b>Les inscirptions ne sont pas ouvertes</b><br />
+      @if (messageConnexion) {
+        <div class="card card-container right">
+          <div [innerHTML]="messageConnexion"></div>
+        </div>
+      }
+      @if (!userExist && messageInscription && inscriptionOpen) {
+        <div class="card card-container right">
+          <div [innerHTML]="messageInscription"></div>
+          <button class="btn btn-danger btn-block" (click)="newInscription = true">
+            Formulaire d'inscription
+          </button>
+          <button class="btn btn-primary btn-block" (click)="newInscription = false">
+            Formulaire de connexion
+          </button>
+        </div>
+      }
+      @if (!userExist && !inscriptionOpen) {
+        <div class="card card-container right">
+          <div>
+            <font color="red"><b>Les inscirptions ne sont pas ouvertes</b><br />
             Veuillez réessayer avec une adresse e-mail valide.<br />
             Si votre adresse e-mail devrait être connue,<br />veuillez contacter l'administrateur via le formulaire de
             contact
           </font>
         </div>
       </div>
+    }
 
-    </div>
-
-
-
+  </div>
 
 
 
@@ -56,87 +64,104 @@
 
 
 
-    <div *ngIf="!newInscription" class="col-md-6">
-      <div *ngIf="!oublieMDP" class="card card-container">
-        <h1 class="center">Page de connexion</h1>
-        <form *ngIf="!isLoggedIn" name="form" (ngSubmit)="f.form.valid && onSubmit()" #f="ngForm" novalidate>
-          <div class="form-group">
-            <label for="username">Email</label>
-            <input type="text" class="form-control" name="username" [(ngModel)]="form.username" required
-              #username="ngModel" (blur)="verifMailExist()" />
-            <div class="alert alert-danger" role="alert" *ngIf="username.errors && f.submitted">
-              Email obligatoire
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="password">Mot de passe</label>
-            <input type="password" class="form-control" name="password" [(ngModel)]="form.password" required
-              minlength="6" #password="ngModel" />
-            <div class="alert alert-danger" role="alert" *ngIf="password.errors && f.submitted">
-              <div *ngIf="password.errors.required">Le mot de passe est obligatoire</div>
-              <div *ngIf="password.errors.minlength">
-                Le mot de passe doit au moins avoir 6 lettres
+
+
+
+  @if (!newInscription) {
+    <div class="col-md-6">
+      @if (!oublieMDP) {
+        <div class="card card-container">
+          <h1 class="center">Page de connexion</h1>
+          @if (!isLoggedIn) {
+            <form name="form" (ngSubmit)="f.form.valid && onSubmit()" #f="ngForm" novalidate>
+              <div class="form-group">
+                <label for="username">Email</label>
+                <input type="text" class="form-control" name="username" [(ngModel)]="form.username" required
+                  #username="ngModel" (blur)="verifMailExist()" />
+                @if (username.errors && f.submitted) {
+                  <div class="alert alert-danger" role="alert">
+                    Email obligatoire
+                  </div>
+                }
               </div>
+              <div class="form-group">
+                <label for="password">Mot de passe</label>
+                <input type="password" class="form-control" name="password" [(ngModel)]="form.password" required
+                  minlength="6" #password="ngModel" />
+                @if (password.errors && f.submitted) {
+                  <div class="alert alert-danger" role="alert">
+                    @if (password.errors.required) {
+                      <div>Le mot de passe est obligatoire</div>
+                    }
+                    @if (password.errors.minlength) {
+                      <div>
+                        Le mot de passe doit au moins avoir 6 lettres
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+              <div class="form-group">
+                <button class="btn btn-primary btn-block">
+                  Connexion
+                </button>
+              </div>
+            </form>
+          }
+          @if (!isLoggedIn) {
+            <div class="form-group">
+              <button (click)="oublieMDP = !oublieMDP" class="btn btn-outline-primary btn-block">
+                Récupération de mot de passe
+              </button>
             </div>
-          </div>
-          <div class="form-group">
-            <button class="btn btn-primary btn-block">
-              Connexion
-            </button>
-          </div>
-
-        </form>
-        <div *ngIf="!isLoggedIn" class="form-group">
+          }
+          @if (isLoggedIn) {
+            <div class="alert alert-success">
+              Votre connexion a réussie !
+              Vous allez être redirigé sur la page de vos adhésions
+            </div>
+          }
+        </div>
+      }
+      @if (!isLoggedIn && oublieMDP) {
+        <div class="card card-container">
           <button (click)="oublieMDP = !oublieMDP" class="btn btn-outline-primary btn-block">
-            Récupération de mot de passe
+            Connexion
           </button>
-        </div>
-        <div class="alert alert-success" *ngIf="isLoggedIn">
-          Votre connexion a réussie !
-          Vous allez être redirigé sur la page de vos adhésions
-        </div>
-      </div>
-
-
-      <div *ngIf="!isLoggedIn && oublieMDP" class="card card-container">
-        <button (click)="oublieMDP = !oublieMDP" class="btn btn-outline-primary btn-block">
-          Connexion
-        </button>
-
-
-        <form name="form" (ngSubmit)="f.form.valid && forgotMdp()" #f="ngForm" novalidate>
-          <div class="form-group">
-            <label for="username">Email de récupération de mot de passe:</label>
-            <input type="text" class="form-control" name="username" [(ngModel)]="form.username" required
-              #username="ngModel" />
-            <div class="alert alert-danger" role="alert" *ngIf="username.errors && f.submitted">
-              L'e-mail est obligatoire
+          <form name="form" (ngSubmit)="f.form.valid && forgotMdp()" #f="ngForm" novalidate>
+            <div class="form-group">
+              <label for="username">Email de récupération de mot de passe:</label>
+              <input type="text" class="form-control" name="username" [(ngModel)]="form.username" required
+                #username="ngModel" />
+              @if (username.errors && f.submitted) {
+                <div class="alert alert-danger" role="alert">
+                  L'e-mail est obligatoire
+                </div>
+              }
             </div>
-          </div>
-
-          <div class="form-group">
-            <button class="btn btn-primary btn-block" [disabled]="reinitMDPDone">
-              Envoyer la demande
-            </button>
-          </div>
-          <div class="form-group">
-            <div class="alert alert-danger" role="alert" *ngIf="f.submitted && isresetFailed">
-              Une erreur s'est produite : {{ errorMessage }}
+            <div class="form-group">
+              <button class="btn btn-primary btn-block" [disabled]="reinitMDPDone">
+                Envoyer la demande
+              </button>
             </div>
-          </div>
-        </form>
-
-        <div class="alert alert-success" *ngIf="reinitMDPDone">
-          Votre demande à bien été prise en compte!
-          Vous avez recu un lien de reactivation sur votre boite mail.
+            <div class="form-group">
+              @if (f.submitted && isresetFailed) {
+                <div class="alert alert-danger" role="alert">
+                  Une erreur s'est produite : {{ errorMessage }}
+                </div>
+              }
+            </div>
+          </form>
+          @if (reinitMDPDone) {
+            <div class="alert alert-success">
+              Votre demande à bien été prise en compte!
+              Vous avez recu un lien de reactivation sur votre boite mail.
+            </div>
+          }
         </div>
-      </div>
-
-
-
-
-
+      }
     </div>
+  }
 
 
 
@@ -145,66 +170,79 @@
 
 
 
-    <div *ngIf="newInscription" class="col-md-6">
-
-
+  @if (newInscription) {
+    <div class="col-md-6">
       <div class="card card-container">
         <h1 class="center">Page d'inscription</h1>
-        <form *ngIf="!isSuccessful" name="form" (ngSubmit)="f.form.valid && onSubmitInscritpion()" #f="ngForm" novalidate>
-          <div class="form-group">
-            <label for="username">Email</label>
-            <input type="email" class="form-control" name="username" [(ngModel)]="form.username" required minlength="10"
-              maxlength="50" #username="ngModel" (blur)="verifMailExist()" />
-            <div class="alert-danger" *ngIf="username.errors && f.submitted">
-              <div class="alert alert-warning" *ngIf="username.errors.required">Email obligatoire</div>
-              <div class="alert alert-warning" *ngIf="username.errors.minlength">
-                L'email doit avoir au moins 10 caractères
-              </div>
-              <div class="alert alert-warning" *ngIf="username.errors.maxlength">
-                L'email doit avoir au plus 50 caractères
-              </div>
-              <div class="alert alert-warning" *ngIf="username.errors.email">
-                L'email doit avoir un format d'email valide
-              </div>
+        @if (!isSuccessful) {
+          <form name="form" (ngSubmit)="f.form.valid && onSubmitInscritpion()" #f="ngForm" novalidate>
+            <div class="form-group">
+              <label for="username">Email</label>
+              <input type="email" class="form-control" name="username" [(ngModel)]="form.username" required minlength="10"
+                maxlength="50" #username="ngModel" (blur)="verifMailExist()" />
+              @if (username.errors && f.submitted) {
+                <div class="alert-danger">
+                  @if (username.errors.required) {
+                    <div class="alert alert-warning">Email obligatoire</div>
+                  }
+                  @if (username.errors.minlength) {
+                    <div class="alert alert-warning">
+                      L'email doit avoir au moins 10 caractères
+                    </div>
+                  }
+                  @if (username.errors.maxlength) {
+                    <div class="alert alert-warning">
+                      L'email doit avoir au plus 50 caractères
+                    </div>
+                  }
+                  @if (username.errors.email) {
+                    <div class="alert alert-warning">
+                      L'email doit avoir un format d'email valide
+                    </div>
+                  }
+                </div>
+              }
             </div>
-          </div>
-          <div class="form-group">
-            <label for="password">Mot de passe</label>
-            <input type="password" class="form-control" name="password" [(ngModel)]="form.password" required
-              minlength="6" #password="ngModel" />
-            <div class="alert-danger" *ngIf="password.errors && f.submitted">
-              <div class="alert alert-warning" *ngIf="password.errors.required">Le mot de passe est obigatoire</div>
-              <div class="alert alert-warning" *ngIf="password.errors.minlength">
-                Le mot de passe doit avoir au moins 6 caractères
-              </div>
+            <div class="form-group">
+              <label for="password">Mot de passe</label>
+              <input type="password" class="form-control" name="password" [(ngModel)]="form.password" required
+                minlength="6" #password="ngModel" />
+              @if (password.errors && f.submitted) {
+                <div class="alert-danger">
+                  @if (password.errors.required) {
+                    <div class="alert alert-warning">Le mot de passe est obigatoire</div>
+                  }
+                  @if (password.errors.minlength) {
+                    <div class="alert alert-warning">
+                      Le mot de passe doit avoir au moins 6 caractères
+                    </div>
+                  }
+                </div>
+              }
             </div>
+            <div>
+              <br /><br />
+              <b >UTILISATION DES DONNEES PERSONNELLES:</b><br /><br />
+              <div [innerHTML]="textRGPD"></div>
+              <br /><br />
+            </div>
+            <div class="form-group center" >
+              <button class="btn btn-primary">Accepter l'utilisation des données personnelles<br />et démarer l'inscription</button>
+            </div>
+            @if (f.submitted && isSignUpFailed) {
+              <div class="alert alert-warning">
+                Votre inscription a échouée <br />{{ errorMessage }}
+              </div>
+            }
+          </form>
+        }
+        @if (isSuccessful) {
+          <div class="alert alert-success">
+            Inscription réussie!
+            Vous allez être redirigé sur la page de vos adhésions.
           </div>
-
-
-
-
-          <div>
-            <br /><br />
-            <b >UTILISATION DES DONNEES PERSONNELLES:</b><br /><br />
-            <div [innerHTML]="textRGPD"></div>
-
-            <br /><br />
-
-          </div>
-
-          <div class="form-group center" >
-            <button class="btn btn-primary">Accepter l'utilisation des données personnelles<br />et démarer l'inscription</button>
-          </div>
-
-          <div class="alert alert-warning" *ngIf="f.submitted && isSignUpFailed">
-            Votre inscription a échouée <br />{{ errorMessage }}
-          </div>
-        </form>
-
-        <div class="alert alert-success" *ngIf="isSuccessful">
-          Inscription réussie!
-          Vous allez être redirigé sur la page de vos adhésions.
-        </div>
+        }
       </div>
     </div>
-  </div>
+  }
+</div>

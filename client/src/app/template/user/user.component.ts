@@ -9,18 +9,22 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ParamService } from 'src/app/_services/param.service';
 import { jsPDF } from "jspdf";
-import { DatePipe } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { ToastrService } from 'ngx-toastr';
 import { UtilService } from 'src/app/_services/util.service';
-import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap/modal';
 import { FileService } from 'src/app/_services/file.service';
 import { TokenStorageService } from 'src/app/_services/token-storage.service';
+import { FormsModule } from '@angular/forms';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 
 @Component({
   selector: 'app-user',
   templateUrl: './user.component.html',
-  styleUrls: ['./user.component.css']
+  styleUrls: ['./user.component.css'],
+  standalone: true,
+  imports: [CommonModule, FormsModule, FontAwesomeModule]
 })
 export class UserComponent implements OnInit {
 
@@ -239,7 +243,7 @@ export class UserComponent implements OnInit {
       }
 
       this.adherentService.update(adherent).subscribe(
-        data => {
+        (data: any) => {
           this.showSuccess("L'adhérent à bien été mis à jour")
           this.adherent = data;
           this.activites = []
@@ -249,7 +253,7 @@ export class UserComponent implements OnInit {
             this.activeModal.close(data)
           }
         },
-        error => {
+        (error: any) => {
           console.log(error)
           this.isFailed = true;
           if (error.status == 409) {
@@ -273,7 +277,7 @@ export class UserComponent implements OnInit {
         adherent.adhesions.push(adhesionBdd)
         this.activitesListe.find(adh => adh.nom == adhesionBdd.activite?.nom)!.horaires.find(hor => hor.id == activiteId)!.dejaInscrit = true
       },
-      error => {
+      (error: any) => {
         this.isFailed = true;
         this.showError(error.message)
       }
@@ -304,11 +308,11 @@ export class UserComponent implements OnInit {
 
     setTimeout(() => {
       this.adhesionService.updateDejaLicencie(adhesion.id, adhesion.dejaLicencie!).subscribe(
-        data => {
+        (data: any) => {
           adhesion.statutActuel = data.statutActuel;
           adhesion.accords = data.accords;
         },
-        error => {
+        (error: any) => {
           this.isFailed = true;
           this.showError(error.message)
         }
@@ -319,12 +323,12 @@ export class UserComponent implements OnInit {
   updateAdhesion(adhesion: Adhesion) {
 
     this.adhesionService.validation(adhesion.accords, adhesion.id).subscribe(
-      data => {
+      (data: any) => {
         this.showSuccess("L'adhésion à bien été enregistrée, vous pouvez réaliser le paiement")
         adhesion.statutActuel = data.statutActuel;
         adhesion.accords = data.accords;
       },
-      error => {
+      (error: any) => {
         this.isFailed = true;
         this.showError(error.message)
       }
@@ -352,20 +356,20 @@ export class UserComponent implements OnInit {
 
   deleteDoc(file: Document) {
     this.fileService.delete(this.adherent.id, file.nom).subscribe(
-      data => {
+      (data: any) => {
         this.adherent.documents = this.adherent.documents.filter(document => document != file.nom)
       },
-      error => {
+      (error: any) => {
         this.isFailed = true;
         this.showError(error.message)
       }
     );
   }
   fillFiles() {
-    this.fileService.getAllFilesName(this.adherent.id).subscribe(data => {
+    this.fileService.getAllFilesName(this.adherent.id).subscribe((data: any) => {
       this.adherent.documents = data
     },
-      error => {
+      (error: any) => {
         this.isFailed = true;
         this.showError(error.message)
       }
@@ -393,7 +397,7 @@ export class UserComponent implements OnInit {
   }
 
   downloadPDF(file: string) {
-    this.fileService.get(this.adherent.id, file).subscribe(res => {
+    this.fileService.get(this.adherent.id, file).subscribe((res: string) => {
 
       //window.open("data:application/pdf;base64," + data, '_self');
       let url = window.URL.createObjectURL(this.b64toBlob(res));
@@ -406,7 +410,7 @@ export class UserComponent implements OnInit {
       window.URL.revokeObjectURL(url);
       a.remove();
     },
-      error => {
+      (error: any) => {
         console.log('😢 Oh no!', error);
       });
 
@@ -435,7 +439,7 @@ export class UserComponent implements OnInit {
 
   uploadPDF(file: Document) {
 
-    this.fileService.update(this.adherent.id, file.nom, file.content.replace("data:application/pdf;base64,", "")).subscribe(data => {
+    this.fileService.update(this.adherent.id, file.nom, file.content.replace("data:application/pdf;base64,", "")).subscribe((data: any) => {
       console.log(data)
       if (this.adherent.documents.length > 0) {
         this.adherent.documents.push(file.nom)
@@ -445,7 +449,7 @@ export class UserComponent implements OnInit {
         this.adherent.documents = docs;
       }
     },
-      error => {
+      (error: any) => {
         console.log('😢 Oh no!', error);
       });
   }
@@ -488,12 +492,12 @@ export class UserComponent implements OnInit {
 
   acceptSupressAdhesion(adhesion: Adhesion) {
     this.adhesionService.deleteAdhesion(adhesion.id).subscribe(
-      data => {
+      (data: any) => {
         this.adherent.adhesions = this.adherent.adhesions.filter(adh => adh.id != adhesion.id)
         this.activitesListe.find(adh => adh.nom == adhesion.activite?.nom)!.horaires.find(hor => hor.id == adhesion.activite?.id)!.dejaInscrit = false
         this.showSuccess("Votre demande d'adhésion à bien été supprimée")
       },
-      error => {
+      (error: any) => {
         this.isFailed = true;
         this.showError(error.message)
       }
@@ -537,11 +541,11 @@ export class UserComponent implements OnInit {
 
   ajoutAccord(adherent: Adherent, nomAccord: string) {
     this.adherentService.addAccord(adherent.id, nomAccord).subscribe(
-      data => {
+      (data: any) => {
         console.log(data)
         adherent.accords = data;
       },
-      error => {
+      (error: any) => {
         this.isFailed = true;
         this.showError(error.message)
       }
@@ -551,10 +555,10 @@ export class UserComponent implements OnInit {
   retraitAccord(adherent: Adherent, accord: Accord) {
 
     this.adherentService.removeAccord(adherent.id, accord.nom).subscribe(
-      data => {
+      (data: any) => {
         adherent.accords = data;
       },
-      error => {
+      (error: any) => {
         this.isFailed = true;
         this.showError(error.message)
       }
@@ -563,11 +567,11 @@ export class UserComponent implements OnInit {
 
   ajoutAccordAdhesion(adhesion: Adhesion, nomAccord: string) {
     this.adhesionService.addAccord(adhesion.id, nomAccord).subscribe(
-      data => {
+      (data: any) => {
         adhesion.accords = data.accords;
         adhesion.statutActuel = data.statutActuel
       },
-      error => {
+      (error: any) => {
         this.isFailed = true;
         this.showError(error.message)
       }
@@ -576,10 +580,10 @@ export class UserComponent implements OnInit {
 
   retraitAccordAdhesion(adhesion: Adhesion, accord: Accord) {
     this.adhesionService.removeAccord(adhesion.id, accord.nom).subscribe(
-      data => {
+      (data: any) => {
         adhesion.accords = data;
       },
-      error => {
+      (error: any) => {
         this.isFailed = true;
         this.showError(error.message)
       }
@@ -589,10 +593,10 @@ export class UserComponent implements OnInit {
 
   addSurclassement(adhesion: Adhesion, surClassement: Activite) {
     this.adhesionService.saveSurclassement(adhesion.id, surClassement.id).subscribe(
-      data => {
+      (data: any) => {
         adhesion.surClassement = data.surClassement;
       },
-      error => {
+      (error: any) => {
         this.isFailed = true;
         this.showError(error.message)
       }
@@ -601,10 +605,10 @@ export class UserComponent implements OnInit {
 
   removeSurclassement(adhesion: Adhesion) {
     this.adhesionService.deleteSurclassement(adhesion.id).subscribe(
-      data => {
+      (data: any) => {
         adhesion.surClassement = undefined;
       },
-      error => {
+      (error: any) => {
         this.isFailed = true;
         this.showError(error.message)
       }

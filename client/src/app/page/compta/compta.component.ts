@@ -11,6 +11,7 @@ import { ParamService } from 'src/app/_services/param.service';
 
 @Component({
   selector: 'app-compta',
+  standalone: false,
   templateUrl: './compta.component.html',
   styleUrls: ['./compta.component.css']
 })

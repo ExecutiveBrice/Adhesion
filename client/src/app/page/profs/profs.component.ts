@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { AdherentService } from '../../_services/adherent.service';
 import { ActiviteLite, Adherent, AdherentLite } from 'src/app/models';
 import { faSquareCaretLeft, faSquareCaretDown, faSkull, faUsers, faEnvelope, faCircleXmark, faFlag, faPiggyBank, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap/modal';
 import { TokenStorageService } from 'src/app/_services/token-storage.service';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -11,6 +11,7 @@ import { ParamService } from 'src/app/_services/param.service';
 
 @Component({
   selector: 'app-profs',
+  standalone: false,
   templateUrl: './profs.component.html',
   styleUrls: ['./profs.component.css']
 })

@@ -4,36 +4,52 @@
   <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss('Cross click')"></button>
 </div>
 <div class="modal-body">
-    <div *ngIf="activites.length > 0">
-      <div *ngFor="let activite of activites | orderBy:'nom':false">
-        <b>{{activite.nom}}</b>
-        <div *ngFor="let horaire of activite.horaires">
-          <div *ngIf="!horaire.reinscription && !horaire.complete && !horaire.dejaInscrit" class="indentation ligne pointer"
-            (click)="activeModal.close(horaire.id)">
-            {{horaire.nom}}
-          </div>
-
-          <div  (click)="admin ||secretaire ?activeModal.close(horaire.id):false" *ngIf=" !horaire.complete && horaire.dejaInscrit" class="indentation lignebleue pointer">
-            {{horaire.nom}} - Déjà Inscrit
-          </div>
-          <div  (click)="admin ||secretaire ?activeModal.close(horaire.id):false" *ngIf=" horaire.complete && !horaire.dejaInscrit" class="indentation lignerouge pointer">
-            {{horaire.nom}} - Complet
-          </div>
-          <div  (click)="admin ||secretaire ?activeModal.close(horaire.id):false" *ngIf="horaire.reinscription && !horaire.complete && !horaire.dejaInscrit" class="indentation lignegrisee pointer">
-            {{horaire.nom}} -
-            <a *ngIf="activite.nom == 'Basket'" href="https://alod.fr/protocle-basket/" target="_blank">Procédure de réinscription</a>
-            <div *ngIf="activite.nom != 'Basket'" >Uniquement sur réinscription, veuillez attendre le 1 juin </div>
-           
-          </div>
+  @if (activites.length > 0) {
+    <div>
+      @for (activite of activites | orderBy:'nom':false; track activite) {
+        <div>
+          <b>{{activite.nom}}</b>
+          @for (horaire of activite.horaires; track horaire) {
+            <div>
+              @if (!horaire.reinscription && !horaire.complete && !horaire.dejaInscrit) {
+                <div class="indentation ligne pointer"
+                  (click)="activeModal.close(horaire.id)">
+                  {{horaire.nom}}
+                </div>
+              }
+              @if ( !horaire.complete && horaire.dejaInscrit) {
+                <div  (click)="admin ||secretaire ?activeModal.close(horaire.id):false" class="indentation lignebleue pointer">
+                  {{horaire.nom}} - Déjà Inscrit
+                </div>
+              }
+              @if ( horaire.complete && !horaire.dejaInscrit) {
+                <div  (click)="admin ||secretaire ?activeModal.close(horaire.id):false" class="indentation lignerouge pointer">
+                  {{horaire.nom}} - Complet
+                </div>
+              }
+              @if (horaire.reinscription && !horaire.complete && !horaire.dejaInscrit) {
+                <div  (click)="admin ||secretaire ?activeModal.close(horaire.id):false" class="indentation lignegrisee pointer">
+                  {{horaire.nom}} -
+                  @if (activite.nom == 'Basket') {
+                    <a href="https://alod.fr/protocle-basket/" target="_blank">Procédure de réinscription</a>
+                  }
+                  @if (activite.nom != 'Basket') {
+                    <div >Uniquement sur réinscription, veuillez attendre le 1 juin </div>
+                  }
+                </div>
+              }
+            </div>
+          }
         </div>
-      </div>
+      }
     </div>
+  }
 
 </div>
 
 <div class="modal-footer">
-  <button type="button" class="btn btn-outline-dark" 
-    (click)="activeModal.dismiss('Annuler')">Annuler</button>
+  <button type="button" class="btn btn-outline-dark"
+  (click)="activeModal.dismiss('Annuler')">Annuler</button>
 
 
 </div>

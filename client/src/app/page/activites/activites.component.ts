@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, inject } from '@angular/core';
-import { NgbModalConfig, NgbModal, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModalConfig, NgbModal, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap/modal';
 import { ActiviteService } from 'src/app/_services/activite.service';
 import { Activite, Adherent, AdherentLite } from 'src/app/models';
 import { FormGroup, FormBuilder } from '@angular/forms';
@@ -27,6 +27,7 @@ import { ModalActivite } from 'src/app/template/modal-activite/modal.activite';
 
 @Component({
   selector: 'ngbd-modal-component',
+  standalone: false,
   templateUrl: './activites.component.html',
   styleUrls: ['./activites.component.css'],
 })

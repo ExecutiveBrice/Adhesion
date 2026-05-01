@@ -1,6 +1,8 @@
-<div *ngIf="isFailed" class="card card-container">
-  {{errorMessage}}
-</div>
+@if (isFailed) {
+  <div class="card card-container">
+    {{errorMessage}}
+  </div>
+}
 
 
 <table class="table table-striped">
@@ -22,37 +24,41 @@
     </tr>
   </thead>
   <tbody>
-    <tr *ngFor="let activite of activites | orderBy:'nom':false ">
-      <td class="center" (click)="openActivite(activite)">
-
-        <fa-icon class="pointer fa-2xl" [icon]="faPencilSquare"></fa-icon>
-      </td>
-      <td>{{activite.nom}}</td>
-      <td class="center">{{activite.tarif}}</td>
-      <td>{{activite.horaire}}</td>
-
-      <td class="center">
-        {{activite.nbPlaces}}
-        <font color="red">{{activite.nbAdhesionsAttente}}</font>/{{activite.nbAdhesionsEnCours}}/<font color="green">{{activite.nbAdhesionsCompletes}}</font>
-      </td>
-      <td class="center">
-        <fa-icon *ngIf="activite.complete" [ngClass]="activite.complete ? 'green' : ''"
-          [icon]="faCircleCheck"></fa-icon>
-        <fa-icon *ngIf="!activite.complete" [ngClass]="!activite.complete ? 'orange' : ''"
-          [icon]="faCircleXmark"></fa-icon>
-      </td>
-      <td class="center">
-        <fa-icon *ngIf="activite.reinscription" [ngClass]="activite.reinscription ? 'green' : ''"
-          [icon]="faCircleCheck"></fa-icon>
-        <fa-icon *ngIf="!activite.reinscription" [ngClass]="!activite.reinscription ? 'orange' : ''"
-          [icon]="faCircleXmark"></fa-icon>
-      </td>
-      <td>{{activite.ageMax}}/{{activite.ageMin}}</td>
-
-      <td>{{activite.genre}}</td>
-
-
-
-    </tr>
+    @for (activite of activites | orderBy:'nom':false ; track activite) {
+      <tr>
+        <td class="center" (click)="openActivite(activite)">
+          <fa-icon class="pointer fa-2xl" [icon]="faPencilSquare"></fa-icon>
+        </td>
+        <td>{{activite.nom}}</td>
+        <td class="center">{{activite.tarif}}</td>
+        <td>{{activite.horaire}}</td>
+        <td class="center">
+          {{activite.nbPlaces}}
+          <font color="red">{{activite.nbAdhesionsAttente}}</font>/{{activite.nbAdhesionsEnCours}}/<font color="green">{{activite.nbAdhesionsCompletes}}</font>
+        </td>
+        <td class="center">
+          @if (activite.complete) {
+            <fa-icon [ngClass]="activite.complete ? 'green' : ''"
+            [icon]="faCircleCheck"></fa-icon>
+          }
+          @if (!activite.complete) {
+            <fa-icon [ngClass]="!activite.complete ? 'orange' : ''"
+            [icon]="faCircleXmark"></fa-icon>
+          }
+        </td>
+        <td class="center">
+          @if (activite.reinscription) {
+            <fa-icon [ngClass]="activite.reinscription ? 'green' : ''"
+            [icon]="faCircleCheck"></fa-icon>
+          }
+          @if (!activite.reinscription) {
+            <fa-icon [ngClass]="!activite.reinscription ? 'orange' : ''"
+            [icon]="faCircleXmark"></fa-icon>
+          }
+        </td>
+        <td>{{activite.ageMax}}/{{activite.ageMin}}</td>
+        <td>{{activite.genre}}</td>
+      </tr>
+    }
   </tbody>
 </table>

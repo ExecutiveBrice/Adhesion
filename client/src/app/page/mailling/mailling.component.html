@@ -19,85 +19,86 @@
   <div class="col-4">
     <div class="btn-group btn-group-sm " role="group">
       <div (click)="template=0" [ngClass]="template==0? 'btn-primary' : 'btn-pomme'" class="btn btn-block"
-           type='button'>Un mail manuel
+        type='button'>Un mail manuel
       </div>
       <div (click)="template=2" [ngClass]="template==2? 'btn-primary' : 'btn-pomme'" class="btn btn-block"
-           type='button'>Le template Brevo n°2 : newsletter
+        type='button'>Le template Brevo n°2 : newsletter
       </div>
       <div (click)="template=6" [ngClass]="template==6? 'btn-primary' : 'btn-pomme'" class="btn btn-block"
-           type='button'>Le template Brevo n°6 : Convocation AG
+        type='button'>Le template Brevo n°6 : Convocation AG
       </div>
     </div>
 
 
-    <div *ngIf="template==0" class="row">
-      <div class="col-sm-12 ">
-        <div class="form-group">
-          <label for="prenom">Objet : <span class="orange" container="body">*</span></label>
-          <input type="text" class="form-control" name="prenom" [(ngModel)]="subject" required
-                 minlength="10" maxlength="255" />
-
+    @if (template==0) {
+      <div class="row">
+        <div class="col-sm-12 ">
+          <div class="form-group">
+            <label for="prenom">Objet : <span class="orange" container="body">*</span></label>
+            <input type="text" class="form-control" name="prenom" [(ngModel)]="subject" required
+              minlength="10" maxlength="255" />
+          </div>
+        </div>
+        <div class="col-sm-12">
+          <angular-editor  [config]="editorConfig" [(ngModel)]="content"></angular-editor>
+        </div>
+        <div class="col-sm-12">
+          <button (click)="envoiMail(subject)" [disabled]="inProgress" class="btn btn-block btn-primary">
+            Envoyer ce message à la liste de diffusion
+          </button>
         </div>
       </div>
-      <div class="col-sm-12">
+    }
 
-
-          <angular-editor  [config]="editorConfig" [(ngModel)]="content"></angular-editor>
-
+    @if (template!=0) {
+      <div class="row">
+        <div class="col-sm-12">
+          <button (click)="envoiTemplate()" [disabled]="inProgress" class="btn btn-block btn-primary">
+            Envoyer ce template à la liste de diffusion
+          </button>
+        </div>
       </div>
-      <div class="col-sm-12">
-        <button (click)="envoiMail(subject)" [disabled]="inProgress" class="btn btn-block btn-primary">
-          Envoyer ce message à la liste de diffusion
-        </button>
-      </div>
-    </div>
-
-    <div *ngIf="template!=0" class="row">
-      <div class="col-sm-12">
-        <button (click)="envoiTemplate()" [disabled]="inProgress" class="btn btn-block btn-primary">
-          Envoyer ce template à la liste de diffusion
-        </button>
-      </div>
-    </div>
+    }
   </div>
   <div class="col-4">
 
     <table>
       <thead>
-      <tr>
-        <th class="center">
-          Date d'envoi
+        <tr>
+          <th class="center">
+            Date d'envoi
 
-        </th>
-        <th class="center">
-          Objet
+          </th>
+          <th class="center">
+            Objet
 
-        </th>
-        <th class="center">
-          Maling Liste
-        </th>
-        <th class="center">
-          Réussis/Echoués
-        </th>
-      </tr>
+          </th>
+          <th class="center">
+            Maling Liste
+          </th>
+          <th class="center">
+            Réussis/Echoués
+          </th>
+        </tr>
       </thead>
       <tbody>
-      <tr
-        *ngFor="let historique of historiques">
-        <td>
-          {{ historique.dateEnvoi | date:'EEEE, MMMM d, y, hh:mm' }}
-        </td>
-        <td>
-          {{ historique.subject }}
-        </td>
-        <td>
-          {{ historique.listing }}
-        </td>
-        <td>
-          {{ historique.nombre }}/{{ historique.echecs }}
-        </td>
-
-      </tr>
+        @for (historique of historiques; track historique) {
+          <tr
+            >
+            <td>
+              {{ historique.dateEnvoi | date:'EEEE, MMMM d, y, hh:mm' }}
+            </td>
+            <td>
+              {{ historique.subject }}
+            </td>
+            <td>
+              {{ historique.listing }}
+            </td>
+            <td>
+              {{ historique.nombre }}/{{ historique.echecs }}
+            </td>
+          </tr>
+        }
       </tbody>
     </table>
 

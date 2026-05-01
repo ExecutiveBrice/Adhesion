@@ -30,7 +30,7 @@ import {
   faUserPlus,
   faL
 } from '@fortawesome/free-solid-svg-icons';
-import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
+import {NgbModal} from '@ng-bootstrap/ng-bootstrap/modal';
 import {TokenStorageService} from 'src/app/_services/token-storage.service';
 import {Router} from '@angular/router';
 import {ParamService} from 'src/app/_services/param.service';
@@ -45,6 +45,7 @@ import {ToastrService} from 'ngx-toastr';
 
 @Component({
   selector: 'app-adherents',
+  standalone: false,
   templateUrl: './adhesions.component.html',
   styleUrls: ['./adhesions.component.css']
 })

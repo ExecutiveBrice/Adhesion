@@ -1,412 +1,467 @@
 <div class="modal-header">
-  <h4 class="modal-title">{{adherent.prenom}} {{adherent.nom}} <fa-icon *ngIf="adherent.completAdhesion"
-      class="pointer orange" [icon]="faPencilSquare" (click)="adherentEdit(adherent)" container="body"></fa-icon>
+  <h4 class="modal-title">{{adherent.prenom}} {{adherent.nom}} @if (adherent.completAdhesion) {
+    <fa-icon
+    class="pointer orange" [icon]="faPencilSquare" (click)="adherentEdit(adherent)" container="body"></fa-icon>
+  }
 
-  </h4>
-  <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss('Cross click')"></button>
+</h4>
+<button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss('Cross click')"></button>
 </div>
 <div class="modal-body ">
   <div class="row">
 
-    <div *ngIf="!adherent.edit && adherent.completAdhesion" class="col-12 col-sm-6">
-      <div class="col-12 header">
-        Informations personnelles :
-      </div>
-      <div class="cadrePermanent ">
-        <div class="col-12 attribute">
-          <u>Naissance :</u> Le {{adherent.naissance}} dans le {{adherent.lieuNaissance}}
+    @if (!adherent.edit && adherent.completAdhesion) {
+      <div class="col-12 col-sm-6">
+        <div class="col-12 header">
+          Informations personnelles :
         </div>
-
-        <div class="col-12 attribute">
-          <u>Telephone :</u> {{adherent.telephoneRepresentant ? adherent.representant.telephone :
-          adherent.telephone}}
-        </div>
-        <div class="col-12 attribute">
-          <u>Email :</u> {{adherent.emailRepresentant ? adherent.representant.user.username :
-          adherent.user.username}}
-        </div>
-        <div class="col-12 attribute">
-          <u>Adresse :</u> {{adherent.adresseRepresentant ? adherent.representant.adresse :
-          adherent.adresse}}
-          {{adherent.adresseRepresentant ? adherent.representant.codePostal :
+        <div class="cadrePermanent ">
+          <div class="col-12 attribute">
+            <u>Naissance :</u> Le {{adherent.naissance}} dans le {{adherent.lieuNaissance}}
+          </div>
+          <div class="col-12 attribute">
+            <u>Telephone :</u> {{adherent.telephoneRepresentant ? adherent.representant.telephone :
+            adherent.telephone}}
+          </div>
+          <div class="col-12 attribute">
+            <u>Email :</u> {{adherent.emailRepresentant ? adherent.representant.user.username :
+            adherent.user.username}}
+          </div>
+          <div class="col-12 attribute">
+            <u>Adresse :</u> {{adherent.adresseRepresentant ? adherent.representant.adresse :
+            adherent.adresse}}
+            {{adherent.adresseRepresentant ? adherent.representant.codePostal :
             adherent.codePostal}}
             {{adherent.adresseRepresentant ? adherent.representant.ville :
-              adherent.ville}}
-        </div>
-
-
-        <div class="col-12 header">
-          Accords:
-        </div>
-        <div *ngFor="let accord of adherent.accords | orderBy:'id':false " class="col-12">
-
-          <div *ngIf="accord.datePassage != null">
-            <fa-icon *ngIf="accord.etat == true" class="green fa-2xl" [icon]="faCircleCheck"></fa-icon>
-            <fa-icon *ngIf="accord.etat == false" class="orange fa-2xl" [icon]="faCircleXmark"></fa-icon>
-            {{accord.title}} {{accord.etat?"accepté":"refusé"}} le {{accord.datePassage | date: 'dd/MM/YYYY'}} <fa-icon
-              (click)="openAccordModal(accord, true)" class="pointer orange fa-2xl" [icon]="faCircleQuestion"></fa-icon>
+            adherent.ville}}
           </div>
-        </div>
-
-
-
-
+          <div class="col-12 header">
+            Accords:
+          </div>
+          @for (accord of adherent.accords | orderBy:'id':false ; track accord) {
+            <div class="col-12">
+              @if (accord.datePassage != null) {
+                <div>
+                  @if (accord.etat == true) {
+                    <fa-icon class="green fa-2xl" [icon]="faCircleCheck"></fa-icon>
+                  }
+                  @if (accord.etat == false) {
+                    <fa-icon class="orange fa-2xl" [icon]="faCircleXmark"></fa-icon>
+                  }
+                  {{accord.title}} {{accord.etat?"accepté":"refusé"}} le {{accord.datePassage | date: 'dd/MM/YYYY'}} <fa-icon
+                (click)="openAccordModal(accord, true)" class="pointer orange fa-2xl" [icon]="faCircleQuestion"></fa-icon>
+              </div>
+            }
+          </div>
+        }
         <div class="col-12 header">
           Documents :
-          <fa-icon *ngIf="showSecretaire"
-          class="pointer green" [icon]="faRefresh" (click)="regenerate(adherent)" container="body"></fa-icon>
+          @if (showSecretaire) {
+            <fa-icon
+            class="pointer green" [icon]="faRefresh" (click)="regenerate(adherent)" container="body"></fa-icon>
+          }
         </div>
-
-
-        <div *ngFor="let document of adherent.documents | orderBy:'id':false " class="col-12 ligne pointer">
-          <div class="row">
-            <div class="col-10 pointer" (click)="downloadPDF(document)">
-              <fa-icon class="green fa-2xl" [icon]="faEye"></fa-icon>
-              {{document}}
-            </div>
-            <div class="col-2 pointer" (click)="deleteDoc(document)">
-              <fa-icon [icon]="faSquareMinus"></fa-icon>
+        @for (document of adherent.documents | orderBy:'id':false ; track document) {
+          <div class="col-12 ligne pointer">
+            <div class="row">
+              <div class="col-10 pointer" (click)="downloadPDF(document)">
+                <fa-icon class="green fa-2xl" [icon]="faEye"></fa-icon>
+                {{document}}
+              </div>
+              <div class="col-2 pointer" (click)="deleteDoc(document)">
+                <fa-icon [icon]="faSquareMinus"></fa-icon>
+              </div>
             </div>
           </div>
-        </div>
-
+        }
         <div class="col-12 pointer" (click)="openAddPDFModal(adherent)">
           Ajouter un document <fa-icon class="orange fa-xl" [icon]="faSquarePlus" container="body"></fa-icon>
         </div>
       </div>
-
-
-
-
-
       <div class="col-12 header">
         Activités de l'année dernière:
       </div>
-
-      <div *ngIf="adherent.activitesNm1.length > 0" class="col-12 ">
-
-        <div
-          *ngFor="let activiteNm1 of adherent.activitesNm1 | simplefilter:'horaire':['Mineur','Majeur'] | orderBy:'id':true"
-          class="col-12 ">
-
-          <div class="cadrePermanent ">
-            <div class="row">
-              <div class="col-8 header">
-                {{activiteNm1.nom}}
-              </div>
-              <div class="col-12 ">
-                <i>{{ activiteNm1.horaire }}</i>
+      @if (adherent.activitesNm1.length > 0) {
+        <div class="col-12 ">
+          @for (activiteNm1 of adherent.activitesNm1 | simplefilter:'horaire':['Mineur','Majeur'] | orderBy:'id':true; track activiteNm1) {
+            <div
+              class="col-12 ">
+              <div class="cadrePermanent ">
+                <div class="row">
+                  <div class="col-8 header">
+                    {{activiteNm1.nom}}
+                  </div>
+                  <div class="col-12 ">
+                    <i>{{ activiteNm1.horaire }}</i>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          }
         </div>
-      </div>
-
+      }
     </div>
+  }
 
 
-    <div *ngIf="adherent.edit || !adherent.completAdhesion"
+  @if (adherent.edit || !adherent.completAdhesion) {
+    <div
       [ngClass]="!adherent.completAdhesion ? 'col-12' : ' col-12 col-sm-6'">
       <div class="col-12 header">
         Informations personnelles :
       </div>
       <div class="cadrePermanent ">
         <form name="adherent" (ngSubmit)="f.form.valid && onSubmit(adherent)" #f="ngForm" novalidate>
-
           <div class="row">
             <div [ngClass]="adherent.completAdhesion ? 'col-12' : ' col-12 col-sm-6'">
               <div class="form-group">
                 <label for="nom">Nom <span class="orange" container="body">*</span></label>
                 <input type="text" class="form-control" name="nom" [(ngModel)]="adherent.nom" required minlength="2"
                   maxlength="255" #nom="ngModel" />
-                <div class="alert-danger" *ngIf="nom.errors && f.submitted">
-                  <div *ngIf="nom.errors.required">Nom obligatoire</div>
-                  <div *ngIf="nom.errors.minlength">
-                    Le nom doit au moins avoir 2 lettres
+                @if (nom.errors && f.submitted) {
+                  <div class="alert-danger">
+                    @if (nom.errors.required) {
+                      <div>Nom obligatoire</div>
+                    }
+                    @if (nom.errors.minlength) {
+                      <div>
+                        Le nom doit au moins avoir 2 lettres
+                      </div>
+                    }
+                    @if (nom.errors.maxlength) {
+                      <div>
+                        Le nom ne peut pas avoir plus de 255 lettres
+                      </div>
+                    }
                   </div>
-                  <div *ngIf="nom.errors.maxlength">
-                    Le nom ne peut pas avoir plus de 255 lettres
-                  </div>
-                </div>
+                }
               </div>
-
               <div class="form-group">
                 <label for="prenom">Prénom <span class="orange" container="body">*</span></label>
                 <input type="text" class="form-control" name="prenom" [(ngModel)]="adherent.prenom" required
                   minlength="2" maxlength="255" #prenom="ngModel" />
-                <div class="alert-danger" *ngIf="prenom.errors && f.submitted">
-                  <div *ngIf="prenom.errors.required">Prenom obligatoire</div>
-                  <div *ngIf="prenom.errors.minlength">
-                    Le prénom doit au moins avoir 2 lettres
+                @if (prenom.errors && f.submitted) {
+                  <div class="alert-danger">
+                    @if (prenom.errors.required) {
+                      <div>Prenom obligatoire</div>
+                    }
+                    @if (prenom.errors.minlength) {
+                      <div>
+                        Le prénom doit au moins avoir 2 lettres
+                      </div>
+                    }
+                    @if (prenom.errors.maxlength) {
+                      <div>
+                        Le prénom ne peut pas avoir plus de 255 lettres
+                      </div>
+                    }
                   </div>
-                  <div *ngIf="prenom.errors.maxlength">
-                    Le prénom ne peut pas avoir plus de 255 lettres
-                  </div>
-                </div>
+                }
               </div>
-
-
-
-
               <div class="form-group">
-
                 <label for="image">Genre <span class="orange" container="body">*</span></label>
-
                 <div class="btn-group btn-group-sm col-12" role="group" aria-label="image">
                   <div type='button' class="btn btn-block"
                     [ngClass]="adherent.genre == 'Féminin' ? 'btn-primary' : ' btn-outline-secondary'"
                     (click)="adherent.genre = 'Féminin'">
-                    Féminin</div>
+                  Féminin</div>
                   <div type='button' class="btn btn-block"
                     [ngClass]="adherent.genre == 'Masculin' ? 'btn-primary' : ' btn-outline-secondary'"
                     (click)="adherent.genre = 'Masculin'">
-                    Masculin</div>
+                  Masculin</div>
                 </div>
-
               </div>
-
               <div class="form-group">
-                <div *ngIf="adherent.mineur && tribu.adherents.length == 1"  class="orange"><b>Le premier adhérent doit être majeur</b><span
-                  class="orange" container="body">*</span></div>
-                <label for="naissance">Date de naissance <span class="orange" container="body">*</span></label>
-                <input type="date" class="form-control" name="naissance" [(ngModel)]="adherent.naissance"
-                  (change)="udpadteMineur(adherent)" #naissance="ngModel" required />
-                <div class="alert-danger" *ngIf="naissance.errors && f.submitted">
-                  <div *ngIf="naissance.errors.required">Date de naissance obligatoire</div>
+                @if (adherent.mineur && tribu.adherents.length == 1) {
+                  <div  class="orange"><b>Le premier adhérent doit être majeur</b><span
+                class="orange" container="body">*</span></div>
+              }
+              <label for="naissance">Date de naissance <span class="orange" container="body">*</span></label>
+              <input type="date" class="form-control" name="naissance" [(ngModel)]="adherent.naissance"
+                (change)="udpadteMineur(adherent)" #naissance="ngModel" required />
+              @if (naissance.errors && f.submitted) {
+                <div class="alert-danger">
+                  @if (naissance.errors.required) {
+                    <div>Date de naissance obligatoire</div>
+                  }
                 </div>
-              </div>
-
-              <div class="form-group">
-                <label for="lieuNaissance">Lieu de naissance <span class="orange" container="body">*</span></label>
-                <input type="text" class="form-control" name="lieuNaissance" [(ngModel)]="adherent.lieuNaissance"
-                  #lieuNaissance="ngModel" placeholder="num du département" required />
-                <div class="alert-danger" *ngIf="lieuNaissance.errors && f.submitted">
-                  <div *ngIf="lieuNaissance.errors.required">Lieu de naissance obligatoire</div>
+              }
+            </div>
+            <div class="form-group">
+              <label for="lieuNaissance">Lieu de naissance <span class="orange" container="body">*</span></label>
+              <input type="text" class="form-control" name="lieuNaissance" [(ngModel)]="adherent.lieuNaissance"
+                #lieuNaissance="ngModel" placeholder="num du département" required />
+              @if (lieuNaissance.errors && f.submitted) {
+                <div class="alert-danger">
+                  @if (lieuNaissance.errors.required) {
+                    <div>Lieu de naissance obligatoire</div>
+                  }
                 </div>
-              </div>
-
-
-
-              <div class="col-12 header">
-                Accords
-
-                <div *ngIf="showAdmin || showSecretaire" ngbDropdown id="icon">
+              }
+            </div>
+            <div class="col-12 header">
+              Accords
+              @if (showAdmin || showSecretaire) {
+                <div ngbDropdown id="icon">
                   <div id="dropdownBasic1" ngbDropdownToggle>
                     Ajouter un accord <fa-icon [icon]="faSquarePlus" container="body"></fa-icon>
                   </div>
-
                   <div ngbDropdownMenu aria-labelledby="dropdownBasic1" style="float:right;">
                     <div type='button' ngbDropdownItem (click)="ajoutAccord(adherent,'RGPD')">RGPD</div>
                     <div type='button' ngbDropdownItem (click)="ajoutAccord(adherent,'DroitImage')">Droit Image</div>
                   </div>
                 </div>
-              </div>
-
-              <div *ngFor="let accord of adherent.accords | orderBy:'id':false " class="high-row">
-                <div *ngIf="accord.datePassage == null" class="form-check form-switch">
-                  <input class="form-check-input big-checkbox" [disabled]="!accord.refusable" [(ngModel)]="accord.etat"
-                    type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
-                  {{accord.etat?accord.valide:accord.refus}} <fa-icon (click)="openAccordModal(accord, true)"
-                    class="pointer orange fa-2xl" [icon]="faCircleQuestion"></fa-icon>
+              }
+            </div>
+            @for (accord of adherent.accords | orderBy:'id':false ; track accord) {
+              <div class="high-row">
+                @if (accord.datePassage == null) {
+                  <div class="form-check form-switch">
+                    <input class="form-check-input big-checkbox" [disabled]="!accord.refusable" [(ngModel)]="accord.etat"
+                      type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+                    {{accord.etat?accord.valide:accord.refus}} <fa-icon (click)="openAccordModal(accord, true)"
+                  class="pointer orange fa-2xl" [icon]="faCircleQuestion"></fa-icon>
                 </div>
-                <div *ngIf="accord.datePassage != null">
-                  <fa-icon *ngIf="showAdmin || showSecretaire" [icon]="faSquareMinus"
+              }
+              @if (accord.datePassage != null) {
+                <div>
+                  @if (showAdmin || showSecretaire) {
+                    <fa-icon [icon]="faSquareMinus"
                     (click)="retraitAccord(adherent,accord)"></fa-icon>
-                  <fa-icon *ngIf="accord.etat == true" class="green fa-2xl" [icon]="faCircleCheck"></fa-icon>
-                  <fa-icon *ngIf="accord.etat == false" class="orange fa-2xl" [icon]="faCircleXmark"></fa-icon>
+                  }
+                  @if (accord.etat == true) {
+                    <fa-icon class="green fa-2xl" [icon]="faCircleCheck"></fa-icon>
+                  }
+                  @if (accord.etat == false) {
+                    <fa-icon class="orange fa-2xl" [icon]="faCircleXmark"></fa-icon>
+                  }
                   {{accord.title}} {{accord.etat?"accepté":"refusé"}} le {{accord.datePassage | date: 'dd/MM/YYYY'}}
                   <fa-icon (click)="openAccordModal(accord, true)" class="pointer orange"
-                    [icon]="faCircleQuestion"></fa-icon>
+                  [icon]="faCircleQuestion"></fa-icon>
                 </div>
-
+              }
+            </div>
+          }
+        </div>
+        <div [ngClass]="adherent.completAdhesion ? 'col-12' : ' col-12 col-sm-6'">
+          <div class="col-12 header">
+            Contact
+          </div>
+          <div class="form-group">
+            @if (adherent.mineur && tribu.adherents.length > 1) {
+              <div  class="orange"><b>{{adherent.prenom}} est mineur, il faut lui désigner un représentant</b><span
+            class="orange" container="body">*</span></div>
+          }
+          @if (adherent.mineur  && tribu.adherents.length > 1) {
+            <div ngbDropdown class="d-inline-block larger">
+              <button type="button" class="btn btn-primary larger" id="dropdownBasic1" ngbDropdownToggle>
+                {{adherent.representant?adherent.representant.prenom+' '+adherent.representant.nom:'Choisir un représentant'}}
+              </button>
+              <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+                <a ngbDropdownItem (click)="newAdherent()">
+                Ajouter un représentant</a>
+                @for (adulte of adultes | orderBy:'nom':false; track adulte) {
+                  <div class="ligne pointer">
+                    <a ngbDropdownItem (click)="chooseAdherent(adulte)">
+                    {{adulte.prenom}} {{adulte.nom}}</a>
+                  </div>
+                }
               </div>
             </div>
-
-            <div [ngClass]="adherent.completAdhesion ? 'col-12' : ' col-12 col-sm-6'">
-
-              <div class="col-12 header">
-                Contact
+          }
+          @if (!adherent.mineur  && tribu.adherents.length > 1) {
+            <div ngbDropdown class="d-inline-block larger">
+              @if (!adherent.mineur) {
+                <button type="button" class="btn btn-primary larger" id="dropdownBasic1" ngbDropdownToggle>
+                  {{adherent.representant?adherent.representant.prenom+' '+adherent.representant.nom:'Choisir un contact référent adulte'}}
+                </button>
+              }
+              <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+                @for (adulte of adultes | orderBy:'nom':false; track adulte) {
+                  <div class="ligne pointer">
+                    <a ngbDropdownItem (click)="chooseAdherent(adulte)">
+                    {{adulte.prenom}} {{adulte.nom}}</a>
+                  </div>
+                }
               </div>
-
+            </div>
+          }
+        </div>
+        @if (adherent.representant) {
+          <div class="form-group">
+            <div class="form-check form-switch form-switch-md">
+              <input class="form-check-input" [(ngModel)]="adherent.emailRepresentant" type="checkbox"
+                id="emailRepresentant" name="darkmode" value="yes">
+              <label class="form-check-label" for="emailRepresentant">Utiliser le mail du représentant légal ?<br />
+                <i>({{adherent.representant.user.username}})</i></label>
+              </div>
+            </div>
+          }
+          @if (!adherent.emailRepresentant ) {
+            <div class="form-group">
+              <label for="email">Email <span class="orange">*</span></label>
+              <input type="email" class="form-control" name="email" [(ngModel)]="adherent.user.username"
+                (ngModelChange)="adherent.user.username = cleaning(adherent.user.username)"
+                (ngModelBlur)="adherent.user.username = cleaning(adherent.user.username)" required minlength="10"
+                #email="ngModel" ngModel email
+                [disabled]="adherent.completAdhesion && !showAdmin && !showSecretaire" />
+              @if (email.errors && f.submitted) {
+                <div class="alert-danger">
+                  @if (email.errors.required) {
+                    <div>l'e-mail est obligatoire</div>
+                  }
+                  @if (email.errors.minlength) {
+                    <div>
+                      l'e-mail doit avoir au minimem 10 characteres
+                    </div>
+                  }
+                  @if (email.errors.email) {
+                    <div>
+                      l'e-mail doit avoir un format valide
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+          @if (adherent.representant ) {
+            <div class="form-group">
+              <div class="form-check form-switch form-switch-md">
+                <input class="form-check-input" [(ngModel)]="adherent.telephoneRepresentant" type="checkbox"
+                  id="telephoneRepresentant" name="darkmode" value="yes">
+                <label class="form-check-label" for="telephoneRepresentant">Utiliser le numéro de téléphone du
+                  représentant
+                  légal ? <br /> <i>({{adherent.representant.telephone}})</i></label>
+                </div>
+              </div>
+            }
+            @if (!adherent.telephoneRepresentant ) {
               <div class="form-group">
-
-                <div *ngIf="adherent.mineur && tribu.adherents.length > 1"  class="orange"><b>{{adherent.prenom}} est mineur, il faut lui désigner un représentant</b><span
-                    class="orange" container="body">*</span></div>
-
-                <div *ngIf="adherent.mineur  && tribu.adherents.length > 1" ngbDropdown class="d-inline-block larger">
-                  <button type="button" class="btn btn-primary larger" id="dropdownBasic1" ngbDropdownToggle>
-                    {{adherent.representant?adherent.representant.prenom+' '+adherent.representant.nom:'Choisir un représentant'}}
-                  </button>
-
-                  <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-                    <a ngbDropdownItem (click)="newAdherent()">
-                      Ajouter un représentant</a>
-                    <div *ngFor="let adulte of adultes | orderBy:'nom':false" class="ligne pointer">
-                      <a ngbDropdownItem (click)="chooseAdherent(adulte)">
-                        {{adulte.prenom}} {{adulte.nom}}</a>
-
-                    </div>
-                  </div>
-                </div>
-
-                <div *ngIf="!adherent.mineur  && tribu.adherents.length > 1" ngbDropdown class="d-inline-block larger">
-
-                  <button *ngIf="!adherent.mineur" type="button" class="btn btn-primary larger" id="dropdownBasic1" ngbDropdownToggle>
-                    {{adherent.representant?adherent.representant.prenom+' '+adherent.representant.nom:'Choisir un contact référent adulte'}}
-                  </button>
-                  <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-                    <div *ngFor="let adulte of adultes | orderBy:'nom':false" class="ligne pointer">
-                      <a ngbDropdownItem (click)="chooseAdherent(adulte)">
-                        {{adulte.prenom}} {{adulte.nom}}</a>
-
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div *ngIf="adherent.representant" class="form-group">
-                <div class="form-check form-switch form-switch-md">
-                  <input class="form-check-input" [(ngModel)]="adherent.emailRepresentant" type="checkbox"
-                    id="emailRepresentant" name="darkmode" value="yes">
-                  <label class="form-check-label" for="emailRepresentant">Utiliser le mail du représentant légal ?<br />
-                    <i>({{adherent.representant.user.username}})</i></label>
-                </div>
-              </div>
-
-
-
-              <div *ngIf="!adherent.emailRepresentant " class="form-group">
-                <label for="email">Email <span class="orange">*</span></label>
-                <input type="email" class="form-control" name="email" [(ngModel)]="adherent.user.username"
-                  (ngModelChange)="adherent.user.username = cleaning(adherent.user.username)"
-                  (ngModelBlur)="adherent.user.username = cleaning(adherent.user.username)" required minlength="10"
-                  #email="ngModel" ngModel email
-                  [disabled]="adherent.completAdhesion && !showAdmin && !showSecretaire" />
-                <div class="alert-danger" *ngIf="email.errors && f.submitted">
-                  <div *ngIf="email.errors.required">l'e-mail est obligatoire</div>
-                  <div *ngIf="email.errors.minlength">
-                    l'e-mail doit avoir au minimem 10 characteres
-                  </div>
-                  <div *ngIf="email.errors.email">
-                    l'e-mail doit avoir un format valide
-                  </div>
-                </div>
-              </div>
-
-
-              <div *ngIf="adherent.representant " class="form-group">
-
-                <div class="form-check form-switch form-switch-md">
-                  <input class="form-check-input" [(ngModel)]="adherent.telephoneRepresentant" type="checkbox"
-                    id="telephoneRepresentant" name="darkmode" value="yes">
-                  <label class="form-check-label" for="telephoneRepresentant">Utiliser le numéro de téléphone du
-                    représentant
-                    légal ? <br /> <i>({{adherent.representant.telephone}})</i></label>
-                </div>
-              </div>
-
-
-              <div *ngIf="!adherent.telephoneRepresentant " class="form-group">
                 <label for="telephone">Téléphone <span class="orange" container="body">*</span></label>
                 <input type="tel" class="form-control" name="telephone"
                   (ngModelChange)="adherent.telephone = cleaning(adherent.telephone)"
                   (ngModelBlur)="adherent.telephone = cleaning(adherent.telephone)" [(ngModel)]="adherent.telephone"
                   pattern="^[0-9]{10}$" #telephone="ngModel" />
-
-                <div class="alert-danger" *ngIf="telephone.errors && f.submitted">
-                  <div *ngIf="telephone.errors.required">Le numéro de téléphone est obligatoire</div>
-                  <div *ngIf="telephone.errors.pattern">
-                    Le numéro de téléphone doit avoir un format valide (10 chiffres)
+                @if (telephone.errors && f.submitted) {
+                  <div class="alert-danger">
+                    @if (telephone.errors.required) {
+                      <div>Le numéro de téléphone est obligatoire</div>
+                    }
+                    @if (telephone.errors.pattern) {
+                      <div>
+                        Le numéro de téléphone doit avoir un format valide (10 chiffres)
+                      </div>
+                    }
                   </div>
-                </div>
+                }
               </div>
-
-
-
-              <div *ngIf="adherent.representant " class="form-group">
+            }
+            @if (adherent.representant ) {
+              <div class="form-group">
                 <div class="form-check form-switch form-switch-md">
                   <input class="form-check-input" [(ngModel)]="adherent.adresseRepresentant" type="checkbox"
                     id="adresseRepresentant" name="darkmode" value="yes">
                   <label class="form-check-label" for="adresseRepresentant">Utiliser l'adresse du représentant légal ?
                     <br />
                     <i>({{adherent.representant.adresse}})</i></label>
-                </div>
-              </div>
-
-
-
-              <div *ngIf="!adherent.adresseRepresentant " class="form-group">
-                <label for="adresse">Adresse <span class="orange" container="body">*</span></label>
-                <input type="text" class="form-control" name="adresse" [(ngModel)]="adherent.adresse" required
-                  minlength="10" maxlength="200" #adresse="ngModel" />
-                <div class="alert-danger" *ngIf="adresse.errors && f.submitted">
-                  <div *ngIf="adresse.errors.required">l'adresse est obligatoire</div>
-                  <div *ngIf="adresse.errors.minlength">
-                    L'adresse doit avoir au moins 10 caractères
-                  </div>
-                  <div *ngIf="adresse.errors.maxlength">
-                    L'adresse doit avoir au maximum 200 caractères
                   </div>
                 </div>
-              </div>
-
-              <div *ngIf="!adherent.adresseRepresentant " class="form-group">
-                <label for="codePostal">Code Postal <span class="orange" container="body">*</span></label>
-                <input type="text" class="form-control" name="codePostal" [(ngModel)]="adherent.codePostal" required
-                  minlength="5" maxlength="7" #codePostal="ngModel" />
-                <div class="alert-danger" *ngIf="codePostal.errors && f.submitted">
-                  <div *ngIf="codePostal.errors.required">le code postal est obligatoire</div>
-                  <div *ngIf="codePostal.errors.minlength">
-                    Le code postal doit avoir au moins 5 caractères
-                  </div>
-                  <div *ngIf="codePostal.errors.maxlength">
-                    Le code postal doit avoir au maximum 7 caractères
-                  </div>
+              }
+              @if (!adherent.adresseRepresentant ) {
+                <div class="form-group">
+                  <label for="adresse">Adresse <span class="orange" container="body">*</span></label>
+                  <input type="text" class="form-control" name="adresse" [(ngModel)]="adherent.adresse" required
+                    minlength="10" maxlength="200" #adresse="ngModel" />
+                  @if (adresse.errors && f.submitted) {
+                    <div class="alert-danger">
+                      @if (adresse.errors.required) {
+                        <div>l'adresse est obligatoire</div>
+                      }
+                      @if (adresse.errors.minlength) {
+                        <div>
+                          L'adresse doit avoir au moins 10 caractères
+                        </div>
+                      }
+                      @if (adresse.errors.maxlength) {
+                        <div>
+                          L'adresse doit avoir au maximum 200 caractères
+                        </div>
+                      }
+                    </div>
+                  }
                 </div>
-              </div>
-
-              <div *ngIf="!adherent.adresseRepresentant " class="form-group">
-                <label for="ville">Ville <span class="orange" container="body">*</span></label>
-                <input type="text" class="form-control" name="ville" [(ngModel)]="adherent.ville" required minlength="4"
-                  maxlength="200" #ville="ngModel" />
-                <div class="alert-danger" *ngIf="ville.errors && f.submitted">
-                  <div *ngIf="ville.errors.required">la ville est obligatoire</div>
-                  <div *ngIf="ville.errors.minlength">
-                    La ville doit avoir au moins 4 caractères
-                  </div>
-                  <div *ngIf="ville.errors.maxlength">
-                    La ville doit avoir au maximum 200 caractères
-                  </div>
+              }
+              @if (!adherent.adresseRepresentant ) {
+                <div class="form-group">
+                  <label for="codePostal">Code Postal <span class="orange" container="body">*</span></label>
+                  <input type="text" class="form-control" name="codePostal" [(ngModel)]="adherent.codePostal" required
+                    minlength="5" maxlength="7" #codePostal="ngModel" />
+                  @if (codePostal.errors && f.submitted) {
+                    <div class="alert-danger">
+                      @if (codePostal.errors.required) {
+                        <div>le code postal est obligatoire</div>
+                      }
+                      @if (codePostal.errors.minlength) {
+                        <div>
+                          Le code postal doit avoir au moins 5 caractères
+                        </div>
+                      }
+                      @if (codePostal.errors.maxlength) {
+                        <div>
+                          Le code postal doit avoir au maximum 7 caractères
+                        </div>
+                      }
+                    </div>
+                  }
                 </div>
-              </div>
-
-              <div *ngIf="!isAllAccordsDone(adherent.accords) || !isAdherentComplet(adherent)" class="orange">
-                <span class="orange">* champs obligatoires</span>
-              </div>
-
-
-
-
+              }
+              @if (!adherent.adresseRepresentant ) {
+                <div class="form-group">
+                  <label for="ville">Ville <span class="orange" container="body">*</span></label>
+                  <input type="text" class="form-control" name="ville" [(ngModel)]="adherent.ville" required minlength="4"
+                    maxlength="200" #ville="ngModel" />
+                  @if (ville.errors && f.submitted) {
+                    <div class="alert-danger">
+                      @if (ville.errors.required) {
+                        <div>la ville est obligatoire</div>
+                      }
+                      @if (ville.errors.minlength) {
+                        <div>
+                          La ville doit avoir au moins 4 caractères
+                        </div>
+                      }
+                      @if (ville.errors.maxlength) {
+                        <div>
+                          La ville doit avoir au maximum 200 caractères
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+              @if (!isAllAccordsDone(adherent.accords) || !isAdherentComplet(adherent)) {
+                <div class="orange">
+                  <span class="orange">* champs obligatoires</span>
+                </div>
+              }
               <div class="form-group fullSize">
                 <button [disabled]="!isAllAccordsDone(adherent.accords) || !isAdherentComplet(adherent)"
-                  class="btn btn-primary btn-block col-12 ">Enregistrer</button>
+                class="btn btn-primary btn-block col-12 ">Enregistrer</button>
               </div>
-              <div *ngIf="!isRepresentant">
-                Vous pouvez souscrire, en plus des garanties de base inclues dans votre affiliation à la Ligue de
-                l'Enseignement et à l'UFOLEP, des garanties complémentaires plus importantes en cas d'accident
-                corporel.<br />
-                Le formulaire est en ligne sur le site de l'ALOD<br />
-              </div>
-
+              @if (!isRepresentant) {
+                <div>
+                  Vous pouvez souscrire, en plus des garanties de base inclues dans votre affiliation à la Ligue de
+                  l'Enseignement et à l'UFOLEP, des garanties complémentaires plus importantes en cas d'accident
+                  corporel.<br />
+                  Le formulaire est en ligne sur le site de l'ALOD<br />
+                </div>
+              }
             </div>
           </div>
         </form>
-
       </div>
-
-
-
     </div>
+  }
 
 
 
@@ -416,10 +471,9 @@
 
 
 
-    <div *ngIf="adherent.completAdhesion" class="col-12 col-sm-6">
-
+  @if (adherent.completAdhesion) {
+    <div class="col-12 col-sm-6">
       <div class="row">
-
         <div class="col-12 ">
           <div class="row">
             <div class="col-6 header">
@@ -428,210 +482,253 @@
             <div class="col-6" (click)="choixActivites(adherent)">
               <div class="col-12 btn-group btn-group-sm" role="group" aria-label="rgpd">
                 <div type='button' class="btn btn-block btn-primary">
-                  Ajouter un nouvelle activité</div>
+                Ajouter un nouvelle activité</div>
               </div>
-
-
             </div>
           </div>
         </div>
-
-        <div *ngIf="adherent.adhesions.length > 0" class="col-12 ">
-
-          <div *ngFor="let adhesion of adherent.adhesions | orderBy:'id':true" class="col-12 ">
-
-            <div class="cadrePermanent ">
-              <div class="row">
-                <div class="col-8 header">
-                  {{adhesion.activite.nom}}
-
-                  <fa-icon
-                    *ngIf="adhesion.statutActuel != 'Validée' || adhesion.statutActuel != 'Licence générée' || adhesion.statutActuel != 'Licence T' "
-                    class="pointer" [icon]="faSquareMinus" (click)="suppressionAdhesionModal(adhesion)"
-                    container="body"></fa-icon>
-
-
-                      <div  *ngIf="showAdmin || showSecretaire" ngbDropdown>
-                      <div id="dropdownBasic1" ngbDropdownToggle>
-                        <fa-icon [icon]="faSquarePlus" container="body"></fa-icon>
+        @if (adherent.adhesions.length > 0) {
+          <div class="col-12 ">
+            @for (adhesion of adherent.adhesions | orderBy:'id':true; track adhesion) {
+              <div class="col-12 ">
+                <div class="cadrePermanent ">
+                  <div class="row">
+                    <div class="col-8 header">
+                      {{adhesion.activite.nom}}
+                      @if (adhesion.statutActuel != 'Validée' || adhesion.statutActuel != 'Licence générée' || adhesion.statutActuel != 'Licence T' ) {
+                        <fa-icon
+                          class="pointer" [icon]="faSquareMinus" (click)="suppressionAdhesionModal(adhesion)"
+                        container="body"></fa-icon>
+                      }
+                      @if (showAdmin || showSecretaire) {
+                        <div  ngbDropdown>
+                          <div id="dropdownBasic1" ngbDropdownToggle>
+                            <fa-icon [icon]="faSquarePlus" container="body"></fa-icon>
+                          </div>
+                          @if (activites.length > 0) {
+                            <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+                              @for (activite of activitesListe  | orderBy:'nom':false; track activite) {
+                                <div class="ligne pointer">
+                                  <b>{{activite.nom}}</b>
+                                  @for (horaire of activite.horaires; track horaire) {
+                                    <div>
+                                      <a ngbDropdownItem (click)="changeActivite(adhesion, horaire.id)">
+                                      {{horaire.nom}}</a>
+                                    </div>
+                                  }
+                                </div>
+                              }
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
+                    <div class="col-4 ">
+                      @if (adhesion.statutActuel == 'Validée' || adhesion.statutActuel == 'Licence générée' || adhesion.statutActuel == 'Licence T') {
+                        <fa-icon
+                        class="green fa-xl" [icon]="faCircleCheck"></fa-icon>
+                      }
+                      @if (adhesion.statutActuel == 'Sur liste d\'attente') {
+                        <fa-icon class="gris fa-xl"
+                        [icon]="faCirclePause"></fa-icon>
+                      }
+                      @if (adhesion.statutActuel == 'Attente validation adhérent') {
+                        <fa-icon class="jaune fa-xl"
+                        [icon]="faClock"></fa-icon>
+                      }
+                      @if (adhesion.statutActuel == 'Attente validation secrétariat') {
+                        <fa-icon class="pomme fa-xl"
+                        [icon]="faClock"></fa-icon>
+                      }
+                      @if (adhesion.statutActuel == 'Attente création licence') {
+                        <fa-icon class="orange fa-xl"
+                        [icon]="faClock"></fa-icon>
+                      }
+                      @if (adhesion.statutActuel == 'Annulée') {
+                        <fa-icon class="orange fa-xl"
+                        [icon]="faCircleXmark"></fa-icon>
+                      }
+                    </div>
+                    <div class="col-12 ">
+                      <i>Statut : {{ adhesion.statutActuel }}</i>
+                    </div>
+                    <div class="col-12 ">
+                      <i>{{ adhesion.activite.horaire }}</i>
+                    </div>
+                    @if (adhesion.surClassement) {
+                      <div class="col-6 ">
+                        <i>surclassement : {{ adhesion.surClassement.horaire }}</i>
+                        @if ((showAdmin || showSecretaire) && adhesion.surClassement) {
+                          <fa-icon class="pointer"
+                          [icon]="faSquareMinus" (click)="removeSurclassement(adhesion)" container="body"></fa-icon>
+                        }
                       </div>
-                      <div *ngIf="activites.length > 0" ngbDropdownMenu aria-labelledby="dropdownBasic1">
-                        <div *ngFor="let activite of activitesListe  | orderBy:'nom':false" class="ligne pointer">
-                          <b>{{activite.nom}}</b>
-                          <div *ngFor="let horaire of activite.horaires">
-                            <a ngbDropdownItem (click)="changeActivite(adhesion, horaire.id)">
-                              {{horaire.nom}}</a>
+                    }
+                    @if ((showAdmin || showSecretaire) &&  activites.length > 0) {
+                      <div ngbDropdown id="icon"
+                        class="col-6 ">
+                        <div id="dropdownBasic1" ngbDropdownToggle>
+                          Ajouter un surclassement <fa-icon [icon]="faSquarePlus" container="body"></fa-icon>
+                        </div>
+                        <div ngbDropdownMenu aria-labelledby="dropdownBasic1" style="float:right;">
+                          @for (activite of activites | orderBy:'id':true; track activite) {
+                            <div>
+                              <div type='button' (click)="addSurclassement(adhesion, activite)" ngbDropdownItem>{{activite.nom}}
+                              - {{activite.horaire}}</div>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    }
+                    @if (adhesion.statutActuel != 'Sur liste d\'attente') {
+                      <div>
+                        <div class="col-8 header">
+                          Paiement :
+                        </div>
+                        <div class="col-4">
+                          {{ adhesion.tarif }}€
+                          @if (adhesion.validPaiementSecretariat) {
+                            <fa-icon class="green fa-xl"
+                            [icon]="faCircleCheck"></fa-icon>
+                          }
+                          @if (!adhesion.validPaiementSecretariat) {
+                            <fa-icon class="jaune fa-xl" [icon]="faClock"></fa-icon>
+                          }
+                        </div>
+                        @if (adhesion.activite.certificatMedical) {
+                          <div class="col-12 header">
+                            Documents :
+                          </div>
+                        }
+                        @if (adhesion.activite.certificatMedical) {
+                          <div class="col-12 row align-items-center fullSize">
+                            <div class="col-10">Questionnaire de santé</div>
+                            <div class="col-2" (click)="openAttestationSante()">@if (adhesion.activite.certificatMedical) {
+                              <fa-icon class="pointer orange fa-2xl"
+                              [icon]="faCloudDownloadAlt"></fa-icon>
+                            }
                           </div>
                         </div>
-                      </div>
-                    </div>
-                </div>
-                <div class="col-4 ">
-
-                  <fa-icon
-                    *ngIf="adhesion.statutActuel == 'Validée' || adhesion.statutActuel == 'Licence générée' || adhesion.statutActuel == 'Licence T'"
-                    class="green fa-xl" [icon]="faCircleCheck"></fa-icon>
-                  <fa-icon *ngIf="adhesion.statutActuel == 'Sur liste d\'attente'" class="gris fa-xl"
-                    [icon]="faCirclePause"></fa-icon>
-                  <fa-icon *ngIf="adhesion.statutActuel == 'Attente validation adhérent'" class="jaune fa-xl"
-                    [icon]="faClock"></fa-icon>
-                  <fa-icon *ngIf="adhesion.statutActuel == 'Attente validation secrétariat'" class="pomme fa-xl"
-                    [icon]="faClock"></fa-icon>
-                  <fa-icon *ngIf="adhesion.statutActuel == 'Attente création licence'" class="orange fa-xl"
-                    [icon]="faClock"></fa-icon>
-                  <fa-icon *ngIf="adhesion.statutActuel == 'Annulée'" class="orange fa-xl"
-                    [icon]="faCircleXmark"></fa-icon>
-
-                </div>
-                <div class="col-12 ">
-                  <i>Statut : {{ adhesion.statutActuel }}</i>
-                </div>
-                <div class="col-12 ">
-                  <i>{{ adhesion.activite.horaire }}</i>
-                </div>
-                <div *ngIf="adhesion.surClassement" class="col-6 ">
-                  <i>surclassement : {{ adhesion.surClassement.horaire }}</i>
-                  <fa-icon *ngIf="(showAdmin || showSecretaire) && adhesion.surClassement" class="pointer"
-                    [icon]="faSquareMinus" (click)="removeSurclassement(adhesion)" container="body"></fa-icon>
-                </div>
-
-                <div *ngIf="(showAdmin || showSecretaire) &&  activites.length > 0" ngbDropdown id="icon"
-                  class="col-6 ">
-                  <div id="dropdownBasic1" ngbDropdownToggle>
-                    Ajouter un surclassement <fa-icon [icon]="faSquarePlus" container="body"></fa-icon>
-                  </div>
-
-                  <div ngbDropdownMenu aria-labelledby="dropdownBasic1" style="float:right;">
-
-                    <div *ngFor="let activite of activites | orderBy:'id':true">
-                      <div type='button' (click)="addSurclassement(adhesion, activite)" ngbDropdownItem>{{activite.nom}}
-                        - {{activite.horaire}}</div>
-
-                    </div>
-                  </div>
-                </div>
-                <div *ngIf="adhesion.statutActuel != 'Sur liste d\'attente'">
-                  <div class="col-8 header">
-                    Paiement :
-                  </div>
-                  <div class="col-4">
-                    {{ adhesion.tarif }}€
-                    <fa-icon *ngIf="adhesion.validPaiementSecretariat" class="green fa-xl"
-                      [icon]="faCircleCheck"></fa-icon>
-                    <fa-icon *ngIf="!adhesion.validPaiementSecretariat" class="jaune fa-xl" [icon]="faClock"></fa-icon>
-                  </div>
-
-
-
-
-                  <div *ngIf="adhesion.activite.certificatMedical" class="col-12 header">
-                    Documents :
-                  </div>
-                  <div *ngIf="adhesion.activite.certificatMedical" class="col-12 row align-items-center fullSize">
-                    <div class="col-10">Questionnaire de santé</div>
-                    <div class="col-2" (click)="openAttestationSante()"><fa-icon class="pointer orange fa-2xl"
-                        *ngIf="adhesion.activite.certificatMedical" [icon]="faCloudDownloadAlt"></fa-icon>
-                    </div>
-                  </div>
-
-                  <div *ngIf="adhesion.activite.certificatMedical" class="col-12 row align-items-center fullSize">
-                    <div class="col-10">Certificat médical (si une réponse négative au questionnaire de santé) </div>
-                    <div class="col-2" (click)="openCertifMed(adhesion.activite)"><fa-icon class="pointer orange fa-2xl"
-                        [icon]="faCloudDownloadAlt"></fa-icon>
-                    </div>
-                  </div>
-
-                  <div *ngIf="adhesion.activite.groupe == 'ALOD_B'">
-                    <div *ngIf="adhesion.statutActuel == 'Attente validation adhérent'" class="form-check form-switch">
-                      <input class="form-check-input big-checkbox" [(ngModel)]="adhesion.dejaLicencie" type="checkbox"
-                        role="switch" [ngModelOptions]="{standalone: true}" (click)="updateDejaLicencie(adhesion)">
-                      {{adhesion.dejaLicencie?"J'ai déjà été licencié FFBB":"Je n'ai jamais été licencié FFBB"}}
-                    </div>
-
-                    <div *ngIf="adhesion.statutActuel != 'Attente validation adhérent'">
-                      <fa-icon *ngIf="adhesion.dejaLicencie == true" class="green fa-2xl"
-                        [icon]="faCircleCheck"></fa-icon>
-                      <fa-icon *ngIf="adhesion.dejaLicencie == false" class="orange fa-2xl"
-                        [icon]="faCircleXmark"></fa-icon>
-                      {{adhesion.dejaLicencie?"J'ai déjà été licencié FFBB":"Je n'ai jamais été licencié FFBB"}}
-                    </div>
-                  </div>
-
-                  <div class="col-12 header">
-                    Accords
-
-                    <div *ngIf="showAdmin || showSecretaire" ngbDropdown id="icon">
-                      <div id="dropdownBasic1" ngbDropdownToggle>
-                        Ajouter un accord <fa-icon [icon]="faSquarePlus" container="body"></fa-icon>
-                      </div>
-
-                      <div ngbDropdownMenu aria-labelledby="dropdownBasic1" style="float:right;">
-                        <div type='button' ngbDropdownItem (click)="ajoutAccordAdhesion(adhesion,'ReglementInterieur')">
-                          ReglementInterieur</div>
-                        <div type='button' ngbDropdownItem (click)="ajoutAccordAdhesion(adhesion,'AttestationSante')">
-                          AttestationSante</div>
-                        <div type='button' ngbDropdownItem (click)="ajoutAccordAdhesion(adhesion,'VieClub')">VieClub
+                      }
+                      @if (adhesion.activite.certificatMedical) {
+                        <div class="col-12 row align-items-center fullSize">
+                          <div class="col-10">Certificat médical (si une réponse négative au questionnaire de santé) </div>
+                          <div class="col-2" (click)="openCertifMed(adhesion.activite)"><fa-icon class="pointer orange fa-2xl"
+                          [icon]="faCloudDownloadAlt"></fa-icon>
                         </div>
-                        <div type='button' ngbDropdownItem
-                          (click)="ajoutAccordAdhesion(adhesion,'AutorisationParentale')">AutorisationParentale</div>
-                        <div type='button' ngbDropdownItem (click)="ajoutAccordAdhesion(adhesion,'PriseEnCharge')">
-                          PriseEnCharge</div>
                       </div>
+                    }
+                    @if (adhesion.activite.groupe == 'ALOD_B') {
+                      <div>
+                        @if (adhesion.statutActuel == 'Attente validation adhérent') {
+                          <div class="form-check form-switch">
+                            <input class="form-check-input big-checkbox" [(ngModel)]="adhesion.dejaLicencie" type="checkbox"
+                              role="switch" [ngModelOptions]="{standalone: true}" (click)="updateDejaLicencie(adhesion)">
+                            {{adhesion.dejaLicencie?"J'ai déjà été licencié FFBB":"Je n'ai jamais été licencié FFBB"}}
+                          </div>
+                        }
+                        @if (adhesion.statutActuel != 'Attente validation adhérent') {
+                          <div>
+                            @if (adhesion.dejaLicencie == true) {
+                              <fa-icon class="green fa-2xl"
+                              [icon]="faCircleCheck"></fa-icon>
+                            }
+                            @if (adhesion.dejaLicencie == false) {
+                              <fa-icon class="orange fa-2xl"
+                              [icon]="faCircleXmark"></fa-icon>
+                            }
+                            {{adhesion.dejaLicencie?"J'ai déjà été licencié FFBB":"Je n'ai jamais été licencié FFBB"}}
+                          </div>
+                        }
+                      </div>
+                    }
+                    <div class="col-12 header">
+                      Accords
+                      @if (showAdmin || showSecretaire) {
+                        <div ngbDropdown id="icon">
+                          <div id="dropdownBasic1" ngbDropdownToggle>
+                            Ajouter un accord <fa-icon [icon]="faSquarePlus" container="body"></fa-icon>
+                          </div>
+                          <div ngbDropdownMenu aria-labelledby="dropdownBasic1" style="float:right;">
+                            <div type='button' ngbDropdownItem (click)="ajoutAccordAdhesion(adhesion,'ReglementInterieur')">
+                            ReglementInterieur</div>
+                            <div type='button' ngbDropdownItem (click)="ajoutAccordAdhesion(adhesion,'AttestationSante')">
+                            AttestationSante</div>
+                            <div type='button' ngbDropdownItem (click)="ajoutAccordAdhesion(adhesion,'VieClub')">VieClub
+                            </div>
+                            <div type='button' ngbDropdownItem
+                            (click)="ajoutAccordAdhesion(adhesion,'AutorisationParentale')">AutorisationParentale</div>
+                            <div type='button' ngbDropdownItem (click)="ajoutAccordAdhesion(adhesion,'PriseEnCharge')">
+                            PriseEnCharge</div>
+                          </div>
+                        </div>
+                      }
                     </div>
-                  </div>
-
-                  <div *ngFor="let accord of adhesion.accords | orderBy:'id':false " class="high-row">
-                    <div *ngIf="accord.datePassage == null" class="form-check form-switch">
-                      <input class="form-check-input big-checkbox" [disabled]="!accord.refusable"
-                        [(ngModel)]="accord.etat" type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
-                      {{accord.etat?accord.valide:accord.refus}} <fa-icon (click)="openAccordModal(accord, true)"
-                        class="pointer orange fa-2xl" [icon]="faCircleQuestion "></fa-icon>
-                      <fa-icon *ngIf="showAdmin || showSecretaire" [icon]="faSquareMinus"
-                        (click)="retraitAccordAdhesion(adhesion,accord)"></fa-icon>
+                    @for (accord of adhesion.accords | orderBy:'id':false ; track accord) {
+                      <div class="high-row">
+                        @if (accord.datePassage == null) {
+                          <div class="form-check form-switch">
+                            <input class="form-check-input big-checkbox" [disabled]="!accord.refusable"
+                              [(ngModel)]="accord.etat" type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+                            {{accord.etat?accord.valide:accord.refus}} <fa-icon (click)="openAccordModal(accord, true)"
+                          class="pointer orange fa-2xl" [icon]="faCircleQuestion "></fa-icon>
+                          @if (showAdmin || showSecretaire) {
+                            <fa-icon [icon]="faSquareMinus"
+                            (click)="retraitAccordAdhesion(adhesion,accord)"></fa-icon>
+                          }
+                        </div>
+                      }
+                      @if (accord.datePassage != null) {
+                        <div>
+                          @if (showAdmin || showSecretaire) {
+                            <fa-icon [icon]="faSquareMinus"
+                            (click)="retraitAccordAdhesion(adhesion,accord)"></fa-icon>
+                          }
+                          @if (accord.etat == true) {
+                            <fa-icon class="green fa-2xl" [icon]="faCircleCheck"></fa-icon>
+                          }
+                          @if (accord.etat == false) {
+                            <fa-icon class="orange fa-2xl" [icon]="faCircleXmark"></fa-icon>
+                          }
+                          {{accord.title}} {{accord.etat?"accepté":"refusé"}} le {{accord.datePassage | date: 'dd/MM/YYYY'}}
+                          <fa-icon (click)="openAccordModal(accord, true)" class="pointer orange"
+                          [icon]="faCircleQuestion"></fa-icon>
+                        </div>
+                      }
                     </div>
-                    <div *ngIf="accord.datePassage != null">
-                      <fa-icon *ngIf="showAdmin || showSecretaire" [icon]="faSquareMinus"
-                        (click)="retraitAccordAdhesion(adhesion,accord)"></fa-icon>
-                      <fa-icon *ngIf="accord.etat == true" class="green fa-2xl" [icon]="faCircleCheck"></fa-icon>
-                      <fa-icon *ngIf="accord.etat == false" class="orange fa-2xl" [icon]="faCircleXmark"></fa-icon>
-                      {{accord.title}} {{accord.etat?"accepté":"refusé"}} le {{accord.datePassage | date: 'dd/MM/YYYY'}}
-                      <fa-icon (click)="openAccordModal(accord, true)" class="pointer orange"
-                        [icon]="faCircleQuestion"></fa-icon>
-                    </div>
-
-                  </div>
-
-
-
-
+                  }
                   <div class="col-12 ">
                     <div class="row align-items-center fullSize">
-                      <div
-                        *ngIf="adhesion.statutActuel == 'Attente validation adhérent' && !isAllAccordsDone(adhesion.accords)"
-                        type='button' class="btn btn-independent btn-outline-danger col-12" disabled>
-                        Enregistrer mon adhésion
-                      </div>
-                      <div
-                        *ngIf="adhesion.statutActuel == 'Attente validation adhérent' && isAllAccordsDone(adhesion.accords)"
-                        type='button' class="btn btn-primary btn-independent col-12" (click)="updateAdhesion(adhesion)">
-                        Enregistrer mon adhésion
-                      </div>
+                      @if (adhesion.statutActuel == 'Attente validation adhérent' && !isAllAccordsDone(adhesion.accords)) {
+                        <div
+                          type='button' class="btn btn-independent btn-outline-danger col-12" disabled>
+                          Enregistrer mon adhésion
+                        </div>
+                      }
+                      @if (adhesion.statutActuel == 'Attente validation adhérent' && isAllAccordsDone(adhesion.accords)) {
+                        <div
+                          type='button' class="btn btn-primary btn-independent col-12" (click)="updateAdhesion(adhesion)">
+                          Enregistrer mon adhésion
+                        </div>
+                      }
                     </div>
                   </div>
-
                 </div>
-              </div>
+              }
             </div>
           </div>
-
         </div>
-      </div>
+      }
     </div>
+  }
+</div>
+</div>
+}
 
 
 
 
-  </div>
+</div>
 </div>
 
 

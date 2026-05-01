@@ -1,62 +1,82 @@
 <div class="row">
-  <div *ngFor="let adherent of tribu.adherents | orderBy:'id':false" [ngClass]="mobile ? 'fullSize' : ''"
-    class="col-6 col-md-4 col-lg-2">
-
-
-    <div class="cadrePermanent">
-      <div class="row">
-        <div class="col-12">
-          <fa-icon *ngIf="supprimable(adherent)" class="fa-lg pointer corner" [icon]="faSquareXmark"
-            (click)="supressionAdherent(adherent)"></fa-icon>
-
-          <div class="pointer" (click)="openAdherent(adherent)">
-            <img *ngIf="adherent.genre == 'Masculin' && !adherent.mineur " src="assets/homme.png" alt="Avatar"
-              style="width:100%">
-            <img *ngIf="adherent.genre == 'Féminin' && !adherent.mineur" src="assets/femme.png" alt="Avatar"
-              style="width:100%">
-            <img *ngIf="adherent.genre == 'Masculin' && adherent.mineur " src="assets/garcon.png" alt="Avatar"
-              style="width:100%">
-            <img *ngIf="adherent.genre == 'Féminin' && adherent.mineur" src="assets/fille.png" alt="Avatar"
-              style="width:100%">
-            <img *ngIf="adherent.genre == undefined" src="assets/nouveau.png" alt="Avatar" style="width:100%">
-            <div class="col-12 center" id="header">
-              {{ !adherent.prenom?"Nouveau":adherent.prenom+" "+adherent.nom}}
-            </div>
-
-
-
-            <div *ngFor="let adhesion of adherent.adhesions | orderBy:'id':false ">
-              {{adhesion.activite.nom}}
-
-              <fa-icon
-                *ngIf="adhesion.statutActuel == 'Validée' || adhesion.statutActuel == 'Licence générée' || adhesion.statutActuel == 'Licence T'"
-                class="green fa-xl" [icon]="faCircleCheck"></fa-icon>
-              <fa-icon *ngIf="adhesion.statutActuel == 'Sur liste d\'attente'" class="gris fa-xl"
-                [icon]="faCirclePause"></fa-icon>
-              <fa-icon *ngIf="adhesion.statutActuel == 'Attente validation adhérent'" class="jaune fa-xl"
-                [icon]="faClock"></fa-icon>
-              <fa-icon *ngIf="adhesion.statutActuel == 'Attente validation secrétariat'" class="pomme fa-xl"
-                [icon]="faClock"></fa-icon>
-              <fa-icon *ngIf="adhesion.statutActuel == 'Attente création licence'" class="orange fa-xl"
-                [icon]="faClock"></fa-icon>
-              <fa-icon *ngIf="adhesion.statutActuel == 'Annulée'" class="orange fa-xl" [icon]="faCircleXmark"></fa-icon>
-
+  @for (adherent of tribu.adherents | orderBy:'id':false; track adherent) {
+    <div [ngClass]="mobile ? 'fullSize' : ''"
+      class="col-6 col-md-4 col-lg-2">
+      <div class="cadrePermanent">
+        <div class="row">
+          <div class="col-12">
+            @if (supprimable(adherent)) {
+              <fa-icon class="fa-lg pointer corner" [icon]="faSquareXmark"
+              (click)="supressionAdherent(adherent)"></fa-icon>
+            }
+            <div class="pointer" (click)="openAdherent(adherent)">
+              @if (adherent.genre == 'Masculin' && !adherent.mineur ) {
+                <img src="assets/homme.png" alt="Avatar"
+                  style="width:100%">
+              }
+              @if (adherent.genre == 'Féminin' && !adherent.mineur) {
+                <img src="assets/femme.png" alt="Avatar"
+                  style="width:100%">
+              }
+              @if (adherent.genre == 'Masculin' && adherent.mineur ) {
+                <img src="assets/garcon.png" alt="Avatar"
+                  style="width:100%">
+              }
+              @if (adherent.genre == 'Féminin' && adherent.mineur) {
+                <img src="assets/fille.png" alt="Avatar"
+                  style="width:100%">
+              }
+              @if (adherent.genre == undefined) {
+                <img src="assets/nouveau.png" alt="Avatar" style="width:100%">
+              }
+              <div class="col-12 center" id="header">
+                {{ !adherent.prenom?"Nouveau":adherent.prenom+" "+adherent.nom}}
+              </div>
+              @for (adhesion of adherent.adhesions | orderBy:'id':false ; track adhesion) {
+                <div>
+                  {{adhesion.activite.nom}}
+                  @if (adhesion.statutActuel == 'Validée' || adhesion.statutActuel == 'Licence générée' || adhesion.statutActuel == 'Licence T') {
+                    <fa-icon
+                    class="green fa-xl" [icon]="faCircleCheck"></fa-icon>
+                  }
+                  @if (adhesion.statutActuel == 'Sur liste d\'attente') {
+                    <fa-icon class="gris fa-xl"
+                    [icon]="faCirclePause"></fa-icon>
+                  }
+                  @if (adhesion.statutActuel == 'Attente validation adhérent') {
+                    <fa-icon class="jaune fa-xl"
+                    [icon]="faClock"></fa-icon>
+                  }
+                  @if (adhesion.statutActuel == 'Attente validation secrétariat') {
+                    <fa-icon class="pomme fa-xl"
+                    [icon]="faClock"></fa-icon>
+                  }
+                  @if (adhesion.statutActuel == 'Attente création licence') {
+                    <fa-icon class="orange fa-xl"
+                    [icon]="faClock"></fa-icon>
+                  }
+                  @if (adhesion.statutActuel == 'Annulée') {
+                    <fa-icon class="orange fa-xl" [icon]="faCircleXmark"></fa-icon>
+                  }
+                </div>
+              }
             </div>
           </div>
         </div>
       </div>
-
     </div>
-  </div>
-  <div *ngIf="ajoutPossible()" class="col-6 col-md-4 col-lg-2">
-    <div class="cadrePermanent" (click)="addAdherent()">
-      <fa-icon class="fa-lg pointer corner white" [icon]="faSquareXmark"></fa-icon>
-      <div class="pointer">
-        <img src="assets/ajout.png" alt="Avatar" style="width:100%">
-        <div class="col-12 center" id="header">Ajouter un adhérent</div>
+  }
+  @if (ajoutPossible()) {
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="cadrePermanent" (click)="addAdherent()">
+        <fa-icon class="fa-lg pointer corner white" [icon]="faSquareXmark"></fa-icon>
+        <div class="pointer">
+          <img src="assets/ajout.png" alt="Avatar" style="width:100%">
+          <div class="col-12 center" id="header">Ajouter un adhérent</div>
+        </div>
       </div>
     </div>
-  </div>
+  }
 </div>
 
 
@@ -66,76 +86,79 @@
 <div class="row">
   <div class="col-12 col-sm-6">
 
-    <div *ngIf="totalRestantDu != 0" class="cadrePermanent">
-
-      <div class="row">
-        <div class="col-12 header">Paiements :</div>
-
-      </div>
-
-
-
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th class="center" scope="col">Activité</th>
-            <th class="center" scope="col">Licencié</th>
-
-            <th class="center" scope="col">Tarif</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let adhesion of adhesionPaiement | orderBy:'id':true ">
-            <td>
-              {{adhesion.activite.nom}} - {{ adhesion.activite.horaire }}
-            </td>
-            <td>{{adhesion.adherent.prenom}}</td>
-            <td>
-              <div>
-                {{ adhesion.tarif }}€
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td colspan="3"><b>Montant total :
-                {{totalRestantDu}}€ </b> à payer ou non encore pris en
+    @if (totalRestantDu != 0) {
+      <div class="cadrePermanent">
+        <div class="row">
+          <div class="col-12 header">Paiements :</div>
+        </div>
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th class="center" scope="col">Activité</th>
+              <th class="center" scope="col">Licencié</th>
+              <th class="center" scope="col">Tarif</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (adhesion of adhesionPaiement | orderBy:'id':true ; track adhesion) {
+              <tr>
+                <td>
+                  {{adhesion.activite.nom}} - {{ adhesion.activite.horaire }}
+                </td>
+                <td>{{adhesion.adherent.prenom}}</td>
+                <td>
+                  <div>
+                    {{ adhesion.tarif }}€
+                  </div>
+                </td>
+              </tr>
+            }
+            <tr>
+              <td colspan="3"><b>Montant total :
+              {{totalRestantDu}}€ </b> à payer ou non encore pris en
               compte par le secretariat
             </td>
           </tr>
         </tbody>
       </table>
-
-      <iframe *ngIf="helloassoAlod" id="haWidget" allowtransparency="true" src="https://www.helloasso.com/associations/amicale-laique-ouche-dinier-reze/adhesions/alod-2025-2026/widget" style="width: 100%; border: none;" onload="window.addEventListener( 'message', function(e) { const dataHeight = e.data.height; const haWidgetElement = document.getElementById('haWidget'); haWidgetElement.height = dataHeight + 'px'; } )" ></iframe>
-      <iframe  *ngIf="helloassoAlod3X" id="haWidget" allowtransparency="true" src="https://www.helloasso.com/associations/amicale-laique-ouche-dinier-reze/adhesions/alod-2025-2026-paiement-en-3-fois/widget" style="width: 100%; border: none;" onload="window.addEventListener( 'message', function(e) { const dataHeight = e.data.height; const haWidgetElement = document.getElementById('haWidget'); haWidgetElement.height = dataHeight + 'px'; } )" ></iframe>
-
-
-      <div *ngIf="totalRestantDu != 0 && showHelloAsso && !majoration" type='button'
-        class="btn btn-primary alod btn-independent" (click)="helloassoAlod = !helloassoAlod">Paiement via HelloAsso
-      </div>
-
-      <div *ngIf="totalRestantDu != 0 && showHelloAsso3X && !majoration" type='button'
-        class="btn btn-primary alod btn-independent" (click)="helloassoAlod3X = !helloassoAlod3X">Paiement via HelloAsso
+      @if (helloassoAlod) {
+        <iframe id="haWidget" allowtransparency="true" src="https://www.helloasso.com/associations/amicale-laique-ouche-dinier-reze/adhesions/alod-2025-2026/widget" style="width: 100%; border: none;" onload="window.addEventListener( 'message', function(e) { const dataHeight = e.data.height; const haWidgetElement = document.getElementById('haWidget'); haWidgetElement.height = dataHeight + 'px'; } )" ></iframe>
+      }
+      @if (helloassoAlod3X) {
+        <iframe  id="haWidget" allowtransparency="true" src="https://www.helloasso.com/associations/amicale-laique-ouche-dinier-reze/adhesions/alod-2025-2026-paiement-en-3-fois/widget" style="width: 100%; border: none;" onload="window.addEventListener( 'message', function(e) { const dataHeight = e.data.height; const haWidgetElement = document.getElementById('haWidget'); haWidgetElement.height = dataHeight + 'px'; } )" ></iframe>
+      }
+      @if (totalRestantDu != 0 && showHelloAsso && !majoration) {
+        <div type='button'
+          class="btn btn-primary alod btn-independent" (click)="helloassoAlod = !helloassoAlod">Paiement via HelloAsso
+        </div>
+      }
+      @if (totalRestantDu != 0 && showHelloAsso3X && !majoration) {
+        <div type='button'
+          class="btn btn-primary alod btn-independent" (click)="helloassoAlod3X = !helloassoAlod3X">Paiement via HelloAsso
         en 3X</div>
-
-
-      <iframe *ngIf="helloassoAlodMajoration" id="haWidget" allowtransparency="true" src="https://www.helloasso.com/associations/amicale-laique-ouche-dinier-reze/adhesions/alod-reinscription-2025-2026/widget" style="width: 100%; border: none;" onload="window.addEventListener( 'message', function(e) { const dataHeight = e.data.height; const haWidgetElement = document.getElementById('haWidget'); haWidgetElement.height = dataHeight + 'px'; } )" ></iframe>
-      <iframe *ngIf="helloassoAlod3XMajoration" id="haWidget" allowtransparency="true" src="https://www.helloasso.com/associations/amicale-laique-ouche-dinier-reze/adhesions/alod-reinscription-2025-2026-paiement-en-3-fois/widget" style="width: 100%; border: none;" onload="window.addEventListener( 'message', function(e) { const dataHeight = e.data.height; const haWidgetElement = document.getElementById('haWidget'); haWidgetElement.height = dataHeight + 'px'; } )" ></iframe>
-
-      <div *ngIf="totalRestantDu != 0 && showHelloAsso && majoration" type='button'
-        class="btn btn-primary alod btn-independent" (click)="helloassoAlodMajoration = !helloassoAlodMajoration">
+      }
+      @if (helloassoAlodMajoration) {
+        <iframe id="haWidget" allowtransparency="true" src="https://www.helloasso.com/associations/amicale-laique-ouche-dinier-reze/adhesions/alod-reinscription-2025-2026/widget" style="width: 100%; border: none;" onload="window.addEventListener( 'message', function(e) { const dataHeight = e.data.height; const haWidgetElement = document.getElementById('haWidget'); haWidgetElement.height = dataHeight + 'px'; } )" ></iframe>
+      }
+      @if (helloassoAlod3XMajoration) {
+        <iframe id="haWidget" allowtransparency="true" src="https://www.helloasso.com/associations/amicale-laique-ouche-dinier-reze/adhesions/alod-reinscription-2025-2026-paiement-en-3-fois/widget" style="width: 100%; border: none;" onload="window.addEventListener( 'message', function(e) { const dataHeight = e.data.height; const haWidgetElement = document.getElementById('haWidget'); haWidgetElement.height = dataHeight + 'px'; } )" ></iframe>
+      }
+      @if (totalRestantDu != 0 && showHelloAsso && majoration) {
+        <div type='button'
+          class="btn btn-primary alod btn-independent" (click)="helloassoAlodMajoration = !helloassoAlodMajoration">
         Paiement via HelloAsso</div>
-
-      <div *ngIf="totalRestantDu != 0 && showHelloAsso3X && majoration" type='button'
-        class="btn btn-primary alod btn-independent" (click)="helloassoAlod3XMajoration = !helloassoAlod3XMajoration">
+      }
+      @if (totalRestantDu != 0 && showHelloAsso3X && majoration) {
+        <div type='button'
+          class="btn btn-primary alod btn-independent" (click)="helloassoAlod3XMajoration = !helloassoAlod3XMajoration">
         Paiement via HelloAsso en 3X</div>
-
-
-
+      }
     </div>
+  }
 
 
 
 
-  </div>
+</div>
 
 </div>

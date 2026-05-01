@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
@@ -73,7 +73,6 @@ registerLocaleData(localeFr);
     ModalPDFComponent,
     ModalChoixActivite,
     ModalActivite,
-    UserComponent,
     SwitchComponent,
     OrderByPipe,
     FilterByPipe,
@@ -93,6 +92,7 @@ registerLocaleData(localeFr);
     BrowserAnimationsModule,
     NgxExtendedPdfViewerModule,
     FontAwesomeModule,
+    UserComponent,
     ngfModule,
     AngularEditorModule,
     ToastrModule.forRoot({
@@ -123,7 +123,8 @@ registerLocaleData(localeFr);
     FilterByPipe
 
   ],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA]
 })
 
 export class AppModule { }
