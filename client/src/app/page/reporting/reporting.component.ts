@@ -12,6 +12,7 @@ import {ToastrService} from "ngx-toastr";
 
 @Component({
   selector: 'app-reporting',
+  standalone: false,
   templateUrl: './reporting.component.html',
   styleUrls: ['./reporting.component.css']
 })

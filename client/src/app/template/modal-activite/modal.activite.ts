@@ -1,5 +1,5 @@
 import { Component, inject, Input, OnInit } from '@angular/core'
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap'
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap/modal'
 import { Activite, ActiviteDropDown, Adherent, AdherentLite } from 'src/app/models';
 import { faExternalLinkSquareAlt } from '@fortawesome/free-solid-svg-icons';
 import { AdherentService } from 'src/app/_services/adherent.service';
@@ -10,6 +10,7 @@ import {DayOfWeek} from "./dayOfWeek";
 
 @Component({
   selector: 'modal',
+  standalone: false,
   templateUrl: './modal.activite.html',
   styleUrls: ['./modal.activite.css']
 })

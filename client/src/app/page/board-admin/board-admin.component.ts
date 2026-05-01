@@ -13,6 +13,7 @@ import {TokenStorageService} from "../../_services/token-storage.service";
 
 @Component({
   selector: 'app-board-admin',
+  standalone: false,
   templateUrl: './board-admin.component.html',
   styleUrls: ['./board-admin.component.css']
 })

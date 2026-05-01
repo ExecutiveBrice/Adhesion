@@ -28,13 +28,19 @@
         </div>
 
         <label for="email"><u>Liste des activités</u></label>
-        <div *ngIf="activitesListe.length > 0">
-          <div *ngFor="let activite of activitesListe | orderBy:'nom':false" class="ligne pointer"
-            (click)="activite.selected = !activite.selected">
-            <b>{{activite.nom}}</b>
-            <fa-icon *ngIf="activite.selected" class="green fa-xl" [icon]="faCircleCheck"></fa-icon>
+        @if (activitesListe.length > 0) {
+          <div>
+            @for (activite of activitesListe | orderBy:'nom':false; track activite) {
+              <div class="ligne pointer"
+                (click)="activite.selected = !activite.selected">
+                <b>{{activite.nom}}</b>
+                @if (activite.selected) {
+                  <fa-icon class="green fa-xl" [icon]="faCircleCheck"></fa-icon>
+                }
+              </div>
+            }
           </div>
-        </div>
+        }
 
 
       </div>
@@ -51,7 +57,7 @@
   <div class="col-md-6 center">
     <div class="btn-group btn-group-sm col-4" role="group">
       <button class="btn btn-sm btn-primary" (click)="openModalAddUser(newAdherentModal)">Nouvel
-        adherent</button>
+      adherent</button>
     </div>
 
   </div>
@@ -82,45 +88,43 @@
           <th class="center col-2" scope="col">Activitées Nm1</th>
         </tr>
       </thead>
-      <div *ngIf="loadder" class="spinner-border text-info"></div>
-      <tbody *ngIf="!loadder">
-        <tr *ngFor="let adherent of adherents ">
-          <td class="center">
-            <fa-icon class="fa-2xl pointer" (click)="opennewTab('#/inscription/'+adherent.tribuId)" [icon]="faUsersRays"></fa-icon>
-          </td>
-          <td>
-            {{adherent.nom}} {{adherent.prenom}}<br />
-            {{adherent.email}}
-          </td>
-          <td>
-            {{adherent.telephone}}
-          </td>
-          <td>
-            {{adherent.adresse}}
-          </td>
-          <td>
-            {{adherent.naissance}}<br />
-            {{adherent.lieuNaissance}}
-          </td>
-          <td>
- {{adherent.accords}}
-          </td>
-
-          <td>
-
-
-            {{adherent.adhesions}}
-          </td>
-          <td>
-
-              {{adherent.activitesNm1}}
-
-
-
-
-          </td>
-        </tr>
-      </tbody>
+      @if (loadder) {
+        <div class="spinner-border text-info"></div>
+      }
+      @if (!loadder) {
+        <tbody>
+          @for (adherent of adherents ; track adherent) {
+            <tr>
+              <td class="center">
+                <fa-icon class="fa-2xl pointer" (click)="opennewTab('#/inscription/'+adherent.tribuId)" [icon]="faUsersRays"></fa-icon>
+              </td>
+              <td>
+                {{adherent.nom}} {{adherent.prenom}}<br />
+                {{adherent.email}}
+              </td>
+              <td>
+                {{adherent.telephone}}
+              </td>
+              <td>
+                {{adherent.adresse}}
+              </td>
+              <td>
+                {{adherent.naissance}}<br />
+                {{adherent.lieuNaissance}}
+              </td>
+              <td>
+                {{adherent.accords}}
+              </td>
+              <td>
+                {{adherent.adhesions}}
+              </td>
+              <td>
+                {{adherent.activitesNm1}}
+              </td>
+            </tr>
+          }
+        </tbody>
+      }
     </table>
 
   </div>

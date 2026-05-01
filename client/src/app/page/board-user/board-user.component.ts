@@ -12,7 +12,8 @@ import {
   Tribu,
   User
 } from '../../models';
-import {NgbDateStruct, NgbCalendar, NgbModal} from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap/modal';
+import { NgbDateStruct, NgbCalendar } from '@ng-bootstrap/ng-bootstrap/datepicker';
 import {ActiviteService} from '../../_services/activite.service';
 import {AdherentService} from 'src/app/_services/adherent.service';
 import {
@@ -49,6 +50,7 @@ import {FileService} from 'src/app/_services/file.service';
 
 @Component({
   selector: 'app-board-user',
+  standalone: false,
   templateUrl: './board-user.component.html',
   styleUrls: ['./board-user.component.css']
 })

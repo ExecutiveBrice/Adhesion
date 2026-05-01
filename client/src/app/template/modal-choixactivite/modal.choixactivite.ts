@@ -1,9 +1,10 @@
 import { Component, inject, Input } from '@angular/core'
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap'
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap/modal'
 import { ActiviteDropDown } from 'src/app/models';
 import { faExternalLinkSquareAlt } from '@fortawesome/free-solid-svg-icons';
 @Component({
   selector: 'modal',
+  standalone: false,
   templateUrl: './modal.choixactivite.html',
   styleUrls: ['./modal.choixactivite.css']
 })

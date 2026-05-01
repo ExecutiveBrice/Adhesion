@@ -13,6 +13,7 @@ import {FormArray, FormBuilder, FormControl, FormGroup} from '@angular/forms';
 
 @Component({
   selector: 'app-mailling',
+  standalone: false,
   templateUrl: './mailling.component.html',
   styleUrls: ['./mailling.component.scss']
 })

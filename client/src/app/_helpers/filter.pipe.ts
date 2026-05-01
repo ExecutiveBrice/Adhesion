@@ -2,6 +2,7 @@ import { Pipe, PipeTransform } from '@angular/core'
 import { Activite } from '../models'
 
 @Pipe({
+  standalone: false,
   name: 'filterBy'
 })
 export class FilterByPipe implements PipeTransform {

@@ -3,6 +3,7 @@ import { TokenStorageService } from '../../_services/token-storage.service';
 
 @Component({
   selector: 'app-maintenance',
+  standalone: false,
   templateUrl: './maintenance.component.html',
   styleUrls: ['./maintenance.component.css']
 })
