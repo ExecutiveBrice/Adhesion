@@ -2924,28 +2924,23 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "secret": {
             "type": "string",
-            "description": "Filled only when requested by the organization back office",
-            "nullable": true
+            "description": "Filled only when requested by the organization back office"
           },
           "partnerName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "privileges": {
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "nullable": true
+            }
           },
           "domain": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -2955,8 +2950,7 @@
         "properties": {
           "domain": {
             "type": "string",
-            "description": "Client domain : Url used to grant authorization redirection",
-            "nullable": true
+            "description": "Client domain : Url used to grant authorization redirection"
           }
         },
         "additionalProperties": false
@@ -2971,8 +2965,7 @@
           },
           "label": {
             "type": "string",
-            "description": "Company legal status label",
-            "nullable": true
+            "description": "Company legal status label"
           }
         },
         "additionalProperties": false,
@@ -2986,12 +2979,10 @@
             "format": "int32"
           },
           "label": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "shortLabel": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -3010,16 +3001,14 @@
         "properties": {
           "url": {
             "type": "string",
-            "description": "The notification Url",
-            "nullable": true
+            "description": "The notification Url"
           },
           "apiNotificationType": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.ApiNotifications.ApiNotificationType"
           },
           "signatureKey": {
             "type": "string",
-            "description": "Signature Key : allows you to verify the authenticity of notifications",
-            "nullable": true
+            "description": "Signature Key : allows you to verify the authenticity of notifications"
           }
         },
         "additionalProperties": false,
@@ -3046,8 +3035,7 @@
         "type": "object",
         "properties": {
           "metadata": {
-            "description": "Metadata (Json object)\r\nOnly if metadata were sent on the checkout form initialization",
-            "nullable": true
+            "description": "Metadata (Json object)\r\nOnly if metadata were sent on the checkout form initialization"
           },
           "order": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.OrderDetail"
@@ -3059,8 +3047,7 @@
           },
           "redirectUrl": {
             "type": "string",
-            "description": "Url where the contributor must be redirected to",
-            "nullable": true
+            "description": "Url where the contributor must be redirected to"
           }
         },
         "additionalProperties": false
@@ -3071,54 +3058,45 @@
           "firstName": {
             "maxLength": 255,
             "type": "string",
-            "description": "FirstName",
-            "nullable": true
+            "description": "FirstName"
           },
           "lastName": {
             "maxLength": 255,
             "type": "string",
-            "description": "LastName",
-            "nullable": true
+            "description": "LastName"
           },
           "email": {
             "maxLength": 255,
             "type": "string",
-            "description": "Email",
-            "nullable": true
+            "description": "Email"
           },
           "dateOfBirth": {
             "type": "string",
             "description": "Date of birth (Date only, no time part)",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "address": {
             "type": "string",
-            "description": "Address",
-            "nullable": true
+            "description": "Address"
           },
           "city": {
             "type": "string",
-            "description": "City",
-            "nullable": true
+            "description": "City"
           },
           "zipCode": {
             "type": "string",
-            "description": "ZipCode",
-            "nullable": true
+            "description": "ZipCode"
           },
           "country": {
             "maxLength": 3,
             "minLength": 3,
             "type": "string",
-            "description": "3 letter country code",
-            "nullable": true
+            "description": "3 letter country code"
           },
           "companyName": {
             "maxLength": 255,
             "type": "string",
-            "description": "Used if the payer is a company",
-            "nullable": true
+            "description": "Used if the payer is a company"
           }
         },
         "additionalProperties": false
@@ -3205,15 +3183,13 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Carts.CheckoutTerm"
             },
-            "description": "The list of future terms (if applicable)",
-            "nullable": true
+            "description": "The list of future terms (if applicable)"
           },
           "payer": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Carts.CheckoutPayer"
           },
           "metadata": {
-            "description": "Metadata (optional)\r\nJson object (max length : 20000)",
-            "nullable": true
+            "description": "Metadata (optional)\r\nJson object (max length : 20000)"
           },
           "paymentOptions": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Carts.CheckoutPaymentOptions"
@@ -3231,8 +3207,7 @@
           },
           "redirectUrl": {
             "type": "string",
-            "description": "Url where the contributor must be redirected to",
-            "nullable": true
+            "description": "Url where the contributor must be redirected to"
           }
         },
         "additionalProperties": false
@@ -3242,13 +3217,11 @@
         "properties": {
           "email": {
             "type": "string",
-            "description": "Contact email",
-            "nullable": true
+            "description": "Contact email"
           },
           "phoneNumber": {
             "type": "string",
-            "description": "Contact phone number",
-            "nullable": true
+            "description": "Contact phone number"
           }
         },
         "additionalProperties": false,
@@ -3259,18 +3232,15 @@
         "properties": {
           "id": {
             "type": "integer",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "fileName": {
             "type": "string",
-            "description": "The file name of document",
-            "nullable": true
+            "description": "The file name of document"
           },
           "publicUrl": {
             "type": "string",
-            "description": "The public url of document",
-            "nullable": true
+            "description": "The public url of document"
           },
           "state": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.ComplianceV2.Documents.DocumentState"
@@ -3283,16 +3253,14 @@
         "type": "object",
         "properties": {
           "caption": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "id": {
             "type": "integer",
             "format": "int32"
           },
           "url": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -3309,13 +3277,11 @@
             "format": "date-time"
           },
           "authorEmail": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "expiresAt": {
             "type": "string",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -3345,8 +3311,7 @@
           },
           "continuationToken": {
             "type": "string",
-            "description": "Continuation Token to get next results",
-            "nullable": true
+            "description": "Continuation Token to get next results"
           }
         },
         "additionalProperties": false,
@@ -3357,30 +3322,25 @@
         "properties": {
           "address": {
             "type": "string",
-            "description": "Address",
-            "nullable": true
+            "description": "Address"
           },
           "name": {
             "type": "string",
-            "description": "Name of the place",
-            "nullable": true
+            "description": "Name of the place"
           },
           "city": {
             "type": "string",
-            "description": "City",
-            "nullable": true
+            "description": "City"
           },
           "zipCode": {
             "type": "string",
-            "description": "ZipCode",
-            "nullable": true
+            "description": "ZipCode"
           },
           "country": {
             "maxLength": 3,
             "minLength": 3,
             "type": "string",
-            "description": "3 letter country code",
-            "nullable": true
+            "description": "3 letter country code"
           },
           "geoLocation": {
             "$ref": "#/components/schemas/HelloAsso.Models.Shared.GeoLocation"
@@ -3398,8 +3358,7 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Directory.PartnerOrganizationModel"
             },
-            "description": "Data property",
-            "nullable": true
+            "description": "Data property"
           },
           "pagination": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Common.PaginationModel"
@@ -3417,8 +3376,7 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Directory.SynchronizableFormModel"
             },
-            "description": "Data property",
-            "nullable": true
+            "description": "Data property"
           },
           "pagination": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Common.PaginationModel"
@@ -3436,8 +3394,7 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Directory.SynchronizableOrganizationModel"
             },
-            "description": "Data property",
-            "nullable": true
+            "description": "Data property"
           },
           "pagination": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Common.PaginationModel"
@@ -3455,8 +3412,7 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Forms.FormLightModel"
             },
-            "description": "Data property",
-            "nullable": true
+            "description": "Data property"
           },
           "pagination": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Common.PaginationModel"
@@ -3474,8 +3430,7 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.Item"
             },
-            "description": "Data property",
-            "nullable": true
+            "description": "Data property"
           },
           "pagination": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Common.PaginationModel"
@@ -3493,8 +3448,7 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.Order"
             },
-            "description": "Data property",
-            "nullable": true
+            "description": "Data property"
           },
           "pagination": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Common.PaginationModel"
@@ -3512,8 +3466,7 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.Payment"
             },
-            "description": "Data property",
-            "nullable": true
+            "description": "Data property"
           },
           "pagination": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Common.PaginationModel"
@@ -3530,8 +3483,7 @@
             "format": "int32"
           },
           "url": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -3553,31 +3505,26 @@
             "items": {
               "type": "string"
             },
-            "description": "The public tags of the organization",
-            "nullable": true
+            "description": "The public tags of the organization"
           },
           "linkedPartners": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "Partners linked to this organization",
-            "nullable": true
+            "description": "Partners linked to this organization"
           },
           "isAuthenticated": {
             "type": "boolean",
-            "description": "The organization is authenticated. Property returned only when asked by an organization admin.",
-            "nullable": true
+            "description": "The organization is authenticated. Property returned only when asked by an organization admin."
           },
           "isCashInCompliant": {
             "type": "boolean",
-            "description": "If transaction can be init on the organization or not. Property returned only when asked by an organization admin.",
-            "nullable": true
+            "description": "If transaction can be init on the organization or not. Property returned only when asked by an organization admin."
           },
           "banner": {
             "type": "string",
-            "description": "The organization banner",
-            "nullable": true
+            "description": "The organization banner"
           },
           "fiscalReceiptEligibility": {
             "type": "boolean",
@@ -3592,49 +3539,41 @@
           },
           "category": {
             "type": "string",
-            "description": "Organization category label",
-            "nullable": true
+            "description": "Organization category label"
           },
           "address": {
             "type": "string",
-            "description": "Organization Address (for authorized applications or if authorized by the organization)",
-            "nullable": true
+            "description": "Organization Address (for authorized applications or if authorized by the organization)"
           },
           "geolocation": {
             "$ref": "#/components/schemas/HelloAsso.Models.Shared.GeoLocation"
           },
           "rnaNumber": {
             "type": "string",
-            "description": "Unique identifier assigned when creating the association",
-            "nullable": true
+            "description": "Unique identifier assigned when creating the association"
           },
           "logo": {
             "type": "string",
-            "description": "Logo of organization",
-            "nullable": true
+            "description": "Logo of organization"
           },
           "name": {
             "type": "string",
-            "description": "Name of organization",
-            "nullable": true
+            "description": "Name of organization"
           },
           "role": {
             "$ref": "#/components/schemas/HelloAsso.Models.Enums.GlobalRole"
           },
           "city": {
             "type": "string",
-            "description": "Organization city",
-            "nullable": true
+            "description": "Organization city"
           },
           "zipCode": {
             "type": "string",
-            "description": "Organization zip code",
-            "nullable": true
+            "description": "Organization zip code"
           },
           "description": {
             "type": "string",
-            "description": "Organization description",
-            "nullable": true
+            "description": "Organization description"
           },
           "updateDate": {
             "type": "string",
@@ -3643,18 +3582,15 @@
           },
           "categoryJoId": {
             "type": "integer",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "url": {
             "type": "string",
-            "description": "The organization url",
-            "nullable": true
+            "description": "The organization url"
           },
           "organizationSlug": {
             "type": "string",
-            "description": "The organization slug",
-            "nullable": true
+            "description": "The organization slug"
           }
         },
         "additionalProperties": false,
@@ -3665,202 +3601,173 @@
         "properties": {
           "formName": {
             "type": "string",
-            "description": "Textual search for form name",
-            "nullable": true
+            "description": "Textual search for form name"
           },
           "formDescription": {
             "type": "string",
-            "description": "Textual search for form description",
-            "nullable": true
+            "description": "Textual search for form description"
           },
           "formZipCodes": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "The zip codes where the forms are located",
-            "nullable": true
+            "description": "The zip codes where the forms are located"
           },
           "formCities": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "The cities where the forms are located",
-            "nullable": true
+            "description": "The cities where the forms are located"
           },
           "formRegions": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "The regions where the forms are located",
-            "nullable": true
+            "description": "The regions where the forms are located"
           },
           "formDepartments": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "The departments where the forms are located",
-            "nullable": true
+            "description": "The departments where the forms are located"
           },
           "formCountries": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "The countries where the forms are located",
-            "nullable": true
+            "description": "The countries where the forms are located"
           },
           "formTypes": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.FormType"
             },
-            "description": "The form types : CrowdFunding, Membership, Event, Donation, PaymentForm ...",
-            "nullable": true
+            "description": "The form types : CrowdFunding, Membership, Event, Donation, PaymentForm ..."
           },
           "formActivityType": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "The Activity Type of the form",
-            "nullable": true
+            "description": "The Activity Type of the form"
           },
           "formPublicationStartDateMin": {
             "type": "string",
             "description": "The inclusive minimum publication date of the forms, format \"yyyy-MM-ddTHH:mm:ss.fffK\"",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "formPublicationStartDateMax": {
             "type": "string",
             "description": "The exclusive maximum publication date of the forms, format \"yyyy-MM-ddTHH:mm:ss.fffK\"",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "formStartDateMin": {
             "type": "string",
             "description": "The inclusive minimum start date of the forms, format \"yyyy-MM-ddTHH:mm:ss.fffK\"",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "formStartDateMax": {
             "type": "string",
             "description": "The exclusive maximum start date of the forms, format \"yyyy-MM-ddTHH:mm:ss.fffK\"",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "formEndDateMax": {
             "type": "string",
             "description": "The exclusive maximum end date of the forms, format \"yyyy-MM-ddTHH:mm:ss.fffK\"",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "formEndDateMin": {
             "type": "string",
             "description": "The inclusive minimum end date of the forms, format \"yyyy-MM-ddTHH:mm:ss.fffK\"",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "formIsFree": {
             "type": "boolean",
-            "description": "Allow only free forms if true",
-            "nullable": true
+            "description": "Allow only free forms if true"
           },
           "formHasRemainingEntries": {
             "type": "boolean",
-            "description": "Allow only forms with remaning entries if true",
-            "nullable": true
+            "description": "Allow only forms with remaning entries if true"
           },
           "formInternalTags": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "Allow only forms with internal tags\r\nthis filter is for special operations only",
-            "nullable": true
+            "description": "Allow only forms with internal tags\r\nthis filter is for special operations only"
           },
           "formPublicTags": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "Allow only forms with public tags",
-            "nullable": true
+            "description": "Allow only forms with public tags"
           },
           "organizationName": {
             "type": "string",
-            "description": "Textual search for organization name",
-            "nullable": true
+            "description": "Textual search for organization name"
           },
           "organizationDescription": {
             "type": "string",
-            "description": "Textual search for organization description",
-            "nullable": true
+            "description": "Textual search for organization description"
           },
           "organizationCategories": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "The categories of the forms",
-            "nullable": true
+            "description": "The categories of the forms"
           },
           "organizationTypes": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "The organization types",
-            "nullable": true
+            "description": "The organization types"
           },
           "organizationZipCodes": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "The zip codes where the organizations are located",
-            "nullable": true
+            "description": "The zip codes where the organizations are located"
           },
           "organizationCities": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "The cities where the organizations are located",
-            "nullable": true
+            "description": "The cities where the organizations are located"
           },
           "organizationRegions": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "The regions where the organizations are located",
-            "nullable": true
+            "description": "The regions where the organizations are located"
           },
           "organizationDepartments": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "The departments where the organizations are located",
-            "nullable": true
+            "description": "The departments where the organizations are located"
           },
           "organizationFiscalReceiptEligibility": {
             "type": "boolean",
-            "description": "Allow only organization with a fiscal receipt eligibility",
-            "nullable": true
+            "description": "Allow only organization with a fiscal receipt eligibility"
           },
           "organizationLinkedPartners": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "Organization linked partners",
-            "nullable": true
+            "description": "Organization linked partners"
           }
         },
         "additionalProperties": false
@@ -3870,90 +3777,78 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "Textual search for organization name",
-            "nullable": true
+            "description": "Textual search for organization name"
           },
           "description": {
             "type": "string",
-            "description": "Textual search for organization description",
-            "nullable": true
+            "description": "Textual search for organization description"
           },
           "categories": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "The categories of the organizations",
-            "nullable": true
+            "description": "The categories of the organizations"
           },
           "types": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "The organization types",
-            "nullable": true
+            "description": "The organization types"
           },
           "zipCodes": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "The zip codes where the organizations are located",
-            "nullable": true
+            "description": "The zip codes where the organizations are located"
           },
           "cities": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "The cities where the organizations are located",
-            "nullable": true
+            "description": "The cities where the organizations are located"
           },
           "regions": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "The regions where the organizations are located",
-            "nullable": true
+            "description": "The regions where the organizations are located"
           },
           "departments": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "The departments where the organizations are located",
-            "nullable": true
+            "description": "The departments where the organizations are located"
           },
           "fiscalReceiptEligibility": {
             "type": "boolean",
-            "description": "Allow only organization with a fiscal receipt eligibility",
-            "nullable": true
+            "description": "Allow only organization with a fiscal receipt eligibility"
           },
           "internalTags": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "Allow only Organization with internal tags\r\nthis filter is for special operations only",
-            "nullable": true
+            "description": "Allow only Organization with internal tags\r\nthis filter is for special operations only"
           },
           "tags": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "Allow only Organization with public tags",
-            "nullable": true
+            "description": "Allow only Organization with public tags"
           },
           "linkedPartners": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "Allow only Organization with linked partners",
-            "nullable": true
+            "description": "Allow only Organization with linked partners"
           }
         },
         "additionalProperties": false
@@ -4252,7 +4147,6 @@
               "type": "string"
             },
             "description": "The list of possible values if type is a CHOICE_LIST",
-            "nullable": true,
             "readOnly": true
           },
           "isRequired": {
@@ -4266,7 +4160,6 @@
           "label": {
             "type": "string",
             "description": "The label to be displayed to the user",
-            "nullable": true,
             "readOnly": true
           }
         },
@@ -4281,8 +4174,7 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Forms.CustomFieldPublicModel"
             },
-            "description": "List of custom fields to be filled by the user",
-            "nullable": true
+            "description": "List of custom fields to be filled by the user"
           },
           "id": {
             "type": "integer",
@@ -4301,13 +4193,11 @@
           },
           "label": {
             "type": "string",
-            "description": "The name of the option",
-            "nullable": true
+            "description": "The name of the option"
           },
           "description": {
             "type": "string",
-            "description": "The description of the option",
-            "nullable": true
+            "description": "The description of the option"
           },
           "isRequired": {
             "type": "boolean",
@@ -4328,13 +4218,11 @@
           },
           "label": {
             "type": "string",
-            "description": "Gets the activity label",
-            "nullable": true
+            "description": "Gets the activity label"
           },
           "shortLabel": {
             "type": "string",
-            "description": "Gets the activity short label",
-            "nullable": true
+            "description": "Gets the activity short label"
           }
         },
         "additionalProperties": false,
@@ -4345,21 +4233,18 @@
         "properties": {
           "formSlug": {
             "type": "string",
-            "description": "The form slug",
-            "nullable": true
+            "description": "The form slug"
           },
           "formType": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.FormType"
           },
           "url": {
             "type": "string",
-            "description": "The form url",
-            "nullable": true
+            "description": "The form url"
           },
           "organizationSlug": {
             "type": "string",
-            "description": "The organization slug",
-            "nullable": true
+            "description": "The organization slug"
           }
         },
         "additionalProperties": false,
@@ -4373,25 +4258,21 @@
           },
           "currency": {
             "type": "string",
-            "description": "Currency",
-            "nullable": true
+            "description": "Currency"
           },
           "description": {
             "type": "string",
-            "description": "Short description (one line)",
-            "nullable": true
+            "description": "Short description (one line)"
           },
           "startDate": {
             "type": "string",
             "description": "The datetime of the activity start",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "endDate": {
             "type": "string",
             "description": "The datetime of the activity end",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "logo": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Common.DocumentModel"
@@ -4404,56 +4285,46 @@
           },
           "title": {
             "type": "string",
-            "description": "Title",
-            "nullable": true
+            "description": "Title"
           },
           "privateTitle": {
             "type": "string",
-            "description": "Private Title",
-            "nullable": true
+            "description": "Private Title"
           },
           "widgetButtonUrl": {
             "type": "string",
-            "description": "Url of the widget button",
-            "nullable": true
+            "description": "Url of the widget button"
           },
           "widgetFullUrl": {
             "type": "string",
-            "description": "Url of the form widget",
-            "nullable": true
+            "description": "Url of the form widget"
           },
           "widgetVignetteHorizontalUrl": {
             "type": "string",
-            "description": "Url of the horizontal vignette widget",
-            "nullable": true
+            "description": "Url of the horizontal vignette widget"
           },
           "widgetVignetteVerticalUrl": {
             "type": "string",
-            "description": "Url of the vertical vignette widget",
-            "nullable": true
+            "description": "Url of the vertical vignette widget"
           },
           "widgetCounterUrl": {
             "type": "string",
-            "description": "Url of the counter widget",
-            "nullable": true
+            "description": "Url of the counter widget"
           },
           "formSlug": {
             "type": "string",
-            "description": "The form slug",
-            "nullable": true
+            "description": "The form slug"
           },
           "formType": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.FormType"
           },
           "url": {
             "type": "string",
-            "description": "The form url",
-            "nullable": true
+            "description": "The form url"
           },
           "organizationSlug": {
             "type": "string",
-            "description": "The organization slug",
-            "nullable": true
+            "description": "The organization slug"
           }
         },
         "additionalProperties": false,
@@ -4464,26 +4335,22 @@
         "properties": {
           "organizationLogo": {
             "type": "string",
-            "description": "Organization Logo",
-            "nullable": true
+            "description": "Organization Logo"
           },
           "organizationName": {
             "type": "string",
-            "description": "Organization Name",
-            "nullable": true
+            "description": "Organization Name"
           },
           "tiers": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Forms.TierPublicModel"
             },
-            "description": "Tiers",
-            "nullable": true
+            "description": "Tiers"
           },
           "activityType": {
             "type": "string",
-            "description": "Activity type of the event eg. \"Atelier(s) / Stage(s)\" matching one of the provided type values <a href=\"index#!/Values/Values_Get\"> provided here</a> or a custom value is allowed.",
-            "nullable": true
+            "description": "Activity type of the event eg. \"Atelier(s) / Stage(s)\" matching one of the provided type values <a href=\"index#!/Values/Values_Get\"> provided here</a> or a custom value is allowed."
           },
           "activityTypeId": {
             "type": "integer",
@@ -4496,47 +4363,40 @@
           "saleEndDate": {
             "type": "string",
             "description": "The datetime (Inclusive) at which the sales end.\r\nIf null the orders will be available until the end of the campaign.",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "saleStartDate": {
             "type": "string",
             "description": "The datetime (Inclusive) at which the users can start placing orders.\r\nIf null the orders will be available as soon as the campaign is published.",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "validityType": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.MembershipValidityType"
           },
           "personalizedMessage": {
             "type": "string",
-            "description": "A message customized by the organization administrator.",
-            "nullable": true
+            "description": "A message customized by the organization administrator."
           },
           "banner": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Common.DocumentModel"
           },
           "currency": {
             "type": "string",
-            "description": "Currency",
-            "nullable": true
+            "description": "Currency"
           },
           "description": {
             "type": "string",
-            "description": "Short description (one line)",
-            "nullable": true
+            "description": "Short description (one line)"
           },
           "startDate": {
             "type": "string",
             "description": "The datetime of the activity start",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "endDate": {
             "type": "string",
             "description": "The datetime of the activity end",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "logo": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Common.DocumentModel"
@@ -4549,56 +4409,46 @@
           },
           "title": {
             "type": "string",
-            "description": "Title",
-            "nullable": true
+            "description": "Title"
           },
           "privateTitle": {
             "type": "string",
-            "description": "Private Title",
-            "nullable": true
+            "description": "Private Title"
           },
           "widgetButtonUrl": {
             "type": "string",
-            "description": "Url of the widget button",
-            "nullable": true
+            "description": "Url of the widget button"
           },
           "widgetFullUrl": {
             "type": "string",
-            "description": "Url of the form widget",
-            "nullable": true
+            "description": "Url of the form widget"
           },
           "widgetVignetteHorizontalUrl": {
             "type": "string",
-            "description": "Url of the horizontal vignette widget",
-            "nullable": true
+            "description": "Url of the horizontal vignette widget"
           },
           "widgetVignetteVerticalUrl": {
             "type": "string",
-            "description": "Url of the vertical vignette widget",
-            "nullable": true
+            "description": "Url of the vertical vignette widget"
           },
           "widgetCounterUrl": {
             "type": "string",
-            "description": "Url of the counter widget",
-            "nullable": true
+            "description": "Url of the counter widget"
           },
           "formSlug": {
             "type": "string",
-            "description": "The form slug",
-            "nullable": true
+            "description": "The form slug"
           },
           "formType": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.FormType"
           },
           "url": {
             "type": "string",
-            "description": "The form url",
-            "nullable": true
+            "description": "The form url"
           },
           "organizationSlug": {
             "type": "string",
-            "description": "The organization slug",
-            "nullable": true
+            "description": "The organization slug"
           }
         },
         "additionalProperties": false,
@@ -4608,16 +4458,13 @@
         "type": "object",
         "properties": {
           "formSlug": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "organizationSlug": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "publicUrl": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -4632,40 +4479,33 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Forms.TierLightModel"
-            },
-            "nullable": true
+            }
           },
           "banner": {
             "type": "string",
-            "description": "The banner of the form",
-            "nullable": true
+            "description": "The banner of the form"
           },
           "description": {
             "type": "string",
-            "description": "The description of form",
-            "nullable": true
+            "description": "The description of form"
           },
           "endDate": {
             "type": "string",
             "description": "The datetime of the activity end",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "logo": {
             "type": "string",
-            "description": "The logo of the form",
-            "nullable": true
+            "description": "The logo of the form"
           },
           "privateTitle": {
             "type": "string",
-            "description": "Private Title : displayed only in the organization back office",
-            "nullable": true
+            "description": "Private Title : displayed only in the organization back office"
           },
           "startDate": {
             "type": "string",
             "description": "The datetime of the activity start",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "title": {
             "minLength": 1,
@@ -4675,8 +4515,7 @@
           "activityTypeId": {
             "type": "integer",
             "description": "Activity type identifier, matching one of the provided type values <a href=\"index#!/Values/Values_Get\"> provided here</a>",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "place": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Common.PlaceModel"
@@ -4684,14 +4523,12 @@
           "saleEndDate": {
             "type": "string",
             "description": "The datetime (Inclusive) at which the sales end.\r\nIf null the orders will be available until the end of the campaign.",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "saleStartDate": {
             "type": "string",
             "description": "The datetime (Inclusive) at which the users can start placing orders.\r\nIf null the orders will be available as soon as the campaign is published.",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "validityType": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.MembershipValidityType"
@@ -4714,13 +4551,11 @@
           },
           "color": {
             "type": "string",
-            "description": "The color of the form",
-            "nullable": true
+            "description": "The color of the form"
           },
           "widgetButtonText": {
             "type": "string",
-            "description": "The text displayed in the widget button",
-            "nullable": true
+            "description": "The text displayed in the widget button"
           },
           "contact": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Common.ContactModel"
@@ -4740,8 +4575,7 @@
           "financialGoal": {
             "type": "integer",
             "description": "Indicates the financial goal (amount of money raised) for the whole form. Null means no goal.",
-            "format": "int64",
-            "nullable": true
+            "format": "int64"
           },
           "generateMembershipCards": {
             "type": "boolean",
@@ -4757,13 +4591,11 @@
           },
           "labelConditionsAndTermsFile": {
             "type": "string",
-            "description": "Label conditions and terms file",
-            "nullable": true
+            "description": "Label conditions and terms file"
           },
           "longDescription": {
             "type": "string",
-            "description": "The long description of the form (rich Html)",
-            "nullable": true
+            "description": "The long description of the form (rich Html)"
           },
           "openDonationPresetAmounts": {
             "type": "array",
@@ -4771,28 +4603,23 @@
               "type": "integer",
               "format": "int32"
             },
-            "description": "The preset amounts to be shown to the user. Maximum 3 amounts.",
-            "nullable": true
+            "description": "The preset amounts to be shown to the user. Maximum 3 amounts."
           },
           "personalizedMessage": {
             "type": "string",
-            "description": "Personalized message for participants",
-            "nullable": true
+            "description": "Personalized message for participants"
           },
           "projectBeneficiaries": {
             "type": "string",
-            "description": "The project beneficiaries of the form (rich Html)",
-            "nullable": true
+            "description": "The project beneficiaries of the form (rich Html)"
           },
           "projectExpensesDetails": {
             "type": "string",
-            "description": "Details of the project expenses (rich Html)",
-            "nullable": true
+            "description": "Details of the project expenses (rich Html)"
           },
           "projectOwners": {
             "type": "string",
-            "description": "Description of the project owners (rich Html)",
-            "nullable": true
+            "description": "Description of the project owners (rich Html)"
           },
           "suggestMonthlyDonation": {
             "type": "boolean",
@@ -4806,8 +4633,7 @@
             "maxLength": 3,
             "minLength": 3,
             "type": "string",
-            "description": "3 letter country code",
-            "nullable": true
+            "description": "3 letter country code"
           },
           "allowOrganismPayer": {
             "type": "boolean",
@@ -4824,8 +4650,7 @@
           "maxEntries": {
             "type": "integer",
             "description": "Indicates the maximum available entries for the whole form. Null means unlimited entries.",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           }
         },
         "additionalProperties": false
@@ -4846,8 +4671,7 @@
           "date": {
             "type": "string",
             "description": "Term Date",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "amount": {
             "type": "integer",
@@ -4862,8 +4686,7 @@
         "type": "object",
         "properties": {
           "label": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "price": {
             "type": "integer",
@@ -4880,16 +4703,14 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Forms.CustomFieldPublicModel"
             },
-            "description": "List of custom fields to be filled by the user",
-            "nullable": true
+            "description": "List of custom fields to be filled by the user"
           },
           "extraOptions": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Forms.ExtraOptionPublicModel"
             },
-            "description": "List of available extra options to buy along the tier",
-            "nullable": true
+            "description": "List of available extra options to buy along the tier"
           },
           "id": {
             "type": "integer",
@@ -4898,13 +4719,11 @@
           },
           "label": {
             "type": "string",
-            "description": "label",
-            "nullable": true
+            "description": "label"
           },
           "description": {
             "type": "string",
-            "description": "description",
-            "nullable": true
+            "description": "description"
           },
           "tierType": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.TierType"
@@ -4912,8 +4731,7 @@
           "price": {
             "type": "integer",
             "description": "the Price in cents\r\nif price equals 0 then it is free or there is a MinAmount",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "vatRate": {
             "type": "number",
@@ -4923,8 +4741,7 @@
           "minAmount": {
             "type": "integer",
             "description": "If set, it means the payment is free to choose, according to the specified minAmount in cents",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "paymentFrequency": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.PaymentFrequencyType"
@@ -4932,8 +4749,7 @@
           "maxPerUser": {
             "type": "integer",
             "description": "Max quantity buyable in this cart",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "meta": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Common.MetaModel"
@@ -4941,14 +4757,12 @@
           "saleStartDate": {
             "type": "string",
             "description": "The datetime (Inclusive) at which the users can start buying this tier.\r\nIf null the tier will be available at the start of the event.",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "saleEndDate": {
             "type": "string",
             "description": "The datetime (Inclusive) at which the tier is no longer available.\r\nIf null the tier will be available until the end of the event.",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "isEligibleTaxReceipt": {
             "type": "boolean",
@@ -4959,16 +4773,14 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Forms.TermModel"
             },
-            "description": "Terms of tier",
-            "nullable": true
+            "description": "Terms of tier"
           },
           "picture": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Common.DocumentModel"
           },
           "isExcludedFromFormPaymentTerms": {
             "type": "boolean",
-            "description": "True means this tier must be paid in the initial payment, false means it can be paid in payment with installments\r\nNull when the form payment terms are disabled or not compatible with the related form",
-            "nullable": true
+            "description": "True means this tier must be paid in the initial payment, false means it can be paid in payment with installments\r\nNull when the form payment terms are disabled or not compatible with the related form"
           },
           "isFavorite": {
             "type": "boolean",
@@ -4983,13 +4795,11 @@
         "properties": {
           "url": {
             "type": "string",
-            "description": "The organization url",
-            "nullable": true
+            "description": "The organization url"
           },
           "organizationSlug": {
             "type": "string",
-            "description": "The organization slug",
-            "nullable": true
+            "description": "The organization slug"
           }
         },
         "additionalProperties": false,
@@ -5000,31 +4810,26 @@
         "properties": {
           "logo": {
             "type": "string",
-            "description": "Logo of organization",
-            "nullable": true
+            "description": "Logo of organization"
           },
           "name": {
             "type": "string",
-            "description": "Name of organization",
-            "nullable": true
+            "description": "Name of organization"
           },
           "role": {
             "$ref": "#/components/schemas/HelloAsso.Models.Enums.GlobalRole"
           },
           "city": {
             "type": "string",
-            "description": "Organization city",
-            "nullable": true
+            "description": "Organization city"
           },
           "zipCode": {
             "type": "string",
-            "description": "Organization zip code",
-            "nullable": true
+            "description": "Organization zip code"
           },
           "description": {
             "type": "string",
-            "description": "Organization description",
-            "nullable": true
+            "description": "Organization description"
           },
           "updateDate": {
             "type": "string",
@@ -5033,18 +4838,15 @@
           },
           "categoryJoId": {
             "type": "integer",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "url": {
             "type": "string",
-            "description": "The organization url",
-            "nullable": true
+            "description": "The organization url"
           },
           "organizationSlug": {
             "type": "string",
-            "description": "The organization slug",
-            "nullable": true
+            "description": "The organization slug"
           }
         },
         "additionalProperties": false,
@@ -5054,51 +4856,42 @@
         "type": "object",
         "properties": {
           "facebookPage": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "galleryImages": {
             "title": "List<ImageModel>",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Common.ImageModel"
-            },
-            "nullable": true
+            }
           },
           "longDescription": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "twitterPage": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "videos": {
             "title": "List<VideoModel>",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Common.VideoModel"
-            },
-            "nullable": true
+            }
           },
           "webSite": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "isAuthenticated": {
             "type": "boolean",
-            "description": "The organization is authenticated. Property returned only when asked by an organization admin.",
-            "nullable": true
+            "description": "The organization is authenticated. Property returned only when asked by an organization admin."
           },
           "isCashInCompliant": {
             "type": "boolean",
-            "description": "If transaction can be init on the organization or not. Property returned only when asked by an organization admin.",
-            "nullable": true
+            "description": "If transaction can be init on the organization or not. Property returned only when asked by an organization admin."
           },
           "banner": {
             "type": "string",
-            "description": "The organization banner",
-            "nullable": true
+            "description": "The organization banner"
           },
           "fiscalReceiptEligibility": {
             "type": "boolean",
@@ -5113,49 +4906,41 @@
           },
           "category": {
             "type": "string",
-            "description": "Organization category label",
-            "nullable": true
+            "description": "Organization category label"
           },
           "address": {
             "type": "string",
-            "description": "Organization Address (for authorized applications or if authorized by the organization)",
-            "nullable": true
+            "description": "Organization Address (for authorized applications or if authorized by the organization)"
           },
           "geolocation": {
             "$ref": "#/components/schemas/HelloAsso.Models.Shared.GeoLocation"
           },
           "rnaNumber": {
             "type": "string",
-            "description": "Unique identifier assigned when creating the association",
-            "nullable": true
+            "description": "Unique identifier assigned when creating the association"
           },
           "logo": {
             "type": "string",
-            "description": "Logo of organization",
-            "nullable": true
+            "description": "Logo of organization"
           },
           "name": {
             "type": "string",
-            "description": "Name of organization",
-            "nullable": true
+            "description": "Name of organization"
           },
           "role": {
             "$ref": "#/components/schemas/HelloAsso.Models.Enums.GlobalRole"
           },
           "city": {
             "type": "string",
-            "description": "Organization city",
-            "nullable": true
+            "description": "Organization city"
           },
           "zipCode": {
             "type": "string",
-            "description": "Organization zip code",
-            "nullable": true
+            "description": "Organization zip code"
           },
           "description": {
             "type": "string",
-            "description": "Organization description",
-            "nullable": true
+            "description": "Organization description"
           },
           "updateDate": {
             "type": "string",
@@ -5164,18 +4949,15 @@
           },
           "categoryJoId": {
             "type": "integer",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "url": {
             "type": "string",
-            "description": "The organization url",
-            "nullable": true
+            "description": "The organization url"
           },
           "organizationSlug": {
             "type": "string",
-            "description": "The organization slug",
-            "nullable": true
+            "description": "The organization slug"
           }
         },
         "additionalProperties": false
@@ -5185,33 +4967,27 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "Name of the partner",
-            "nullable": true
+            "description": "Name of the partner"
           },
           "displayName": {
             "type": "string",
-            "description": "Display Name of the partner",
-            "nullable": true
+            "description": "Display Name of the partner"
           },
           "description": {
             "type": "string",
-            "description": "Description of the partner",
-            "nullable": true
+            "description": "Description of the partner"
           },
           "url": {
             "type": "string",
-            "description": "Website of the partner",
-            "nullable": true
+            "description": "Website of the partner"
           },
           "logo": {
             "type": "string",
-            "description": "Logo of the partner : square format",
-            "nullable": true
+            "description": "Logo of the partner : square format"
           },
           "logoRectangle": {
             "type": "string",
-            "description": "Logo of the partner : rectangle format",
-            "nullable": true
+            "description": "Logo of the partner : rectangle format"
           },
           "apiClient": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Accounts.Clients.ApiClientModel"
@@ -5221,8 +4997,7 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.ApiNotifications.ApiUrlNotificationModel"
             },
-            "description": "Url Notification of the partner",
-            "nullable": true
+            "description": "Url Notification of the partner"
           },
           "partnerStatistics": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Models.PartnerStatisticsModel"
@@ -5261,36 +5036,30 @@
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.FormType"
           },
           "campaignName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "operationType": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Payment.CashoutExport.CashoutExportPaymentOperation"
           },
           "credit": {
             "type": "number",
-            "format": "double",
-            "nullable": true
+            "format": "double"
           },
           "debit": {
             "type": "number",
-            "format": "double",
-            "nullable": true
+            "format": "double"
           },
           "orderId": {
             "type": "integer",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "paymentId": {
             "type": "integer",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "paymentDate": {
             "type": "string",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "paymentMethod": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.PaymentMeans"
@@ -5307,28 +5076,22 @@
             "format": "int32"
           },
           "designation": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "payerCompany": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "payerLastName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "payerFirstName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "payerEmail": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "payerSiren": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -5385,12 +5148,10 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.ItemPayment"
             },
-            "description": "Payments linked to this item",
-            "nullable": true
+            "description": "Payments linked to this item"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "user": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.User"
@@ -5401,8 +5162,7 @@
           "minAmount": {
             "type": "integer",
             "description": "Minimum amount that was specified on the tier (in cents)",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "discount": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.ItemDiscount"
@@ -5412,51 +5172,42 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.ItemCustomField"
             },
-            "description": "Custom fields related to this item",
-            "nullable": true
+            "description": "Custom fields related to this item"
           },
           "options": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.ItemOption"
             },
-            "description": "Extra options taken with this item",
-            "nullable": true
+            "description": "Extra options taken with this item"
           },
           "ticketUrl": {
             "type": "string",
-            "description": "The Ticket Url",
-            "nullable": true
+            "description": "The Ticket Url"
           },
           "qrCode": {
             "type": "string",
-            "description": "The item QrCode (for ticket scanning only)",
-            "nullable": true
+            "description": "The item QrCode (for ticket scanning only)"
           },
           "membershipCardUrl": {
             "type": "string",
-            "description": "The Membership Card Url",
-            "nullable": true
+            "description": "The Membership Card Url"
           },
           "dayOfLevy": {
             "type": "integer",
             "description": "The day of levy for monthly donation only",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "tierDescription": {
             "type": "string",
-            "description": "Tier description",
-            "nullable": true
+            "description": "Tier description"
           },
           "tierId": {
             "type": "integer",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "comment": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "id": {
             "type": "integer",
@@ -5474,8 +5225,7 @@
           "initialAmount": {
             "type": "integer",
             "description": "The raw amount (without reduction)",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "state": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.ItemState"
@@ -5492,16 +5242,14 @@
             "format": "int32"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "type": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.FieldType"
           },
           "answer": {
             "type": "string",
-            "description": "Participant or user answer",
-            "nullable": true
+            "description": "Participant or user answer"
           }
         },
         "additionalProperties": false,
@@ -5521,12 +5269,10 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.ItemPayment"
             },
-            "description": "Payments linked to this item",
-            "nullable": true
+            "description": "Payments linked to this item"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "user": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.User"
@@ -5537,8 +5283,7 @@
           "minAmount": {
             "type": "integer",
             "description": "Minimum amount that was specified on the tier (in cents)",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "discount": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.ItemDiscount"
@@ -5548,51 +5293,42 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.ItemCustomField"
             },
-            "description": "Custom fields related to this item",
-            "nullable": true
+            "description": "Custom fields related to this item"
           },
           "options": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.ItemOption"
             },
-            "description": "Extra options taken with this item",
-            "nullable": true
+            "description": "Extra options taken with this item"
           },
           "ticketUrl": {
             "type": "string",
-            "description": "The Ticket Url",
-            "nullable": true
+            "description": "The Ticket Url"
           },
           "qrCode": {
             "type": "string",
-            "description": "The item QrCode (for ticket scanning only)",
-            "nullable": true
+            "description": "The item QrCode (for ticket scanning only)"
           },
           "membershipCardUrl": {
             "type": "string",
-            "description": "The Membership Card Url",
-            "nullable": true
+            "description": "The Membership Card Url"
           },
           "dayOfLevy": {
             "type": "integer",
             "description": "The day of levy for monthly donation only",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "tierDescription": {
             "type": "string",
-            "description": "Tier description",
-            "nullable": true
+            "description": "Tier description"
           },
           "tierId": {
             "type": "integer",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "comment": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "id": {
             "type": "integer",
@@ -5610,8 +5346,7 @@
           "initialAmount": {
             "type": "integer",
             "description": "The raw amount (without reduction)",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "state": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.ItemState"
@@ -5624,8 +5359,7 @@
         "properties": {
           "code": {
             "type": "string",
-            "description": "The discount code applied on the item",
-            "nullable": true
+            "description": "The discount code applied on the item"
           },
           "amount": {
             "type": "integer",
@@ -5640,8 +5374,7 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "Name of the option",
-            "nullable": true
+            "description": "Name of the option"
           },
           "amount": {
             "type": "integer",
@@ -5660,8 +5393,7 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.ItemCustomField"
             },
-            "description": "Custom fields related to this option",
-            "nullable": true
+            "description": "Custom fields related to this option"
           },
           "optionId": {
             "type": "integer",
@@ -5695,8 +5427,7 @@
           "amountTip": {
             "type": "integer",
             "description": "Tip Amount of the payment (in cents)",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "date": {
             "type": "string",
@@ -5709,8 +5440,7 @@
           "installmentNumber": {
             "type": "integer",
             "description": "Indicates the payment number (useful in the case of an order comprising payments with installments)",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "state": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.PaymentState"
@@ -5730,8 +5460,7 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.RefundOperationLightModel"
             },
-            "description": "The refund operations information for the specific payment.",
-            "nullable": true
+            "description": "The refund operations information for the specific payment."
           }
         },
         "additionalProperties": false,
@@ -5748,16 +5477,14 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.OrderItem"
             },
-            "description": "All items of the order",
-            "nullable": true
+            "description": "All items of the order"
           },
           "payments": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.OrderPayment"
             },
-            "description": "All payments of the order",
-            "nullable": true
+            "description": "All payments of the order"
           },
           "amount": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.OrderAmountModel"
@@ -5774,21 +5501,18 @@
           },
           "formSlug": {
             "type": "string",
-            "description": "FormSlug (lowercase name of the form without special characters)",
-            "nullable": true
+            "description": "FormSlug (lowercase name of the form without special characters)"
           },
           "formType": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.FormType"
           },
           "organizationName": {
             "type": "string",
-            "description": "The organization name.",
-            "nullable": true
+            "description": "The organization name."
           },
           "organizationSlug": {
             "type": "string",
-            "description": "OrganizationSlug (lowercase name of the organization without special characters)",
-            "nullable": true
+            "description": "OrganizationSlug (lowercase name of the organization without special characters)"
           },
           "organizationType": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.OrganizationType"
@@ -5800,8 +5524,7 @@
           "checkoutIntentId": {
             "type": "integer",
             "description": "Checkout intent Id if available",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "meta": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Common.MetaModel"
@@ -5841,16 +5564,14 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.OrderItem"
             },
-            "description": "All items of the order",
-            "nullable": true
+            "description": "All items of the order"
           },
           "payments": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.OrderPayment"
             },
-            "description": "All payments of the order",
-            "nullable": true
+            "description": "All payments of the order"
           },
           "amount": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.OrderAmountModel"
@@ -5867,21 +5588,18 @@
           },
           "formSlug": {
             "type": "string",
-            "description": "FormSlug (lowercase name of the form without special characters)",
-            "nullable": true
+            "description": "FormSlug (lowercase name of the form without special characters)"
           },
           "formType": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.FormType"
           },
           "organizationName": {
             "type": "string",
-            "description": "The organization name.",
-            "nullable": true
+            "description": "The organization name."
           },
           "organizationSlug": {
             "type": "string",
-            "description": "OrganizationSlug (lowercase name of the organization without special characters)",
-            "nullable": true
+            "description": "OrganizationSlug (lowercase name of the organization without special characters)"
           },
           "organizationType": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.OrganizationType"
@@ -5893,8 +5611,7 @@
           "checkoutIntentId": {
             "type": "integer",
             "description": "Checkout intent Id if available",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "meta": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Common.MetaModel"
@@ -5910,12 +5627,10 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.SharePayment"
             },
-            "description": "Payments linked to this item and each share between the item and the payment",
-            "nullable": true
+            "description": "Payments linked to this item and each share between the item and the payment"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "user": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.User"
@@ -5926,8 +5641,7 @@
           "minAmount": {
             "type": "integer",
             "description": "Minimum amount that was specified on the tier (in cents)",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "discount": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.ItemDiscount"
@@ -5937,51 +5651,42 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.ItemCustomField"
             },
-            "description": "Custom fields related to this item",
-            "nullable": true
+            "description": "Custom fields related to this item"
           },
           "options": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.ItemOption"
             },
-            "description": "Extra options taken with this item",
-            "nullable": true
+            "description": "Extra options taken with this item"
           },
           "ticketUrl": {
             "type": "string",
-            "description": "The Ticket Url",
-            "nullable": true
+            "description": "The Ticket Url"
           },
           "qrCode": {
             "type": "string",
-            "description": "The item QrCode (for ticket scanning only)",
-            "nullable": true
+            "description": "The item QrCode (for ticket scanning only)"
           },
           "membershipCardUrl": {
             "type": "string",
-            "description": "The Membership Card Url",
-            "nullable": true
+            "description": "The Membership Card Url"
           },
           "dayOfLevy": {
             "type": "integer",
             "description": "The day of levy for monthly donation only",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "tierDescription": {
             "type": "string",
-            "description": "Tier description",
-            "nullable": true
+            "description": "Tier description"
           },
           "tierId": {
             "type": "integer",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "comment": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "id": {
             "type": "integer",
@@ -5999,8 +5704,7 @@
           "initialAmount": {
             "type": "integer",
             "description": "The raw amount (without reduction)",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "state": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.ItemState"
@@ -6024,21 +5728,18 @@
           },
           "formSlug": {
             "type": "string",
-            "description": "FormSlug (lowercase name of the form without special characters)",
-            "nullable": true
+            "description": "FormSlug (lowercase name of the form without special characters)"
           },
           "formType": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.FormType"
           },
           "organizationName": {
             "type": "string",
-            "description": "The organization name.",
-            "nullable": true
+            "description": "The organization name."
           },
           "organizationSlug": {
             "type": "string",
-            "description": "OrganizationSlug (lowercase name of the organization without special characters)",
-            "nullable": true
+            "description": "OrganizationSlug (lowercase name of the organization without special characters)"
           },
           "organizationType": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.OrganizationType"
@@ -6050,8 +5751,7 @@
           "checkoutIntentId": {
             "type": "integer",
             "description": "Checkout intent Id if available",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "meta": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Common.MetaModel"
@@ -6067,33 +5767,28 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.ShareItem"
             },
-            "description": "Items linked to this payment and each share between the item and the payment",
-            "nullable": true
+            "description": "Items linked to this payment and each share between the item and the payment"
           },
           "cashOutDate": {
             "type": "string",
             "description": "The date of the cash out",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "idCashOut": {
             "type": "integer",
             "description": "The id of the cash out",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "cashOutState": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.PaymentCashOutState"
           },
           "paymentReceiptUrl": {
             "type": "string",
-            "description": "The Payment Receipt Url",
-            "nullable": true
+            "description": "The Payment Receipt Url"
           },
           "fiscalReceiptUrl": {
             "type": "string",
-            "description": "The Fiscal Receipt Url",
-            "nullable": true
+            "description": "The Fiscal Receipt Url"
           },
           "id": {
             "type": "integer",
@@ -6108,8 +5803,7 @@
           "amountTip": {
             "type": "integer",
             "description": "Tip Amount of the payment (in cents)",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "date": {
             "type": "string",
@@ -6122,8 +5816,7 @@
           "installmentNumber": {
             "type": "integer",
             "description": "Indicates the payment number (useful in the case of an order comprising payments with installments)",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "state": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.PaymentState"
@@ -6143,8 +5836,7 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.RefundOperationLightModel"
             },
-            "description": "The refund operations information for the specific payment.",
-            "nullable": true
+            "description": "The refund operations information for the specific payment."
           }
         },
         "additionalProperties": false,
@@ -6154,47 +5846,38 @@
         "type": "object",
         "properties": {
           "email": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "address": {
             "type": "string",
-            "description": "Gets or Sets Address",
-            "nullable": true
+            "description": "Gets or Sets Address"
           },
           "city": {
             "type": "string",
-            "description": "Gets or Sets City",
-            "nullable": true
+            "description": "Gets or Sets City"
           },
           "zipCode": {
             "type": "string",
-            "description": "Gets or Sets ZipCode",
-            "nullable": true
+            "description": "Gets or Sets ZipCode"
           },
           "country": {
             "type": "string",
-            "description": "Gets or Sets Country",
-            "nullable": true
+            "description": "Gets or Sets Country"
           },
           "company": {
             "type": "string",
-            "description": "Gets or Sets Company",
-            "nullable": true
+            "description": "Gets or Sets Company"
           },
           "dateOfBirth": {
             "type": "string",
             "description": "Gets or Sets date of birth",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "firstName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "lastName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -6213,33 +5896,28 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.PaymentItem"
             },
-            "description": "Items linked to this payment",
-            "nullable": true
+            "description": "Items linked to this payment"
           },
           "cashOutDate": {
             "type": "string",
             "description": "The date of the cash out",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "idCashOut": {
             "type": "integer",
             "description": "The id of the cash out",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "cashOutState": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.PaymentCashOutState"
           },
           "paymentReceiptUrl": {
             "type": "string",
-            "description": "The Payment Receipt Url",
-            "nullable": true
+            "description": "The Payment Receipt Url"
           },
           "fiscalReceiptUrl": {
             "type": "string",
-            "description": "The Fiscal Receipt Url",
-            "nullable": true
+            "description": "The Fiscal Receipt Url"
           },
           "id": {
             "type": "integer",
@@ -6254,8 +5932,7 @@
           "amountTip": {
             "type": "integer",
             "description": "Tip Amount of the payment (in cents)",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "date": {
             "type": "string",
@@ -6268,8 +5945,7 @@
           "installmentNumber": {
             "type": "integer",
             "description": "Indicates the payment number (useful in the case of an order comprising payments with installments)",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "state": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.PaymentState"
@@ -6289,8 +5965,7 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.RefundOperationLightModel"
             },
-            "description": "The refund operations information for the specific payment.",
-            "nullable": true
+            "description": "The refund operations information for the specific payment."
           }
         },
         "additionalProperties": false
@@ -6309,33 +5984,28 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.PaymentItem"
             },
-            "description": "Items linked to this payment",
-            "nullable": true
+            "description": "Items linked to this payment"
           },
           "cashOutDate": {
             "type": "string",
             "description": "The date of the cash out",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "idCashOut": {
             "type": "integer",
             "description": "The id of the cash out",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "cashOutState": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.PaymentCashOutState"
           },
           "paymentReceiptUrl": {
             "type": "string",
-            "description": "The Payment Receipt Url",
-            "nullable": true
+            "description": "The Payment Receipt Url"
           },
           "fiscalReceiptUrl": {
             "type": "string",
-            "description": "The Fiscal Receipt Url",
-            "nullable": true
+            "description": "The Fiscal Receipt Url"
           },
           "id": {
             "type": "integer",
@@ -6350,8 +6020,7 @@
           "amountTip": {
             "type": "integer",
             "description": "Tip Amount of the payment (in cents)",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "date": {
             "type": "string",
@@ -6364,8 +6033,7 @@
           "installmentNumber": {
             "type": "integer",
             "description": "Indicates the payment number (useful in the case of an order comprising payments with installments)",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "state": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.PaymentState"
@@ -6385,8 +6053,7 @@
             "items": {
               "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Statistics.RefundOperationLightModel"
             },
-            "description": "The refund operations information for the specific payment.",
-            "nullable": true
+            "description": "The refund operations information for the specific payment."
           }
         },
         "additionalProperties": false
@@ -6407,8 +6074,7 @@
           "shareOptionsAmount": {
             "type": "integer",
             "description": "Amount of all extra options linked to this item and payed on this payment (in cents)",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "id": {
             "type": "integer",
@@ -6426,16 +6092,14 @@
           "initialAmount": {
             "type": "integer",
             "description": "The raw amount (without reduction)",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "state": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.ItemState"
           },
           "name": {
             "type": "string",
-            "description": "Name of the item paid (relevant for checkout forms)",
-            "nullable": true
+            "description": "Name of the item paid (relevant for checkout forms)"
           }
         },
         "additionalProperties": false,
@@ -6490,8 +6154,7 @@
           "shareOptionsAmount": {
             "type": "integer",
             "description": "Amount of all extra options linked to this item and payed on this payment (in cents)",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           }
         },
         "additionalProperties": false
@@ -6516,12 +6179,10 @@
         "type": "object",
         "properties": {
           "firstName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "lastName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -6536,20 +6197,17 @@
           },
           "name": {
             "type": "string",
-            "description": "Name tag",
-            "nullable": true
+            "description": "Name tag"
           },
           "formCount": {
             "type": "integer",
             "description": "Count of times Tag is used by forms",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "organizationCount": {
             "type": "integer",
             "description": "Count of times Tag is used by Organizations",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "tagType": {
             "$ref": "#/components/schemas/HelloAsso.Api.V5.Common.Models.Enums.TagType"
@@ -6560,8 +6218,7 @@
           "amountCollected": {
             "type": "integer",
             "description": "Amount collected by all forms linked to this tag (in cents)",
-            "format": "int64",
-            "nullable": true
+            "format": "int64"
           }
         },
         "additionalProperties": false,
@@ -6572,8 +6229,7 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "Name tag",
-            "nullable": true
+            "description": "Name tag"
           },
           "score": {
             "type": "number",

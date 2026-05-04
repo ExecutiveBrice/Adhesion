@@ -57,9 +57,10 @@ public class AdherentServices {
 
 
     public void findByGroup(List<Groupe> maillingListe, List<String> mailling) {
-        log.info("findByGroup Role");
+
         maillingListe.forEach(groupe -> {
             if(groupe.getNom().equals("role")){
+                log.info("findByGroup Role");
                 groupe.getHoraires().forEach(horaire -> {
                     if(horaire.getChecked()){
                             mailling.addAll( adherentRepository.findByUserRoleId(horaire.getId()).stream().map(adherent -> {
@@ -69,27 +70,27 @@ public class AdherentServices {
 
                     }
                 });
-            }
-
-            if(groupe.getChecked()){
-                log.info("findByGroup Activite {}", groupe.getNom());
-                mailling.addAll( activiteServices.findByNom(groupe.getNom()).stream().flatMap(activite -> activite.getAdhesions().stream().map(adhesion -> {
-                            return Boolean.TRUE.equals(adhesion.getAdherent().getEmailRepresentant()) && adhesion.getAdherent().getRepresentant() != null ? adhesion.getAdherent().getRepresentant().getUser().getUsername():adhesion.getAdherent().getUser().getUsername();
-                        }).filter(Objects::nonNull))
-                        .collect(Collectors.toSet()));
-
-            }else {
-                groupe.getHoraires().forEach(horaire -> {
-                    if(horaire.getChecked()){
-                        log.info("findByGroup Horaire {}", horaire.getNom());
-                mailling.addAll( activiteServices.getById(horaire.getId()).getAdhesions().stream().map(adhesion -> {
-                            return Boolean.TRUE.equals(adhesion.getAdherent().getEmailRepresentant()) && adhesion.getAdherent().getRepresentant() != null ? adhesion.getAdherent().getRepresentant().getUser().getUsername():adhesion.getAdherent().getUser().getUsername();
-                        }).filter(Objects::nonNull)
-                        .collect(Collectors.toSet()));
-                    }
-                });
+            }else{
+                if(groupe.getChecked()){
+                    log.info("findByGroup Activite {}", groupe.getNom());
+                    mailling.addAll( activiteServices.findByNom(groupe.getNom()).stream().flatMap(activite -> activite.getAdhesions().stream().map(adhesion -> {
+                                return Boolean.TRUE.equals(adhesion.getAdherent().getEmailRepresentant()) && adhesion.getAdherent().getRepresentant() != null ? adhesion.getAdherent().getRepresentant().getUser().getUsername():adhesion.getAdherent().getUser().getUsername();
+                            }).filter(Objects::nonNull))
+                            .collect(Collectors.toSet()));
+                    }else {
+                    groupe.getHoraires().forEach(horaire -> {
+                        if(horaire.getChecked()){
+                            log.info("findByGroup Horaire {}", horaire.getNom());
+                    mailling.addAll( activiteServices.getById(horaire.getId()).getAdhesions().stream().map(adhesion -> {
+                                return Boolean.TRUE.equals(adhesion.getAdherent().getEmailRepresentant()) && adhesion.getAdherent().getRepresentant() != null ? adhesion.getAdherent().getRepresentant().getUser().getUsername():adhesion.getAdherent().getUser().getUsername();
+                            }).filter(Objects::nonNull)
+                            .collect(Collectors.toSet()));
+                        }
+                    });
+                }
             }
         });
+
 
     }
 

@@ -140,6 +140,7 @@ public class EmailService {
         apiKey.setApiKey(System.getenv("BREVO_APIKEY_PRIVATE"));
 
         try {
+            log.info("Send singlemessage to {}",destinataires );
 
             TransactionalEmailsApi api = new TransactionalEmailsApi();
             SendSmtpEmailSender sender = new SendSmtpEmailSender();
@@ -184,8 +185,8 @@ public class EmailService {
             }
 
 
-//            CreateSmtpEmail response = api.sendTransacEmail(sendSmtpEmail);
-//            log.info(response.toString());
+            CreateSmtpEmail response = api.sendTransacEmail(sendSmtpEmail);
+            log.info(response.toString());
         } catch (Exception e) {
             log.warn("Exception occurred:- " + e.getMessage());
         }

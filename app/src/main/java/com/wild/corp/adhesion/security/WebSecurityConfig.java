@@ -67,7 +67,9 @@ public class WebSecurityConfig{
                                 .requestMatchers(HttpMethod.GET, "/param/**").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/adherent/**").permitAll()
                                 .requestMatchers(HttpMethod.OPTIONS,"/**").permitAll()
-                                .requestMatchers("/swagger-ui**").permitAll()
+                                .requestMatchers(
+                                        "/swagger-ui/**",
+                                        "/v3/api-docs/**").permitAll()
                                 .anyRequest().authenticated()
                 );
 
