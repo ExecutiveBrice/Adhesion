@@ -4,7 +4,6 @@ import com.wild.corp.adhesion.models.Adherent;
 import com.wild.corp.adhesion.models.resources.AdherentLite;
 import com.wild.corp.adhesion.services.AdherentServices;
 import com.wild.corp.adhesion.services.UserServices;
-import jakarta.transaction.Transactional;
 import jakarta.websocket.server.PathParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

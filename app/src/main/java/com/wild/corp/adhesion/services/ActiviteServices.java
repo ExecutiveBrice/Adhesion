@@ -1,9 +1,7 @@
 package com.wild.corp.adhesion.services;
 
-import com.wild.corp.adhesion.models.Activite;
-import com.wild.corp.adhesion.models.Adherent;
-import com.wild.corp.adhesion.models.Adhesion;
-import com.wild.corp.adhesion.models.Seance;
+import com.wild.corp.adhesion.models.*;
+import com.wild.corp.adhesion.repository.ActiviteNm1Repository;
 import com.wild.corp.adhesion.repository.ActiviteRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +24,7 @@ public class ActiviteServices {
     @Autowired
     AdherentServices adherentServices;
     @Autowired
-    UserServices userServices;
+    ActiviteNm1Repository activiteNm1Repository;
     @Autowired
     SeanceServices seanceServices;
 
@@ -35,6 +33,21 @@ public class ActiviteServices {
         Activite activite = getById(activiteId);
         LocalDate now = LocalDate.now();
         return activite.getSeances().stream().filter(seance -> now.equals(seance.getDateSeance())).toList();
+    }
+    public List<ActiviteNm1> getAllNm1() {
+        List<ActiviteNm1> activites = activiteNm1Repository.findAll();
+
+        List<ActiviteNm1> uniques = activites.stream()
+                .collect(Collectors.toMap(
+                        ActiviteNm1::getActiviteId,
+                        a -> a,
+                        (a1, a2) -> a1
+                ))
+                .values()
+                .stream()
+                .toList();
+
+        return uniques;
     }
 
 
@@ -78,8 +91,16 @@ public class ActiviteServices {
         return activiteRepository.findByNom(nom);
     }
 
+
+    public List<ActiviteNm1> findNm1ByNom(String nom) {
+        return activiteNm1Repository.findByNom(nom);
+    }
+
     public Activite getById(Long activiteId) {
         return activiteRepository.findById(activiteId).get();
+    }
+    public List<ActiviteNm1> getNm1ById(Long activiteId) {
+        return activiteNm1Repository.findByActiviteId(activiteId);
     }
 
 }

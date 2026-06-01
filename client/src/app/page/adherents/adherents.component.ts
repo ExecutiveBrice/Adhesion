@@ -11,7 +11,7 @@ import { ParamService } from 'src/app/_services/param.service';
 import { ExcelService } from 'src/app/_services/excel.service';
 import { FilterAdhesionByPipe } from 'src/app/_helpers/filterAdhesion.pipe';
 import { ActiviteService } from 'src/app/_services/activite.service';
-import { ActivitesNm1 } from 'src/app/models/activitesNm1';
+import { ActiviteNm1 } from 'src/app/models/activiteNm1';
 import { TribuService } from 'src/app/_services/tribu.service';
 import { ToastrService } from 'ngx-toastr';
 import {AdherentFlat} from "../../models/adherentFlat";
@@ -109,10 +109,10 @@ export class AdherentsComponent implements OnInit {
     this.authService.registerAnonymous(email).subscribe({
       next: (adherent) => {
 
-        let activitesNm1: ActivitesNm1[] = []
+        let activitesNm1: ActiviteNm1[] = []
         this.activitesListe.forEach(activiteMineur => {
           if (activiteMineur.selected) {
-            let activiteNm1 = new ActivitesNm1();
+            let activiteNm1 = new ActiviteNm1();
             activiteNm1.nom = activiteMineur.nom
             activiteNm1.horaire = this.type
             activiteNm1.tribu = adherent.tribu

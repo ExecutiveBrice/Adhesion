@@ -1,4 +1,5 @@
 ﻿export * from './activite';
+export * from './activiteNm1';
 export * from './adherent';
 export * from './adhesion';
 export * from './email';
