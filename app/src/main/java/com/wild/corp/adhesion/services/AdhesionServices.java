@@ -247,20 +247,23 @@ public class AdhesionServices {
     public Adhesion save(Principal principal, Long adherentId, Long activiteId) {
         Activite activite = activiteServices.getById(activiteId);
         Adherent adherent = adherentServices.getById(adherentId);
+
+        boolean dejaLicencie =  adherent.getActivitesNm1().stream().anyMatch(activiteNm1 -> "ALOD_B".equals(activiteNm1.getGroupe()) || activite.getGroupeFiltre().equals(activiteNm1.getGroupeFiltre()));
+
         Adhesion newAdhesion = new Adhesion();
         newAdhesion.setPosition(0);
         newAdhesion.setRappel(false);
         newAdhesion.setDateAjoutPanier(now());
         newAdhesion.setAdherent(adherent);
         newAdhesion.setActivite(activite);
-        newAdhesion.setDejaLicencie("ALOD_B".equals(activite.getGroupeFiltre()) ? true : false);
+        newAdhesion.setDejaLicencie(dejaLicencie);
         newAdhesion.setFlag(false);
         newAdhesion.setInscrit(false);
         newAdhesion.setValidDocumentSecretariat(false);
         newAdhesion.setValidPaiementSecretariat(false);
 
-        Predicate<ActiviteNm1> basket = activiteNm1 -> activiteNm1.getGroupeFiltre() != null && activiteNm1.getGroupeFiltre().matches("^U(.*)|^Loisir$|^Senior$|^Dirigeant$");
-        if(adherent.getActivitesNm1().stream().anyMatch(basket) && "Basket".equals(activite.getGroupeFiltre())){
+
+        if(dejaLicencie && activite.isMajoration()){
             newAdhesion.setMajoration(true);
             newAdhesion.setTarif(activite.getTarif()+30);
         }else{

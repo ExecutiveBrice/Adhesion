@@ -1,6 +1,6 @@
 import { Tribu } from "./tribu";
 
-export class ActivitesNm1 {
+export class ActiviteNm1 {
 
   id!: number;
   activiteId!: number;

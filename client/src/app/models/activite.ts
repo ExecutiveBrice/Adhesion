@@ -7,6 +7,7 @@ export class Activite {
   nom!: string;
   groupe!: string;
   groupeFiltre!: string;
+  groupeCompta!: string;
   tarif!: number;
   jour!: string;
   ageMin!: number;
@@ -28,6 +29,7 @@ export class Activite {
   vieClub!: boolean;
   charteAmicale!: boolean;
   complete!: boolean;
+  majoration!: boolean;
   reinscription!: boolean;
   globaleSpecifique!: boolean;
 

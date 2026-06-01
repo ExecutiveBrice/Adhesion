@@ -28,4 +28,6 @@ public class ActiviteNm1 {
 
     @ManyToOne
     private Tribu tribu;
+
+
 }

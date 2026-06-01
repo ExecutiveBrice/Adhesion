@@ -1,6 +1,6 @@
 import { Accord } from "./accord";
 import { Activite } from "./activite";
-import { ActivitesNm1 } from "./activitesNm1";
+import { ActiviteNm1 } from "./activiteNm1";
 import { Adhesion } from "./adhesion";
 import { Document } from "./document";
 import { Notification } from "./notification";
@@ -37,7 +37,7 @@ export class Adherent {
   derniereVisites!: Notification[];
   tribu!: Tribu;
   adhesions!: Adhesion[]
-  activitesNm1!: ActivitesNm1[]
+  activitesNm1!: ActiviteNm1[]
   cours!: Activite[];
   user!: User;
 

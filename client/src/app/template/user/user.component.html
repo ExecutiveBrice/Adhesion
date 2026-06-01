@@ -91,11 +91,16 @@
 
           <div class="cadrePermanent ">
             <div class="row">
-              <div class="col-8 header">
-                {{activiteNm1.nom}}
-              </div>
-              <div class="col-12 ">
+              <div class="col-8 ">
+               <b class="header"> {{activiteNm1.nom}}</b><br>
                 <i>{{ activiteNm1.horaire }}</i>
+
+
+
+              </div>
+              <div class="col-4 ">
+                    <span type='button'
+                          class="btn btn-primary alod btn-independent" (click)="choisir(adherent, activiteNm1.activiteId)">Renouveler</span>
               </div>
             </div>
           </div>
@@ -428,7 +433,7 @@
             <div class="col-6" (click)="choixActivites(adherent)">
               <div class="col-12 btn-group btn-group-sm" role="group" aria-label="rgpd">
                 <div type='button' class="btn btn-block btn-primary">
-                  Ajouter un nouvelle activité</div>
+                  Ajouter une nouvelle activité</div>
               </div>
 
 

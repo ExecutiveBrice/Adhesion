@@ -2,6 +2,7 @@
 export class ActiviteDropDown {
 
   nom!: string;
+  groupeFiltre!: string;
   horaires!: HoraireDropDown[];
   selected!:boolean
   constructor(){

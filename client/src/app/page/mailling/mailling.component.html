@@ -1,7 +1,13 @@
 <div class="row">
 
   <div class="col-4">
-    @for (groupe of maillingListe.controls | orderObjectBy:"value.ordre":false;track $index){
+    @if ( pageReady){
+
+      <span type='button'
+           class="btn btn-primary alod btn-independent" (click)="role_bouton = !role_bouton">mailing par role</span>
+
+      @if ( role_bouton){
+      @for (groupe of roleListe.controls | orderObjectBy:"value.ordre":false;track $index){
       <label class="checkbox">
         <input type="checkbox" [formControl]="getControl(groupe)" (change)="selectGroupe(groupe)" />
         <span><b>{{groupe.get('text')?.value}}</b></span>
@@ -13,8 +19,42 @@
         </label>
       }
     }
+      }
+      <span type='button'
+           class="btn btn-primary alod btn-independent" (click)="activite_bouton = !activite_bouton">mailing pour les activités de 2025/2026</span>
 
+      @if ( activite_bouton){
+    @for (groupe of activiteListe.controls | orderObjectBy:"value.ordre":false;track $index){
+      <label class="checkbox">
+        <input type="checkbox" [formControl]="getControl(groupe)" (change)="selectGroupe(groupe)" />
+        <span><b>{{groupe.get('text')?.value}}</b></span>
+      </label>
+      @for (horaire of groupe.get('horaires')?.controls | orderObjectBy:"value.ordre":false;track $index){
+        <label class="indentation checkbox">
+          <input type="checkbox" [formControl]="getControl(horaire)" (change)="evaluateMailing(groupe, horaire)" />
+          <span >{{horaire.get('text')?.value}}</span>
+        </label>
+      }
+    }
+      }
+      <span type='button'
+           class="btn btn-primary alod btn-independent" (click)="activiteNm1_bouton = !activiteNm1_bouton">mailing pour les activités de 2026/2027</span>
 
+      @if ( activiteNm1_bouton){
+    @for (groupe of activiteNm1Liste.controls | orderObjectBy:"value.ordre":false;track $index){
+      <label class="checkbox">
+        <input type="checkbox" [formControl]="getControl(groupe)" (change)="selectGroupe(groupe)" />
+        <span><b>{{groupe.get('text')?.value}}</b></span>
+      </label>
+      @for (horaire of groupe.get('horaires')?.controls | orderObjectBy:"value.ordre":false;track $index){
+        <label class="indentation checkbox">
+          <input type="checkbox" [formControl]="getControl(horaire)" (change)="evaluateMailing(groupe, horaire)" />
+          <span >{{horaire.get('text')?.value}}</span>
+        </label>
+      }
+    }
+    }
+    }
   </div>
   <div class="col-4">
     <div class="btn-group btn-group-sm " role="group">
@@ -83,7 +123,7 @@
       </thead>
       <tbody>
       <tr
-        *ngFor="let historique of historiques">
+        *ngFor="let historique of historiques | orderSimpleBy:'dateEnvoi':true">
         <td>
           {{ historique.dateEnvoi | date:'EEEE, MMMM d, y, hh:mm' }}
         </td>

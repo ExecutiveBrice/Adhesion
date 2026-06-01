@@ -29,6 +29,11 @@ ActiviteServices activiteServices;
 		return ResponseEntity.ok(activiteServices.getAll());
 	}
 
+	@GetMapping("/allNm1")
+	public ResponseEntity<?> getAllNm1() {
+		return ResponseEntity.ok(activiteServices.getAllNm1());
+	}
+
 	@GetMapping("/seancesDuJour")
 	public ResponseEntity<?> getSeancesDuJourForAcivite( @RequestParam(value="activiteId") Long activiteId) {
 		log.info("getAllCours for activite " + activiteId );

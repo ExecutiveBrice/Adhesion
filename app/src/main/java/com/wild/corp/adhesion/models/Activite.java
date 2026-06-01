@@ -30,6 +30,8 @@ public class Activite {
 
     private String groupeFiltre;
 
+    private String groupeCompta;
+
     private String nom;
 
     private String lien;
@@ -67,6 +69,9 @@ public class Activite {
     private boolean certificatMedical;
 
     private boolean complete;
+
+    @Column(name = "majoration")
+    private boolean majoration;
 
     private Integer dureeVieCertif;
 

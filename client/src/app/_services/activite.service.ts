@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { Activite, Adherent, ActiviteDropDown, HoraireDropDown } from '../models';
+import { Activite, Adherent,ActiviteNm1, ActiviteDropDown, HoraireDropDown } from '../models';
 import { Seance } from '../models/seance';
 
 const API_URL = environment.server + '/activite/';
@@ -17,9 +17,14 @@ export class ActiviteService {
     return this.http.get<Seance[]>(API_URL + 'seancesDuJour', { responseType: 'json' });
   }
 
+  getAllNm1(): Observable<ActiviteNm1[]> {
+    return this.http.get<ActiviteNm1[]>(API_URL + 'allNm1', { responseType: 'json' });
+  }
   getAll(): Observable<Activite[]> {
     return this.http.get<Activite[]>(API_URL + 'all', { responseType: 'json' });
   }
+
+
 
   addReferent(activiteId: number, adherentId: string): Observable<Activite[]> {
     let params = new HttpParams().set('activiteId', '' + activiteId + '').set('adherentId', '' + adherentId + '');
@@ -52,6 +57,7 @@ export class ActiviteService {
               } else {
                 activiteDropDown = new ActiviteDropDown()
                 activiteDropDown.nom = act.nom
+                activiteDropDown.groupeFiltre = act.groupeFiltre
                 activitesListe.push(activiteDropDown)
               }
 
@@ -74,7 +80,7 @@ export class ActiviteService {
                 if(act.globaleSpecifique){
                   horaireDropDown.reinscription =  adherent.activitesNm1.map(value => value.activiteId).includes(act.id);
                 }else {
-                  horaireDropDown.reinscription =  adherent.activitesNm1.find(activiteNm1 => activiteNm1.nom == activiteDropDown.nom) != undefined
+                  horaireDropDown.reinscription =  adherent.activitesNm1.find(activiteNm1 => activiteNm1.nom == act.nom) != undefined
                 }
               }
               horaireDropDown.complete = act.complete

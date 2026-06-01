@@ -370,7 +370,7 @@ export class BoardUserComponent implements OnInit {
 
       },
       err => {
-        ;
+        console.log(err) ;
       }
     );
   }
@@ -397,7 +397,6 @@ export class BoardUserComponent implements OnInit {
     }, (reason) => {
       console.log(reason)
       this.getTribu();
-      // on dismiss
     });
   }
 
