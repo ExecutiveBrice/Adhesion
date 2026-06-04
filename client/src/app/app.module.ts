@@ -40,6 +40,8 @@ import { MaintenanceComponent } from './page/maintenance/maintenance.component';
 import { ParamTransmissionService } from './_helpers/transmission.service';
 import { ReportingComponent } from './page/reporting/reporting.component';
 import { DatePipe, registerLocaleData } from '@angular/common';
+import { CalendarModule, DateAdapter } from 'angular-calendar';
+import { adapterFactory } from 'angular-calendar/date-adapters/date-fns';
 
 import { AngularEditorModule } from '@wfpena/angular-wysiwyg';
 
@@ -95,6 +97,7 @@ registerLocaleData(localeFr);
     FontAwesomeModule,
     ngfModule,
     AngularEditorModule,
+    CalendarModule.forRoot({ provide: DateAdapter, useFactory: adapterFactory }),
     ToastrModule.forRoot({
       enableHtml: true,
       timeOut: 10000,
