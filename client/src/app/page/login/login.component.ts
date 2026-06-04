@@ -7,6 +7,7 @@ import { faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePl
 import { Subscription } from 'rxjs';
 import { ParamService } from 'src/app/_services/param.service';
 import { ToastrService } from 'ngx-toastr';
+import { CalendarEvent, CalendarView } from 'angular-calendar';
 
 @Component({
   selector: 'app-login',
@@ -41,6 +42,15 @@ export class LoginComponent implements OnInit {
   validRgpd = false;
   testRgpd = false;
   inscriptionOpen: boolean = false;
+  calendarView: CalendarView = CalendarView.Week;
+  calendarViewDate: Date = new Date();
+  calendarEvents: CalendarEvent[] = [];
+  calendarLocale = 'fr';
+  calendarWeekStartsOn = 1;
+  calendarExcludeDays: number[] = [0, 6];
+  calendarDayStartHour = 8;
+  calendarDayEndHour = 23;
+  calendarDayEndMinute = 59;
 
 
   constructor(

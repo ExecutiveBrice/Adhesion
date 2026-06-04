@@ -133,7 +133,39 @@
       </div>
 
 
-
+      <div *ngIf="!isLoggedIn && !oublieMDP" class="card card-container login-calendar">
+        <div class="calendar-header">
+          <button
+            class="btn btn-outline-primary btn-sm"
+            mwlCalendarPreviousView
+            [view]="calendarView"
+            [(viewDate)]="calendarViewDate"
+            [excludeDays]="calendarExcludeDays">
+            Semaine précédente
+          </button>
+          <h2 class="calendar-title">
+            {{ calendarViewDate | calendarDate:(calendarView + 'ViewTitle'):calendarLocale:calendarWeekStartsOn:calendarExcludeDays }}
+          </h2>
+          <button
+            class="btn btn-outline-primary btn-sm"
+            mwlCalendarNextView
+            [view]="calendarView"
+            [(viewDate)]="calendarViewDate"
+            [excludeDays]="calendarExcludeDays">
+            Semaine suivante
+          </button>
+        </div>
+        <mwl-calendar-week-view
+          [viewDate]="calendarViewDate"
+          [events]="calendarEvents"
+          [locale]="calendarLocale"
+          [weekStartsOn]="calendarWeekStartsOn"
+          [excludeDays]="calendarExcludeDays"
+          [dayStartHour]="calendarDayStartHour"
+          [dayEndHour]="calendarDayEndHour"
+          [dayEndMinute]="calendarDayEndMinute">
+        </mwl-calendar-week-view>
+      </div>
 
 
     </div>

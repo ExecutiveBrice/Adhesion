@@ -1,0 +1,29 @@
+.login-calendar {
+  overflow-x: auto;
+}
+
+.calendar-header {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.calendar-title {
+  font-size: 1.1rem;
+  margin: 0;
+  text-align: center;
+}
+
+.login-calendar mwl-calendar-week-view {
+  display: block;
+  min-width: 620px;
+}
+
+@media (max-width: 768px) {
+  .calendar-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
