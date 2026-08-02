@@ -41,7 +41,7 @@ public class UserServices {
         User user = findByEmail(username);
         List<Seance> seances = user.getAdherent().getCours().stream().flatMap(activite -> {
             LocalDate now = LocalDate.now();
-            return activite.getSeances().stream().filter(seance -> now.equals(seance.getDateSeance()));
+            return activite.getSeances().stream().filter(seance -> now.equals(seance.getDebut()));
         }).toList();
 
 

@@ -65,6 +65,7 @@ public class Activite {
 
     private DayOfWeek jour;
 
+    private Long duree;
 
     private boolean certificatMedical;
 

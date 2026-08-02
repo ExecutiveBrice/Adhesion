@@ -32,7 +32,7 @@ public class ActiviteServices {
 
         Activite activite = getById(activiteId);
         LocalDate now = LocalDate.now();
-        return activite.getSeances().stream().filter(seance -> now.equals(seance.getDateSeance())).toList();
+        return activite.getSeances().stream().filter(seance -> now.equals(seance.getDebut())).toList();
     }
     public List<ActiviteNm1> getAllNm1() {
         List<ActiviteNm1> activites = activiteNm1Repository.findAll();

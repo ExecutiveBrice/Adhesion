@@ -192,7 +192,46 @@
                     </execution>
 
 
+                    <execution>
+                        <id>VacancesScolaire</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <!-- Chemin vers api-farmeo.json -->
+                            <inputSpec>${project.basedir}/src/main/resources/vacances.json</inputSpec>
+                            <!-- Générateur 'spring' + Feign Spring Cloud -->
+                            <generatorName>spring</generatorName>
+                            <output>${project.build.directory}/generated-sources/vacances</output>
 
+                            <!-- Si on veut que ça écrase le code si l'API change -->
+                            <skipOverwrite>false</skipOverwrite>
+
+                            <!-- Les packages où seront générées les APIs et les models -->
+                            <apiPackage>org.wild.corp.adhesion.client.vacances.api</apiPackage>
+                            <modelPackage>org.wild.corp.adhesion.client.vacances.model</modelPackage>
+                            <configOptions>
+                                <useTags>true</useTags>
+                                <!-- Librairie Feign Spring Cloud -->
+                                <library>spring-cloud</library>
+                                <!-- Générer uniquement des interfaces, pas de controllers -->
+                                <interfaceOnly>true</interfaceOnly>
+                                <!-- Ne génère pas d'impl par défaut -->
+                                <skipDefaultInterface>true</skipDefaultInterface>
+                                <!-- On utilise Jakarta EE (pour Spring Boot 3 / Java 21) -->
+                                <useJakartaEe>true</useJakartaEe>
+                            </configOptions>
+                            <typeMappings>
+                                <typeMapping>DateTime=LocalDateTime</typeMapping>
+                                <typeMapping>Date=LocalDate</typeMapping>
+                            </typeMappings>
+                            <importMappings>
+                                <importMapping>LocalDateTime=java.time.LocalDateTime</importMapping>
+                                <importMapping>LocalDate=java.time.LocalDate</importMapping>
+                            </importMappings>
+                        </configuration>
+                    </execution>
 
                 </executions>
             </plugin>
