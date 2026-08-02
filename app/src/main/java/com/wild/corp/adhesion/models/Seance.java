@@ -7,6 +7,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,7 +34,9 @@ public class Seance {
 
     private String causeAnnulation;
 
-    private LocalDate dateSeance;
+    private LocalDateTime debut;
+
+    private LocalDateTime fin;
 
     private String commentaire;
 
