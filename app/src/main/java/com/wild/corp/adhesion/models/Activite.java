@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.DayOfWeek;
+import java.time.LocalTime;
 import java.time.MonthDay;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -64,6 +65,8 @@ public class Activite {
 
 
     private DayOfWeek jour;
+
+    private LocalTime horaireDebut;
 
     private Long duree;
 
