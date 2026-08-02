@@ -23,23 +23,24 @@ class SeanceServicesTest {
 
     @Test
     void createsWeeklySessionsAtActivityStartAndSkipsVacationsAndPublicHolidays() {
-        DatasetApi api = mock(DatasetApi.class);
+        DatasetApi vacancesApi = mock(DatasetApi.class);
+        DatasetApi joursFeriesApi = mock(DatasetApi.class);
         Records vacations = new Records().results(List.of(new Record()
                 .putAdditionalProperty("start_date", "2026-09-12T00:00:00+02:00")
                 .putAdditionalProperty("end_date", "2026-09-15T00:00:00+02:00")));
         Records holidays = new Records().results(List.of(new Record()
                 .putAdditionalProperty("date", "2026-09-21")));
 
-        when(api.getRecords(eq("vacances"), nullable(String.class), nullable(String.class),
+        when(vacancesApi.getRecords(eq("vacances"), nullable(String.class), nullable(String.class),
                 nullable(String.class), nullable(String.class), eq(100), eq(0), nullable(String.class),
                 nullable(String.class), eq("fr"), eq("Europe/Paris"), eq(false), eq(false)))
                 .thenReturn(ResponseEntity.ok(vacations));
-        when(api.getRecords(eq("feries"), nullable(String.class), nullable(String.class),
+        when(joursFeriesApi.getRecords(eq("feries"), nullable(String.class), nullable(String.class),
                 nullable(String.class), nullable(String.class), eq(100), eq(0), nullable(String.class),
                 nullable(String.class), eq("fr"), eq("Europe/Paris"), eq(false), eq(false)))
                 .thenReturn(ResponseEntity.ok(holidays));
 
-        SeanceServices service = new SeanceServices(api, "C", "vacances", "feries");
+        SeanceServices service = new SeanceServices(vacancesApi, joursFeriesApi, "C", "vacances", "feries");
         Activite activite = activity();
         service.fillSeances(activite, 4, "C", LocalDate.of(2026, 9, 8));
 

@@ -13,9 +13,11 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 
 
 @SpringBootApplication
+@EnableFeignClients(basePackages = "com.wild.corp.adhesion.config")
 public class AdhesionWebApp {
 
 	@Autowired
@@ -69,4 +71,3 @@ public class AdhesionWebApp {
 		paramNumberServices.fillParamNumber();
 	}
 }
-

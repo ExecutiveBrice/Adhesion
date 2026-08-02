@@ -5,6 +5,7 @@ import com.wild.corp.adhesion.repository.SeanceRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.wild.corp.adhesion.client.vacances.api.DatasetApi;
 import org.wild.corp.adhesion.client.vacances.model.Record;
@@ -25,16 +26,19 @@ public class SeanceServices {
     @Autowired
     SeanceRepository seanceRepository;
 
-    private final DatasetApi datasetApi;
+    private final DatasetApi vacancesApi;
+    private final DatasetApi joursFeriesApi;
     private final String zone;
     private final String vacancesDataset;
     private final String joursFeriesDataset;
 
-    public SeanceServices(DatasetApi datasetApi,
+    public SeanceServices(@Qualifier("vacancesDatasetApi") DatasetApi vacancesApi,
+                          @Qualifier("joursFeriesDatasetApi") DatasetApi joursFeriesApi,
                           @Value("${adhesion.calendrier.zone:C}") String zone,
                           @Value("${adhesion.calendrier.vacances-dataset:fr-en-calendrier-scolaire}") String vacancesDataset,
                           @Value("${adhesion.calendrier.jours-feries-dataset:jours-feries-en-france}") String joursFeriesDataset) {
-        this.datasetApi = datasetApi;
+        this.vacancesApi = vacancesApi;
+        this.joursFeriesApi = joursFeriesApi;
         this.zone = zone;
         this.vacancesDataset = vacancesDataset;
         this.joursFeriesDataset = joursFeriesDataset;
@@ -81,7 +85,7 @@ public class SeanceServices {
         Set<LocalDate> dates = new HashSet<>();
         String vacationWhere = "zones=\"Zone " + schoolZone.toUpperCase() + "\" and start_date <= date'" + end
                 + "' and end_date >= date'" + start + "'";
-        Records vacations = response(vacancesDataset, vacationWhere);
+        Records vacations = response(vacancesApi, vacancesDataset, vacationWhere);
         for (Record record : vacations.getResults()) {
             LocalDate vacationStart = date(record, "start_date");
             LocalDate vacationEnd = date(record, "end_date");
@@ -95,14 +99,14 @@ public class SeanceServices {
             }
         }
 
-        Records holidays = response(joursFeriesDataset,
+        Records holidays = response(joursFeriesApi, joursFeriesDataset,
                 "date >= date'" + start + "' and date <= date'" + end + "'");
         holidays.getResults().stream().map(record -> date(record, "date")).filter(java.util.Objects::nonNull)
                 .forEach(dates::add);
         return dates;
     }
 
-    private Records response(String dataset, String where) {
+    private Records response(DatasetApi datasetApi, String dataset, String where) {
         Records records = datasetApi.getRecords(dataset, null, where, null, null, 100, 0,
                 null, null, "fr", "Europe/Paris", false, false).getBody();
         if (records == null) {
