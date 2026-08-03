@@ -1,17 +1,13 @@
-import { PresenceSeance } from "./presenceSeance";
-
+import { Activite } from './activite';
+import { PresenceSeance } from './presenceSeance';
 
 export class Seance {
-
   id!: number;
-
-  activiteId!: number;
-
-  numeroSeance!: number;
-
-  dateSeance!: string;
-
-  commentaire!: string;
-
-  presenceSeance: PresenceSeance[]=[];
+  activite!: Activite;
+  etatSeance!: string;
+  causeAnnulation?: string;
+  debut!: string;
+  fin!: string;
+  commentaire?: string;
+  presences: PresenceSeance[] = [];
 }

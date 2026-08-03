@@ -9,6 +9,9 @@
 
     <div class="collapse navbar-collapse" [ngbCollapse]="isCollapsed" id="navbarToggler">
       <ul class="navbar-nav mr-auto" routerLinkActive="active">
+        <li class="nav-item" *ngIf="isLoggedIn" (click)="isCollapsed = true">
+          <a href="/accueil" class="nav-link blanc" routerLink="accueil">Accueil</a>
+        </li>
         <li class="nav-item" *ngIf="showAdmin" (click)="isCollapsed = true">
           <a href="/admin" class="nav-link blanc" routerLink="admin">Administration</a>
         </li>

@@ -6,6 +6,8 @@ import { NgbModule, NgbDatepickerModule, NgbCollapseModule, NgbTooltipModule, Ng
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { LoginComponent } from './page/login/login.component';
+import { AccueilComponent } from './page/accueil/accueil.component';
+import { FullCalendarModule } from '@fullcalendar/angular';
 import { ResetPasswordComponent } from './page/resetPassword/resetpassword.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { BoardAdminComponent } from './page/board-admin/board-admin.component';
@@ -58,6 +60,7 @@ registerLocaleData(localeFr);
   declarations: [
     AppComponent,
     LoginComponent,
+    AccueilComponent,
     ResetPasswordComponent,
     BoardAdminComponent,
     AdherentsComponent,
@@ -82,6 +85,7 @@ registerLocaleData(localeFr);
   ],
   imports: [
     BrowserModule,
+    FullCalendarModule,
     AppRoutingModule,
     FormsModule,
     NgbModule,

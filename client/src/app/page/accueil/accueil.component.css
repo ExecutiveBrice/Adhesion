@@ -1,0 +1,68 @@
+.accueil-calendrier {
+  max-width: 1500px;
+  margin: 24px auto;
+  padding: 0 12px;
+}
+
+.accueil-entete {
+  margin-bottom: 18px;
+}
+
+.accueil-entete h1,
+.accueil-entete p {
+  margin-bottom: 4px;
+}
+
+.sur-titre {
+  color: #527c65;
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.calendrier-conteneur {
+  position: relative;
+  padding: 20px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, .12);
+}
+
+.calendrier-en-chargement full-calendar {
+  opacity: .35;
+}
+
+.chargement {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  color: #527c65;
+  font-weight: 700;
+}
+
+:host ::ng-deep .fc .fc-button-primary {
+  border-color: #3e604d;
+  background-color: #527c65;
+}
+
+:host ::ng-deep .fc .fc-button-primary:hover,
+:host ::ng-deep .fc .fc-button-primary:not(:disabled).fc-button-active {
+  border-color: #2e4739;
+  background-color: #3e604d;
+}
+
+:host ::ng-deep .fc .fc-timegrid-now-indicator-line {
+  border-color: #d74a4a;
+}
+
+:host ::ng-deep .seance-annulee .fc-event-title {
+  text-decoration: line-through;
+}
+
+@media (max-width: 768px) {
+  .accueil-calendrier { margin-top: 14px; padding: 0; }
+  .calendrier-conteneur { padding: 10px; border-radius: 10px; }
+  :host ::ng-deep .fc .fc-toolbar { align-items: stretch; flex-direction: column; gap: 8px; }
+  :host ::ng-deep .fc .fc-toolbar-title { font-size: 1.2rem; }
+}

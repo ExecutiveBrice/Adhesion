@@ -26,10 +26,10 @@ UserServices userServices;
 	AdherentRepository adherentRepository;
 
 
-	@GetMapping("/seancesDuJour")
-	public ResponseEntity<?> getSeancesDuJour(Authentication principal) {
-		log.info("getAllCours by " + principal.getName() );
-		return ResponseEntity.ok(userServices.getSeancesDuJourForUser(principal.getName()));
+	@GetMapping("/seancesSemaine")
+	public ResponseEntity<?> getSeancesDeLaSemaine(Authentication principal) {
+		log.info("getSeancesDeLaSemaine by " + principal.getName());
+		return ResponseEntity.ok(userServices.getSeancesDeLaSemaineForUser(principal.getName()));
 	}
 
 

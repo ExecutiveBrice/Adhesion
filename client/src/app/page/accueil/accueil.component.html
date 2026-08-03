@@ -1,0 +1,14 @@
+<section class="accueil-calendrier" aria-labelledby="titre-calendrier">
+  <div class="accueil-entete">
+    <div>
+      <p class="sur-titre">Mon planning</p>
+      <h1 id="titre-calendrier">Calendrier des séances</h1>
+      <p>Retrouvez ici toutes vos séances de la semaine.</p>
+    </div>
+  </div>
+
+  <div class="calendrier-conteneur" [class.calendrier-en-chargement]="!calendrierCharge">
+    <full-calendar [options]="calendarOptions"></full-calendar>
+    <p *ngIf="!calendrierCharge" class="chargement" role="status">Chargement du calendrier…</p>
+  </div>
+</section>

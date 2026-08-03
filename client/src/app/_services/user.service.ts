@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { User, UserLite } from '../models';
+import { Seance } from '../models/seance';
 
 const API_URL = environment.server+'/user/';
 
@@ -11,6 +12,10 @@ const API_URL = environment.server+'/user/';
 })
 export class UserService {
   constructor(private http: HttpClient) { }
+
+  getSeancesDeLaSemaine(): Observable<Seance[]> {
+    return this.http.get<Seance[]>(API_URL + 'seancesSemaine', { responseType: 'json' });
+  }
 
   getConnectedUser(): Observable<User> {
     return this.http.get<User>(API_URL + 'connecteduser', { responseType: 'json' });

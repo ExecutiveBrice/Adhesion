@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 
 
 import { LoginComponent } from './page/login/login.component';
+import { AccueilComponent } from './page/accueil/accueil.component';
 import { ResetPasswordComponent } from './page/resetPassword/resetpassword.component';
 
 
@@ -20,6 +21,7 @@ import { ProfsComponent } from './page/profs/profs.component';
 import { ComptaComponent } from './page/compta/compta.component';
 
 const routes: Routes = [
+  { path: 'accueil', component: AccueilComponent },
   { path: 'login', component: LoginComponent },
   { path: 'resetPassword/:token', component: ResetPasswordComponent },
   { path: 'inscription/:tribuUuid', component: BoardUserComponent },

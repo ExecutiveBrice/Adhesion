@@ -11,7 +11,10 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,17 +38,20 @@ public class UserServices {
     private String serverName;
 
 
-    public List<Seance> getSeancesDuJourForUser (String username){
-
+    public List<Seance> getSeancesDeLaSemaineForUser(String username) {
+        LocalDate aujourdHui = LocalDate.now();
+        LocalDateTime debutSemaine = aujourdHui
+                .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+                .atStartOfDay();
+        LocalDateTime finSemaine = debutSemaine.plusWeeks(1);
 
         User user = findByEmail(username);
-        List<Seance> seances = user.getAdherent().getCours().stream().flatMap(activite -> {
-            LocalDate now = LocalDate.now();
-            return activite.getSeances().stream().filter(seance -> now.equals(seance.getDebut()));
-        }).toList();
-
-
-        return seances;
+        return user.getAdherent().getCours().stream()
+                .flatMap(activite -> activite.getSeances().stream())
+                .filter(seance -> !seance.getDebut().isBefore(debutSemaine)
+                        && seance.getDebut().isBefore(finSemaine))
+                .sorted(Comparator.comparing(Seance::getDebut))
+                .toList();
     }
 
 
