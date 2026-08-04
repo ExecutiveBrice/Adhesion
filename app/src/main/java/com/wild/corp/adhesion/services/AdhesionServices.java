@@ -10,7 +10,14 @@ import com.wild.corp.adhesion.utils.Status;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -83,6 +90,8 @@ public class AdhesionServices {
 
     private AdhesionLite reduceAdhesion(Adhesion adhesion) {
         return AdhesionLite.builder().id(adhesion.getId())
+                .tarif(adhesion.getTarif())
+                .position(adhesion.getPosition())
                 .adherent(AdherentLite.builder()
                         .id(adhesion.getAdherent().getId())
                         .nomPrenom((Objects.equals(adhesion.getAdherent().getNom(), "") ? "zzzz" : adhesion.getAdherent().getNom()) + (Objects.equals(adhesion.getAdherent().getPrenom(), "") ? "zzzz" : adhesion.getAdherent().getPrenom()))
@@ -116,10 +125,85 @@ public class AdhesionServices {
                 .build();
     }
 
+    public List<String> getStatuses() {
+        LinkedHashSet<String> statuses = Arrays.stream(Status.values())
+                .map(value -> value.label)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        statuses.addAll(adhesionRepository.findDistinctStatuses());
+        return List.copyOf(statuses);
+    }
+
     public List<AdhesionLite> getAllLite() {
         List<Adhesion> adhesions = adhesionRepository.findAll();
 
         return adhesions.stream().map(adhesion -> reduceAdhesion(adhesion)).toList();
+    }
+
+    public Page<AdhesionLite> getAllLite(String section, String search, String status,
+                                         Boolean paymentValidated, Boolean documentsValidated,
+                                         Boolean flagged, Pageable pageable) {
+        Specification<Adhesion> specification = (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
+        String[] sections = section.split("#", 2);
+
+        if (sections.length == 2 && sections[0].equals("activite")) {
+            specification = specification.and((root, query, criteriaBuilder) ->
+                    criteriaBuilder.equal(root.get("activite").get("nom"), sections[1]));
+        } else if (sections.length == 2 && sections[0].equals("horaire")) {
+            Long activiteId = Long.parseLong(sections[1]);
+            specification = specification.and((root, query, criteriaBuilder) ->
+                    criteriaBuilder.equal(root.get("activite").get("id"), activiteId));
+        }
+
+        if (StringUtils.hasText(search)) {
+            String searchPattern = toLikePattern(search);
+            specification = specification.and((root, query, criteriaBuilder) -> {
+                Join<Adhesion, Adherent> adherent = root.join("adherent", JoinType.LEFT);
+                Join<Adherent, User> user = adherent.join("user", JoinType.LEFT);
+                Join<Adherent, Adherent> representant = adherent.join("representant", JoinType.LEFT);
+                Join<Adherent, User> representantUser = representant.join("user", JoinType.LEFT);
+
+                var fullName = criteriaBuilder.lower(criteriaBuilder.concat(
+                        criteriaBuilder.concat(adherent.<String>get("nom"), " "),
+                        adherent.<String>get("prenom")));
+
+                return criteriaBuilder.or(
+                        criteriaBuilder.like(criteriaBuilder.lower(adherent.get("nom")), searchPattern, '\\'),
+                        criteriaBuilder.like(criteriaBuilder.lower(adherent.get("prenom")), searchPattern, '\\'),
+                        criteriaBuilder.like(fullName, searchPattern, '\\'),
+                        criteriaBuilder.like(criteriaBuilder.lower(user.get("username")), searchPattern, '\\'),
+                        criteriaBuilder.like(criteriaBuilder.lower(representantUser.get("username")), searchPattern, '\\'),
+                        criteriaBuilder.like(criteriaBuilder.lower(adherent.get("adresse")), searchPattern, '\\'),
+                        criteriaBuilder.like(criteriaBuilder.lower(adherent.get("ville")), searchPattern, '\\')
+                );
+            });
+        }
+
+        if (StringUtils.hasText(status)) {
+            specification = specification.and((root, query, criteriaBuilder) ->
+                    criteriaBuilder.equal(root.get("statutActuel"), status));
+        }
+        if (paymentValidated != null) {
+            specification = specification.and((root, query, criteriaBuilder) ->
+                    criteriaBuilder.equal(root.get("validPaiementSecretariat"), paymentValidated));
+        }
+        if (documentsValidated != null) {
+            specification = specification.and((root, query, criteriaBuilder) ->
+                    criteriaBuilder.equal(root.get("validDocumentSecretariat"), documentsValidated));
+        }
+        if (flagged != null) {
+            specification = specification.and((root, query, criteriaBuilder) ->
+                    criteriaBuilder.equal(root.get("flag"), flagged));
+        }
+
+        return adhesionRepository.findAll(specification, pageable).map(this::reduceAdhesion);
+    }
+
+    private String toLikePattern(String value) {
+        String escapedValue = value.trim().toLowerCase(Locale.ROOT)
+                .replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_");
+        return "%" + escapedValue + "%";
     }
 
 

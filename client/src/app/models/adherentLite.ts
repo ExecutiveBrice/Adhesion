@@ -1,5 +1,6 @@
 import { Accord } from "./accord";
 import { AdhesionLite } from "./adhesionLite";
+import { Notification } from "./notification";
 
 export class AdherentLite {
   id!: number;
@@ -27,13 +28,17 @@ export class AdherentLite {
   adhesions!: AdhesionLite[]
   lieuNaissance!: string;
   naissance!: string;
-  tribuId!: number;
+  tribuId!: string;
   tribuSize!: number;
+  derniereModifs!: Notification[];
+  derniereVisites!: Notification[];
   constructor() {
 
     this.accords = [];
 
     this.adhesions = []
+    this.derniereModifs = [];
+    this.derniereVisites = [];
   }
 
 

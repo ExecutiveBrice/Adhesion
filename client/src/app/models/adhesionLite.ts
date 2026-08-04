@@ -3,31 +3,36 @@ import { Accord } from "./accord";
 import { ActiviteLite } from "./activiteLite";
 import { AdherentLite } from "./adherentLite";
 import { Paiement } from "./paiement";
+import { Notification } from "./notification";
 
 export class AdhesionLite {
 
   id!: number;
   tarif!: number;
-  activite!: ActiviteLite | undefined
-  adherentNom!: AdherentLite | undefined
+  activite!: ActiviteLite;
+  adherent!: AdherentLite;
   paiements!: Paiement[];
-  typeReglement!: String;
-  dateReglement!: String;
-  dateChangementStatut!: string
-  statutActuel!: String;
-  remarqueSecretariat!: String;
+  typeReglement!: string;
+  dateReglement!: string;
+  dateChangementStatut!: string;
+  statutActuel!: string;
+  remarqueSecretariat!: string;
   inscrit!: boolean;
   flag!: boolean;
-  mineur!: boolean;
+  dejaLicencie?: boolean;
   validPaiementSecretariat!: boolean;
   validDocumentSecretariat!: boolean;
   blocage!: boolean;
   accords!: Accord[];
+  derniereModifs!: Notification[];
+  derniereVisites!: Notification[];
   
   constructor() {
 
     this.paiements = [];
 
     this.accords = [];
+    this.derniereModifs = [];
+    this.derniereVisites = [];
   }
 }
