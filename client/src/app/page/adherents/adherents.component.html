@@ -66,6 +66,25 @@
 <div class="row">
 
   <div class="col-12 center">
+    <div class="table-toolbar">
+      <span *ngIf="!loadder">Résultats {{firstResult}}–{{lastResult}} sur {{totalElements}}</span>
+      <span *ngIf="loadder"><span class="spinner-border spinner-border-sm"></span> Chargement…</span>
+      <div class="toolbar-page-controls">
+        <label for="adherent-page-size">Lignes par page
+          <select id="adherent-page-size" class="form-select form-select-sm" [(ngModel)]="pageSize"
+            (ngModelChange)="onPageSizeChange()">
+            <option *ngFor="let size of pageSizes" [ngValue]="size">{{size}}</option>
+          </select>
+        </label>
+        <span *ngIf="totalPages > 0">Page {{page}} sur {{totalPages}}</span>
+        <div *ngIf="totalPages > 0" class="btn-group" role="group" aria-label="Pagination des adhérents">
+          <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="page <= 1"
+            (click)="goToPage(page - 1)">Précédente</button>
+          <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="page >= totalPages"
+            (click)="goToPage(page + 1)">Suivante</button>
+        </div>
+      </div>
+    </div>
     <table class="table table-striped">
       <thead>
         <tr>

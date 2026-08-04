@@ -1,3 +1,29 @@
 .ligne:hover{
     background-color: rgba(188, 219, 205, 255)!important;
   }
+.table-toolbar,
+.toolbar-page-controls,
+.table-toolbar label {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+}
+
+.table-toolbar {
+  padding: .85rem 0 .6rem;
+  color: #526861;
+}
+
+.toolbar-page-controls {
+  margin-left: auto;
+}
+
+.table-toolbar label {
+  margin: 0;
+  font-size: .85rem;
+  font-weight: 700;
+}
+
+.table-toolbar select {
+  width: auto;
+}

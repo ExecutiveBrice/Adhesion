@@ -14,6 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
@@ -460,46 +462,50 @@ public class AdherentServices {
     }
 
     public List<AdherentFlat> getAllFlat() {
-        List<AdherentFlat> adherentFlats = new ArrayList<>();
-        List<Adherent> adherents = adherentRepository.findAll();
-
-        adherents.forEach(adherent -> {
-            AdherentFlat adherentFlat = new AdherentFlat();
-
-
-            StringBuilder adhesions = new StringBuilder();
-            adherent.getAdhesions().forEach(adhesion -> adhesions.append(adhesion.getActivite().getNom() + " " + adhesion.getActivite().getHoraire() + "\n\r"));
-            adherentFlat.setAdhesions(adhesions.toString());
-
-            StringBuilder activitesNm1 = new StringBuilder();
-            adherent.getActivitesNm1().forEach(adhesion -> activitesNm1.append(adhesion.getNom() + " " + adhesion.getHoraire() + "\n\r"));
-            adherentFlat.setActivitesNm1(activitesNm1.toString());
-
-            StringBuilder accords = new StringBuilder();
-            adherent.getAccords().forEach(adhesion -> accords.append(adhesion.getNom() + " " + adhesion.getEtat() + "\n\r"));
-            adherentFlat.setAccords(accords.toString());
-
-
-            adherentFlat.setId(adherent.getId());
-            adherentFlat.setEmail(Boolean.TRUE.equals(adherent.getEmailRepresentant()) && adherent.getRepresentant() != null ? adherent.getRepresentant().getUser().getUsername() : adherent.getUser().getUsername());
-            adherentFlat.setTelephone(Boolean.TRUE.equals(adherent.getTelephoneRepresentant()) && adherent.getRepresentant() != null ? adherent.getRepresentant().getTelephone() : adherent.getTelephone());
-            adherentFlat.setAdresse(Boolean.TRUE.equals(adherent.getAdresseRepresentant()) && adherent.getRepresentant() != null ?
-                    adherent.getRepresentant().getAdresse() + " " + adherent.getRepresentant().getCodePostal() + " " + adherent.getRepresentant().getVille() :
-                    adherent.getAdresse() + " " + adherent.getCodePostal() + " " + adherent.getVille());
-            adherentFlat.setNaissance(adherent.getNaissance());
-            adherentFlat.setPrenom(adherent.getPrenom());
-            adherentFlat.setNom(adherent.getNom());
-            adherentFlat.setNomPrenom((Objects.equals(adherent.getNom(), "") ? "zzzz" : adherent.getNom()) + (Objects.equals(adherent.getPrenom(), "") ? "zzzz" : adherent.getPrenom()));
-            adherentFlat.setLieuNaissance(adherent.getLieuNaissance());
-            adherentFlat.setTribuId(adherent.getTribu().getUuid());
-
-            adherentFlats.add(adherentFlat);
-        });
-
-        return adherentFlats.stream()
+        return adherentRepository.findAll().stream()
+                .map(this::toAdherentFlat)
                 .sorted(Comparator.comparing(AdherentFlat::getNomPrenom))
                 .collect(Collectors.toList());
+    }
 
+    public Page<AdherentFlat> getPage(Pageable pageable) {
+        return adherentRepository.findAll(pageable).map(this::toAdherentFlat);
+    }
+
+    private AdherentFlat toAdherentFlat(Adherent adherent) {
+        AdherentFlat adherentFlat = new AdherentFlat();
+
+        StringBuilder adhesions = new StringBuilder();
+        adherent.getAdhesions().forEach(adhesion -> adhesions.append(adhesion.getActivite().getNom())
+                .append(" ").append(adhesion.getActivite().getHoraire()).append("\n\r"));
+        adherentFlat.setAdhesions(adhesions.toString());
+
+        StringBuilder activitesNm1 = new StringBuilder();
+        adherent.getActivitesNm1().forEach(activite -> activitesNm1.append(activite.getNom())
+                .append(" ").append(activite.getHoraire()).append("\n\r"));
+        adherentFlat.setActivitesNm1(activitesNm1.toString());
+
+        StringBuilder accords = new StringBuilder();
+        adherent.getAccords().forEach(accord -> accords.append(accord.getNom())
+                .append(" ").append(accord.getEtat()).append("\n\r"));
+        adherentFlat.setAccords(accords.toString());
+
+        adherentFlat.setId(adherent.getId());
+        adherentFlat.setEmail(Boolean.TRUE.equals(adherent.getEmailRepresentant()) && adherent.getRepresentant() != null
+                ? adherent.getRepresentant().getUser().getUsername() : adherent.getUser().getUsername());
+        adherentFlat.setTelephone(Boolean.TRUE.equals(adherent.getTelephoneRepresentant()) && adherent.getRepresentant() != null
+                ? adherent.getRepresentant().getTelephone() : adherent.getTelephone());
+        adherentFlat.setAdresse(Boolean.TRUE.equals(adherent.getAdresseRepresentant()) && adherent.getRepresentant() != null
+                ? adherent.getRepresentant().getAdresse() + " " + adherent.getRepresentant().getCodePostal() + " " + adherent.getRepresentant().getVille()
+                : adherent.getAdresse() + " " + adherent.getCodePostal() + " " + adherent.getVille());
+        adherentFlat.setNaissance(adherent.getNaissance());
+        adherentFlat.setPrenom(adherent.getPrenom());
+        adherentFlat.setNom(adherent.getNom());
+        adherentFlat.setNomPrenom((Objects.equals(adherent.getNom(), "") ? "zzzz" : adherent.getNom())
+                + (Objects.equals(adherent.getPrenom(), "") ? "zzzz" : adherent.getPrenom()));
+        adherentFlat.setLieuNaissance(adherent.getLieuNaissance());
+        adherentFlat.setTribuId(adherent.getTribu().getUuid());
+        return adherentFlat;
     }
 
     public List<AdherentLite> getByRole(Long roleId) {

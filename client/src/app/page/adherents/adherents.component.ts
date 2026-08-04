@@ -33,6 +33,11 @@ export class AdherentsComponent implements OnInit {
   faEnvelope = faEnvelope;
   faPencilSquare = faPencilSquare;
   adherents: AdherentFlat[] = [];
+  page = 1;
+  pageSize = 20;
+  readonly pageSizes = [10, 20, 50, 100];
+  totalElements = 0;
+  totalPages = 0;
 
   loadder:boolean=true
   errorMessage = '';
@@ -71,22 +76,50 @@ export class AdherentsComponent implements OnInit {
     } else {
       this.router.navigate(['login']);
     }
-    this.adherentService.getAllLite().subscribe({
-      next: (data) => {
-        console.log(data)
-        this.adherents = data;
-        this.loadder=false
-
-
-      },
-      error: (error) => {
-        console.log(error)
-        this.showError(error.error.message)
-      }
-    })
+    this.getAdherents();
     this.activiteService.fillObjects(this.activites, this.activitesListe, undefined);
   }
 
+  getAdherents(resetPage: boolean = false) {
+    if (resetPage) {
+      this.page = 1;
+    }
+    this.loadder = true;
+    this.adherentService.getPage(this.page - 1, this.pageSize).subscribe({
+      next: (data) => {
+        this.adherents = data.content;
+        this.totalElements = data.totalElements;
+        this.totalPages = data.totalPages;
+        this.page = data.number + 1;
+        this.loadder = false;
+      },
+      error: (error) => {
+        console.log(error);
+        this.loadder = false;
+        this.showError(error.error?.message || error.message);
+      }
+    });
+  }
+
+  goToPage(targetPage: number) {
+    if (targetPage < 1 || targetPage > this.totalPages || targetPage === this.page) {
+      return;
+    }
+    this.page = targetPage;
+    this.getAdherents();
+  }
+
+  onPageSizeChange() {
+    this.getAdherents(true);
+  }
+
+  get firstResult(): number {
+    return this.totalElements === 0 ? 0 : (this.page - 1) * this.pageSize + 1;
+  }
+
+  get lastResult(): number {
+    return Math.min(this.page * this.pageSize, this.totalElements);
+  }
 
 
 

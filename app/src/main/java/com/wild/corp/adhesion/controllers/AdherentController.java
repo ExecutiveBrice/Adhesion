@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -119,6 +121,14 @@ public class AdherentController {
     public ResponseEntity<?> getAllFlat(Authentication principal) {
         log.info("getAllFlat by " + principal.getName());
         return ResponseEntity.ok(adherentServices.getAllFlat());
+    }
+
+    @GetMapping("/page")
+    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+    public ResponseEntity<?> getPage(Authentication principal,
+                                     @PageableDefault(size = 20, sort = {"nom", "prenom"}) Pageable pageable) {
+        log.info("getPage by " + principal.getName());
+        return ResponseEntity.ok(adherentServices.getPage(pageable));
     }
     @GetMapping("/allExportLite")
     @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
