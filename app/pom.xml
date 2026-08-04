@@ -17,13 +17,19 @@
     <properties>
         <java.version>21</java.version>
         <maven.compiler.proc>full</maven.compiler.proc>
+        <brevo.version>1.1.9</brevo.version>
+        <commons-lang3.version>3.20.0</commons-lang3.version>
+        <jackson-databind-nullable.version>0.2.11</jackson-databind-nullable.version>
+        <jjwt.version>0.13.0</jjwt.version>
+        <openapi-generator.version>7.24.0</openapi-generator.version>
+        <postgresql.version>42.7.13</postgresql.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>com.brevo</groupId>
             <artifactId>brevo</artifactId>
-            <version>1.1.0</version>
+            <version>${brevo.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -51,42 +57,30 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.2</version>
+            <version>${postgresql.version}</version>
+            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
-            <version>0.11.5</version>
+            <version>${jjwt.version}</version>
         </dependency>
 
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
-            <version>0.11.5</version>
+            <version>${jjwt.version}</version>
             <scope>runtime</scope>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.14.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.mailersend</groupId>
-            <artifactId>java-sdk</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/com.mailjet/mailjet-client -->
-        <dependency>
-            <groupId>com.mailjet</groupId>
-            <artifactId>mailjet-client</artifactId>
-            <version>5.2.5</version>
+            <version>${commons-lang3.version}</version>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
-            <version>0.11.5</version>
+            <version>${jjwt.version}</version>
             <scope>runtime</scope>
         </dependency>
 
@@ -129,7 +123,7 @@
         <dependency>
             <groupId>org.openapitools</groupId>
             <artifactId>jackson-databind-nullable</artifactId>
-            <version>0.2.1</version>
+            <version>${jackson-databind-nullable.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>
@@ -158,7 +152,7 @@
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
-                <version>7.12.0</version>
+                <version>${openapi-generator.version}</version>
                 <executions>
                     <execution>
                         <id>ApiHelloasso</id>

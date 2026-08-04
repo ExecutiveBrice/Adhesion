@@ -25,6 +25,7 @@ logging.level.org.hibernate: ERROR
 server:
   name : ${DNS_NAME}
   app:
+    # Une clé d'au moins 64 octets est requise pour signer les jetons en HS512.
     jwtSecret: ${JWT_SECRET}
     jwtExpirationMs: 86400000
 
