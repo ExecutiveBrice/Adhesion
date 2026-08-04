@@ -65,6 +65,9 @@ export class AdhesionsComponent implements OnInit {
   faFlag = faFlag;
   adhesions: Adhesion[] = [];
   adhesionsCopy: Adhesion[] = [];
+  page = 1;
+  pageSize = 20;
+  totalElements = 0;
 
 
   validPaiementSecretariat:boolean|null=null;
@@ -132,16 +135,19 @@ export class AdhesionsComponent implements OnInit {
 
   loadder: boolean = true
 
-  getAdhesion() {
+  getAdhesion(resetPage: boolean = false) {
+    if (resetPage) {
+      this.page = 1;
+    }
     this.loadder = true
     this.adhesions = []
     this.adhesionsCopy = []
-    this.adhesionService.getAllLiteBysection(this.choixSection).subscribe({
+    this.adhesionService.getPage(this.choixSection, this.page - 1, this.pageSize).subscribe({
       next: (data) => {
-        console.log(data)
-        data.forEach(value => value.nomprenom = value.adherent.nom + value.adherent.prenom)
-        this.adhesions = data;
-        this.adhesionsCopy = data;
+        data.content.forEach(value => value.nomprenom = value.adherent.nom + value.adherent.prenom)
+        this.adhesions = data.content;
+        this.adhesionsCopy = data.content;
+        this.totalElements = data.totalElements;
         this.loadder = false
       },
       error: (error) => {

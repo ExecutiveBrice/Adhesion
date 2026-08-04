@@ -10,6 +10,8 @@ import com.wild.corp.adhesion.utils.Status;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
@@ -120,6 +122,21 @@ public class AdhesionServices {
         List<Adhesion> adhesions = adhesionRepository.findAll();
 
         return adhesions.stream().map(adhesion -> reduceAdhesion(adhesion)).toList();
+    }
+
+    public Page<AdhesionLite> getAllLite(String section, Pageable pageable) {
+        String[] sections = section.split("#", 2);
+        Page<Adhesion> adhesions;
+
+        if (sections.length == 2 && sections[0].equals("activite")) {
+            adhesions = adhesionRepository.findByActiviteNom(sections[1], pageable);
+        } else if (sections.length == 2 && sections[0].equals("horaire")) {
+            adhesions = adhesionRepository.findByActiviteId(Long.parseLong(sections[1]), pageable);
+        } else {
+            adhesions = adhesionRepository.findAll(pageable);
+        }
+
+        return adhesions.map(this::reduceAdhesion);
     }
 
 

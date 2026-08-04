@@ -8,6 +8,8 @@ import jakarta.websocket.server.PathParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -111,6 +113,14 @@ AdhesionServices adhesionServices;
 	public ResponseEntity<?> getAllLite(Authentication principal) {
 		log.info("getAllLite by " + principal.getName() );
 		return ResponseEntity.ok(adhesionServices.getAllLite());
+	}
+
+	@GetMapping("/page")
+	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+	public ResponseEntity<?> getPage(Authentication principal, @RequestParam(defaultValue = "Toutes") String sections,
+			@PageableDefault(size = 20, sort = {"adherent.nom", "adherent.prenom"}) Pageable pageable) {
+		log.info("getPage by " + principal.getName() + " for section " + sections);
+		return ResponseEntity.ok(adhesionServices.getAllLite(sections, pageable));
 	}
 
 	@GetMapping("/liteBysection")

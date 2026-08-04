@@ -6,6 +6,14 @@ import { Accord, Activite, Adhesion, Paiement } from '../models';
 
 const API_URL = environment.server+'/adhesion/';
 
+export interface Page<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -84,6 +92,14 @@ export class AdhesionService {
     return this.http.get<Adhesion[]>(API_URL+"liteBysection", {params, responseType: 'json' });
   }
 
+  getPage(sections: string, page: number, size: number): Observable<Page<Adhesion>> {
+    const params = new HttpParams()
+      .set('sections', sections)
+      .set('page', page)
+      .set('size', size);
+    return this.http.get<Page<Adhesion>>(API_URL + "page", {params, responseType: 'json'});
+  }
+
   updateDejaLicencie(adhesionId : number, dejaLicencie:boolean): Observable<any> {
     let params = new HttpParams().set('adhesionId', '' + adhesionId + '').set('dejaLicencie', '' + dejaLicencie + '');
     return this.http.put(API_URL+"updateDejaLicencie", {}, {params, responseType: 'json' });
@@ -117,5 +133,4 @@ export class AdhesionService {
     return this.http.post<Adhesion>(API_URL+"savePaiement", paiement, {params, responseType: 'json' });
   }
 }
-
 

@@ -7,13 +7,13 @@
           {{visuelselection.length >0?visuelselection:'Activité'}}
         </button>
         <div *ngIf="activites.length > 0" ngbDropdownMenu aria-labelledby="dropdownBasic1">
-          <a ngbDropdownItem (click)="choixSection = 'Toutes';  getAdhesion(); visuelselection = 'Toutes les adhésions'">
+          <a ngbDropdownItem (click)="choixSection = 'Toutes'; getAdhesion(true); visuelselection = 'Toutes les adhésions'">
             Toutes</a>
           <div *ngFor="let activite of activites  | orderBy:'nom':false" class="ligne pointer">
-            <a ngbDropdownItem (click)="choixSection = 'activite#'+activite.nom;  getAdhesion(); visuelselection = activite.nom+'-Tous horaires'">
+            <a ngbDropdownItem (click)="choixSection = 'activite#'+activite.nom; getAdhesion(true); visuelselection = activite.nom+'-Tous horaires'">
               <b>{{activite.nom}}</b></a>
             <div *ngFor="let horaire of activite.horaires">
-              <a ngbDropdownItem (click)="choixSection = 'horaire#'+horaire.id; getAdhesion(); visuelselection = activite.nom+'-'+horaire.nom">
+              <a ngbDropdownItem (click)="choixSection = 'horaire#'+horaire.id; getAdhesion(true); visuelselection = activite.nom+'-'+horaire.nom">
                 {{horaire.nom}}</a>
             </div>
           </div>
@@ -23,7 +23,7 @@
 
     </div>
     <div class="btn-group btn-group-sm col-4 center" role="group">
-     <p> {{(adhesions | filterAdhesionBy:validPaiementSecretariat:validDocumentSecretariat:statutActuel:flag).length}} adhésions listées</p>
+     <p>{{totalElements}} adhésions au total</p>
     </div>
 
 </div>
@@ -271,6 +271,16 @@
     </tr>
   </tbody>
 </table>
+
+<ngb-pagination *ngIf="totalElements > pageSize"
+  class="d-flex justify-content-center"
+  [(page)]="page"
+  [pageSize]="pageSize"
+  [collectionSize]="totalElements"
+  [maxSize]="7"
+  [rotate]="true"
+  (pageChange)="getAdhesion()">
+</ngb-pagination>
 
 
 
