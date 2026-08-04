@@ -118,9 +118,21 @@ AdhesionServices adhesionServices;
 	@GetMapping("/page")
 	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
 	public ResponseEntity<?> getPage(Authentication principal, @RequestParam(defaultValue = "Toutes") String sections,
+			@RequestParam(defaultValue = "") String search,
+			@RequestParam(defaultValue = "") String status,
+			@RequestParam(required = false) Boolean paymentValidated,
+			@RequestParam(required = false) Boolean documentsValidated,
+			@RequestParam(required = false) Boolean flagged,
 			@PageableDefault(size = 20, sort = {"adherent.nom", "adherent.prenom"}) Pageable pageable) {
 		log.info("getPage by " + principal.getName() + " for section " + sections);
-		return ResponseEntity.ok(adhesionServices.getAllLite(sections, pageable));
+		return ResponseEntity.ok(adhesionServices.getAllLite(sections, search, status, paymentValidated,
+				documentsValidated, flagged, pageable));
+	}
+
+	@GetMapping("/statuses")
+	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+	public ResponseEntity<List<String>> getStatuses() {
+		return ResponseEntity.ok(adhesionServices.getStatuses());
 	}
 
 	@GetMapping("/liteBysection")

@@ -2,6 +2,7 @@
 export * from './activiteNm1';
 export * from './adherent';
 export * from './adhesion';
+export * from './adhesionLite';
 export * from './email';
 export * from './tribu';
 export * from './accord';

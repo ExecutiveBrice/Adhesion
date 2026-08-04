@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams} from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { Accord, Activite, Adhesion, Paiement } from '../models';
+import { Accord, Activite, Adhesion, AdhesionLite, Paiement } from '../models';
 
 const API_URL = environment.server+'/adhesion/';
 
@@ -12,6 +12,18 @@ export interface Page<T> {
   totalPages: number;
   number: number;
   size: number;
+}
+
+export interface AdhesionPageQuery {
+  sections: string;
+  page: number;
+  size: number;
+  search?: string;
+  status?: string;
+  paymentValidated?: boolean | null;
+  documentsValidated?: boolean | null;
+  flagged?: boolean | null;
+  sort?: string;
 }
 
 @Injectable({
@@ -92,12 +104,36 @@ export class AdhesionService {
     return this.http.get<Adhesion[]>(API_URL+"liteBysection", {params, responseType: 'json' });
   }
 
-  getPage(sections: string, page: number, size: number): Observable<Page<Adhesion>> {
-    const params = new HttpParams()
-      .set('sections', sections)
-      .set('page', page)
-      .set('size', size);
-    return this.http.get<Page<Adhesion>>(API_URL + "page", {params, responseType: 'json'});
+  getPage(query: AdhesionPageQuery): Observable<Page<AdhesionLite>> {
+    let params = new HttpParams()
+      .set('sections', query.sections)
+      .set('page', query.page)
+      .set('size', query.size);
+
+    if (query.search) {
+      params = params.set('search', query.search);
+    }
+    if (query.status) {
+      params = params.set('status', query.status);
+    }
+    if (query.paymentValidated !== null && query.paymentValidated !== undefined) {
+      params = params.set('paymentValidated', query.paymentValidated);
+    }
+    if (query.documentsValidated !== null && query.documentsValidated !== undefined) {
+      params = params.set('documentsValidated', query.documentsValidated);
+    }
+    if (query.flagged !== null && query.flagged !== undefined) {
+      params = params.set('flagged', query.flagged);
+    }
+    if (query.sort) {
+      params = params.set('sort', query.sort);
+    }
+
+    return this.http.get<Page<AdhesionLite>>(API_URL + "page", {params, responseType: 'json'});
+  }
+
+  getStatuses(): Observable<string[]> {
+    return this.http.get<string[]>(API_URL + "statuses", {responseType: 'json'});
   }
 
   updateDejaLicencie(adhesionId : number, dejaLicencie:boolean): Observable<any> {
@@ -133,4 +169,3 @@ export class AdhesionService {
     return this.http.post<Adhesion>(API_URL+"savePaiement", paiement, {params, responseType: 'json' });
   }
 }
-

@@ -8,6 +8,7 @@ export class ActiviteLite {
   horaire!: string;
   lien!: string;
   salle!: string;
+  groupe!: string;
   adherents!: AdherentLite[];
 
   constructor(){
