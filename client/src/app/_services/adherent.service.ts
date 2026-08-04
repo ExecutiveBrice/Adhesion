@@ -8,6 +8,14 @@ import {AdherentExport} from "../models/adherentExport";
 
 const API_URL = environment.server+'/adherent/';
 
+export interface AdherentPage {
+  content: AdherentFlat[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -65,6 +73,15 @@ export class AdherentService {
     return this.http.get<AdherentFlat[]>(API_URL + 'allFlat', { responseType: 'json' });
   }
 
+  getPage(page: number, size: number): Observable<AdherentPage> {
+    const params = new HttpParams()
+      .set('page', page)
+      .set('size', size)
+      .set('sort', 'nom,asc')
+      .append('sort', 'prenom,asc');
+    return this.http.get<AdherentPage>(API_URL + 'page', {params, responseType: 'json'});
+  }
+
   getAllExportLite(): Observable<AdherentExport[]> {
     return this.http.get<AdherentExport[]>(API_URL + 'allExportLite', { responseType: 'json' });
   }
@@ -111,5 +128,4 @@ export class AdherentService {
   }
 
 }
-
 
