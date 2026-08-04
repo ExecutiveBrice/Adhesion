@@ -3,12 +3,15 @@ package com.wild.corp.adhesion.security.jwt;
 import com.wild.corp.adhesion.models.UserDetails;
 import io.jsonwebtoken.security.WeakKeyException;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.core.env.MapPropertySource;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -17,6 +20,20 @@ class JwtUtilsTest {
 
     private static final String SECRET = "a-secure-signing-secret-with-at-least-64-bytes-for-the-HS512-algorithm";
     private static final Instant NOW = Instant.parse("2026-08-03T12:00:00Z");
+
+    @Test
+    void springUsesTheConfiguredConstructor() {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
+            context.getEnvironment().getPropertySources().addFirst(new MapPropertySource("jwt-test", Map.of(
+                    "server.app.jwtSecret", SECRET,
+                    "server.app.jwtExpirationMs", "60000")));
+            context.register(JwtUtils.class);
+
+            context.refresh();
+
+            assertThat(context.getBean(JwtUtils.class)).isNotNull();
+        }
+    }
 
     @Test
     void generatesAndReadsAValidToken() {

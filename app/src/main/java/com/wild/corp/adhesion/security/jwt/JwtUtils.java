@@ -6,6 +6,7 @@ import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,7 @@ public class JwtUtils {
   private final long jwtExpirationMs;
   private final Clock clock;
 
+  @Autowired
   public JwtUtils(@Value("${server.app.jwtSecret}") String jwtSecret,
                   @Value("${server.app.jwtExpirationMs}") long jwtExpirationMs) {
     this(jwtSecret, jwtExpirationMs, Clock.systemUTC());
