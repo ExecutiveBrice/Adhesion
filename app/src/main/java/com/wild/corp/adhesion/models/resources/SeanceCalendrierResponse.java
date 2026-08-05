@@ -11,17 +11,27 @@ public record SeanceCalendrierResponse(
         String activiteNom,
         String horaireActivite,
         String salle,
+        String adresseSalle,
+        String couleurSalle,
+        String commentaire,
+        String lien,
         LocalDateTime debut,
         LocalDateTime fin,
         ESeance etatSeance
 ) {
     public static SeanceCalendrierResponse from(Seance seance) {
+        var activite = seance.getActivite();
+        var salle = activite.getSalle();
         return new SeanceCalendrierResponse(
                 seance.getId(),
-                seance.getActivite().getId(),
-                seance.getActivite().getNom(),
-                seance.getActivite().getHoraire(),
-                seance.getActivite().getSalle(),
+                activite.getId(),
+                activite.getNom(),
+                activite.getHoraire(),
+                salle != null ? salle.getNom() : activite.getNomSalle(),
+                salle != null ? salle.getAdresse() : null,
+                salle != null ? salle.getCouleur() : null,
+                seance.getCommentaire(),
+                activite.getLien(),
                 seance.getDebut(),
                 seance.getFin(),
                 seance.getEtatSeance()

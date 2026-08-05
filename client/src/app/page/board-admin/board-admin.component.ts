@@ -2,9 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { UserService } from '../../_services/user.service';
 import { ParamService } from '../../_services/param.service';
 
-import { AgendaGoogleConfiguration, ParamBoolean, ParamNumber, ParamText, UserLite } from 'src/app/models';
+import { AgendaGoogleConfiguration, ParamBoolean, ParamNumber, ParamText, SalleConfiguration, UserLite } from 'src/app/models';
 import { forkJoin } from 'rxjs';
-import { faCalendarDays, faCircleCheck, faCircleXmark, faEnvelope, faPlus, faSquareMinus, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarDays, faCircleCheck, faCircleXmark, faEnvelope, faLocationDot, faPlus, faSquareMinus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { AdherentService } from 'src/app/_services/adherent.service';
 import {AuthService} from "../../_services/auth.service";
 import {TokenStorageService} from "../../_services/token-storage.service";
@@ -22,6 +22,7 @@ export class BoardAdminComponent implements OnInit {
   faCircleCheck = faCircleCheck;
   faSquareMinus = faSquareMinus;
   faCalendarDays = faCalendarDays;
+  faLocationDot = faLocationDot;
   faPlus = faPlus;
   faTrash = faTrash;
   paramBooleans: ParamBoolean[] = [];
@@ -33,6 +34,13 @@ export class BoardAdminComponent implements OnInit {
   agendaEnregistrement = false;
   agendaMessage = '';
   agendaErreur = '';
+  salles: SalleConfiguration[] = [];
+  nouvelleSalleNom = '';
+  nouvelleSalleAdresse = '';
+  nouvelleSalleCouleur = '#0F9D58';
+  salleEnregistrement = false;
+  salleMessage = '';
+  salleErreur = '';
   usersLite: UserLite[] = [];
   adminsLite: UserLite[] = [];
   administrateursLite: UserLite[] = [];
@@ -49,6 +57,7 @@ export class BoardAdminComponent implements OnInit {
     this.getAllText()
     this.getAllNumber()
     this.getAgendasGoogle()
+    this.getSalles()
     this.fillLists()
   }
 
@@ -214,6 +223,90 @@ console.log(data)
   private prochaineCouleur(): string {
     const palette = ['#4285F4', '#DB4437', '#F4B400', '#0F9D58', '#AB47BC', '#00ACC1'];
     return palette[this.agendasGoogle.length % palette.length];
+  }
+
+  getSalles(): void {
+    this.paramService.getSalles().subscribe({
+      next: salles => this.salles = salles,
+      error: () => this.salleErreur = 'La liste des salles n’a pas pu être chargée.'
+    });
+  }
+
+  ajouterSalle(): void {
+    const nom = this.nouvelleSalleNom.trim();
+    const adresse = this.nouvelleSalleAdresse.trim();
+    this.salleErreur = '';
+    this.salleMessage = '';
+    if (!nom || !adresse) {
+      this.salleErreur = 'Saisissez le nom et l’adresse de la salle.';
+      return;
+    }
+    this.salleEnregistrement = true;
+    this.paramService.createSalle({ nom, adresse, couleur: this.nouvelleSalleCouleur }).subscribe({
+      next: salle => {
+        this.salles = [...this.salles, salle].sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
+        this.nouvelleSalleNom = '';
+        this.nouvelleSalleAdresse = '';
+        this.nouvelleSalleCouleur = this.prochaineCouleurSalle();
+        this.salleEnregistrement = false;
+        this.salleMessage = 'Salle ajoutée.';
+      },
+      error: response => this.afficherErreurSalle(response)
+    });
+  }
+
+  supprimerSalle(index: number): void {
+    const salle = this.salles[index];
+    if (salle.id == null || this.salleEnregistrement) {
+      return;
+    }
+    this.salleEnregistrement = true;
+    this.salleErreur = '';
+    this.salleMessage = '';
+    this.paramService.deleteSalle(salle.id).subscribe({
+      next: () => {
+        this.salles = this.salles.filter(item => item.id !== salle.id);
+        this.salleEnregistrement = false;
+        this.salleMessage = 'Salle supprimée.';
+      },
+      error: response => this.afficherErreurSalle(response)
+    });
+  }
+
+  enregistrerSalles(): void {
+    if (this.salleEnregistrement) {
+      return;
+    }
+    if (this.salles.some(salle => !salle.nom.trim() || !salle.adresse.trim())) {
+      this.salleErreur = 'Le nom et l’adresse sont obligatoires pour chaque salle.';
+      return;
+    }
+    const misesAJour = this.salles.filter(salle => salle.id != null).map(salle => this.paramService.updateSalle(salle));
+    if (misesAJour.length === 0) {
+      return;
+    }
+    this.salleEnregistrement = true;
+    this.salleErreur = '';
+    this.salleMessage = '';
+    forkJoin(misesAJour).subscribe({
+      next: salles => {
+        this.salles = salles.sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
+        this.salleEnregistrement = false;
+        this.salleMessage = 'Salles enregistrées.';
+      },
+      error: response => this.afficherErreurSalle(response)
+    });
+  }
+
+  private afficherErreurSalle(response: any): void {
+    this.salleEnregistrement = false;
+    this.salleErreur = response?.error?.message || response?.error?.detail
+      || 'La configuration des salles n’a pas pu être enregistrée.';
+  }
+
+  private prochaineCouleurSalle(): string {
+    const palette = ['#0F9D58', '#4285F4', '#DB4437', '#F4B400', '#AB47BC', '#00ACC1'];
+    return palette[this.salles.length % palette.length];
   }
   updateParamBoolean(param: ParamBoolean) {
     this.paramService.saveBoolean(param).subscribe(

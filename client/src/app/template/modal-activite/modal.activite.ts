@@ -1,10 +1,11 @@
 import { Component, inject, Input, OnDestroy, OnInit } from '@angular/core'
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap'
-import { Activite, Adherent, AdherentLite } from 'src/app/models';
+import { Activite, Adherent, AdherentLite, SalleConfiguration } from 'src/app/models';
 import { Seance } from 'src/app/models/seance';
 import { faExternalLinkSquareAlt } from '@fortawesome/free-solid-svg-icons';
 import { AdherentService } from 'src/app/_services/adherent.service';
 import { ActiviteService } from 'src/app/_services/activite.service';
+import { ParamService } from 'src/app/_services/param.service';
 import { faCircleQuestion, faEnvelope, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ToastrService } from 'ngx-toastr';
 
@@ -34,6 +35,7 @@ export class ModalActivite implements OnInit, OnDestroy {
   activite!: Activite;
 
   profs: AdherentLite[] = []
+  salles: SalleConfiguration[] = [];
   seances: Seance[] = [];
   nombreSeances = 1;
   dateDebutSeances = '';
@@ -57,11 +59,13 @@ export class ModalActivite implements OnInit, OnDestroy {
     private toastr: ToastrService,
     private adherentService: AdherentService,
     public activiteService: ActiviteService,
+    private paramService: ParamService,
   ) { }
 
   ngOnInit(): void {
     this.dateDebutSeances = this.aujourdHui();
     this.getProfs();
+    this.getSalles();
     if (this.activite.id) {
       this.getSeances();
     }
@@ -106,6 +110,17 @@ export class ModalActivite implements OnInit, OnDestroy {
       }
     );
 
+  }
+
+  getSalles(): void {
+    this.paramService.getSalles().subscribe({
+      next: salles => this.salles = salles,
+      error: err => this.showError(err.message)
+    });
+  }
+
+  comparerSalles(salleA?: SalleConfiguration, salleB?: SalleConfiguration): boolean {
+    return salleA?.id === salleB?.id;
   }
 
   getSeances() {

@@ -52,9 +52,9 @@
 
 .calendrier-mois {
   color: var(--encre);
-  font-size: 1.2rem;
+  font-size: 1.35rem;
   font-weight: 750;
-  margin: 1.35rem 0 0.7rem;
+  margin: 0;
   text-transform: capitalize;
 }
 
@@ -150,26 +150,53 @@
   white-space: nowrap;
 }
 
+.icone-etat-calendrier {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.icone-etat-calendrier.etat-programmee {
+  color: #0d6efd;
+}
+
+.icone-etat-calendrier.etat-annulee {
+  color: #dc3545;
+}
+
+.icone-etat-calendrier.etat-realisee {
+  color: #198754;
+}
+
+.icone-etat-calendrier.etat-modifiee {
+  color: #fd7e14;
+}
+
 .seance-resume.etat-programmee,
 .etat-seance.etat-programmee {
-  background: #e6f5f2;
-  border-color: var(--vert-alod);
-  color: #245d55;
+  background: color-mix(in srgb, var(--agenda-color, var(--vert-alod)) 14%, white);
+  border-color: var(--agenda-color, var(--vert-alod));
+  color: #354044;
 }
 
 .seance-resume.etat-realisee,
 .etat-seance.etat-realisee {
-  background: #e9edf9;
-  border-color: #6f7cc3;
-  color: #394783;
+  background: color-mix(in srgb, var(--agenda-color, #6f7cc3) 14%, white);
+  border-color: var(--agenda-color, #6f7cc3);
+  color: #354044;
 }
 
 .seance-resume.etat-annulee,
 .etat-seance.etat-annulee {
-  background: #fdebec;
-  border-color: var(--rouge-alod);
-  color: #963d3f;
-  text-decoration: line-through;
+  background: color-mix(in srgb, var(--agenda-color, var(--rouge-alod)) 14%, white);
+  border-color: var(--agenda-color, var(--rouge-alod));
+  color: #354044;
+}
+
+.seance-resume.etat-modifiee,
+.etat-seance.etat-modifiee {
+  background: color-mix(in srgb, var(--agenda-color, #fd7e14) 14%, white);
+  border-color: var(--agenda-color, #fd7e14);
+  color: #354044;
 }
 
 .seance-resume.source-google,
@@ -278,6 +305,11 @@
   white-space: pre-line;
 }
 
+.detail-lien {
+  margin-top: 0.45rem;
+  overflow-wrap: anywhere;
+}
+
 :host ::ng-deep .detail-commentaire img {
   height: auto;
   max-width: 100%;
@@ -337,8 +369,7 @@
 }
 
 @media (max-width: 767px) {
-  .calendrier-entete,
-  .legende-agendas {
+  .calendrier-entete {
     align-items: stretch;
     flex-direction: column;
   }

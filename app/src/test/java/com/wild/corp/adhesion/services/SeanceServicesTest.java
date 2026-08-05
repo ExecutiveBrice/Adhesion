@@ -2,6 +2,7 @@ package com.wild.corp.adhesion.services;
 
 import com.wild.corp.adhesion.models.Activite;
 import com.wild.corp.adhesion.models.ESeance;
+import com.wild.corp.adhesion.models.Salle;
 import com.wild.corp.adhesion.models.Seance;
 import com.wild.corp.adhesion.repository.SeanceRepository;
 import org.junit.jupiter.api.Test;
@@ -34,7 +35,8 @@ class SeanceServicesTest {
         activite.setId(5L);
         activite.setNom("Pilates");
         activite.setHoraire("Mardi de 19h30 à 20h30");
-        activite.setSalle("Salle des sports");
+        activite.setSalle(Salle.builder().id(4L).nom("Salle des sports").adresse("1 rue des Sports")
+                .couleur("#4285F4").build());
 
         Seance seance = new Seance();
         seance.setId(42L);
@@ -56,6 +58,8 @@ class SeanceServicesTest {
         assertThat(calendrier).singleElement().satisfies(evenement -> {
             assertThat(evenement.activiteNom()).isEqualTo("Pilates");
             assertThat(evenement.salle()).isEqualTo("Salle des sports");
+            assertThat(evenement.adresseSalle()).isEqualTo("1 rue des Sports");
+            assertThat(evenement.couleurSalle()).isEqualTo("#4285F4");
             assertThat(evenement.debut()).isEqualTo(LocalDateTime.of(2026, 9, 1, 19, 30));
         });
     }

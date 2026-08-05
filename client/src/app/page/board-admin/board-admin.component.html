@@ -80,6 +80,83 @@
     </section>
   </div>
 
+  <div class="col-12">
+    <section class="card card-container agenda-admin" aria-labelledby="titre-salles-admin">
+      <div class="agenda-admin-entete">
+        <div class="agenda-admin-titre">
+          <span class="agenda-admin-icone" aria-hidden="true"><fa-icon [icon]="faLocationDot"></fa-icon></span>
+          <div>
+            <h2 id="titre-salles-admin">Salles</h2>
+            <p>Enregistrez les salles utilisées par l’association, avec leur adresse et leur couleur.</p>
+          </div>
+        </div>
+        <span class="agenda-compteur">{{salles.length}}</span>
+      </div>
+
+      <div class="agenda-ajout">
+        <div class="agenda-nom">
+          <label for="nouvelleSalleNom">Nom de la salle</label>
+          <input id="nouvelleSalleNom" type="text" class="form-control" maxlength="100"
+                 [(ngModel)]="nouvelleSalleNom" placeholder="Ex. Salle polyvalente">
+        </div>
+        <div class="agenda-source">
+          <label for="nouvelleSalleAdresse">Adresse</label>
+          <input id="nouvelleSalleAdresse" type="text" class="form-control" maxlength="500"
+                 [(ngModel)]="nouvelleSalleAdresse" (keydown.enter)="ajouterSalle()"
+                 placeholder="Ex. 8 rue de l’Ouche Dinier, 44400 Rezé">
+        </div>
+        <div class="agenda-couleur">
+          <label for="nouvelleSalleCouleur">Couleur</label>
+          <input id="nouvelleSalleCouleur" type="color" class="form-control form-control-color"
+                 [(ngModel)]="nouvelleSalleCouleur" title="Choisir la couleur de la nouvelle salle">
+        </div>
+        <button type="button" class="btn btn-primary agenda-ajouter" [disabled]="salleEnregistrement"
+                (click)="ajouterSalle()">
+          <fa-icon [icon]="faPlus"></fa-icon>
+          Ajouter
+        </button>
+      </div>
+
+      <div *ngIf="salles.length > 0" class="agenda-liste">
+        <div *ngFor="let salle of salles; let index = index" class="agenda-ligne">
+          <span class="agenda-apercu" [style.background-color]="salle.couleur" aria-hidden="true"></span>
+          <div class="agenda-nom">
+            <label [for]="'salleNom' + index">Nom</label>
+            <input [id]="'salleNom' + index" type="text" class="form-control" maxlength="100"
+                   [(ngModel)]="salle.nom">
+          </div>
+          <div class="agenda-source">
+            <label [for]="'salleAdresse' + index">Adresse</label>
+            <input [id]="'salleAdresse' + index" type="text" class="form-control" maxlength="500"
+                   [(ngModel)]="salle.adresse">
+          </div>
+          <div class="agenda-couleur">
+            <label [for]="'salleCouleur' + index">Couleur</label>
+            <input [id]="'salleCouleur' + index" type="color" class="form-control form-control-color"
+                   [(ngModel)]="salle.couleur" [title]="'Couleur de la salle ' + (index + 1)">
+          </div>
+          <button type="button" class="btn btn-outline-danger agenda-supprimer" [disabled]="salleEnregistrement"
+                  (click)="supprimerSalle(index)" [attr.aria-label]="'Supprimer la salle ' + (index + 1)">
+            <fa-icon [icon]="faTrash"></fa-icon>
+          </button>
+        </div>
+        <div class="agenda-actions">
+          <small>Les modifications de nom, d’adresse et de couleur sont appliquées après enregistrement.</small>
+          <button type="button" class="btn btn-outline-primary" [disabled]="salleEnregistrement"
+                  (click)="enregistrerSalles()">
+            {{salleEnregistrement ? 'Enregistrement…' : 'Enregistrer les modifications'}}
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="salles.length === 0 && !salleErreur" class="agenda-vide">
+        Aucune salle n'est configurée pour le moment.
+      </div>
+      <div *ngIf="salleMessage" class="alert alert-success agenda-retour" role="status">{{salleMessage}}</div>
+      <div *ngIf="salleErreur" class="alert alert-danger agenda-retour" role="alert">{{salleErreur}}</div>
+    </section>
+  </div>
+
   <!--div class="col-md-12">
     <div type='button' class="btn btn-block btn-primary" (click)="nouvelleAnnee()">Nouvelle Annee</div>
   </div-->

@@ -4,6 +4,7 @@ import com.wild.corp.adhesion.models.*;
 import com.wild.corp.adhesion.models.resources.SeanceResponse;
 import com.wild.corp.adhesion.repository.ActiviteNm1Repository;
 import com.wild.corp.adhesion.repository.ActiviteRepository;
+import com.wild.corp.adhesion.repository.SalleRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.BeanUtils;
@@ -28,6 +29,8 @@ public class ActiviteServices {
     ActiviteNm1Repository activiteNm1Repository;
     @Autowired
     SeanceServices seanceServices;
+    @Autowired
+    SalleRepository salleRepository;
 
     public List<Seance> getSeancesDuJour(Long activiteId) {
 
@@ -77,13 +80,15 @@ public class ActiviteServices {
     }
 
     public Activite save(Activite activite) {
+        Salle salle = trouverSalle(activite.getSalle());
         if (activite.getId() != null) {
             Activite activiteInDB = activiteRepository.findById(activite.getId()).orElseThrow();
             activiteInDB.getProfs().forEach(adherent -> adherent.getCours().remove(activiteInDB));
 
             BeanUtils.copyProperties(activite, activiteInDB,
                     "id", "adhesions", "sousClassement", "profs", "seances",
-                    "nbAdhesionsEnCours", "nbAdhesionsCompletes", "nbAdhesionsAttente", "montantCollecte");
+                    "nbAdhesionsEnCours", "nbAdhesionsCompletes", "nbAdhesionsAttente", "montantCollecte", "salle");
+            activiteInDB.setSalle(salle);
 
             activiteInDB.setProfs(activite.getProfs().stream()
                     .map(adherent -> adherentServices.getById(adherent.getId()))
@@ -93,8 +98,17 @@ public class ActiviteServices {
             return activiteRepository.save(activiteInDB);
         }
 
+        activite.setSalle(salle);
         seanceServices.fillSeances(activite, 29);
         return activiteRepository.save(activite);
+    }
+
+    private Salle trouverSalle(Salle salle) {
+        if (salle == null || salle.getId() == null) {
+            return null;
+        }
+        return salleRepository.findById(salle.getId())
+                .orElseThrow(() -> new IllegalArgumentException("La salle sélectionnée n'existe plus"));
     }
 
     public Activite addReferent(Long activiteId, Long adherentId) {

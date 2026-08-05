@@ -1,5 +1,6 @@
 import { Adherent } from "./adherent";
 import { Adhesion } from "./adhesion";
+import { SalleConfiguration } from './salle';
 
 export class Activite {
 
@@ -17,7 +18,7 @@ export class Activite {
   genre!: string;
   horaire!: string;
   lien!: string;
-  salle!: string;
+  salle?: SalleConfiguration;
   profs!: Adherent[];
   nbPlaces!: number;
   nbAdhesionsEnCours!: number;

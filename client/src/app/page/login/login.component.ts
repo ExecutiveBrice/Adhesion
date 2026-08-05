@@ -3,7 +3,7 @@ import { AuthService } from '../../_services/auth.service';
 import { TokenStorageService } from '../../_services/token-storage.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ParamTransmissionService } from 'src/app/_helpers/transmission.service';
-import { faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faCheck, faClock, faCloudDownloadAlt, faPencilSquare, faScaleBalanced, faSquareMinus, faSquarePlus, faTriangleExclamation, faUserPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { catchError, forkJoin, of, Subscription } from 'rxjs';
 import { ParamService } from 'src/app/_services/param.service';
 import { ToastrService } from 'ngx-toastr';
@@ -15,6 +15,7 @@ interface EvenementCalendrier {
   id: string;
   titre: string;
   lieu: string | null;
+  adresseSalle?: string | null;
   commentaire?: string | null;
   debut: string;
   fin: string;
@@ -22,6 +23,8 @@ interface EvenementCalendrier {
   journeeEntiere: boolean;
   agenda?: string;
   agendaSource?: string;
+  couleurSalle?: string | null;
+  lien?: string | null;
   etatSeance?: SeanceCalendrier['etatSeance'];
 }
 
@@ -46,7 +49,10 @@ export class LoginComponent implements OnInit {
     password: null
   };
 
-  faCircleCheck = faCircleCheck;
+  faClock = faClock;
+  faXmark = faXmark;
+  faCheck = faCheck;
+  faTriangleExclamation = faTriangleExclamation;
   subscription = new Subscription()
   isLoggedIn = false;
   isLoginFailed = false;
@@ -225,7 +231,17 @@ export class LoginComponent implements OnInit {
   }
 
   etatLibelle(etat?: SeanceCalendrier['etatSeance']): string {
-    return etat === 'ANNULEE' ? 'Annulée' : etat === 'REALISEE' ? 'Réalisée' : 'Programmée';
+    return etat === 'ANNULEE' ? 'Annulée'
+      : etat === 'REALISEE' ? 'Réalisée'
+      : etat === 'MODIFIEE' ? 'Modifiée'
+      : 'Programmée';
+  }
+
+  iconeEtat(etat?: SeanceCalendrier['etatSeance']) {
+    return etat === 'ANNULEE' ? this.faXmark
+      : etat === 'REALISEE' ? this.faCheck
+      : etat === 'MODIFIEE' ? this.faTriangleExclamation
+      : this.faClock;
   }
 
   classeEtat(etat?: SeanceCalendrier['etatSeance']): string {
@@ -247,6 +263,10 @@ export class LoginComponent implements OnInit {
         id: `seance-${seance.id}`,
         titre: seance.activiteNom,
         lieu: seance.salle,
+        adresseSalle: seance.adresseSalle,
+        commentaire: seance.commentaire,
+        couleurSalle: seance.couleurSalle,
+        lien: seance.lien,
         debut: seance.debut,
         fin: seance.fin,
         source: 'SEANCE' as const,
@@ -303,9 +323,9 @@ export class LoginComponent implements OnInit {
     return evenement.source === 'GOOGLE' ? 'source-google' : this.classeEtat(evenement.etatSeance);
   }
 
-  couleurAgenda(evenement: EvenementCalendrier): string {
-    if (evenement.source !== 'GOOGLE') {
-      return '';
+  couleurEvenement(evenement: EvenementCalendrier): string {
+    if (evenement.source === 'SEANCE') {
+      return evenement.couleurSalle || '#5CBBaf';
     }
     return this.agendasGoogle.find(agenda => agenda.source === evenement.agendaSource)?.couleur || '#D29438';
   }
@@ -314,6 +334,21 @@ export class LoginComponent implements OnInit {
     return this.agendasGoogle.find(agenda => agenda.source === evenement.agendaSource)?.nom
       || evenement.agenda
       || 'Agenda Google';
+  }
+
+  lienActivite(evenement: EvenementCalendrier): string | null {
+    if (evenement.source !== 'SEANCE' || !evenement.lien?.trim()) {
+      return null;
+    }
+    const lien = evenement.lien.trim();
+    return /^https?:\/\//i.test(lien) ? lien : `https://${lien}`;
+  }
+
+  lienAdresseSalle(evenement: EvenementCalendrier): string | null {
+    if (!evenement.adresseSalle?.trim()) {
+      return null;
+    }
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(evenement.adresseSalle.trim())}`;
   }
 
   sourceEvenement(evenement: EvenementCalendrier): string {

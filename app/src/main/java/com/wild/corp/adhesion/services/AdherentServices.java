@@ -314,7 +314,7 @@ public class AdherentServices {
             adherentsLite.addAll(activite.getSousClassement().stream().map(this::veryReduceAdherent).collect(Collectors.toSet()));
 
             return ActiviteLite.builder().id(activite.getId())
-                    .salle(activite.getSalle())
+                    .salle(activite.getNomSalle())
                     .lien(activite.getLien())
                     .horaire(activite.getHoraire())
                     .nom(activite.getNom())
@@ -688,7 +688,7 @@ public class AdherentServices {
         activiteNm1.setNom(adhesion.getActivite().getNom());
         activiteNm1.setHoraire(adhesion.getActivite().getHoraire());
         activiteNm1.setGroupe(adhesion.getActivite().getGroupe());
-        activiteNm1.setSalle(adhesion.getActivite().getSalle());
+        activiteNm1.setSalle(adhesion.getActivite().getNomSalle());
         activiteNm1.setTarif(adhesion.getActivite().getTarif());
         activiteNm1.setGroupeFiltre(adhesion.getActivite().getGroupeFiltre());
         return activiteNm1;

@@ -20,7 +20,21 @@
     margin-left: 5px;
   }
 
-  .big-checkbox {width: 40px; height: 20px;}
+.big-checkbox {width: 40px; height: 20px;}
+
+.selecteur-salle {
+  align-items: center;
+  display: flex;
+  gap: .55rem;
+}
+
+.couleur-salle {
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px #adb5bd;
+  flex: 0 0 20px;
+  height: 20px;
+}
 
 .seances-section {
   border-top: 1px solid #dee2e6;
@@ -85,4 +99,8 @@
 
 .etat-annulee {
   border-color: #dc3545;
+}
+
+.etat-modifiee {
+  border-color: #fd7e14;
 }

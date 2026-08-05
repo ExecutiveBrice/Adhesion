@@ -51,7 +51,20 @@
 
       <div class="form-group">
         <label for="salle">Salle</label>
-        <input type="text" class="form-control" name="salle" [(ngModel)]="activite.salle" />
+        <div class="selecteur-salle">
+          <span *ngIf="activite.salle" class="couleur-salle" [style.background-color]="activite.salle.couleur"
+                [title]="'Couleur : ' + activite.salle.couleur" aria-hidden="true"></span>
+          <select id="salle" class="form-select" name="salle" [(ngModel)]="activite.salle"
+                  [compareWith]="comparerSalles">
+          <option [ngValue]="undefined">Aucune salle</option>
+          <option *ngFor="let salle of salles" [ngValue]="salle">
+            {{salle.nom}} — {{salle.adresse}} · {{salle.couleur}}
+          </option>
+          </select>
+        </div>
+        <small *ngIf="activite.salle" class="text-muted">
+          La couleur {{activite.salle.couleur}} sera utilisée pour les nouvelles séances dans le calendrier.
+        </small>
       </div>
 
       <div class="form-group">
@@ -297,10 +310,11 @@
                 <select class="form-select form-select-sm" [(ngModel)]="seance.etatSeance"
                         [name]="'etatSeance-' + seance.id" (ngModelChange)="enregistrerEtatSeance(seance)"
                         [disabled]="suppressionSeances.has(seance.id)"
-                        [ngClass]="seance.etatSeance === 'ANNULEE' ? 'etat-annulee' : (seance.etatSeance === 'REALISEE' ? 'etat-realisee' : 'etat-programmee')">
+                        [ngClass]="seance.etatSeance === 'ANNULEE' ? 'etat-annulee' : (seance.etatSeance === 'REALISEE' ? 'etat-realisee' : (seance.etatSeance === 'MODIFIEE' ? 'etat-modifiee' : 'etat-programmee'))">
                   <option value="PROGRAMMEE">Programmée</option>
                   <option value="REALISEE">Réalisée</option>
                   <option value="ANNULEE">Annulée</option>
+                  <option value="MODIFIEE">Modifiée</option>
                 </select>
               </td>
               <td class="commentaire-seance">
