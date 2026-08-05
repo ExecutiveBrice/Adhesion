@@ -10,6 +10,8 @@ export class Activite {
   groupeCompta!: string;
   tarif!: number;
   jour!: string;
+  horaireDebut!: string;
+  duree!: number;
   ageMin!: number;
   ageMax!: number;
   genre!: string;

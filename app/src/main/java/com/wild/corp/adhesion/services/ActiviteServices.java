@@ -1,16 +1,17 @@
 package com.wild.corp.adhesion.services;
 
 import com.wild.corp.adhesion.models.*;
+import com.wild.corp.adhesion.models.resources.SeanceResponse;
 import com.wild.corp.adhesion.repository.ActiviteNm1Repository;
 import com.wild.corp.adhesion.repository.ActiviteRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -33,6 +34,20 @@ public class ActiviteServices {
         Activite activite = getById(activiteId);
         LocalDate now = LocalDate.now();
         return activite.getSeances().stream().filter(seance -> now.equals(seance.getDebut())).toList();
+    }
+
+    public List<SeanceResponse> getSeances(Long activiteId) {
+        return getById(activiteId).getSeances().stream()
+                .sorted(Comparator.comparing(Seance::getDebut, Comparator.nullsLast(Comparator.naturalOrder())))
+                .map(SeanceResponse::from)
+                .toList();
+    }
+
+    public List<SeanceResponse> addSeances(Long activiteId, int nombreSeances, LocalDate dateDebut) {
+        Activite activite = getById(activiteId);
+        seanceServices.addSeances(activite, nombreSeances, dateDebut);
+        activiteRepository.save(activite);
+        return getSeances(activiteId);
     }
     public List<ActiviteNm1> getAllNm1() {
         List<ActiviteNm1> activites = activiteNm1Repository.findAll();
@@ -63,19 +78,23 @@ public class ActiviteServices {
 
     public Activite save(Activite activite) {
         if (activite.getId() != null) {
-            Optional<Activite> activiteInDB = activiteRepository.findById(activite.getId());
-            activiteInDB.ifPresent(value -> value.getProfs().forEach(adherent -> adherent.getCours().remove(value)));
+            Activite activiteInDB = activiteRepository.findById(activite.getId()).orElseThrow();
+            activiteInDB.getProfs().forEach(adherent -> adherent.getCours().remove(activiteInDB));
 
-            activite.setProfs(activite.getProfs().stream().map(adherent -> adherentServices.getById(adherent.getId())).collect(Collectors.toSet()));
-            activite.getProfs().forEach(adherent -> adherent.getCours().add(activite));
-            if(!activite.getJour().equals(activiteInDB.get().getJour())){
-                seanceServices.modifyDay(activite);
-            }
-        }else{
-           seanceServices.fillSeances(activite, 29);
+            BeanUtils.copyProperties(activite, activiteInDB,
+                    "id", "adhesions", "sousClassement", "profs", "seances",
+                    "nbAdhesionsEnCours", "nbAdhesionsCompletes", "nbAdhesionsAttente", "montantCollecte");
+
+            activiteInDB.setProfs(activite.getProfs().stream()
+                    .map(adherent -> adherentServices.getById(adherent.getId()))
+                    .collect(Collectors.toSet()));
+            activiteInDB.getProfs().forEach(adherent -> adherent.getCours().add(activiteInDB));
+
+            return activiteRepository.save(activiteInDB);
         }
 
-        return  activiteRepository.save(activite);
+        seanceServices.fillSeances(activite, 29);
+        return activiteRepository.save(activite);
     }
 
     public Activite addReferent(Long activiteId, Long adherentId) {

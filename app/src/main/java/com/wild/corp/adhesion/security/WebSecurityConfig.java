@@ -3,6 +3,7 @@ package com.wild.corp.adhesion.security;
 import com.wild.corp.adhesion.services.UserDetailsService;
 import com.wild.corp.adhesion.security.jwt.AuthEntryPointJwt;
 import com.wild.corp.adhesion.security.jwt.AuthTokenFilter;
+import jakarta.servlet.DispatcherType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -63,9 +64,11 @@ public class WebSecurityConfig{
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth ->
-                        auth.requestMatchers("/auth/**").permitAll()
+                        auth.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
+                                .requestMatchers("/auth/**").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/param/**").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/adherent/**").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/activite/calendrier", "/activite/calendrier/google").permitAll()
                                 .requestMatchers(HttpMethod.OPTIONS,"/**").permitAll()
                                 .requestMatchers("/swagger-ui**").permitAll()
                                 .anyRequest().authenticated()

@@ -178,6 +178,12 @@ public class ParamTextServices {
                             "Les inscriptions débuteront à partir du 4 Juin").build());
         }
 
+        if(!paramTextRepository.existsByParamName("Google_Agendas")) {
+            paramTextRepository.save(ParamText.builder()
+                    .paramName("Google_Agendas")
+                    .paramValue("").build());
+        }
+
         if(!paramTextRepository.existsByParamName("Text_Inscription")) {
             paramTextRepository.save(ParamText.builder()
                     .paramName("Text_Inscription")

@@ -23,6 +23,7 @@
         <jjwt.version>0.13.0</jjwt.version>
         <openapi-generator.version>7.24.0</openapi-generator.version>
         <postgresql.version>42.7.13</postgresql.version>
+        <ical4j.version>4.3.0</ical4j.version>
     </properties>
 
     <dependencies>
@@ -76,6 +77,11 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>${commons-lang3.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mnode.ical4j</groupId>
+            <artifactId>ical4j</artifactId>
+            <version>${ical4j.version}</version>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>

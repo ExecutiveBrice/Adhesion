@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { Activite, Adherent,ActiviteNm1, ActiviteDropDown, HoraireDropDown } from '../models';
-import { Seance } from '../models/seance';
+import { CalendrierGoogle, Seance, SeanceCalendrier } from '../models/seance';
 
 const API_URL = environment.server + '/activite/';
 
@@ -15,6 +15,53 @@ export class ActiviteService {
 
   getSeancesDuJour(): Observable<Seance[]> {
     return this.http.get<Seance[]>(API_URL + 'seancesDuJour', { responseType: 'json' });
+  }
+
+  getSeances(activiteId: number): Observable<Seance[]> {
+    return this.http.get<Seance[]>(API_URL + activiteId + '/seances', { responseType: 'json' });
+  }
+
+  getCalendrier(dateDebut: string, dateFin: string): Observable<SeanceCalendrier[]> {
+    const params = new HttpParams().set('dateDebut', dateDebut).set('dateFin', dateFin);
+    return this.http.get<SeanceCalendrier[]>(API_URL + 'calendrier', { params, responseType: 'json' });
+  }
+
+  getCalendrierGoogle(dateDebut: string, dateFin: string, sources: string[]): Observable<CalendrierGoogle> {
+    let params = new HttpParams().set('dateDebut', dateDebut).set('dateFin', dateFin);
+    sources.forEach(source => params = params.append('source', source));
+    return this.http.get<CalendrierGoogle>(API_URL + 'calendrier/google', { params, responseType: 'json' });
+  }
+
+  ajouterSeances(activiteId: number, nombreSeances: number, dateDebut: string): Observable<Seance[]> {
+    return this.http.post<Seance[]>(API_URL + activiteId + '/seances', {
+      nombreSeances,
+      dateDebut
+    }, { responseType: 'json' });
+  }
+
+  modifierEtatSeance(activiteId: number, seance: Seance): Observable<Seance> {
+    return this.http.patch<Seance>(API_URL + activiteId + '/seances/' + seance.id, {
+      etatSeance: seance.etatSeance
+    }, { responseType: 'json' });
+  }
+
+  modifierCommentaireSeance(activiteId: number, seance: Seance): Observable<Seance> {
+    return this.http.patch<Seance>(API_URL + activiteId + '/seances/' + seance.id, {
+      commentaire: seance.commentaire,
+      commentairePresent: true
+    }, { responseType: 'json' });
+  }
+
+  modifierHoraireSeance(activiteId: number, seance: Seance): Observable<Seance> {
+    return this.http.patch<Seance>(API_URL + activiteId + '/seances/' + seance.id, {
+      date: seance.dateEdition,
+      heureDebut: seance.heureEdition,
+      horairePresent: true
+    }, { responseType: 'json' });
+  }
+
+  supprimerSeance(activiteId: number, seanceId: number): Observable<void> {
+    return this.http.delete<void>(API_URL + activiteId + '/seances/' + seanceId);
   }
 
   getAllNm1(): Observable<ActiviteNm1[]> {

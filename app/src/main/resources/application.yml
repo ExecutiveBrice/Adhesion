@@ -35,3 +35,4 @@ image-storage-dir: C:\Users\PC\Documents\ProjetsDev\Adhesion
 adhesion:
   calendrier:
     zone: ${ZONE_SCOLAIRE:C}
+    jours-feries-dataset: ${JOURS_FERIES_DATASET:jours-ouvres-week-end-feries-france-2010-a-2030}

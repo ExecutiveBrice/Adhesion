@@ -4,9 +4,32 @@ import { TokenStorageService } from '../../_services/token-storage.service';
 import { Router } from '@angular/router';
 import { ParamTransmissionService } from 'src/app/_helpers/transmission.service';
 import { faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
-import { Subscription } from 'rxjs';
+import { catchError, forkJoin, of, Subscription } from 'rxjs';
 import { ParamService } from 'src/app/_services/param.service';
 import { ToastrService } from 'ngx-toastr';
+import { ActiviteService } from 'src/app/_services/activite.service';
+import { EvenementGoogleAgenda, SeanceCalendrier } from 'src/app/models/seance';
+
+interface EvenementCalendrier {
+  id: string;
+  titre: string;
+  lieu: string | null;
+  debut: string;
+  fin: string;
+  source: 'SEANCE' | 'GOOGLE';
+  journeeEntiere: boolean;
+  agenda?: string;
+  etatSeance?: SeanceCalendrier['etatSeance'];
+}
+
+interface JourCalendrier {
+  date: Date;
+  iso: string;
+  numero: number;
+  dansLeMois: boolean;
+  aujourdhui: boolean;
+  evenements: EvenementCalendrier[];
+}
 
 @Component({
   selector: 'app-login',
@@ -34,6 +57,15 @@ export class LoginComponent implements OnInit {
   messageInscription: string = ""
   textMaintenance: string = ""
   textRGPD: string = ""
+  calendrier: JourCalendrier[] = [];
+  jourSelectionne: JourCalendrier | null = null;
+  moisAffiche = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  chargementCalendrier = false;
+  erreurCalendrier = '';
+  googleAgendaSources = '';
+  googleAgendaIds: string[] = [];
+  googleAgendaErreur = '';
+  readonly joursSemaine = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
   maintenance: Boolean = false;
   isSuccessful = false;
@@ -49,17 +81,23 @@ export class LoginComponent implements OnInit {
     private authService: AuthService,
     private tokenStorage: TokenStorageService,
     public router: Router,
-    public paramService: ParamService) { }
+    public paramService: ParamService,
+    private activiteService: ActiviteService) { }
 
   ngOnInit(): void {
 
+    this.chargerCalendrier();
+
     this.paramService.getAllText().subscribe({
       next: (data) => {
-        this.messageConnexion = data.filter(param => param.paramName == "Text_Accueil")[0].paramValue;
-        this.messageInscription = data.filter(param => param.paramName == "Text_Inscription")[0].paramValue;
-        this.textMaintenance = data.filter(param => param.paramName == "Text_Maintenance")[0].paramValue;
-
-        this.textRGPD = data.filter(param => param.paramName == "RGPD")[0].paramValue;
+        this.messageConnexion = data.find(param => param.paramName == "Text_Accueil")?.paramValue || '';
+        this.messageInscription = data.find(param => param.paramName == "Text_Inscription")?.paramValue || '';
+        this.textMaintenance = data.find(param => param.paramName == "Text_Maintenance")?.paramValue || '';
+        this.textRGPD = data.find(param => param.paramName == "RGPD")?.paramValue || '';
+        this.googleAgendaSources = data.find(param => param.paramName == "Google_Agendas")?.paramValue || '';
+        if (this.googleAgendaSources.trim()) {
+          this.afficherGoogleAgendas(false);
+        }
 
       },
       error: (error) => {
@@ -99,6 +137,186 @@ export class LoginComponent implements OnInit {
       });
 
 
+  }
+
+  get libelleMois(): string {
+    return new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' })
+      .format(this.moisAffiche);
+  }
+
+  get libelleJourSelectionne(): string {
+    if (!this.jourSelectionne) {
+      return '';
+    }
+    return new Intl.DateTimeFormat('fr-FR', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    }).format(this.jourSelectionne.date);
+  }
+
+  changerMois(decalage: number): void {
+    this.moisAffiche = new Date(
+      this.moisAffiche.getFullYear(), this.moisAffiche.getMonth() + decalage, 1);
+    this.chargerCalendrier();
+  }
+
+  revenirAujourdhui(): void {
+    const maintenant = new Date();
+    this.moisAffiche = new Date(maintenant.getFullYear(), maintenant.getMonth(), 1);
+    this.chargerCalendrier();
+  }
+
+  selectionnerJour(jour: JourCalendrier): void {
+    this.jourSelectionne = jour;
+  }
+
+  chargerCalendrier(): void {
+    const debut = this.premierJourVisible();
+    const fin = new Date(debut);
+    fin.setDate(fin.getDate() + 41);
+    this.chargementCalendrier = true;
+    this.erreurCalendrier = '';
+    this.googleAgendaErreur = '';
+    const dateDebut = this.dateIso(debut);
+    const dateFin = this.dateIso(fin);
+    const seances$ = this.activiteService.getCalendrier(dateDebut, dateFin).pipe(catchError(() => {
+      this.erreurCalendrier = "Le calendrier des séances n'est pas disponible pour le moment.";
+      return of([] as SeanceCalendrier[]);
+    }));
+    const google$ = this.googleAgendaIds.length > 0
+      ? this.activiteService.getCalendrierGoogle(dateDebut, dateFin, this.googleAgendaIds).pipe(catchError(() => {
+          this.googleAgendaErreur = "Les agendas Google publics ne sont pas disponibles pour le moment.";
+          return of({ evenements: [] as EvenementGoogleAgenda[], erreurs: [] });
+        }))
+      : of({ evenements: [] as EvenementGoogleAgenda[], erreurs: [] });
+
+    forkJoin({ seances: seances$, google: google$ }).subscribe(({ seances, google }) => {
+      this.googleAgendaErreur ||= google.erreurs.join(' ');
+      this.construireCalendrier(debut, seances, google.evenements);
+      this.chargementCalendrier = false;
+    });
+  }
+
+  heure(dateHeure: string): string {
+    return dateHeure?.substring(11, 16) || '';
+  }
+
+  etatLibelle(etat?: SeanceCalendrier['etatSeance']): string {
+    return etat === 'ANNULEE' ? 'Annulée' : etat === 'REALISEE' ? 'Réalisée' : 'Programmée';
+  }
+
+  classeEtat(etat?: SeanceCalendrier['etatSeance']): string {
+    return `etat-${(etat || 'PROGRAMMEE').toLowerCase()}`;
+  }
+
+  afficherGoogleAgendas(afficherErreur = true): void {
+    const agendas = this.extraireGoogleAgendaIds(this.googleAgendaSources);
+    this.googleAgendaErreur = '';
+    if (agendas.length === 0) {
+      this.googleAgendaIds = [];
+      if (afficherErreur) {
+        this.googleAgendaErreur = "Saisissez l'identifiant ou l'URL publique d'au moins un Google Agenda.";
+      }
+      this.chargerCalendrier();
+      return;
+    }
+    this.googleAgendaIds = agendas;
+    this.chargerCalendrier();
+  }
+
+  private premierJourVisible(): Date {
+    const premierDuMois = new Date(this.moisAffiche.getFullYear(), this.moisAffiche.getMonth(), 1);
+    const decalageDepuisLundi = (premierDuMois.getDay() + 6) % 7;
+    const debut = new Date(premierDuMois);
+    debut.setDate(debut.getDate() - decalageDepuisLundi);
+    return debut;
+  }
+
+  private construireCalendrier(debut: Date, seances: SeanceCalendrier[], google: EvenementGoogleAgenda[]): void {
+    const evenementsParJour = new Map<string, EvenementCalendrier[]>();
+    const evenements: EvenementCalendrier[] = [
+      ...seances.map(seance => ({
+        id: `seance-${seance.id}`,
+        titre: seance.activiteNom,
+        lieu: seance.salle,
+        debut: seance.debut,
+        fin: seance.fin,
+        source: 'SEANCE' as const,
+        journeeEntiere: false,
+        etatSeance: seance.etatSeance
+      })),
+      ...google.map(evenement => ({ ...evenement, source: 'GOOGLE' as const }))
+    ];
+    evenements.forEach(evenement => {
+      let date = new Date(`${evenement.debut.substring(0, 10)}T12:00:00`);
+      const dernierJour = new Date(`${evenement.fin.substring(0, 10)}T12:00:00`);
+      if (evenement.journeeEntiere) dernierJour.setDate(dernierJour.getDate() - 1);
+      do {
+        const iso = this.dateIso(date);
+        evenementsParJour.set(iso, [...(evenementsParJour.get(iso) || []), evenement]);
+        date.setDate(date.getDate() + 1);
+      } while (date <= dernierJour);
+    });
+
+    const aujourdHui = this.dateIso(new Date());
+    this.calendrier = Array.from({ length: 42 }, (_, index) => {
+      const date = new Date(debut);
+      date.setDate(debut.getDate() + index);
+      const iso = this.dateIso(date);
+      return {
+        date,
+        iso,
+        numero: date.getDate(),
+        dansLeMois: date.getMonth() === this.moisAffiche.getMonth(),
+        aujourdhui: iso === aujourdHui,
+        evenements: (evenementsParJour.get(iso) || []).sort((a, b) => a.debut.localeCompare(b.debut))
+      };
+    });
+
+    const ancienneSelection = this.jourSelectionne?.iso;
+    this.jourSelectionne = this.calendrier.find(jour => jour.iso === ancienneSelection)
+      || this.calendrier.find(jour => jour.iso === aujourdHui)
+      || this.calendrier.find(jour => jour.dansLeMois && jour.evenements.length > 0)
+      || this.calendrier.find(jour => jour.dansLeMois)
+      || null;
+  }
+
+  private dateIso(date: Date): string {
+    const mois = String(date.getMonth() + 1).padStart(2, '0');
+    const jour = String(date.getDate()).padStart(2, '0');
+    return `${date.getFullYear()}-${mois}-${jour}`;
+  }
+
+  private extraireGoogleAgendaIds(sources: string): string[] {
+    const ids = sources.split(/\r?\n|;/).flatMap(source => {
+      const valeur = source.trim();
+      if (!valeur) {
+        return [];
+      }
+      try {
+        const url = new URL(valeur);
+        if (url.protocol !== 'https:' || url.hostname !== 'calendar.google.com') {
+          return [];
+        }
+        const sourcesUrl = url.searchParams.getAll('src');
+        return sourcesUrl.length > 0 ? sourcesUrl : [valeur];
+      } catch {
+        return [valeur];
+      }
+    });
+
+    return [...new Set(ids.filter(id => id.length <= 500 && !/[<>"']/.test(id)))];
+  }
+
+  heureEvenement(evenement: EvenementCalendrier): string {
+    return evenement.journeeEntiere ? 'Journée' : this.heure(evenement.debut);
+  }
+
+  classeEvenement(evenement: EvenementCalendrier): string {
+    return evenement.source === 'GOOGLE' ? 'source-google' : this.classeEtat(evenement.etatSeance);
+  }
+
+  sourceEvenement(evenement: EvenementCalendrier): string {
+    return evenement.source === 'GOOGLE' ? `Google · ${evenement.agenda}` : this.etatLibelle(evenement.etatSeance);
   }
   onSubmitInscritpion(): void{
     const { username, password } = this.form;
