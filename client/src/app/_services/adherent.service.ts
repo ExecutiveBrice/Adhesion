@@ -73,10 +73,11 @@ export class AdherentService {
     return this.http.get<AdherentFlat[]>(API_URL + 'allFlat', { responseType: 'json' });
   }
 
-  getPage(page: number, size: number): Observable<AdherentPage> {
+  getPage(page: number, size: number, search = ''): Observable<AdherentPage> {
     const params = new HttpParams()
       .set('page', page)
       .set('size', size)
+      .set('search', search)
       .set('sort', 'nom,asc')
       .append('sort', 'prenom,asc');
     return this.http.get<AdherentPage>(API_URL + 'page', {params, responseType: 'json'});
@@ -128,4 +129,3 @@ export class AdherentService {
   }
 
 }
-

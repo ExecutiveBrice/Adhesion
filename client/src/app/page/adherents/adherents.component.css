@@ -1,6 +1,36 @@
 .ligne:hover{
     background-color: rgba(188, 219, 205, 255)!important;
   }
+.filter-panel {
+  display: flex;
+  align-items: end;
+  gap: 1rem;
+  padding: .85rem 0 .25rem;
+}
+
+.filter-field {
+  min-width: min(28rem, 100%);
+}
+
+.filter-field label {
+  display: block;
+  margin-bottom: .35rem;
+  font-size: .85rem;
+  font-weight: 700;
+  color: #526861;
+}
+
+.reset-button {
+  white-space: nowrap;
+}
+
+@media (max-width: 576px) {
+  .filter-panel {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
 .table-toolbar,
 .toolbar-page-controls,
 .table-toolbar label {

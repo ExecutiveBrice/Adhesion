@@ -5,7 +5,7 @@ import { faPen, faUsersRays, faSkull, faUsers, faEnvelope, faCircleXmark, faClou
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TokenStorageService } from 'src/app/_services/token-storage.service';
 import { Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { AuthService } from 'src/app/_services/auth.service';
 import { ParamService } from 'src/app/_services/param.service';
 import { ExcelService } from 'src/app/_services/excel.service';
@@ -38,6 +38,9 @@ export class AdherentsComponent implements OnInit {
   readonly pageSizes = [10, 20, 50, 100];
   totalElements = 0;
   totalPages = 0;
+  searchTerm = '';
+  private readonly searchChanges = new Subject<string>();
+  private readonly destroy$ = new Subject<void>();
 
   loadder:boolean=true
   errorMessage = '';
@@ -76,8 +79,19 @@ export class AdherentsComponent implements OnInit {
     } else {
       this.router.navigate(['login']);
     }
+    this.searchChanges.pipe(
+      debounceTime(350),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe(() => this.getAdherents(true));
+
     this.getAdherents();
     this.activiteService.fillObjects(this.activites, this.activitesListe, undefined);
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   getAdherents(resetPage: boolean = false) {
@@ -85,7 +99,7 @@ export class AdherentsComponent implements OnInit {
       this.page = 1;
     }
     this.loadder = true;
-    this.adherentService.getPage(this.page - 1, this.pageSize).subscribe({
+    this.adherentService.getPage(this.page - 1, this.pageSize, this.searchTerm.trim()).subscribe({
       next: (data) => {
         this.adherents = data.content;
         this.totalElements = data.totalElements;
@@ -99,6 +113,15 @@ export class AdherentsComponent implements OnInit {
         this.showError(error.error?.message || error.message);
       }
     });
+  }
+
+  onSearchChange(value: string) {
+    this.searchChanges.next(value.trim());
+  }
+
+  resetFilters() {
+    this.searchTerm = '';
+    this.getAdherents(true);
   }
 
   goToPage(targetPage: number) {
