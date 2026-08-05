@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../../_services/auth.service';
 import { TokenStorageService } from '../../_services/token-storage.service';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ParamTransmissionService } from 'src/app/_helpers/transmission.service';
 import { faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { catchError, forkJoin, of, Subscription } from 'rxjs';
@@ -9,16 +9,19 @@ import { ParamService } from 'src/app/_services/param.service';
 import { ToastrService } from 'ngx-toastr';
 import { ActiviteService } from 'src/app/_services/activite.service';
 import { EvenementGoogleAgenda, SeanceCalendrier } from 'src/app/models/seance';
+import { AgendaGoogleConfiguration } from 'src/app/models';
 
 interface EvenementCalendrier {
   id: string;
   titre: string;
   lieu: string | null;
+  commentaire?: string | null;
   debut: string;
   fin: string;
   source: 'SEANCE' | 'GOOGLE';
   journeeEntiere: boolean;
   agenda?: string;
+  agendaSource?: string;
   etatSeance?: SeanceCalendrier['etatSeance'];
 }
 
@@ -59,12 +62,14 @@ export class LoginComponent implements OnInit {
   textRGPD: string = ""
   calendrier: JourCalendrier[] = [];
   jourSelectionne: JourCalendrier | null = null;
+  popupJourOuverte = false;
   moisAffiche = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   chargementCalendrier = false;
   erreurCalendrier = '';
-  googleAgendaSources = '';
+  agendasGoogle: AgendaGoogleConfiguration[] = [];
   googleAgendaIds: string[] = [];
   googleAgendaErreur = '';
+  sessionExpiree = false;
   readonly joursSemaine = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
   maintenance: Boolean = false;
@@ -81,12 +86,15 @@ export class LoginComponent implements OnInit {
     private authService: AuthService,
     private tokenStorage: TokenStorageService,
     public router: Router,
+    private route: ActivatedRoute,
     public paramService: ParamService,
     private activiteService: ActiviteService) { }
 
   ngOnInit(): void {
 
-    this.chargerCalendrier();
+    this.sessionExpiree = this.route.snapshot.queryParamMap.get('sessionExpiree') === '1';
+
+    this.chargerConfigurationAgendas();
 
     this.paramService.getAllText().subscribe({
       next: (data) => {
@@ -94,11 +102,6 @@ export class LoginComponent implements OnInit {
         this.messageInscription = data.find(param => param.paramName == "Text_Inscription")?.paramValue || '';
         this.textMaintenance = data.find(param => param.paramName == "Text_Maintenance")?.paramValue || '';
         this.textRGPD = data.find(param => param.paramName == "RGPD")?.paramValue || '';
-        this.googleAgendaSources = data.find(param => param.paramName == "Google_Agendas")?.paramValue || '';
-        if (this.googleAgendaSources.trim()) {
-          this.afficherGoogleAgendas(false);
-        }
-
       },
       error: (error) => {
       }
@@ -139,6 +142,22 @@ export class LoginComponent implements OnInit {
 
   }
 
+  chargerConfigurationAgendas(): void {
+    this.paramService.getAgendasGoogle().subscribe({
+      next: agendas => {
+        this.agendasGoogle = agendas;
+        this.googleAgendaIds = agendas.map(agenda => agenda.source);
+        this.chargerCalendrier();
+      },
+      error: () => {
+        this.agendasGoogle = [];
+        this.googleAgendaIds = [];
+        this.chargerCalendrier();
+        this.googleAgendaErreur = "La configuration des agendas Google n'est pas disponible pour le moment.";
+      }
+    });
+  }
+
   get libelleMois(): string {
     return new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' })
       .format(this.moisAffiche);
@@ -167,6 +186,11 @@ export class LoginComponent implements OnInit {
 
   selectionnerJour(jour: JourCalendrier): void {
     this.jourSelectionne = jour;
+    this.popupJourOuverte = true;
+  }
+
+  fermerPopupJour(): void {
+    this.popupJourOuverte = false;
   }
 
   chargerCalendrier(): void {
@@ -206,21 +230,6 @@ export class LoginComponent implements OnInit {
 
   classeEtat(etat?: SeanceCalendrier['etatSeance']): string {
     return `etat-${(etat || 'PROGRAMMEE').toLowerCase()}`;
-  }
-
-  afficherGoogleAgendas(afficherErreur = true): void {
-    const agendas = this.extraireGoogleAgendaIds(this.googleAgendaSources);
-    this.googleAgendaErreur = '';
-    if (agendas.length === 0) {
-      this.googleAgendaIds = [];
-      if (afficherErreur) {
-        this.googleAgendaErreur = "Saisissez l'identifiant ou l'URL publique d'au moins un Google Agenda.";
-      }
-      this.chargerCalendrier();
-      return;
-    }
-    this.googleAgendaIds = agendas;
-    this.chargerCalendrier();
   }
 
   private premierJourVisible(): Date {
@@ -286,27 +295,6 @@ export class LoginComponent implements OnInit {
     return `${date.getFullYear()}-${mois}-${jour}`;
   }
 
-  private extraireGoogleAgendaIds(sources: string): string[] {
-    const ids = sources.split(/\r?\n|;/).flatMap(source => {
-      const valeur = source.trim();
-      if (!valeur) {
-        return [];
-      }
-      try {
-        const url = new URL(valeur);
-        if (url.protocol !== 'https:' || url.hostname !== 'calendar.google.com') {
-          return [];
-        }
-        const sourcesUrl = url.searchParams.getAll('src');
-        return sourcesUrl.length > 0 ? sourcesUrl : [valeur];
-      } catch {
-        return [valeur];
-      }
-    });
-
-    return [...new Set(ids.filter(id => id.length <= 500 && !/[<>"']/.test(id)))];
-  }
-
   heureEvenement(evenement: EvenementCalendrier): string {
     return evenement.journeeEntiere ? 'Journée' : this.heure(evenement.debut);
   }
@@ -315,8 +303,21 @@ export class LoginComponent implements OnInit {
     return evenement.source === 'GOOGLE' ? 'source-google' : this.classeEtat(evenement.etatSeance);
   }
 
+  couleurAgenda(evenement: EvenementCalendrier): string {
+    if (evenement.source !== 'GOOGLE') {
+      return '';
+    }
+    return this.agendasGoogle.find(agenda => agenda.source === evenement.agendaSource)?.couleur || '#D29438';
+  }
+
+  nomAgenda(evenement: EvenementCalendrier): string {
+    return this.agendasGoogle.find(agenda => agenda.source === evenement.agendaSource)?.nom
+      || evenement.agenda
+      || 'Agenda Google';
+  }
+
   sourceEvenement(evenement: EvenementCalendrier): string {
-    return evenement.source === 'GOOGLE' ? `Google · ${evenement.agenda}` : this.etatLibelle(evenement.etatSeance);
+    return evenement.source === 'GOOGLE' ? `Google · ${this.nomAgenda(evenement)}` : this.etatLibelle(evenement.etatSeance);
   }
   onSubmitInscritpion(): void{
     const { username, password } = this.form;

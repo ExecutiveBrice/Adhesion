@@ -30,6 +30,13 @@ public class ParamTextServices {
     public String getParamValue(String paramName){
         return paramTextRepository.findByParamName(paramName).get().getParamValue();
     }
+
+    public String getParamValueOrDefault(String paramName, String valeurParDefaut) {
+        return paramTextRepository.findByParamName(paramName)
+                .map(ParamText::getParamValue)
+                .orElse(valeurParDefaut);
+    }
+
     public ParamText save(ParamText param){
 
         if(paramTextRepository.existsByParamName(param.getParamName())){
@@ -176,12 +183,6 @@ public class ParamTextServices {
                     .paramValue("Bonjour,<br />Bienvenue sur le site des adhésions de l'ALOD<br />" +
                             "Les préinscriptions sont possibles jusqu'au 27 Mai<br />" +
                             "Les inscriptions débuteront à partir du 4 Juin").build());
-        }
-
-        if(!paramTextRepository.existsByParamName("Google_Agendas")) {
-            paramTextRepository.save(ParamText.builder()
-                    .paramName("Google_Agendas")
-                    .paramValue("").build());
         }
 
         if(!paramTextRepository.existsByParamName("Text_Inscription")) {

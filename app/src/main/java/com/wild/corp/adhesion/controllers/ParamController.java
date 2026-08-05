@@ -3,6 +3,8 @@ package com.wild.corp.adhesion.controllers;
 import com.wild.corp.adhesion.models.ParamBoolean;
 import com.wild.corp.adhesion.models.ParamNumber;
 import com.wild.corp.adhesion.models.ParamText;
+import com.wild.corp.adhesion.models.resources.AgendaGoogleConfiguration;
+import com.wild.corp.adhesion.services.GoogleAgendaConfigurationServices;
 import com.wild.corp.adhesion.services.ParamBooleanServices;
 import com.wild.corp.adhesion.services.ParamNumberServices;
 import com.wild.corp.adhesion.services.ParamTextServices;
@@ -26,6 +28,34 @@ public class ParamController {
 
 	@Autowired
 	ParamNumberServices paramNumberServices;
+
+	@Autowired
+	GoogleAgendaConfigurationServices googleAgendaConfigurationServices;
+
+	@GetMapping("/agendas")
+	public ResponseEntity<?> getAgendas() {
+		return ResponseEntity.ok(googleAgendaConfigurationServices.getAll());
+	}
+
+	@PostMapping("/agendas")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<?> createAgenda(@RequestBody AgendaGoogleConfiguration agenda) {
+		return ResponseEntity.ok(googleAgendaConfigurationServices.create(agenda));
+	}
+
+	@PutMapping("/agendas/{agendaId}")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<?> updateAgenda(@PathVariable Long agendaId,
+			@RequestBody AgendaGoogleConfiguration agenda) {
+		return ResponseEntity.ok(googleAgendaConfigurationServices.update(agendaId, agenda));
+	}
+
+	@DeleteMapping("/agendas/{agendaId}")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<Void> deleteAgenda(@PathVariable Long agendaId) {
+		googleAgendaConfigurationServices.delete(agendaId);
+		return ResponseEntity.noContent().build();
+	}
 
 	@GetMapping("/allText")
 	public ResponseEntity<?> getAllText() {

@@ -1,5 +1,85 @@
 <div class="row">
 
+  <div class="col-12">
+    <section class="card card-container agenda-admin" aria-labelledby="titre-agenda-admin">
+      <div class="agenda-admin-entete">
+        <div class="agenda-admin-titre">
+          <span class="agenda-admin-icone" aria-hidden="true"><fa-icon [icon]="faCalendarDays"></fa-icon></span>
+          <div>
+            <h2 id="titre-agenda-admin">Agenda</h2>
+            <p>Ajoutez des Google Agendas publics et choisissez leur couleur dans le calendrier d'accueil.</p>
+          </div>
+        </div>
+        <span class="agenda-compteur">{{agendasGoogle.length}} / 10</span>
+      </div>
+
+      <div class="agenda-ajout">
+        <div class="agenda-nom">
+          <label for="nouvelAgendaNom">Nom de l'agenda</label>
+          <input id="nouvelAgendaNom" type="text" class="form-control" maxlength="100"
+                 [(ngModel)]="nouvelAgendaNom" placeholder="Ex. Événements de l'ALOD">
+        </div>
+        <div class="agenda-source">
+          <label for="nouvelAgendaSource">Identifiant ou URL publique Google Agenda</label>
+          <input id="nouvelAgendaSource" type="text" class="form-control"
+                 [(ngModel)]="nouvelAgendaSource"
+                 (keydown.enter)="ajouterAgenda()"
+                 placeholder="exemple@group.calendar.google.com ou https://calendar.google.com/…">
+        </div>
+        <div class="agenda-couleur">
+          <label for="nouvelAgendaCouleur">Couleur</label>
+          <input id="nouvelAgendaCouleur" type="color" class="form-control form-control-color"
+                 [(ngModel)]="nouvelAgendaCouleur" title="Choisir la couleur du nouvel agenda">
+        </div>
+        <button type="button" class="btn btn-primary agenda-ajouter"
+                [disabled]="agendaEnregistrement || agendasGoogle.length >= 10"
+                (click)="ajouterAgenda()">
+          <fa-icon [icon]="faPlus"></fa-icon>
+          Ajouter
+        </button>
+      </div>
+
+      <div *ngIf="agendasGoogle.length > 0" class="agenda-liste">
+        <div *ngFor="let agenda of agendasGoogle; let index = index" class="agenda-ligne">
+          <span class="agenda-apercu" [style.background-color]="agenda.couleur" aria-hidden="true"></span>
+          <div class="agenda-nom">
+            <label [for]="'agendaNom' + index">Nom</label>
+            <input [id]="'agendaNom' + index" type="text" class="form-control" maxlength="100"
+                   [(ngModel)]="agenda.nom">
+          </div>
+          <div class="agenda-source">
+            <label [for]="'agendaSource' + index">Identifiant public</label>
+            <input [id]="'agendaSource' + index" type="text" class="form-control"
+                   [(ngModel)]="agenda.source">
+          </div>
+          <div class="agenda-couleur">
+            <label [for]="'agendaCouleur' + index">Couleur</label>
+            <input [id]="'agendaCouleur' + index" type="color" class="form-control form-control-color"
+                   [(ngModel)]="agenda.couleur" [title]="'Couleur de l’agenda ' + (index + 1)">
+          </div>
+          <button type="button" class="btn btn-outline-danger agenda-supprimer"
+                  [disabled]="agendaEnregistrement"
+                  (click)="supprimerAgenda(index)" [attr.aria-label]="'Supprimer l’agenda ' + (index + 1)">
+            <fa-icon [icon]="faTrash"></fa-icon>
+          </button>
+        </div>
+        <div class="agenda-actions">
+          <small>Les modifications de nom, d'identifiant et de couleur sont appliquées après enregistrement.</small>
+          <button type="button" class="btn btn-outline-primary"
+                  [disabled]="agendaEnregistrement" (click)="enregistrerAgendas()">
+            {{agendaEnregistrement ? 'Enregistrement…' : 'Enregistrer les modifications'}}
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="agendasGoogle.length === 0 && !agendaErreur" class="agenda-vide">
+        Aucun agenda Google n'est configuré pour le moment.
+      </div>
+      <div *ngIf="agendaMessage" class="alert alert-success agenda-retour" role="status">{{agendaMessage}}</div>
+      <div *ngIf="agendaErreur" class="alert alert-danger agenda-retour" role="alert">{{agendaErreur}}</div>
+    </section>
+  </div>
+
   <!--div class="col-md-12">
     <div type='button' class="btn btn-block btn-primary" (click)="nouvelleAnnee()">Nouvelle Annee</div>
   </div-->

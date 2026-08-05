@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient} from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { ParamBoolean, ParamNumber, ParamText } from '../models';
+import { AgendaGoogleConfiguration, ParamBoolean, ParamNumber, ParamText } from '../models';
 
 const API_URL = environment.server+'/param/';
 
@@ -18,6 +18,22 @@ export class ParamService {
 
   saveText(param: ParamText): Observable<ParamText> {
     return this.http.post<ParamText>(API_URL + 'saveText', param, { responseType: 'json' });
+  }
+
+  getAgendasGoogle(): Observable<AgendaGoogleConfiguration[]> {
+    return this.http.get<AgendaGoogleConfiguration[]>(API_URL + 'agendas', { responseType: 'json' });
+  }
+
+  createAgendaGoogle(agenda: AgendaGoogleConfiguration): Observable<AgendaGoogleConfiguration> {
+    return this.http.post<AgendaGoogleConfiguration>(API_URL + 'agendas', agenda, { responseType: 'json' });
+  }
+
+  updateAgendaGoogle(agenda: AgendaGoogleConfiguration): Observable<AgendaGoogleConfiguration> {
+    return this.http.put<AgendaGoogleConfiguration>(API_URL + 'agendas/' + agenda.id, agenda, { responseType: 'json' });
+  }
+
+  deleteAgendaGoogle(agendaId: number): Observable<void> {
+    return this.http.delete<void>(API_URL + 'agendas/' + agendaId);
   }
 
   getAllBoolean(): Observable<ParamBoolean[]> {
@@ -41,4 +57,3 @@ export class ParamService {
   }
 
 }
-

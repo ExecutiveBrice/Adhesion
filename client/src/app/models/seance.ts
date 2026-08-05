@@ -24,10 +24,12 @@ export interface EvenementGoogleAgenda {
   id: string;
   titre: string;
   lieu: string | null;
+  commentaire: string | null;
   debut: string;
   fin: string;
   journeeEntiere: boolean;
   agenda: string;
+  agendaSource: string;
 }
 
 export interface CalendrierGoogle {

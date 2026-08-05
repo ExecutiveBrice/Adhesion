@@ -2,6 +2,7 @@ package com.wild.corp.adhesion.services;
 
 import com.wild.corp.adhesion.models.resources.CalendrierGoogleResponse;
 import com.wild.corp.adhesion.models.resources.EvenementGoogleAgendaResponse;
+import lombok.extern.slf4j.Slf4j;
 import net.fortuna.ical4j.data.CalendarBuilder;
 import net.fortuna.ical4j.model.Period;
 import net.fortuna.ical4j.model.Property;
@@ -38,6 +39,7 @@ import java.util.Locale;
 import java.util.Set;
 
 @Service
+@Slf4j
 public class GoogleAgendaServices {
 
     private static final ZoneId PARIS = ZoneId.of("Europe/Paris");
@@ -75,6 +77,7 @@ public class GoogleAgendaServices {
             try {
                 evenements.addAll(chargerAgenda(agenda, dateDebut, dateFin));
             } catch (Exception exception) {
+                log.warn("Impossible de charger l'agenda Google {} : {}", agenda, exception.getMessage());
                 erreurs.add("Agenda " + nomCourt(agenda) + " : impossible de charger le flux public");
             }
         }
@@ -89,28 +92,40 @@ public class GoogleAgendaServices {
                 .map(Property::getValue).filter(nom -> !nom.isBlank()).orElse(nomCourt(identifiant));
         List<EvenementGoogleAgendaResponse> evenements = new ArrayList<>();
 
-        for (VEvent evenement : calendrier.<VEvent>getComponents()) {
-            if (evenement.getStatus() != null
-                    && Status.VALUE_CANCELLED.equalsIgnoreCase(evenement.getStatus().getValue())) {
+        for (var composant : calendrier.getComponents()) {
+            if (!(composant instanceof VEvent evenement)) {
                 continue;
             }
-            Temporal debutInitial = evenement.getStartDate().map(date -> date.getDate()).orElse(null);
-            if (debutInitial == null) {
-                continue;
-            }
-            boolean journeeEntiere = debutInitial instanceof LocalDate;
-            for (Period<?> occurrence : occurrences(evenement, debutInitial, dateDebut, dateFin)) {
-                LocalDateTime debut = heureLocale(occurrence.getStart());
-                LocalDateTime fin = heureLocale(occurrence.getEnd());
-                if (fin == null || !fin.isAfter(debut)) {
-                    fin = journeeEntiere ? debut.plusDays(1) : debut;
+            try {
+                if (evenement.getStatus() != null
+                        && Status.VALUE_CANCELLED.equalsIgnoreCase(evenement.getStatus().getValue())) {
+                    continue;
                 }
-                String uid = evenement.getUid().map(Property::getValue).orElse("google");
-                String titre = evenement.getSummary() == null || evenement.getSummary().getValue().isBlank()
-                        ? "Événement Google Agenda" : evenement.getSummary().getValue();
-                String lieu = evenement.getLocation() == null ? null : evenement.getLocation().getValue();
-                evenements.add(new EvenementGoogleAgendaResponse(
-                        uid + "@" + debut, titre, lieu, debut, fin, journeeEntiere, nomAgenda));
+                Temporal debutInitial = evenement.getStartDate().map(date -> date.getDate()).orElse(null);
+                if (debutInitial == null) {
+                    continue;
+                }
+                boolean journeeEntiere = debutInitial instanceof LocalDate;
+                for (Period<?> occurrence : occurrences(evenement, debutInitial, dateDebut, dateFin)) {
+                    LocalDateTime debut = heureLocale(occurrence.getStart());
+                    LocalDateTime fin = heureLocale(occurrence.getEnd());
+                    if (fin == null || !fin.isAfter(debut)) {
+                        fin = journeeEntiere ? debut.plusDays(1) : debut;
+                    }
+                    String uid = evenement.getUid().map(Property::getValue).orElse("google");
+                    String titre = evenement.getSummary() == null || evenement.getSummary().getValue().isBlank()
+                            ? "Événement Google Agenda" : evenement.getSummary().getValue();
+                    String lieu = evenement.getLocation() == null ? null : evenement.getLocation().getValue();
+                    String commentaire = evenement.<Property>getProperty("DESCRIPTION")
+                            .map(Property::getValue).filter(description -> !description.isBlank()).orElse(null);
+                    evenements.add(new EvenementGoogleAgendaResponse(
+                            uid + "@" + debut, titre, lieu, commentaire, debut, fin,
+                            journeeEntiere, nomAgenda, identifiant));
+                }
+            } catch (Exception exception) {
+                String uid = evenement.getUid().map(Property::getValue).orElse("sans identifiant");
+                log.warn("Événement {} ignoré dans l'agenda Google {} : {}", uid, identifiant,
+                        exception.getMessage());
             }
         }
         return evenements;

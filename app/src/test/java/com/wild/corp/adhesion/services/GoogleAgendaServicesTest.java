@@ -21,13 +21,29 @@ class GoogleAgendaServicesTest {
                 VERSION:2.0
                 PRODID:-//Adhesion Test//FR
                 X-WR-CALNAME:Agenda public
+                BEGIN:VTIMEZONE
+                TZID:Europe/Paris
+                BEGIN:DAYLIGHT
+                TZOFFSETFROM:+0100
+                TZOFFSETTO:+0200
+                DTSTART:19700329T020000
+                RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU
+                END:DAYLIGHT
+                BEGIN:STANDARD
+                TZOFFSETFROM:+0200
+                TZOFFSETTO:+0100
+                DTSTART:19701025T030000
+                RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU
+                END:STANDARD
+                END:VTIMEZONE
                 BEGIN:VEVENT
                 UID:cours-google
-                DTSTART:20260901T190000
-                DTEND:20260901T200000
+                DTSTART;TZID=Europe/Paris:20260901T190000
+                DTEND;TZID=Europe/Paris:20260901T200000
                 RRULE:FREQ=WEEKLY;COUNT=3
                 SUMMARY:Cours externe
                 LOCATION:Salle Google
+                DESCRIPTION:Commentaire public de l'événement
                 END:VEVENT
                 BEGIN:VEVENT
                 UID:journee-google
@@ -46,10 +62,14 @@ class GoogleAgendaServicesTest {
         assertThat(evenements).filteredOn(evenement -> evenement.titre().equals("Cours externe"))
                 .extracting(evenement -> evenement.debut().toLocalDate())
                 .containsExactly(LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 8), LocalDate.of(2026, 9, 15));
+        assertThat(evenements).filteredOn(evenement -> evenement.titre().equals("Cours externe"))
+                .extracting(evenement -> evenement.commentaire())
+                .containsOnly("Commentaire public de l'événement");
         assertThat(evenements).filteredOn(evenement -> evenement.journeeEntiere())
                 .singleElement().satisfies(evenement -> {
                     assertThat(evenement.debut()).isEqualTo(LocalDateTime.of(2026, 9, 5, 0, 0));
                     assertThat(evenement.agenda()).isEqualTo("Agenda public");
+                    assertThat(evenement.agendaSource()).isEqualTo("demo@group.calendar.google.com");
                 });
     }
 

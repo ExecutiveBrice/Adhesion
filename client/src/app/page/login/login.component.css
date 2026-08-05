@@ -174,9 +174,9 @@
 
 .seance-resume.source-google,
 .etat-seance.source-google {
-  background: #fff3db;
-  border-color: #d29438;
-  color: #765011;
+  background: color-mix(in srgb, var(--agenda-color, #d29438) 14%, white);
+  border-color: var(--agenda-color, #d29438);
+  color: #354044;
 }
 
 .seances-supplementaires {
@@ -184,15 +184,33 @@
   font-weight: 700;
 }
 
-.detail-jour {
-  background: #f7f9f9;
-  border-radius: 12px;
-  margin-top: 1rem;
+.popup-jour-fond {
+  align-items: center;
+  background: rgba(22, 31, 34, 0.58);
+  display: flex;
+  inset: 0;
+  justify-content: center;
   padding: 1rem;
+  position: fixed;
+  z-index: 1050;
+}
+
+.popup-jour {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 24px 70px rgba(17, 28, 32, 0.32);
+  max-height: min(80vh, 720px);
+  max-width: 760px;
+  overflow: hidden;
+  padding: 1.2rem;
+  width: 100%;
 }
 
 .detail-jour-entete {
+  align-items: flex-start;
+  border-bottom: 1px solid #dce4e5;
   margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
 }
 
 .detail-jour-entete h3 {
@@ -201,8 +219,33 @@
   text-transform: capitalize;
 }
 
-.detail-jour-entete > span {
+.detail-jour-entete span {
   font-size: 0.78rem;
+}
+
+.popup-jour-fermer {
+  align-items: center;
+  background: #f1f5f4;
+  border: 0;
+  border-radius: 50%;
+  color: var(--encre);
+  display: inline-flex;
+  flex: 0 0 36px;
+  font-size: 1.5rem;
+  height: 36px;
+  justify-content: center;
+  line-height: 1;
+}
+
+.popup-jour-fermer:hover,
+.popup-jour-fermer:focus-visible {
+  background: var(--vert-pale);
+  outline: 2px solid var(--vert-alod);
+}
+
+.popup-jour-liste {
+  max-height: calc(min(80vh, 720px) - 95px);
+  overflow-y: auto;
 }
 
 .detail-seance {
@@ -216,50 +259,75 @@
   font-weight: 800;
 }
 
-.detail-seance div {
+.detail-contenu {
   display: flex;
   flex-direction: column;
 }
 
-.detail-seance div span,
+.detail-contenu span,
 .detail-vide {
   font-size: 0.78rem;
 }
 
+.detail-commentaire {
+  background: #f7f9f9;
+  border-left: 3px solid var(--agenda-color, var(--vert-alod));
+  border-radius: 4px;
+  margin: 0.45rem 0 0;
+  padding: 0.55rem 0.7rem;
+  white-space: pre-line;
+}
+
+:host ::ng-deep .detail-commentaire img {
+  height: auto;
+  max-width: 100%;
+}
+
+:host ::ng-deep .detail-commentaire a {
+  overflow-wrap: anywhere;
+}
+
 .etat-seance {
+  align-self: start;
   border-radius: 999px;
   font-size: 0.7rem;
   font-weight: 750;
   padding: 0.28rem 0.55rem;
 }
 
-.google-agenda-form label {
-  color: var(--encre);
-  font-weight: 700;
-  margin-top: 1rem;
-}
-
-.sources-google {
+.legende-agendas {
   border-top: 1px solid #dce4e5;
+  display: flex;
+  gap: 1rem;
   margin-top: 1rem;
+  padding-top: 1rem;
 }
 
-.google-agenda-form textarea {
-  border-radius: 10px;
+.legende-titre {
+  color: var(--encre);
+  font-size: 0.78rem;
+  font-weight: 800;
 }
 
-.google-agenda-actions {
-  align-items: flex-end;
-  margin-top: 0.75rem;
+.legende-agendas-liste {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.8rem;
 }
 
-.google-agenda-actions small {
-  color: #68767b;
+.legende-agenda {
+  align-items: center;
+  display: flex;
+  gap: 0.35rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.google-agenda-actions .btn {
-  border-radius: 10px;
-  flex: 0 0 auto;
+.legende-couleur {
+  border-radius: 50%;
+  flex: 0 0 10px;
+  height: 10px;
 }
 
 .google-agenda-vide {
@@ -270,7 +338,7 @@
 
 @media (max-width: 767px) {
   .calendrier-entete,
-  .google-agenda-actions {
+  .legende-agendas {
     align-items: stretch;
     flex-direction: column;
   }
@@ -289,9 +357,5 @@
 
   .detail-horaire {
     grid-column: 1 / -1;
-  }
-
-  .google-agenda-actions .btn {
-    width: 100%;
   }
 }
