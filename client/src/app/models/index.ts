@@ -23,3 +23,5 @@ export * from './adhesionExcel';
 export * from './paiement';
 export * from './notification';
 export * from './activiteDropDown';
+export * from './agendaGoogle';
+export * from './salle';

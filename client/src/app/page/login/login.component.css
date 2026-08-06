@@ -1,0 +1,392 @@
+.calendriers-accueil {
+  --vert-alod: #5cbbaf;
+  --vert-pale: #eaf7f4;
+  --rouge-alod: #ed6567;
+  --encre: #263338;
+  margin: 2rem 0 3rem;
+}
+
+.calendrier-card {
+  border: 0;
+  border-radius: 18px;
+  background: #fff;
+  padding: clamp(1rem, 2.5vw, 2rem);
+  box-shadow: 0 14px 36px rgba(38, 51, 56, 0.12);
+}
+
+.calendrier-entete,
+.detail-jour-entete,
+.google-agenda-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.calendrier-entete h2 {
+  color: var(--encre);
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  margin: 0.2rem 0;
+}
+
+.calendrier-entete p {
+  margin: 0;
+}
+
+.calendrier-surtitre {
+  color: #387e75;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.calendrier-navigation {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.calendrier-navigation .btn {
+  min-width: 42px;
+  border-radius: 10px;
+}
+
+.calendrier-mois {
+  color: var(--encre);
+  font-size: 1.35rem;
+  font-weight: 750;
+  margin: 0;
+  text-transform: capitalize;
+}
+
+.calendrier-tableau {
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.calendrier-semaine,
+.calendrier-grille {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  min-width: 720px;
+}
+
+.calendrier-semaine {
+  background: var(--encre);
+  border-radius: 12px 12px 0 0;
+  color: #fff;
+  font-weight: 800;
+  text-align: center;
+}
+
+.calendrier-semaine > div {
+  padding: 0.65rem 0.25rem;
+}
+
+.calendrier-grille {
+  border-left: 1px solid #dce4e5;
+  border-top: 1px solid #dce4e5;
+}
+
+.calendrier-jour {
+  background: #fff;
+  border-bottom: 1px solid #dce4e5;
+  border-right: 1px solid #dce4e5;
+  cursor: pointer;
+  min-height: 118px;
+  padding: 0.45rem;
+}
+
+.calendrier-jour:hover,
+.calendrier-jour:focus-visible {
+  background: #f4fbf9;
+  box-shadow: inset 0 0 0 2px var(--vert-alod);
+}
+
+.calendrier-jour.hors-mois {
+  background: #f6f7f7;
+  color: #9ca7aa;
+}
+
+.calendrier-jour.jour-selectionne {
+  background: var(--vert-pale);
+  box-shadow: inset 0 0 0 2px var(--vert-alod);
+}
+
+.numero-jour {
+  font-weight: 800;
+  line-height: 25px;
+  margin: 0 0 0.35rem auto;
+  text-align: center;
+  width: 25px;
+}
+
+.jour-actuel .numero-jour {
+  background: var(--rouge-alod);
+  border-radius: 50%;
+  color: #fff;
+}
+
+.seances-du-jour {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.seance-resume {
+  border-left: 3px solid var(--vert-alod);
+  border-radius: 4px;
+  display: flex;
+  font-size: 0.68rem;
+  gap: 0.3rem;
+  padding: 0.25rem 0.3rem;
+}
+
+.seance-resume span {
+  font-variant-numeric: tabular-nums;
+}
+
+.seance-resume strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.icone-etat-calendrier {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.icone-etat-calendrier.etat-programmee {
+  color: #0d6efd;
+}
+
+.icone-etat-calendrier.etat-annulee {
+  color: #dc3545;
+}
+
+.icone-etat-calendrier.etat-realisee {
+  color: #198754;
+}
+
+.icone-etat-calendrier.etat-modifiee {
+  color: #fd7e14;
+}
+
+.seance-resume.etat-programmee,
+.etat-seance.etat-programmee {
+  background: color-mix(in srgb, var(--agenda-color, var(--vert-alod)) 14%, white);
+  border-color: var(--agenda-color, var(--vert-alod));
+  color: #354044;
+}
+
+.seance-resume.etat-realisee,
+.etat-seance.etat-realisee {
+  background: color-mix(in srgb, var(--agenda-color, #6f7cc3) 14%, white);
+  border-color: var(--agenda-color, #6f7cc3);
+  color: #354044;
+}
+
+.seance-resume.etat-annulee,
+.etat-seance.etat-annulee {
+  background: color-mix(in srgb, var(--agenda-color, var(--rouge-alod)) 14%, white);
+  border-color: var(--agenda-color, var(--rouge-alod));
+  color: #354044;
+}
+
+.seance-resume.etat-modifiee,
+.etat-seance.etat-modifiee {
+  background: color-mix(in srgb, var(--agenda-color, #fd7e14) 14%, white);
+  border-color: var(--agenda-color, #fd7e14);
+  color: #354044;
+}
+
+.seance-resume.source-google,
+.etat-seance.source-google {
+  background: color-mix(in srgb, var(--agenda-color, #d29438) 14%, white);
+  border-color: var(--agenda-color, #d29438);
+  color: #354044;
+}
+
+.seances-supplementaires {
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.popup-jour-fond {
+  align-items: center;
+  background: rgba(22, 31, 34, 0.58);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 1rem;
+  position: fixed;
+  z-index: 1050;
+}
+
+.popup-jour {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 24px 70px rgba(17, 28, 32, 0.32);
+  max-height: min(80vh, 720px);
+  max-width: 760px;
+  overflow: hidden;
+  padding: 1.2rem;
+  width: 100%;
+}
+
+.detail-jour-entete {
+  align-items: flex-start;
+  border-bottom: 1px solid #dce4e5;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.detail-jour-entete h3 {
+  font-size: 1rem;
+  margin: 0;
+  text-transform: capitalize;
+}
+
+.detail-jour-entete span {
+  font-size: 0.78rem;
+}
+
+.popup-jour-fermer {
+  align-items: center;
+  background: #f1f5f4;
+  border: 0;
+  border-radius: 50%;
+  color: var(--encre);
+  display: inline-flex;
+  flex: 0 0 36px;
+  font-size: 1.5rem;
+  height: 36px;
+  justify-content: center;
+  line-height: 1;
+}
+
+.popup-jour-fermer:hover,
+.popup-jour-fermer:focus-visible {
+  background: var(--vert-pale);
+  outline: 2px solid var(--vert-alod);
+}
+
+.popup-jour-liste {
+  max-height: calc(min(80vh, 720px) - 95px);
+  overflow-y: auto;
+}
+
+.detail-seance {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: 100px 1fr auto;
+  padding: 0.55rem 0;
+}
+
+.detail-horaire {
+  font-weight: 800;
+}
+
+.detail-contenu {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-contenu span,
+.detail-vide {
+  font-size: 0.78rem;
+}
+
+.detail-commentaire {
+  background: #f7f9f9;
+  border-left: 3px solid var(--agenda-color, var(--vert-alod));
+  border-radius: 4px;
+  margin: 0.45rem 0 0;
+  padding: 0.55rem 0.7rem;
+  white-space: pre-line;
+}
+
+.detail-lien {
+  margin-top: 0.45rem;
+  overflow-wrap: anywhere;
+}
+
+:host ::ng-deep .detail-commentaire img {
+  height: auto;
+  max-width: 100%;
+}
+
+:host ::ng-deep .detail-commentaire a {
+  overflow-wrap: anywhere;
+}
+
+.etat-seance {
+  align-self: start;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 750;
+  padding: 0.28rem 0.55rem;
+}
+
+.legende-agendas {
+  border-top: 1px solid #dce4e5;
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+
+.legende-titre {
+  color: var(--encre);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.legende-agendas-liste {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.8rem;
+}
+
+.legende-agenda {
+  align-items: center;
+  display: flex;
+  gap: 0.35rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.legende-couleur {
+  border-radius: 50%;
+  flex: 0 0 10px;
+  height: 10px;
+}
+
+.google-agenda-vide {
+  background: #f7f9f9;
+  margin-top: 1rem;
+  padding: 1rem;
+}
+
+@media (max-width: 767px) {
+  .calendrier-entete {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .calendrier-navigation {
+    justify-content: space-between;
+  }
+
+  .calendrier-navigation .aujourd-hui {
+    flex: 1;
+  }
+
+  .detail-seance {
+    grid-template-columns: 1fr auto;
+  }
+
+  .detail-horaire {
+    grid-column: 1 / -1;
+  }
+}

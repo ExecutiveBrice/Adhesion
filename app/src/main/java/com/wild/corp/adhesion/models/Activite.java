@@ -49,7 +49,14 @@ public class Activite {
 
     private String horaire;
 
-    private String salle;
+    @Column(name = "salle")
+    @JsonIgnore
+    private String salleTexte;
+
+    @ManyToOne
+    @JoinColumn(name = "salle_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Salle salle;
 
     private Boolean reinscription;
 
@@ -106,5 +113,9 @@ public class Activite {
     @OneToMany(mappedBy = "activite", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Seance> seances = new ArrayList<>();
+
+    public String getNomSalle() {
+        return salle != null ? salle.getNom() : salleTexte;
+    }
 
 }

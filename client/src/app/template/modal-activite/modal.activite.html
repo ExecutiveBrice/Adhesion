@@ -39,16 +39,6 @@
         <input type="number" class="form-control" name="tarif" [(ngModel)]="activite.tarif" />
       </div>
 
-      <div ngbDropdown class="d-inline-block">
-        <button type="button" class="btn btn-primary" id="Jour" ngbDropdownToggle>
-          {{activite.jour?activite.jour:'Jour'}}
-        </button>
-        <div ngbDropdownMenu aria-labelledby="Jour">
-          <div ngbDropdownItem *ngFor="let day of  getEnumKeys()"
-               (click)="activite.jour = day">{{day}} </div>
-        </div>
-      </div>
-
       <div class="form-group">
         <label for="horaire">Horaire</label>
         <input type="text" class="form-control" name="horaire" [(ngModel)]="activite.horaire" />
@@ -61,7 +51,20 @@
 
       <div class="form-group">
         <label for="salle">Salle</label>
-        <input type="text" class="form-control" name="salle" [(ngModel)]="activite.salle" />
+        <div class="selecteur-salle">
+          <span *ngIf="activite.salle" class="couleur-salle" [style.background-color]="activite.salle.couleur"
+                [title]="'Couleur : ' + activite.salle.couleur" aria-hidden="true"></span>
+          <select id="salle" class="form-select" name="salle" [(ngModel)]="activite.salle"
+                  [compareWith]="comparerSalles">
+          <option [ngValue]="undefined">Aucune salle</option>
+          <option *ngFor="let salle of salles" [ngValue]="salle">
+            {{salle.nom}} — {{salle.adresse}} · {{salle.couleur}}
+          </option>
+          </select>
+        </div>
+        <small *ngIf="activite.salle" class="text-muted">
+          La couleur {{activite.salle.couleur}} sera utilisée pour les nouvelles séances dans le calendrier.
+        </small>
       </div>
 
       <div class="form-group">
@@ -215,6 +218,143 @@
       </div>
     </div>
   </div>
+
+  <section class="seances-section">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <div>
+        <h5 class="mb-1">Séances</h5>
+        <small class="text-muted">Les séances sont créées chaque semaine selon la planification ci-dessous, hors vacances et jours fériés.</small>
+      </div>
+      <span *ngIf="activite.id" class="badge bg-secondary">{{seances.length}} séance(s)</span>
+    </div>
+
+    <div class="row g-2 align-items-end planification-seances mb-3">
+      <div class="col-12">
+        <h6 class="mb-0">Planification hebdomadaire</h6>
+      </div>
+      <div class="col-12 col-sm-4">
+        <label for="jourSeance" class="form-label">Jour</label>
+        <select id="jourSeance" name="jourSeance" class="form-select" [(ngModel)]="activite.jour">
+          <option value="" disabled>Sélectionner un jour</option>
+          <option *ngFor="let jour of joursSemaine" [value]="jour.valeur">{{jour.libelle}}</option>
+        </select>
+      </div>
+      <div class="col-12 col-sm-4">
+        <label for="horaireDebut" class="form-label">Heure de début</label>
+        <input id="horaireDebut" type="time" class="form-control" name="horaireDebut"
+               [(ngModel)]="activite.horaireDebut" />
+      </div>
+      <div class="col-12 col-sm-4">
+        <label for="duree" class="form-label">Durée (minutes)</label>
+        <input id="duree" type="number" min="1" class="form-control" name="duree"
+               [(ngModel)]="activite.duree" />
+      </div>
+    </div>
+
+    <div *ngIf="activite.id; else activiteNonEnregistree">
+      <div class="row g-2 align-items-end ajout-seances">
+        <div class="col-12 col-sm-4">
+          <label for="nombreSeances" class="form-label">Nombre de séances</label>
+          <input id="nombreSeances" name="nombreSeances" type="number" min="1" max="200"
+                 class="form-control" [(ngModel)]="nombreSeances" />
+        </div>
+        <div class="col-12 col-sm-4">
+          <label for="dateDebutSeances" class="form-label">À partir du</label>
+          <input id="dateDebutSeances" name="dateDebutSeances" type="date"
+                 class="form-control" [(ngModel)]="dateDebutSeances" />
+        </div>
+        <div class="col-12 col-sm-4 d-grid">
+          <button type="button" class="btn btn-primary" (click)="ajouterSeances()"
+                  [disabled]="ajoutSeancesEnCours || !dateDebutSeances || nombreSeances < 1 || nombreSeances > 200">
+            {{ajoutSeancesEnCours ? 'Ajout en cours…' : 'Ajouter les séances'}}
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="chargementSeances" class="text-center text-muted py-4">Chargement des séances…</div>
+
+      <div *ngIf="!chargementSeances && seances.length === 0" class="alert alert-light border mt-3 mb-0">
+        Aucune séance planifiée pour cette activité.
+      </div>
+
+      <div *ngIf="!chargementSeances && seances.length > 0" class="table-responsive seances-liste">
+        <table class="table table-sm table-striped align-middle mb-0">
+          <thead>
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col">Heure</th>
+              <th scope="col">Salle</th>
+              <th scope="col">État</th>
+              <th scope="col">Commentaire</th>
+              <th scope="col" class="text-center"><span class="visually-hidden">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let seance of seances">
+              <td class="date-seance">
+                <input type="date" class="form-control form-control-sm"
+                       [name]="'dateSeance-' + seance.id" [(ngModel)]="seance.dateEdition"
+                       (ngModelChange)="planifierEnregistrementHoraire(seance)"
+                       (blur)="enregistrerHoraireAuBlur(seance)"
+                       [disabled]="suppressionSeances.has(seance.id)" />
+                <small class="text-muted text-capitalize">{{seance.debut | date:'EEEE'}}</small>
+              </td>
+              <td class="horaire-seance">
+                <input type="time" class="form-control form-control-sm"
+                       [name]="'heureSeance-' + seance.id" [(ngModel)]="seance.heureEdition"
+                       (ngModelChange)="planifierEnregistrementHoraire(seance)"
+                       (blur)="enregistrerHoraireAuBlur(seance)"
+                       [disabled]="suppressionSeances.has(seance.id)" />
+                <small class="text-muted">Fin : {{seance.fin | date:'HH:mm'}}</small>
+              </td>
+              <td class="salle-seance">
+                <select class="form-select form-select-sm" [(ngModel)]="seance.salle"
+                        [name]="'salleSeance-' + seance.id" [compareWith]="comparerSalles"
+                        (ngModelChange)="enregistrerSalleSeance(seance)"
+                        [disabled]="suppressionSeances.has(seance.id)">
+                  <option [ngValue]="undefined">Aucune salle</option>
+                  <option *ngFor="let salle of salles" [ngValue]="salle">{{salle.nom}}</option>
+                </select>
+              </td>
+              <td class="etat-seance">
+                <select class="form-select form-select-sm" [(ngModel)]="seance.etatSeance"
+                        [name]="'etatSeance-' + seance.id" (ngModelChange)="enregistrerEtatSeance(seance)"
+                        [disabled]="suppressionSeances.has(seance.id)"
+                        [ngClass]="seance.etatSeance === 'ANNULEE' ? 'etat-annulee' : (seance.etatSeance === 'REALISEE' ? 'etat-realisee' : (seance.etatSeance === 'MODIFIEE' ? 'etat-modifiee' : 'etat-programmee'))">
+                  <option value="PROGRAMMEE">Programmée</option>
+                  <option value="REALISEE">Réalisée</option>
+                  <option value="ANNULEE">Annulée</option>
+                  <option value="MODIFIEE">Modifiée</option>
+                </select>
+              </td>
+              <td class="commentaire-seance">
+                <input type="text" class="form-control form-control-sm" maxlength="255"
+                       [name]="'commentaireSeance-' + seance.id" [(ngModel)]="seance.commentaire"
+                       (ngModelChange)="planifierEnregistrementCommentaire(seance)"
+                       (blur)="enregistrerCommentaireAuBlur(seance)"
+                       [disabled]="suppressionSeances.has(seance.id)" placeholder="Ajouter un commentaire" />
+                <small *ngIf="enregistrementSeances.has(seance.id)" class="text-muted">Enregistrement…</small>
+              </td>
+              <td class="text-center action-seance">
+                <button type="button" class="btn btn-sm btn-outline-danger" title="Supprimer la séance"
+                        [attr.aria-label]="'Supprimer la séance du ' + (seance.debut | date:'d MMMM y')"
+                        (click)="supprimerSeance(seance)"
+                        [disabled]="suppressionSeances.has(seance.id) || enregistrementSeances.has(seance.id)">
+                  <fa-icon [icon]="faTrash"></fa-icon>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <ng-template #activiteNonEnregistree>
+      <div class="alert alert-info mb-0">
+        Enregistrez d'abord l'activité, puis rouvrez-la pour ajouter et consulter ses séances.
+      </div>
+    </ng-template>
+  </section>
 
 
 </div>

@@ -59,6 +59,9 @@
     <div *ngIf="!newInscription" class="col-md-6">
       <div *ngIf="!oublieMDP" class="card card-container">
         <h1 class="center">Page de connexion</h1>
+        <div *ngIf="sessionExpiree" class="alert alert-warning" role="alert">
+          Votre session a expiré. Reconnectez-vous pour poursuivre vos modifications.
+        </div>
         <form *ngIf="!isLoggedIn" name="form" (ngSubmit)="f.form.valid && onSubmit()" #f="ngForm" novalidate>
           <div class="form-group">
             <label for="username">Email</label>
@@ -208,3 +211,128 @@
       </div>
     </div>
   </div>
+
+  <app-calendrier></app-calendrier>
+
+  <!-- Ancien rendu conservé temporairement à titre de référence ; l'affichage est assuré par app-calendrier. -->
+  <!--
+  <section class="calendriers-accueil" aria-labelledby="titre-calendrier-seances">
+    <div class="card calendrier-card">
+      <div class="calendrier-entete">
+        <div class="calendrier-mois" id="titre-calendrier-seances" aria-live="polite">{{libelleMois}}</div>
+        <div class="calendrier-navigation" aria-label="Navigation dans le calendrier">
+          <button type="button" class="btn btn-outline-secondary" (click)="changerMois(-1)"
+                  aria-label="Mois précédent">‹</button>
+          <button type="button" class="btn btn-outline-secondary aujourd-hui" (click)="revenirAujourdhui()">
+            Aujourd'hui
+          </button>
+          <button type="button" class="btn btn-outline-secondary" (click)="changerMois(1)"
+                  aria-label="Mois suivant">›</button>
+        </div>
+      </div>
+
+      <div *ngIf="erreurCalendrier" class="alert alert-warning mb-3" role="alert">
+        {{erreurCalendrier}}
+      </div>
+      <div *ngIf="chargementCalendrier" class="calendrier-chargement" aria-live="polite">
+        Chargement des séances…
+      </div>
+
+      <div class="calendrier-tableau">
+        <div class="calendrier-semaine" aria-hidden="true">
+          <div *ngFor="let jourSemaine of joursSemaine">{{jourSemaine}}</div>
+        </div>
+
+        <div class="calendrier-grille" role="grid" [attr.aria-label]="'Calendrier ' + libelleMois">
+          <div *ngFor="let jour of calendrier"
+             class="calendrier-jour"
+             [class.hors-mois]="!jour.dansLeMois"
+             [class.jour-actuel]="jour.aujourdhui"
+             [class.jour-selectionne]="jourSelectionne?.iso === jour.iso"
+             role="gridcell"
+             tabindex="0"
+             [attr.aria-label]="jour.date | date:'fullDate':'':'fr-FR'"
+             [attr.aria-selected]="jourSelectionne?.iso === jour.iso"
+             (click)="selectionnerJour(jour)"
+             (keydown.enter)="selectionnerJour(jour)"
+             (keydown.space)="$event.preventDefault(); selectionnerJour(jour)">
+          <div class="numero-jour">{{jour.numero}}</div>
+          <div class="seances-du-jour">
+            <div *ngFor="let evenement of jour.evenements | slice:0:3"
+                 class="seance-resume"
+                 [ngClass]="classeEvenement(evenement)"
+                 [style.--agenda-color]="couleurEvenement(evenement)"
+                 [title]="heureEvenement(evenement) + ' · ' + evenement.titre">
+              <span>{{heureEvenement(evenement)}}</span>
+              <strong>{{evenement.titre}}</strong>
+              <fa-icon *ngIf="evenement.source === 'SEANCE'" class="icone-etat-calendrier"
+                       [ngClass]="classeEtat(evenement.etatSeance)"
+                       [icon]="iconeEtat(evenement.etatSeance)"
+                       [title]="etatLibelle(evenement.etatSeance)"
+                       [attr.aria-label]="etatLibelle(evenement.etatSeance)"></fa-icon>
+            </div>
+            <span *ngIf="jour.evenements.length > 3" class="seances-supplementaires">
+              + {{jour.evenements.length - 3}} autre(s)
+            </span>
+          </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="googleAgendaErreur" class="alert alert-warning mt-3 mb-0" role="alert">
+        {{googleAgendaErreur}}
+      </div>
+      <div *ngIf="googleAgendaIds.length === 0 && !googleAgendaErreur" class="google-agenda-vide">
+        Aucun agenda Google n'est configuré pour le moment.
+      </div>
+
+      <div *ngIf="popupJourOuverte && jourSelectionne" class="popup-jour-fond"
+           (click)="fermerPopupJour()">
+        <section class="popup-jour" role="dialog" aria-modal="true"
+                 [attr.aria-label]="'Événements du ' + libelleJourSelectionne"
+                 (click)="$event.stopPropagation()">
+          <div class="detail-jour-entete">
+            <div>
+              <h3>{{libelleJourSelectionne}}</h3>
+              <span>{{jourSelectionne.evenements.length}} événement(s)</span>
+            </div>
+            <button type="button" class="popup-jour-fermer" aria-label="Fermer la popup"
+                    (click)="fermerPopupJour()">×</button>
+          </div>
+          <div *ngIf="jourSelectionne.evenements.length === 0" class="detail-vide">
+            Aucun événement programmé ce jour-là.
+          </div>
+          <div class="popup-jour-liste">
+            <article *ngFor="let evenement of jourSelectionne.evenements" class="detail-seance"
+                     [style.--agenda-color]="couleurEvenement(evenement)">
+              <span class="detail-horaire" *ngIf="!evenement.journeeEntiere">
+                {{heure(evenement.debut)}} – {{heure(evenement.fin)}}
+              </span>
+              <span class="detail-horaire" *ngIf="evenement.journeeEntiere">Toute la journée</span>
+              <div class="detail-contenu">
+                <strong>{{evenement.titre}}</strong>
+                <span *ngIf="evenement.lieu" class="detail-lieu">
+                  {{evenement.lieu}}<span *ngIf="lienAdresseSalle(evenement)"> — </span>
+                  <a *ngIf="lienAdresseSalle(evenement)" [href]="lienAdresseSalle(evenement)" target="_blank"
+                     rel="noopener noreferrer">{{evenement.adresseSalle}}</a>
+                </span>
+                <div
+                  *ngIf="evenement.commentaire"
+                  class="detail-commentaire"
+                  [innerHTML]="evenement.commentaire">
+                </div>
+                <a *ngIf="lienActivite(evenement)" class="detail-lien" [href]="lienActivite(evenement)" target="_blank"
+                   rel="noopener noreferrer">Voir l'activité</a>
+              </div>
+              <span class="etat-seance" [ngClass]="classeEvenement(evenement)"
+                    [style.--agenda-color]="couleurEvenement(evenement)">
+                {{sourceEvenement(evenement)}}
+              </span>
+            </article>
+          </div>
+        </section>
+      </div>
+    </div>
+  </section>
+  -->
+</div>

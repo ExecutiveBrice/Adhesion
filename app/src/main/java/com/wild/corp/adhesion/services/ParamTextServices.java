@@ -30,6 +30,13 @@ public class ParamTextServices {
     public String getParamValue(String paramName){
         return paramTextRepository.findByParamName(paramName).get().getParamValue();
     }
+
+    public String getParamValueOrDefault(String paramName, String valeurParDefaut) {
+        return paramTextRepository.findByParamName(paramName)
+                .map(ParamText::getParamValue)
+                .orElse(valeurParDefaut);
+    }
+
     public ParamText save(ParamText param){
 
         if(paramTextRepository.existsByParamName(param.getParamName())){
