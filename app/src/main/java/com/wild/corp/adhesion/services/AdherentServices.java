@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
@@ -468,8 +469,22 @@ public class AdherentServices {
                 .collect(Collectors.toList());
     }
 
-    public Page<AdherentFlat> getPage(Pageable pageable) {
-        return adherentRepository.findAll(pageable).map(this::toAdherentFlat);
+    public Page<AdherentFlat> getPage(String search, Pageable pageable) {
+        Specification<Adherent> specification = (root, query, criteriaBuilder) -> {
+            if (search == null || search.isBlank()) {
+                return criteriaBuilder.conjunction();
+            }
+            String pattern = "%" + search.trim().toLowerCase() + "%";
+            return criteriaBuilder.or(
+                    criteriaBuilder.like(criteriaBuilder.lower(root.get("nom")), pattern),
+                    criteriaBuilder.like(criteriaBuilder.lower(root.get("prenom")), pattern),
+                    criteriaBuilder.like(criteriaBuilder.lower(root.get("telephone")), pattern),
+                    criteriaBuilder.like(criteriaBuilder.lower(root.get("adresse")), pattern),
+                    criteriaBuilder.like(criteriaBuilder.lower(root.get("ville")), pattern),
+                    criteriaBuilder.like(criteriaBuilder.lower(root.get("user").get("username")), pattern)
+            );
+        };
+        return adherentRepository.findAll(specification, pageable).map(this::toAdherentFlat);
     }
 
     private AdherentFlat toAdherentFlat(Adherent adherent) {

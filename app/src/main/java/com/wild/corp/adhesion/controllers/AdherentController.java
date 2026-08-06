@@ -126,9 +126,10 @@ public class AdherentController {
     @GetMapping("/page")
     @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
     public ResponseEntity<?> getPage(Authentication principal,
+                                     @RequestParam(defaultValue = "") String search,
                                      @PageableDefault(size = 20, sort = {"nom", "prenom"}) Pageable pageable) {
         log.info("getPage by " + principal.getName());
-        return ResponseEntity.ok(adherentServices.getPage(pageable));
+        return ResponseEntity.ok(adherentServices.getPage(search, pageable));
     }
     @GetMapping("/allExportLite")
     @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
