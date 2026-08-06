@@ -95,9 +95,13 @@ gh auth status
   git push origin HEAD:agent/gestion-seances-calendrier-google
   ```
 
-- Vérifier l'authentification une fois avec `gh auth status`. Si le jeton est
-  invalide, demander à l'utilisateur d'exécuter `gh auth login -h github.com`
-  plutôt que de multiplier les tentatives réseau.
+- Sur macOS, exécuter `gh auth status` avec accès au trousseau système
+  (hors sandbox) dès la première vérification. Une erreur d'authentification
+  depuis l'environnement isolé ne prouve pas qu'un jeton est invalide : elle
+  peut seulement signifier que le trousseau macOS est inaccessible.
+- Ne demander `gh auth login -h github.com` à l'utilisateur qu'après l'échec
+  de cette vérification avec accès au trousseau. Ne pas faire plusieurs
+  tentatives identiques dans le sandbox.
 - Après un push, une seule vérification ciblée suffit :
 
   ```sh
