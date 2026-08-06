@@ -61,6 +61,13 @@ export class ActiviteService {
     }, { responseType: 'json' });
   }
 
+  modifierSalleSeance(activiteId: number, seance: Seance): Observable<Seance> {
+    return this.http.patch<Seance>(API_URL + activiteId + '/seances/' + seance.id, {
+      salleId: seance.salle?.id ?? null,
+      sallePresente: true
+    }, { responseType: 'json' });
+  }
+
   supprimerSeance(activiteId: number, seanceId: number): Observable<void> {
     return this.http.delete<void>(API_URL + activiteId + '/seances/' + seanceId);
   }

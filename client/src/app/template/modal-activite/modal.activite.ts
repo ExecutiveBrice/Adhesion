@@ -237,6 +237,25 @@ export class ModalActivite implements OnInit, OnDestroy {
     });
   }
 
+  enregistrerSalleSeance(seance: Seance) {
+    if (!this.activite.id || !seance.id) {
+      return;
+    }
+
+    this.enregistrementSeances.add(seance.id);
+    this.activiteService.modifierSalleSeance(this.activite.id, seance).subscribe({
+      next: data => {
+        seance.salle = data.salle;
+        this.enregistrementSeances.delete(seance.id);
+      },
+      error: err => {
+        this.enregistrementSeances.delete(seance.id);
+        this.getSeances();
+        this.showError(err.message);
+      }
+    });
+  }
+
   planifierEnregistrementHoraire(seance: Seance) {
     const timerExistant = this.horaireTimers.get(seance.id);
     if (timerExistant) {

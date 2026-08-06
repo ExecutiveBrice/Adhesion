@@ -30,6 +30,16 @@ public class Seance {
     @JsonIgnoreProperties({"adhesions", "profs"})
     private Activite activite;
 
+    /**
+     * Salle effectivement prévue pour cette séance. Elle est initialisée avec
+     * la salle de l'activité lors de la planification, puis peut évoluer sans
+     * modifier les autres séances.
+     */
+    @ManyToOne
+    @JoinColumn(name = "salle_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Salle salle;
+
     private ESeance etatSeance;
 
     private String causeAnnulation;

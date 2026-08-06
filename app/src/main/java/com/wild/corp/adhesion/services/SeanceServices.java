@@ -3,6 +3,7 @@ package com.wild.corp.adhesion.services;
 import com.wild.corp.adhesion.models.*;
 import com.wild.corp.adhesion.models.resources.SeanceCalendrierResponse;
 import com.wild.corp.adhesion.repository.SeanceRepository;
+import com.wild.corp.adhesion.repository.SalleRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +36,9 @@ public class SeanceServices {
 
     @Autowired
     SeanceRepository seanceRepository;
+
+    @Autowired
+    SalleRepository salleRepository;
 
     private final DatasetApi vacancesApi;
     private final DatasetApi joursFeriesApi;
@@ -81,6 +85,7 @@ public class SeanceServices {
     public Seance addFirstSeance(Activite activite, LocalDate date) {
         Seance nouvelleSeance = new Seance();
         nouvelleSeance.setActivite(activite);
+        nouvelleSeance.setSalle(activite.getSalle());
         nouvelleSeance.setDebut(LocalDateTime.of(date, activite.getHoraireDebut()));
         nouvelleSeance.setFin(nouvelleSeance.getDebut().plusMinutes(activite.getDuree()));
         nouvelleSeance.setEtatSeance(ESeance.PROGRAMMEE);
@@ -213,8 +218,9 @@ public class SeanceServices {
 
     public Seance updateSeance(Long activiteId, Long seanceId, ESeance etatSeance,
                                String commentaire, boolean commentairePresent,
-                               LocalDate date, LocalTime heureDebut, boolean horairePresent) {
-        if (etatSeance == null && !commentairePresent && !horairePresent) {
+                               LocalDate date, LocalTime heureDebut, boolean horairePresent,
+                               Long salleId, boolean sallePresente) {
+        if (etatSeance == null && !commentairePresent && !horairePresent && !sallePresente) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Aucune modification demandée");
         }
         if (etatSeance != null) {
@@ -227,7 +233,18 @@ public class SeanceServices {
         if (horairePresent) {
             updateHoraire(activiteId, seanceId, date, heureDebut);
         }
+        if (sallePresente) {
+            getSeance(activiteId, seanceId).setSalle(trouverSalle(salleId));
+        }
         return getSeance(activiteId, seanceId);
+    }
+
+    private Salle trouverSalle(Long salleId) {
+        if (salleId == null) {
+            return null;
+        }
+        return salleRepository.findById(salleId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "La salle sélectionnée n'existe plus"));
     }
 
     private void updateHoraire(Long activiteId, Long seanceId, LocalDate date, LocalTime heureDebut) {

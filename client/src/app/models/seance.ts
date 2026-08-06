@@ -1,3 +1,5 @@
+import { SalleConfiguration } from './salle';
+
 export class Seance {
   id!: number;
   etatSeance!: 'PROGRAMMEE' | 'REALISEE' | 'ANNULEE' | 'MODIFIEE';
@@ -5,6 +7,7 @@ export class Seance {
   debut!: string;
   fin!: string;
   commentaire!: string;
+  salle?: SalleConfiguration;
   dateEdition!: string;
   heureEdition!: string;
 }

@@ -41,6 +41,7 @@ class SeanceServicesTest {
         Seance seance = new Seance();
         seance.setId(42L);
         seance.setActivite(activite);
+        seance.setSalle(activite.getSalle());
         seance.setDebut(LocalDateTime.of(2026, 9, 1, 19, 30));
         seance.setFin(LocalDateTime.of(2026, 9, 1, 20, 30));
         seance.setEtatSeance(ESeance.PROGRAMMEE);
@@ -99,6 +100,18 @@ class SeanceServicesTest {
     }
 
     @Test
+    void initializesEachSessionWithTheActivityRoom() {
+        SeanceServices service = serviceWithRepository(mock(SeanceRepository.class));
+        Activite activite = activity();
+        Salle salle = Salle.builder().id(8L).nom("Gymnase").adresse("1 rue du Gymnase").couleur("#123456").build();
+        activite.setSalle(salle);
+
+        Seance seance = service.addFirstSeance(activite, LocalDate.of(2026, 9, 7));
+
+        assertThat(seance.getSalle()).isSameAs(salle);
+    }
+
+    @Test
     void addsTheRequestedNumberOfSessionsAndSkipsExistingDates() {
         DatasetApi vacancesApi = mock(DatasetApi.class);
         DatasetApi joursFeriesApi = mock(DatasetApi.class);
@@ -148,12 +161,12 @@ class SeanceServicesTest {
         SeanceServices service = serviceWithRepository(repository);
 
         Seance updated = service.updateSeance(
-                3L, 7L, ESeance.REALISEE, null, false, null, null, false);
+                3L, 7L, ESeance.REALISEE, null, false, null, null, false, null, false);
 
         assertThat(updated.getEtatSeance()).isEqualTo(ESeance.REALISEE);
         assertThat(updated.getCommentaire()).isEqualTo("Commentaire conservé");
         service.updateSeance(
-                3L, 7L, null, "  Présents au complet  ", true, null, null, false);
+                3L, 7L, null, "  Présents au complet  ", true, null, null, false, null, false);
         assertThat(updated.getCommentaire()).isEqualTo("Présents au complet");
         verify(repository).updateEtat(7L, 3L, ESeance.REALISEE);
         verify(repository).updateCommentaire(7L, 3L, "Présents au complet");
@@ -178,7 +191,7 @@ class SeanceServicesTest {
 
         Seance updated = service.updateSeance(
                 3L, 11L, null, null, false,
-                LocalDate.of(2026, 9, 8), LocalTime.of(10, 30), true);
+                LocalDate.of(2026, 9, 8), LocalTime.of(10, 30), true, null, false);
 
         assertThat(updated.getDebut()).isEqualTo(nouveauDebut);
         assertThat(updated.getFin()).isEqualTo(nouvelleFin);

@@ -283,6 +283,7 @@
             <tr>
               <th scope="col">Date</th>
               <th scope="col">Heure</th>
+              <th scope="col">Salle</th>
               <th scope="col">État</th>
               <th scope="col">Commentaire</th>
               <th scope="col" class="text-center"><span class="visually-hidden">Actions</span></th>
@@ -305,6 +306,15 @@
                        (blur)="enregistrerHoraireAuBlur(seance)"
                        [disabled]="suppressionSeances.has(seance.id)" />
                 <small class="text-muted">Fin : {{seance.fin | date:'HH:mm'}}</small>
+              </td>
+              <td class="salle-seance">
+                <select class="form-select form-select-sm" [(ngModel)]="seance.salle"
+                        [name]="'salleSeance-' + seance.id" [compareWith]="comparerSalles"
+                        (ngModelChange)="enregistrerSalleSeance(seance)"
+                        [disabled]="suppressionSeances.has(seance.id)">
+                  <option [ngValue]="undefined">Aucune salle</option>
+                  <option *ngFor="let salle of salles" [ngValue]="salle">{{salle.nom}}</option>
+                </select>
               </td>
               <td class="etat-seance">
                 <select class="form-select form-select-sm" [(ngModel)]="seance.etatSeance"

@@ -21,13 +21,13 @@ public record SeanceCalendrierResponse(
 ) {
     public static SeanceCalendrierResponse from(Seance seance) {
         var activite = seance.getActivite();
-        var salle = activite.getSalle();
+        var salle = seance.getSalle();
         return new SeanceCalendrierResponse(
                 seance.getId(),
                 activite.getId(),
                 activite.getNom(),
                 activite.getHoraire(),
-                salle != null ? salle.getNom() : activite.getNomSalle(),
+                salle != null ? salle.getNom() : null,
                 salle != null ? salle.getAdresse() : null,
                 salle != null ? salle.getCouleur() : null,
                 seance.getCommentaire(),

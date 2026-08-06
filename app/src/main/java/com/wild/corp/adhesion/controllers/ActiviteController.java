@@ -86,7 +86,8 @@ ActiviteServices activiteServices;
 			@RequestBody @Valid MiseAJourSeanceRequest request) {
 		return ResponseEntity.ok(SeanceResponse.from(seanceServices.updateSeance(
 				activiteId, seanceId, request.etatSeance(), request.commentaire(), request.commentairePresent(),
-				request.date(), request.heureDebut(), request.horairePresent())));
+				request.date(), request.heureDebut(), request.horairePresent(),
+				request.salleId(), request.sallePresente())));
 	}
 
 	@DeleteMapping("/{activiteId}/seances/{seanceId}")

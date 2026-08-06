@@ -1,6 +1,7 @@
 package com.wild.corp.adhesion.models.resources;
 
 import com.wild.corp.adhesion.models.ESeance;
+import com.wild.corp.adhesion.models.Salle;
 import com.wild.corp.adhesion.models.Seance;
 
 import java.time.LocalDateTime;
@@ -11,7 +12,8 @@ public record SeanceResponse(
         String causeAnnulation,
         LocalDateTime debut,
         LocalDateTime fin,
-        String commentaire
+        String commentaire,
+        Salle salle
 ) {
     public static SeanceResponse from(Seance seance) {
         return new SeanceResponse(
@@ -20,7 +22,8 @@ public record SeanceResponse(
                 seance.getCauseAnnulation(),
                 seance.getDebut(),
                 seance.getFin(),
-                seance.getCommentaire()
+                seance.getCommentaire(),
+                seance.getSalle()
         );
     }
 }

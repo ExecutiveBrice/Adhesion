@@ -12,6 +12,8 @@ public record MiseAJourSeanceRequest(
         boolean commentairePresent,
         LocalDate date,
         LocalTime heureDebut,
-        boolean horairePresent
+        boolean horairePresent,
+        Long salleId,
+        boolean sallePresente
 ) {
 }
