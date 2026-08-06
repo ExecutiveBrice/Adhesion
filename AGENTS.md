@@ -1,3 +1,38 @@
+# AGENTS.md — Projet Adhesion
+
+## Contexte fonctionnel
+
+Adhesion est une application de gestion associative avec un backend Spring Boot et un frontend Angular.
+
+## Conventions techniques
+
+### Backend
+
+- Préserver les routes existantes et leur sécurité ; une nouvelle route doit utiliser les mêmes mécanismes d’authentification
+- Lorsqu’une relation est reçue via l’API, résoudre l’entité gérée en base avant de sauvegarder.
+- Ajouter ou mettre à jour les tests de service pour les règles métier nouvelles.
+
+### Frontend
+
+- Vérifier que les contrôles utilisent des comparateurs adaptés pour les objets sélectionnés.
+- Garder les libellés utilisateur en français.
+
+## Vérification avant livraison
+
+Avant de commiter :
+
+1. Exécuter `git diff --check`.
+2. Construire le frontend avec `npm run build` dans `client/`.
+3. Compiler ou démarrer le backend pour détecter les erreurs de compilation.
+5. Ne jamais ajouter `.DS_Store`, fichiers d’IDE, secrets ou fichiers de configuration locaux au commit.
+
+## Git et pull requests
+
+- Vérifier `git status -sb` avant toute opération.
+- Ne pas inclure de fichiers non liés à la demande.
+- Faire des commits concis et centrés sur une fonctionnalité.
+- Lorsqu’une PR existe déjà, pousser sur sa branche plutôt que d’en créer une nouvelle.
+
 # Développement local
 
 ## Prérequis
@@ -175,10 +210,4 @@ Interprétation :
   erreurs de console, sans captures d'écran, navigation répétée ni inspection
   de stockage local.
 
-### 4. Authentification
 
-Une erreur indiquant qu'un utilisateur est absent traduit généralement une
-connexion à une base neuve ou incorrecte. Vérifier l'URL JDBC configurée et
-le démarrage Hikari avant de modifier le code, de régénérer les données ou de
-réessayer la connexion. Consulter uniquement l'extrait de logs borné ci-dessus
-et ne jamais afficher les secrets, jetons ou valeurs de `.env`.
