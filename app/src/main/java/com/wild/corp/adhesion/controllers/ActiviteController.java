@@ -52,8 +52,9 @@ ActiviteServices activiteServices;
 	@GetMapping("/calendrier")
 	public ResponseEntity<?> getCalendrier(
 			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
-			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
-		return ResponseEntity.ok(seanceServices.getCalendrier(dateDebut, dateFin));
+			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin,
+			@RequestParam(required = false) java.util.UUID tribuUuid) {
+		return ResponseEntity.ok(seanceServices.getCalendrier(dateDebut, dateFin, tribuUuid));
 	}
 
 	@GetMapping("/calendrier/google")

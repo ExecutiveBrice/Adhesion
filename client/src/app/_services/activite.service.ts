@@ -21,8 +21,9 @@ export class ActiviteService {
     return this.http.get<Seance[]>(API_URL + activiteId + '/seances', { responseType: 'json' });
   }
 
-  getCalendrier(dateDebut: string, dateFin: string): Observable<SeanceCalendrier[]> {
-    const params = new HttpParams().set('dateDebut', dateDebut).set('dateFin', dateFin);
+  getCalendrier(dateDebut: string, dateFin: string, tribuUuid?: string): Observable<SeanceCalendrier[]> {
+    let params = new HttpParams().set('dateDebut', dateDebut).set('dateFin', dateFin);
+    if (tribuUuid) params = params.set('tribuUuid', tribuUuid);
     return this.http.get<SeanceCalendrier[]>(API_URL + 'calendrier', { params, responseType: 'json' });
   }
 

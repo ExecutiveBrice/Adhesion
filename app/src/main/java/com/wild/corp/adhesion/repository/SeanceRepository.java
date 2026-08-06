@@ -20,6 +20,12 @@ public interface SeanceRepository extends JpaRepository<Seance, Long> {
     List<Seance> findAllByDebutGreaterThanEqualAndDebutLessThanOrderByDebut(
             LocalDateTime debut, LocalDateTime fin);
 
+    @Query("select distinct s from Seance s join s.activite a join a.adhesions ad join ad.adherent h join h.tribu t " +
+            "where t.uuid = :tribuUuid and ad.statutActuel not in :statutsExclus and s.debut >= :debut and s.debut < :fin order by s.debut")
+    List<Seance> findAllByTribuAndStatutNonExcluAndDebutBetweenOrderByDebut(@Param("tribuUuid") java.util.UUID tribuUuid,
+            @Param("statutsExclus") List<String> statutsExclus,
+            @Param("debut") LocalDateTime debut, @Param("fin") LocalDateTime fin);
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("update Seance s set s.etatSeance = :etat where s.id = :id and s.activite.id = :activiteId")
     int updateEtat(@Param("id") Long id, @Param("activiteId") Long activiteId, @Param("etat") ESeance etat);
