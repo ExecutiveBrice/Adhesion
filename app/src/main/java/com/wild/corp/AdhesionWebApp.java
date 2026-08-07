@@ -49,6 +49,9 @@ public class AdhesionWebApp {
 		if(!roleRepository.findByName(ERole.ROLE_PROF).isPresent()){
 			roleRepository.save(new Role(ERole.ROLE_PROF));
 		}
+		if(!roleRepository.findByName(ERole.ROLE_REFERENT).isPresent()){
+			roleRepository.save(new Role(ERole.ROLE_REFERENT));
+		}
 		if(!roleRepository.findByName(ERole.ROLE_COMPTABLE).isPresent()){
 			roleRepository.save(new Role(ERole.ROLE_COMPTABLE));
 		}

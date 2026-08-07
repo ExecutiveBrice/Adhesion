@@ -512,8 +512,8 @@ public class AdherentServices {
                 pageable.getPageNumber(),
                 pageable.getPageSize(),
                 Sort.by(
-                        Sort.Order.asc("nom").ignoreCase(),
-                        Sort.Order.asc("prenom").ignoreCase()
+                        Sort.Order.asc("nom"),
+                        Sort.Order.asc("prenom")
                 )
         );
         return adherentRepository.findAll(specification, sortedPageable).map(this::toAdherentFlat);
@@ -557,6 +557,10 @@ public class AdherentServices {
 
     public List<AdherentLite> getByRole(Long roleId) {
         return adherentRepository.findByUserRoleId(roleId).stream().map(this::reduceAdherent).collect(Collectors.toList());
+    }
+
+    public List<AdherentLite> getLites(Collection<Adherent> adherents) {
+        return adherents.stream().map(this::reduceAdherent).toList();
     }
 
     private AdherentLite reduceAdherent(Adherent adherent) {

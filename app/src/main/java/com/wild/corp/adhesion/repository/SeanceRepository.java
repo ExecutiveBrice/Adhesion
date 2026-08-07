@@ -20,6 +20,18 @@ public interface SeanceRepository extends JpaRepository<Seance, Long> {
     List<Seance> findAllByDebutGreaterThanEqualAndDebutLessThanOrderByDebut(
             LocalDateTime debut, LocalDateTime fin);
 
+    @Query("select distinct s from Seance s join s.activite a left join a.profs p left join p.user pu " +
+            "left join a.referents r left join r.user ru " +
+            "where (pu.username = :username or ru.username = :username) " +
+            "and s.debut >= :debut and s.debut < :fin order by s.debut")
+    List<Seance> findTodayByProfessorUsername(@Param("username") String username,
+            @Param("debut") LocalDateTime debut, @Param("fin") LocalDateTime fin);
+
+    @Query("select distinct s from Seance s join s.activite a left join a.profs p left join p.user pu " +
+            "left join a.referents r left join r.user ru " +
+            "where s.id = :seanceId and (pu.username = :username or ru.username = :username)")
+    Optional<Seance> findByIdAndManagerUsername(@Param("seanceId") Long seanceId, @Param("username") String username);
+
     @Query("select distinct s from Seance s join s.activite a join a.adhesions ad join ad.adherent h join h.tribu t " +
             "where t.uuid = :tribuUuid and ad.statutActuel not in :statutsExclus and s.debut >= :debut and s.debut < :fin order by s.debut")
     List<Seance> findAllByTribuAndStatutNonExcluAndDebutBetweenOrderByDebut(@Param("tribuUuid") java.util.UUID tribuUuid,
@@ -29,6 +41,14 @@ public interface SeanceRepository extends JpaRepository<Seance, Long> {
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("update Seance s set s.etatSeance = :etat where s.id = :id and s.activite.id = :activiteId")
     int updateEtat(@Param("id") Long id, @Param("activiteId") Long activiteId, @Param("etat") ESeance etat);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("update Seance s set s.etatSeance = :etatRealisee " +
+            "where s.debut >= :debut and s.debut < :fin and s.etatSeance in :etatsARealiser")
+    int updateEtatForDebutBetweenAndEtatIn(@Param("debut") LocalDateTime debut,
+                                            @Param("fin") LocalDateTime fin,
+                                            @Param("etatsARealiser") List<ESeance> etatsARealiser,
+                                            @Param("etatRealisee") ESeance etatRealisee);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("update Seance s set s.commentaire = :commentaire where s.id = :id and s.activite.id = :activiteId")

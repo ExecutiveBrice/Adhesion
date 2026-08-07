@@ -41,6 +41,9 @@ public class MailController {
     @PostMapping(value = "/sendTemplate")
     public ResponseEntity<Historique> sendTemplate(@RequestBody List<Groupe> maillingListe, @RequestParam(value = "templateId") Long templateId) {
         log.debug("send sendTemplate " + templateId);
+        if (!emailService.isMailSendingEnabled()) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
 
         Historique historique =  emailService.diffusionTemplate(maillingListe, templateId);
 
@@ -50,6 +53,9 @@ public class MailController {
     @RequestMapping(value = "/", method = RequestMethod.POST)
     public ResponseEntity<Historique> send(@RequestBody EmailContent mail) {
         log.debug("send mail ");
+        if (!emailService.isMailSendingEnabled()) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
         Historique historique = emailService.sendMessage(mail);
         return new ResponseEntity<>(historique, HttpStatus.OK);
     }

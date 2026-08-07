@@ -6,6 +6,7 @@ import com.wild.corp.adhesion.services.AdhesionServices;
 import com.wild.corp.adhesion.services.EmailService;
 import com.wild.corp.adhesion.services.ParamBooleanServices;
 import com.wild.corp.adhesion.services.ParamNumberServices;
+import com.wild.corp.adhesion.services.SeanceServices;
 import com.wild.corp.adhesion.utils.Status;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -31,9 +32,13 @@ public class Config {
     ParamNumberServices paramNumberServices;
     @Autowired
     EmailService emailService;
+    @Autowired
+    SeanceServices seanceServices;
     @Scheduled(cron = "0 0 1 * * ?", zone = "Europe/Paris")
     public void tachesJournalieres() {
         log.info("tachesJournalieres");
+        int seancesRealisees = seanceServices.realiserSeancesDu(LocalDate.now().minusDays(1));
+        log.info("{} séance(s) de la veille passée(s) au statut réalisée", seancesRealisees);
         if(paramBooleanServices.findByParamValue("Mail_Annulation")) {
             log.info("annulation");
             annulation();

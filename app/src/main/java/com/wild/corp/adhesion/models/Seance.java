@@ -50,7 +50,7 @@ public class Seance {
 
     private String commentaire;
 
-    @OneToMany(mappedBy = "seanceId", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "seance", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Presence> presences = new ArrayList<>();
 
 }

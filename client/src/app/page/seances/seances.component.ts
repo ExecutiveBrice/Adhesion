@@ -1,75 +1,117 @@
-import { Component, OnInit } from '@angular/core';
-import { ActiviteLite } from 'src/app/models';
-import { faSquareCaretLeft, faSquareCaretDown, faSkull, faUsers, faEnvelope, faCircleXmark, faFlag, faPiggyBank, , faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
-
-import { TokenStorageService } from 'src/app/_services/token-storage.service';
-import { Router } from '@angular/router';
-import { Subscription } from 'rxjs';
-import { ParamService } from 'src/app/_services/param.service';
-import { ActiviteService } from 'src/app/_services/activite.service';
+import { Component, OnInit, TemplateRef } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-
+import { Router } from '@angular/router';
+import { PresenceSeance, SeanceDuJour } from 'src/app/models/seance';
+import { TokenStorageService } from 'src/app/_services/token-storage.service';
+import { UserService } from 'src/app/_services/user.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { faCheck, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
   selector: 'app-seances',
   templateUrl: './seances.component.html',
   styleUrls: ['./seances.component.css']
 })
-export class ProfsComponent implements OnInit {
-  faSquareCaretLeft=faSquareCaretLeft;
-  faSquareCaretDown=faSquareCaretDown;
-  faCircleCheck=faCircleCheck;
-  faCircleXmark = faCircleXmark;
-  faPiggyBank=faPiggyBank;
-  faFlag=faFlag;
-  faUsers = faUsers;
-  faSkull = faSkull;
-  faEnvelope = faEnvelope;
-  faPencilSquare = faPencilSquare;
-  activitesLite: ActiviteLite[] = [];
-  mobile:boolean = false;
-  isFailed: boolean = false;
+export class SeancesComponent implements OnInit {
+  seances: SeanceDuJour[] = [];
+  isFailed = false;
   errorMessage = '';
-  ordre: string = 'nom';
-  search: string = "";
-  sens: boolean = false;
-  showAdmin: boolean = false;
-  filtres: Map<string, boolean> = new Map<string, boolean>();
-  subscription = new Subscription()
+  today = new Date();
+  seanceSelectionnee?: SeanceDuJour;
+  presences: PresenceSeance[] = [];
+  chargementPresences = false;
+  erreurPresences = '';
+  miseAJourPresences = new Set<number>();
+  enregistrementCommentaire = false;
+  faCheck = faCheck;
+  faXmark = faXmark;
+  faTriangleExclamation = faTriangleExclamation;
 
   constructor(
-
-    private activiteService: ActiviteService,
     private tokenStorageService: TokenStorageService,
-    public paramService: ParamService,
-    public router: Router) { }
+    private userService: UserService,
+    private modalService: NgbModal,
+    private router: Router) { }
 
   ngOnInit(): void {
-    if (this.tokenStorageService.getUser().roles) {
-      this.showAdmin = this.tokenStorageService.getUser().roles.includes('ROLE_ADMIN');
-    } else {
+    const roles = this.tokenStorageService.getUser().roles as string[] | undefined;
+    if (!roles) {
       this.router.navigate(['login']);
+      return;
+    }
+    if (!roles.includes('ROLE_PROF') && !roles.includes('ROLE_REFERENT')) {
+      this.router.navigate(['inscription']);
+      return;
     }
 
-    if (window.innerWidth <= 1080) { // 768px portrait
-      this.mobile = true;
-    }
-
-    this.activiteService.getSeancesDuJour().subscribe({
-      next: (data) => {
-
-console.log(data)
-      },
+    this.userService.getSeancesDuJour().subscribe({
+      next: data => this.seances = data,
       error: (error: HttpErrorResponse) => {
-        console.log(error)
-
-
+        this.isFailed = true;
+        this.errorMessage = error.error?.message || 'Impossible de charger les séances du jour.';
       }
     });
   }
 
+  ouvrirPresences(seance: SeanceDuJour, contenu: TemplateRef<unknown>): void {
+    this.seanceSelectionnee = seance;
+    this.presences = [];
+    this.erreurPresences = '';
+    this.chargementPresences = true;
+    this.modalService.open(contenu, { centered: true, size: 'lg' });
+    this.userService.getPresences(seance.id).subscribe({
+      next: presences => {
+        this.presences = presences;
+        this.chargementPresences = false;
+      },
+      error: (error: HttpErrorResponse) => {
+        this.erreurPresences = error.error?.message || 'Impossible de charger les présences.';
+        this.chargementPresences = false;
+      }
+    });
+  }
 
+  changerPresence(presence: PresenceSeance): void {
+    const valeurPrecedente = presence.presence;
+    presence.presence = !valeurPrecedente;
+    this.miseAJourPresences.add(presence.id);
+    this.userService.updatePresence(this.seanceSelectionnee!.id, presence.id, presence.presence).subscribe({
+      next: miseAJour => {
+        presence.presence = miseAJour.presence;
+        this.miseAJourPresences.delete(presence.id);
+      },
+      error: () => {
+        presence.presence = valeurPrecedente;
+        this.miseAJourPresences.delete(presence.id);
+        this.erreurPresences = 'Impossible d’enregistrer la présence.';
+      }
+    });
+  }
 
+  enregistrerCommentaire(): void {
+    if (!this.seanceSelectionnee) return;
+    this.enregistrementCommentaire = true;
+    this.userService.updateCommentaireSeance(this.seanceSelectionnee.id, this.seanceSelectionnee.commentaire).subscribe({
+      next: seance => {
+        this.seanceSelectionnee = seance;
+        const index = this.seances.findIndex(element => element.id === seance.id);
+        if (index >= 0) this.seances[index] = seance;
+        this.enregistrementCommentaire = false;
+      },
+      error: () => {
+        this.erreurPresences = 'Impossible d’enregistrer le commentaire.';
+        this.enregistrementCommentaire = false;
+      }
+    });
+  }
 
+  libelleEtat(etat: SeanceDuJour['etatSeance']): string {
+    return etat === 'REALISEE' ? 'Réalisée' : etat === 'ANNULEE' ? 'Annulée'
+      : etat === 'MODIFIEE' ? 'Modifiée' : 'Programmée';
+  }
 
+  iconeEtat(etat: SeanceDuJour['etatSeance']) {
+    return etat === 'REALISEE' ? this.faCheck : etat === 'ANNULEE' ? this.faXmark
+      : etat === 'MODIFIEE' ? this.faTriangleExclamation : null;
+  }
 }

@@ -98,6 +98,12 @@ public class Activite {
     @Transient
     private Long nbAdhesionsAttente;
 
+    @Transient
+    private Long nbSeancesRealisees;
+
+    @Transient
+    private Long nbSeancesTotal;
+
     @OneToMany(mappedBy="activite")
     @JsonIgnore
     private Set<Adhesion> adhesions = new HashSet<>();
@@ -109,6 +115,10 @@ public class Activite {
     @ManyToMany(mappedBy="cours", cascade = CascadeType.ALL)
     @JsonIgnoreProperties({"cours", "accords", "adhesions", "activitesNm1", "user", "tribu", "derniereModifs", "derniereVisites"})
     private Set<Adherent> profs = new HashSet<>();
+
+    @ManyToMany(mappedBy = "activitesReferent")
+    @JsonIgnoreProperties({"cours", "activitesReferent", "accords", "adhesions", "activitesNm1", "user", "tribu", "derniereModifs", "derniereVisites"})
+    private Set<Adherent> referents = new HashSet<>();
 
     @OneToMany(mappedBy = "activite", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore

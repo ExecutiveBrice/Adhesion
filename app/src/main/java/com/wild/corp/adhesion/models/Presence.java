@@ -1,6 +1,8 @@
 package com.wild.corp.adhesion.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -21,7 +23,11 @@ public class Presence {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long seanceId;
+    @ManyToOne
+    @JoinColumn(name = "seance_id")
+    @JsonIgnore
+    @JsonIgnoreProperties({"activite", "presences"})
+    private Seance seance;
 
     @ManyToOne
     @JsonIgnoreProperties({"activite", "presences"})
@@ -34,5 +40,10 @@ public class Presence {
     public Presence() {
         this.presence = false;
         this.dateModification = LocalDate.now();
+    }
+
+    @JsonProperty("seanceId")
+    public Long getSeanceId() {
+        return seance == null ? null : seance.getId();
     }
 }

@@ -1,19 +1,31 @@
 package com.wild.corp.adhesion.services;
 
 import com.wild.corp.adhesion.models.Activite;
+import com.wild.corp.adhesion.models.Adhesion;
+import com.wild.corp.adhesion.models.ESeance;
 import com.wild.corp.adhesion.models.Seance;
 import com.wild.corp.adhesion.repository.ActiviteRepository;
+import com.wild.corp.adhesion.utils.Status;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -32,6 +44,54 @@ class ActiviteServicesTest {
 
     @InjectMocks
     private ActiviteServices activiteServices;
+
+    @Test
+    void returnsPagedActivitiesWithCountersAndRequiredSort() {
+        Activite activite = new Activite();
+        activite.setNom("Yoga");
+        activite.getAdhesions().add(adhesionAvecStatut(Status.VALIDEE));
+        activite.getAdhesions().add(adhesionAvecStatut(Status.ATTENTE_ADHERENT));
+        activite.getAdhesions().add(adhesionAvecStatut(Status.LISTE_ATTENTE));
+        activite.getSeances().add(seanceAvecEtat(ESeance.REALISEE));
+        activite.getSeances().add(seanceAvecEtat(ESeance.PROGRAMMEE));
+        activite.getSeances().add(seanceAvecEtat(ESeance.ANNULEE));
+
+        when(activiteRepository.findAll(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(activite), PageRequest.of(1, 10), 21));
+
+        Page<Activite> resultat = activiteServices.getPage(" ", null, null, null, null, "",
+                PageRequest.of(1, 10, Sort.by("tarif")));
+
+        assertThat(resultat.getContent()).containsExactly(activite);
+        assertThat(activite.getNbAdhesionsCompletes()).isEqualTo(1);
+        assertThat(activite.getNbAdhesionsEnCours()).isEqualTo(1);
+        assertThat(activite.getNbAdhesionsAttente()).isEqualTo(1);
+        assertThat(activite.getNbSeancesRealisees()).isEqualTo(1);
+        assertThat(activite.getNbSeancesTotal()).isEqualTo(2);
+
+        var pageableCaptor = org.mockito.ArgumentCaptor.forClass(Pageable.class);
+        verify(activiteRepository).findAll(pageableCaptor.capture());
+        Pageable pageableUtilise = pageableCaptor.getValue();
+        assertThat(pageableUtilise.getPageNumber()).isEqualTo(1);
+        assertThat(pageableUtilise.getPageSize()).isEqualTo(10);
+        assertThat(pageableUtilise.getSort().stream().map(Sort.Order::getProperty))
+                .containsExactly("groupeFiltre", "nom", "horaire");
+        assertThat(pageableUtilise.getSort().stream().map(Sort.Order::getDirection))
+                .containsOnly(Sort.Direction.ASC);
+    }
+
+    @Test
+    void searchesByAllActivityFields() {
+        Pageable pageable = PageRequest.of(0, 20);
+        when(activiteRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(Page.empty(pageable));
+
+        activiteServices.getPage("Danse", 200, true, false, 16, "Féminine", pageable);
+
+        verify(activiteRepository)
+                .findAll(any(Specification.class), eq(PageRequest.of(0, 20,
+                        Sort.by(Sort.Direction.ASC, "groupeFiltre", "nom", "horaire"))));
+    }
 
     @Test
     void updatesAnActivityWithoutReplacingOrDeletingItsSessions() {
@@ -62,5 +122,19 @@ class ActiviteServicesTest {
         assertThat(resultat.getSeances()).containsExactly(seance);
         verify(seanceServices, never()).modifyDay(activiteInDB);
         verify(activiteRepository).save(activiteInDB);
+    }
+
+    private Adhesion adhesionAvecStatut(Status status) {
+        Adhesion adhesion = new Adhesion();
+        adhesion.setId((long) status.ordinal() + 1);
+        adhesion.setStatutActuel(status.label);
+        return adhesion;
+    }
+
+    private Seance seanceAvecEtat(ESeance etat) {
+        Seance seance = new Seance();
+        seance.setId((long) etat.ordinal() + 1);
+        seance.setEtatSeance(etat);
+        return seance;
     }
 }

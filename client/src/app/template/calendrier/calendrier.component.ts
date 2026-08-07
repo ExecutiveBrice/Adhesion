@@ -4,7 +4,7 @@ import { ActiviteService } from 'src/app/_services/activite.service';
 import { ParamService } from 'src/app/_services/param.service';
 import { AgendaGoogleConfiguration } from 'src/app/models';
 import { EvenementGoogleAgenda, SeanceCalendrier } from 'src/app/models/seance';
-import { faCheck, faClock, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
 
 interface EvenementCalendrier {
   id: string;
@@ -50,7 +50,6 @@ export class CalendrierComponent implements OnInit, OnChanges {
   googleAgendaIds: string[] = [];
   googleAgendaErreur = '';
   readonly joursSemaine = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-  faClock = faClock;
   faXmark = faXmark;
   faCheck = faCheck;
   faTriangleExclamation = faTriangleExclamation;
@@ -117,7 +116,7 @@ export class CalendrierComponent implements OnInit, OnChanges {
 
   heure(dateHeure: string): string { return dateHeure?.substring(11, 16) || ''; }
   etatLibelle(etat?: SeanceCalendrier['etatSeance']): string { return etat === 'ANNULEE' ? 'Annulée' : etat === 'REALISEE' ? 'Réalisée' : etat === 'MODIFIEE' ? 'Modifiée' : 'Programmée'; }
-  iconeEtat(etat?: SeanceCalendrier['etatSeance']) { return etat === 'ANNULEE' ? this.faXmark : etat === 'REALISEE' ? this.faCheck : etat === 'MODIFIEE' ? this.faTriangleExclamation : this.faClock; }
+  iconeEtat(etat?: SeanceCalendrier['etatSeance']) { return etat === 'ANNULEE' ? this.faXmark : etat === 'REALISEE' ? this.faCheck : this.faTriangleExclamation; }
   classeEtat(etat?: SeanceCalendrier['etatSeance']): string { return `etat-${(etat || 'PROGRAMMEE').toLowerCase()}`; }
   heureEvenement(evenement: EvenementCalendrier): string { return evenement.journeeEntiere ? 'Journée' : this.heure(evenement.debut); }
   classeEvenement(evenement: EvenementCalendrier): string { return evenement.source === 'GOOGLE' ? 'source-google' : this.classeEtat(evenement.etatSeance); }

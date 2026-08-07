@@ -1,8 +1,10 @@
 package com.wild.corp.adhesion.services;
 
 import com.wild.corp.adhesion.repository.RoleRepository;
+import com.wild.corp.adhesion.repository.SeanceRepository;
 import com.wild.corp.adhesion.repository.UserRepository;
 import com.wild.corp.adhesion.models.*;
+import com.wild.corp.adhesion.models.resources.SeanceDuJourResponse;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +24,8 @@ public class UserServices {
     @Autowired
     UserRepository userRepository;
     @Autowired
+    SeanceRepository seanceRepository;
+    @Autowired
     ConfirmationTokenService confirmationTokenService;
     @Autowired
     RoleRepository roleRepository;
@@ -35,17 +39,12 @@ public class UserServices {
     private String serverName;
 
 
-    public List<Seance> getSeancesDuJourForUser (String username){
-
-
-        User user = findByEmail(username);
-        List<Seance> seances = user.getAdherent().getCours().stream().flatMap(activite -> {
-            LocalDate now = LocalDate.now();
-            return activite.getSeances().stream().filter(seance -> now.equals(seance.getDebut()));
-        }).toList();
-
-
-        return seances;
+    public List<SeanceDuJourResponse> getSeancesDuJourForUser(String username) {
+        LocalDate today = LocalDate.now();
+        return seanceRepository.findTodayByProfessorUsername(
+                        username, today.atStartOfDay(), today.plusDays(1).atStartOfDay()).stream()
+                .map(SeanceDuJourResponse::from)
+                .toList();
     }
 
 

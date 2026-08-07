@@ -1,110 +1,61 @@
-<div *ngIf="isFailed" class="card card-container">
-  {{errorMessage}}
-</div>
+<section class="seances-page">
+  <h2>Séances du {{ today | date:'fullDate':'':'fr-FR' }}</h2>
 
-<div class="row d-flex justify-content-center">
 
-  <div class="col-11 center cadrer" *ngFor="let activite of activitesLite | orderBy:'nom':false ">
+  <div *ngIf="isFailed" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
 
-    <div class="row" (click)="activite.open = !activite.open">
-      <div class="col-10" id="header">
-        <h4>{{activite.nom}} {{activite.horaire}} ({{activite.adherents.length}})</h4>
-      </div>  
-
-      <div class="col-2" id="icon">
-        <fa-icon *ngIf="!activite.open" class="pointer green fa-2xl" [icon]="faSquareCaretLeft"
-          container="body"></fa-icon>
-        <fa-icon *ngIf="activite.open" class="pointer green fa-2xl" [icon]="faSquareCaretDown"
-          container="body"></fa-icon>
-
-      </div>
-    </div>
-
-    <div *ngIf="mobile && activite.open">
-
-      <div class="cadrePermanent petite_taille row" *ngFor="let adherent of activite.adherents | orderBy:ordre:sens ">
-
-        <div class="col-4">
-          <div>
-            <b>{{adherent.nom}} {{adherent.prenom}}</b><br />
-            {{adherent.naissance | date:'yyyy'}}<br />
-            {{adherent.emailRepresentant?adherent.representant.email:adherent.email}}<br />
-            {{adherent.telephoneRepresentant?adherent.representant.telephone:adherent.telephone}}
-
-          </div>
-        </div>
-
-        <div class="col-4">
-          <b>Adhésion : {{adherent.statut}}</b><br />
-
-          <fa-icon *ngIf="!adherent.flag" class="pointer fa" [icon]="faFlag "></fa-icon>
-          <fa-icon *ngIf="adherent.flag" class="pointer orange fa" [icon]="faFlag"></fa-icon>
-          <fa-icon *ngIf="adherent.paiement" class="pointer green fa" [icon]="faPiggyBank "></fa-icon>
-          <fa-icon *ngIf="!adherent.paiement" class="pointer orange fa" [icon]="faPiggyBank"></fa-icon> <br />
-          {{adherent.commentaire}}<br />
-
-        </div>
-        <div class="col-4">
-
-          <div *ngFor="let accord of adherent.accords | orderBy:ordre:sens ">
-            {{accord.nom}}<fa-icon *ngIf="accord.etat" class="green" [icon]="faCircleCheck"></fa-icon><fa-icon
-              *ngIf="!accord.etat" class="orange" [icon]="faCircleXmark"></fa-icon>
-          </div>
-
-        </div>
-        <div class="col-12" *ngIf="adherent.mineur">
-          <b>Référent :</b>{{adherent.representant?adherent.representant.prenom:''}} {{adherent.representant?adherent.representant.nom:''}}
-        </div>
-      </div>
-    </div>
-
-    <table *ngIf="!mobile && activite.open" class="table table-striped">
-      <thead>
-        <tr>
-          <th class="center pointer" scope="col" (click)="ordre='nom'; sens = !sens">Nom</th>
-          <th class="center pointer" scope="col" (click)="ordre='email'; sens = !sens">Contact</th>
-          <th class="center pointer" scope="col" (click)="ordre='telephone'; sens = !sens">Référent</th>
-          <th class="center pointer" scope="col" (click)="ordre='telephone'; sens = !sens">Secrétariat</th>
-          <th class="center pointer" scope="col" (click)="ordre='telephone'; sens = !sens">Accords</th>
-          <th class="center pointer" scope="col" (click)="ordre='telephone'; sens = !sens">Statut</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let adherent of activite.adherents | orderBy:ordre:sens ">
-
-          <td>
-            {{adherent.prenom}} {{adherent.nom}}
-            <br />
-            {{adherent.naissance | date:'yyyy'}}
-          </td>
-          <td>
-            {{adherent.emailRepresentant?adherent.representant.email:adherent.email}}<br />
-            {{adherent.telephoneRepresentant?adherent.representant.telephone:adherent.telephone}}
-          </td>
-          <td>
-            {{adherent.representant?adherent.representant.prenom:''}} {{adherent.representant?adherent.representant.nom:''}}
-          </td>
-          <td>
-            {{adherent.commentaire}}
-            <fa-icon *ngIf="!adherent.flag" class="pointer fa-2xl" [icon]="faFlag "></fa-icon>
-            <fa-icon *ngIf="adherent.flag" class="pointer orange fa-2xl" [icon]="faFlag"></fa-icon>
-
-            <fa-icon *ngIf="adherent.paiement" class="pointer green fa-2xl" [icon]="faPiggyBank "></fa-icon>
-            <fa-icon *ngIf="!adherent.paiement" class="pointer orange fa-2xl" [icon]="faPiggyBank"></fa-icon>
-          </td>
-          <td>
-            <div *ngFor="let accord of adherent.accords | orderBy:ordre:sens ">
-              {{accord.nom}}<fa-icon *ngIf="accord.etat" class="green" [icon]="faCircleCheck"></fa-icon><fa-icon
-                *ngIf="!accord.etat" class="orange" [icon]="faCircleXmark"></fa-icon>
-            </div>
-          </td>
-          <td>
-            {{adherent.statut}}
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
+  <div *ngIf="!isFailed && seances.length === 0" class="alert alert-info">
+    Aucune séance prévue aujourd’hui.
   </div>
 
-</div>
+  <article *ngFor="let seance of seances" class="card seance-card" role="button" tabindex="0"
+           (click)="ouvrirPresences(seance, presencesModal)"
+           (keydown.enter)="ouvrirPresences(seance, presencesModal)">
+    <div class="card-body">
+      <h3 class="card-title">{{ seance.activite }}</h3>
+      <dl>
+        <div><dt>Horaire</dt><dd>{{ seance.debut | date:'HH:mm' }} – {{ seance.fin | date:'HH:mm' }}</dd></div>
+        <div><dt>Lieu</dt><dd>{{ seance.lieu || 'Lieu non renseigné' }}<span *ngIf="seance.adresse">, {{ seance.adresse }}</span></dd></div>
+        <div><dt>Statut</dt><dd class="etat-seance" [ngClass]="'etat-' + seance.etatSeance.toLowerCase()">
+          <fa-icon *ngIf="iconeEtat(seance.etatSeance)" [icon]="iconeEtat(seance.etatSeance)!"></fa-icon>
+          {{ libelleEtat(seance.etatSeance) }}
+        </dd></div>
+        <div><dt>Participants</dt><dd>{{ seance.nombreParticipants }}</dd></div>
+      </dl>
+    </div>
+  </article>
+</section>
+
+<ng-template #presencesModal let-modal>
+  <div class="modal-header">
+    <h2 class="modal-title fs-5">Présences — {{ seanceSelectionnee?.activite }}</h2>
+    <button type="button" class="btn-close" aria-label="Fermer" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body">
+    <div class="mb-3">
+      <label for="commentaireSeance" class="form-label">Commentaire de la séance</label>
+      <div class="input-group">
+        <textarea id="commentaireSeance" class="form-control" maxlength="255" rows="3"
+                  [(ngModel)]="seanceSelectionnee!.commentaire" placeholder="Ajouter un commentaire"></textarea>
+
+      </div>
+      <button type="button" class="btn btn-primary" (click)="enregistrerCommentaire()"
+              [disabled]="enregistrementCommentaire">
+        {{ enregistrementCommentaire ? 'Enregistrement…' : 'Enregistrer' }}
+      </button>
+    </div>
+    <div *ngIf="chargementPresences" class="text-center text-muted py-3">Chargement des présences…</div>
+    <div *ngIf="erreurPresences" class="alert alert-danger" role="alert">{{ erreurPresences }}</div>
+    <div *ngIf="!chargementPresences && !erreurPresences && presences.length === 0" class="alert alert-info">
+      Aucun adhérent inscrit à cette séance.
+    </div>
+    <div *ngFor="let presence of presences" class="presence-ligne">
+      <span>{{ presence.prenom }} {{ presence.nom }}</span>
+      <button type="button" class="btn btn-sm" [class.btn-success]="presence.presence"
+              [class.btn-outline-secondary]="!presence.presence" (click)="changerPresence(presence)"
+              [disabled]="miseAJourPresences.has(presence.id)">
+        {{ presence.presence ? 'Présent' : 'Absent' }}
+      </button>
+    </div>
+  </div>
+</ng-template>

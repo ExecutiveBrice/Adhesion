@@ -85,6 +85,7 @@ class SeanceServicesTest {
                 .thenReturn(ResponseEntity.ok(holidays));
 
         SeanceServices service = new SeanceServices(vacancesApi, joursFeriesApi, "C", "vacances", "feries");
+        service.presenceServices = mock(PresenceServices.class);
         Activite activite = activity();
         service.fillSeances(activite, 4, "C", LocalDate.of(2026, 9, 8));
 
@@ -112,6 +113,23 @@ class SeanceServicesTest {
     }
 
     @Test
+    void marksOnlyScheduledOrModifiedSessionsFromTheRequestedDayAsCompleted() {
+        SeanceRepository repository = mock(SeanceRepository.class);
+        LocalDate date = LocalDate.of(2026, 8, 6);
+        when(repository.updateEtatForDebutBetweenAndEtatIn(
+                date.atStartOfDay(), date.plusDays(1).atStartOfDay(),
+                List.of(ESeance.PROGRAMMEE, ESeance.MODIFIEE), ESeance.REALISEE)).thenReturn(2);
+        SeanceServices service = serviceWithRepository(repository);
+
+        int updated = service.realiserSeancesDu(date);
+
+        assertThat(updated).isEqualTo(2);
+        verify(repository).updateEtatForDebutBetweenAndEtatIn(
+                date.atStartOfDay(), date.plusDays(1).atStartOfDay(),
+                List.of(ESeance.PROGRAMMEE, ESeance.MODIFIEE), ESeance.REALISEE);
+    }
+
+    @Test
     void addsTheRequestedNumberOfSessionsAndSkipsExistingDates() {
         DatasetApi vacancesApi = mock(DatasetApi.class);
         DatasetApi joursFeriesApi = mock(DatasetApi.class);
@@ -131,6 +149,7 @@ class SeanceServicesTest {
                 .thenReturn(ResponseEntity.ok(holidays));
 
         SeanceServices service = new SeanceServices(vacancesApi, joursFeriesApi, "C", "vacances", "feries");
+        service.presenceServices = mock(PresenceServices.class);
         Activite activite = activity();
         activite.getSeances().add(service.addFirstSeance(activite, LocalDate.of(2026, 9, 28)));
 
@@ -215,6 +234,7 @@ class SeanceServicesTest {
         SeanceServices service = new SeanceServices(
                 mock(DatasetApi.class), mock(DatasetApi.class), "C", "vacances", "feries");
         service.seanceRepository = repository;
+        service.presenceServices = mock(PresenceServices.class);
         return service;
     }
 

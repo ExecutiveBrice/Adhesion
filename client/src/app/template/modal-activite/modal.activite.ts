@@ -35,6 +35,7 @@ export class ModalActivite implements OnInit, OnDestroy {
   activite!: Activite;
 
   profs: AdherentLite[] = []
+  referents: AdherentLite[] = []
   salles: SalleConfiguration[] = [];
   seances: Seance[] = [];
   nombreSeances = 1;
@@ -63,8 +64,13 @@ export class ModalActivite implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
+    this.activite.profs ??= [];
+    this.activite.referents ??= [];
     this.dateDebutSeances = this.aujourdHui();
     this.getProfs();
+    if (this.activite.id) {
+      this.getReferents();
+    }
     this.getSalles();
     if (this.activite.id) {
       this.getSeances();
@@ -99,6 +105,16 @@ export class ModalActivite implements OnInit, OnDestroy {
     newActivite.profs = newActivite.profs.filter(prof => prof.id != adherent.id);
   }
 
+  ajouterReferent(newActivite: Activite, adherent: Adherent) {
+    if (!newActivite.referents.some(referent => referent.id === adherent.id)) {
+      newActivite.referents.push(adherent);
+    }
+  }
+
+  retirerReferent(newActivite: Activite, adherent: Adherent) {
+    newActivite.referents = newActivite.referents.filter(referent => referent.id !== adherent.id);
+  }
+
 
   getProfs() {
     this.adherentService.getByRole(3).subscribe(
@@ -110,6 +126,13 @@ export class ModalActivite implements OnInit, OnDestroy {
       }
     );
 
+  }
+
+  getReferents() {
+    this.activiteService.getReferentsCandidates(this.activite.id).subscribe(
+      data => this.referents = data,
+      err => this.showError(err.message)
+    );
   }
 
   getSalles(): void {

@@ -1,213 +1,183 @@
 # AGENTS.md — Projet Adhesion
 
-## Contexte fonctionnel
+## Objet et périmètre
 
-Adhesion est une application de gestion associative avec un backend Spring Boot et un frontend Angular.
+Ce fichier s'applique à tout le dépôt. Adhesion est une application de gestion
+associative : adhérents et tribus, inscriptions, activités, séances et
+présences, paiements, documents, courriels et reporting.
 
-## Conventions techniques
+Avant toute modification, lire les fichiers proches du code concerné et
+vérifier l'état Git. Le dépôt peut contenir des travaux locaux sans rapport avec
+la tâche : les préserver et limiter le diff au besoin exprimé.
 
-### Backend
+## Carte du dépôt
 
-- Préserver les routes existantes et leur sécurité ; une nouvelle route doit utiliser les mêmes mécanismes d’authentification
-- Lorsqu’une relation est reçue via l’API, résoudre l’entité gérée en base avant de sauvegarder.
-- Ajouter ou mettre à jour les tests de service pour les règles métier nouvelles.
+- `app/` : backend Java 21, Spring Boot/Spring Cloud, Maven, JPA/PostgreSQL,
+  Spring Security avec JWT.
+- `app/src/main/java/com/wild/corp/adhesion/controllers/` : API REST.
+- `app/src/main/java/com/wild/corp/adhesion/services/` : règles métier et
+  limites transactionnelles.
+- `app/src/main/java/com/wild/corp/adhesion/repository/` : accès Spring Data.
+- `app/src/main/java/com/wild/corp/adhesion/models/` : entités JPA ; les objets
+  d'échange spécifiques sont sous `models/resources/`.
+- `app/src/main/resources/` : configuration, modèles de courriel/PDF et
+  spécifications OpenAPI utilisées par Maven.
+- `app/src/test/` : tests JUnit 5, AssertJ et Mockito.
+- `client/` : frontend Angular 17 en modules Angular, TypeScript strict, RxJS,
+  Bootstrap/ng-bootstrap et Karma/Jasmine.
+- `client/src/app/_services/` : appels HTTP ; `client/src/app/models/` : contrats
+  TypeScript ; `page/` et `template/` : écrans et composants.
+- `docker-compose.yml` : déploiement ; `docker-compose.local.yml` : surcharge
+  de développement.
 
-### Frontend
+Ne jamais modifier manuellement `app/target/`, `client/dist/`,
+`client/node_modules/` ni les clients générés sous `app/target/generated-sources/`.
+Pour changer un client généré, modifier sa spécification JSON dans
+`app/src/main/resources/`, puis relancer Maven.
 
-- Vérifier que les contrôles utilisent des comparateurs adaptés pour les objets sélectionnés.
-- Garder les libellés utilisateur en français.
+## Principes de modification
 
-## Vérification avant livraison
+- Faire le changement minimal complet ; éviter les renommages, reformattages
+  ou migrations techniques sans rapport avec la demande.
+- Respecter le style du fichier existant. Aucun formateur ou linter global
+  n'est configuré ; ne pas inventer une commande `lint`.
+- Conserver les fichiers en UTF-8 et les libellés visibles par l'utilisateur en
+  français.
+- Toute évolution de contrat API doit être répercutée dans le service Angular,
+  les modèles TypeScript et les tests concernés.
+- Ne pas casser les URL publiques : le client est servi sous `/adhesion/`,
+  utilise un routage Angular avec hash et appelle l'API à partir de
+  `environment.server`.
 
-Avant de commiter :
+## Backend
 
-1. Exécuter `git diff --check`.
-2. Construire le frontend avec `npm run build` dans `client/`.
-3. Compiler ou démarrer le backend pour détecter les erreurs de compilation.
-5. Ne jamais ajouter `.DS_Store`, fichiers d’IDE, secrets ou fichiers de configuration locaux au commit.
+- Garder les contrôleurs minces : validation et traduction HTTP dans le
+  contrôleur, logique métier dans un service, persistance dans un repository.
+- Pour une nouvelle classe, préférer l'injection par constructeur. Ne pas
+  convertir les injections existantes en masse dans une tâche sans rapport.
+- Préserver les routes, verbes, paramètres, statuts HTTP et formats de réponse
+  existants sauf évolution explicitement demandée. Pour une nouvelle route,
+  préférer les annotations Spring `@PathVariable` et `@RequestParam`.
+- Vérifier la sécurité à deux endroits : `WebSecurityConfig` et les
+  `@PreAuthorize` du contrôleur. Une route d'écriture ne doit jamais devenir
+  publique par défaut. Les rôles sont centralisés dans `ERole` et initialisés
+  au démarrage de l'application.
+- Ne pas accepter aveuglément un graphe d'entités JPA provenant du client.
+  Résoudre par identifiant les entités liées, modifier les instances gérées et
+  utiliser un DTO de `models/resources/` lorsque le contrat ne correspond pas
+  exactement à une entité.
+- Lors d'un changement de relation, examiner les deux côtés de l'association,
+  les cascades, `orphanRemoval`, les contraintes d'unicité et les annotations
+  Jackson. Éviter les suppressions implicites et les boucles de sérialisation.
+- Les services métier sont généralement transactionnels. Garder ensemble les
+  mises à jour qui doivent réussir ou échouer comme une seule opération.
+- Pour les séances et calendriers, utiliser `java.time`, des bornes explicites
+  et des dates fixes dans les tests. Préserver les règles liées à la zone
+  scolaire, aux vacances, aux jours fériés et à Google Agenda.
+- Les appels Brevo, HelloAsso, Google Agenda et jeux de données publics doivent
+  être simulés dans les tests. Ne jamais envoyer de vrai courriel ni appeler un
+  service externe depuis une suite de tests.
+- Ajouter un test de service ciblé pour chaque règle métier corrigée ou ajoutée,
+  notamment sur les relations, suppressions, autorisations, dates et cas
+  limites.
 
-## Git et pull requests
+## Frontend
 
-- Vérifier `git status -sb` avant toute opération.
-- Ne pas inclure de fichiers non liés à la demande.
-- Faire des commits concis et centrés sur une fonctionnalité.
-- Lorsqu’une PR existe déjà, pousser sur sa branche plutôt que d’en créer une nouvelle.
+- Le projet utilise encore `AppModule` et des composants non standalone : ne
+  pas introduire une architecture standalone isolée sans demande de migration.
+- Respecter le mode strict TypeScript et typer les réponses HTTP. Éviter `any`
+  dans le nouveau code lorsqu'un modèle ou une interface locale suffit.
+- Centraliser les appels API dans `_services/`, construire les paramètres avec
+  `HttpParams` et ne jamais coder en dur l'hôte du backend dans un composant.
+- Garder les modèles TypeScript alignés sur les DTO/réponses Java, y compris la
+  pagination Spring (`content`, `number`, `size`, `totalElements`,
+  `totalPages`).
+- Pour les listes potentiellement volumineuses, préférer pagination et filtrage
+  côté serveur. Ne pas réintroduire un chargement complet si une route paginée
+  existe.
+- Nettoyer les souscriptions longues (`takeUntil`, `async` pipe ou mécanisme
+  équivalent) et conserver les retours utilisateur via les composants déjà
+  utilisés, notamment Toastr.
+- Pour les sélecteurs d'objets, définir un comparateur stable basé sur
+  l'identifiant lorsque l'égalité par référence n'est pas garantie.
+- Une évolution visible doit rester utilisable aux largeurs d'écran déjà
+  supportées et conserver des états explicites de chargement, vide et erreur.
+- Ajouter ou adapter les tests Jasmine ciblés. Les nombreux tests de création de
+  composant ne remplacent pas un test du comportement modifié.
 
-# Développement local
+## Données sensibles et effets externes
 
-## Prérequis
+- Les `.env*` sont locaux et ignorés par Git. Ne jamais afficher, copier,
+  modifier ou versionner leurs valeurs. Ne jamais ajouter de secret dans
+  `application.yml` ou les fichiers `environment*.ts`.
+- Les données d'adhérents, adresses, courriels, paiements, documents, jetons JWT
+  et liens d'usurpation sont sensibles. Ne pas les écrire dans les logs, jeux de
+  tests ou messages d'erreur.
+- Ne pas affaiblir CORS, JWT, les contrôles de rôles ou la validation des
+  fichiers sans demande explicite et justification.
+- Ne pas lancer d'opération de nettoyage annuel, suppression de données,
+  envoi de courriels, synchronisation Google ou régénération globale pendant
+  une vérification locale.
+- Ne jamais supprimer un volume Docker ni réinitialiser une base sans demande
+  explicite.
 
-- Docker Desktop lancé ;
-- Java 21+ et Maven ;
-- Node.js et les dépendances déjà installées dans `client/node_modules` ;
-- un fichier `.env` local, non versionné, renseignant au minimum :
-  `DB_NAME`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`,
-  `JWT_SECRET`, ainsi que les autres variables utilisées par `docker-compose.yml`.
+## Développement local
 
-Ne jamais afficher, modifier ou versionner les valeurs de `.env`.
+Prérequis : JDK 21, Maven installé globalement (aucun wrapper n'est versionné),
+Node.js/npm et Docker Compose. Installer les dépendances du client depuis
+`client/` avec `npm install` seulement lorsque nécessaire.
 
-## Configuration Docker locale
+Commandes usuelles :
 
-Le fichier `docker-compose.local.yml` est la surcharge à toujours utiliser en
-local. Il corrige les différences avec l'environnement Ubuntu de production :
+```text
+# Backend — depuis app/
+mvn test
+mvn package -DskipTests
 
-- expose l'API sur `localhost:8000` ;
-- désactive le montage `/home/ubuntu/adhesion`, indisponible sous macOS ;
-- publie la base Docker secondaire sur `localhost:8106` pour ne pas entrer en
-  conflit avec une base existante sur `8105` ;
-- raccorde l'API à la base locale existante sur le port `8105`, via
-  `host.docker.internal` (et non `127.0.0.1`, qui désigne le conteneur lui-même).
-
-Si le réseau partagé n'existe pas, le créer une seule fois :
-
-```sh
-docker network create traefik_web
-```
-
-## Démarrage
-
-Depuis la racine du dépôt :
-
-```sh
-cd app
-mvn package -DskipTests -q
-cd ..
-docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
-cd client
+# Frontend — depuis client/
 npm start -- --host 127.0.0.1 --port 4201
-```
+npm run build
+npm test -- --watch=false --browsers=ChromeHeadless
 
-L'interface est disponible sur `http://localhost:4201/adhesion/`.
-L'API est disponible sur `http://localhost:8000`.
-
-Le port `4200` peut être occupé par une autre application locale : conserver
-le port `4201` pour Adhesion. Une réponse HTTP `401` de l'API sans jeton de
-connexion est attendue et confirme que le serveur répond.
-
-## Vérifications
-
-```sh
-cd app && mvn package -DskipTests -q
-cd ../client && npm run build
-cd .. && docker compose -f docker-compose.yml -f docker-compose.local.yml ps
-```
-
-`mvn test` peut échouer sous le JDK 25 local, car Mockito ne parvient pas à
-attacher son agent. Utiliser Java 21 pour exécuter la suite de tests complète.
-
-## Arrêt
-
-Arrêter le serveur Angular avec `Ctrl+C`, puis depuis la racine :
-
-```sh
-docker compose -f docker-compose.yml -f docker-compose.local.yml down
-```
-
-Ne pas supprimer les volumes Docker ni arrêter la base PostgreSQL existante
-sur le port `8105` sans demande explicite : elle peut être partagée avec une
-autre session de développement.
-
-## GitHub : pratique fiable et économe
-
-Avant toute publication, vérifier une seule fois le contexte local :
-
-```sh
-git status -sb
-git diff --stat
-gh auth status
-```
-
-- Ne jamais utiliser `git add -A` dans un répertoire de travail mêlant des
-  modifications existantes et une nouvelle tâche. Ajouter explicitement les
-  fichiers de la fonctionnalité concernée.
-- Lire le diff des seuls fichiers à publier et lancer `git diff --check` avant
-  le commit. Exécuter ensuite uniquement les vérifications pertinentes, sans
-  répéter les builds déjà réussis.
-- Pour mettre à jour une PR existante, identifier et pousser sa **branche
-  source**, pas une branche locale de convenance. Exemple pour la PR 48 :
-
-  ```sh
-  git push origin HEAD:agent/gestion-seances-calendrier-google
-  ```
-
-- Sur macOS, exécuter `gh auth status` avec accès au trousseau système
-  (hors sandbox) dès la première vérification. Une erreur d'authentification
-  depuis l'environnement isolé ne prouve pas qu'un jeton est invalide : elle
-  peut seulement signifier que le trousseau macOS est inaccessible.
-- Ne demander `gh auth login -h github.com` à l'utilisateur qu'après l'échec
-  de cette vérification avec accès au trousseau. Ne pas faire plusieurs
-  tentatives identiques dans le sandbox.
-- Après un push, une seule vérification ciblée suffit :
-
-  ```sh
-  git ls-remote --heads origin <branche-source>
-  ```
-
-Pour limiter la consommation de tokens, ne pas relire toute la PR, tous les
-logs CI ou tout l'historique Git lorsqu'un statut, un diff ciblé et la branche
-source répondent déjà à la question. Ne récupérer les commentaires de revue ou
-les logs d'échec CI que si la tâche le demande explicitement.
-
-## Diagnostic local : une passe courte avant toute relance
-
-Les problèmes de Docker, ports, navigateur et base de données sont coûteux à
-diagnostiquer lorsqu'ils sont traités par essais successifs. Appliquer cette
-séquence, dans cet ordre, et s'arrêter dès qu'une preuve est obtenue.
-
-### 1. État connu avant action
-
-Exécuter **une seule fois** les contrôles concis suivants :
-
-```sh
+# Stack locale — depuis la racine, après construction du JAR
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
 docker compose -f docker-compose.yml -f docker-compose.local.yml ps
-lsof -nP -iTCP:4200 -sTCP:LISTEN
-lsof -nP -iTCP:4201 -sTCP:LISTEN
-lsof -nP -iTCP:8000 -sTCP:LISTEN
-curl --silent --output /dev/null --write-out 'HTTP %{http_code}\n' http://127.0.0.1:8000/activite/all
+docker compose -f docker-compose.yml -f docker-compose.local.yml logs --tail=80 app_adhesion
 ```
 
-Interprétation :
+Le frontend local est attendu sur `http://127.0.0.1:4201/adhesion/` et l'API
+sur `http://127.0.0.1:8000` lorsque la surcharge Docker est utilisée. Cette
+surcharge dirige actuellement l'API vers une PostgreSQL accessible via
+`host.docker.internal:8105`, tandis que le conteneur PostgreSQL du compose est
+publié sur `8106` : confirmer la base visée avant de démarrer ou de modifier la
+configuration.
 
-- `401` sur l'API signifie que le backend répond mais que la route exige une
-  authentification ; ce n'est pas une panne.
-- Un port occupé ne doit pas être libéré en arrêtant un processus inconnu.
-  Utiliser le port prévu `4201` pour Angular et conserver `4200` intact.
-- Ne lancer `docker compose up --build` que si le JAR ou le Dockerfile a
-  changé. Sinon, utiliser `docker compose ... up -d`.
+## Validation proportionnée
 
-### 2. Docker et base de données
+Exécuter au minimum les contrôles correspondant au périmètre :
 
-- Toujours utiliser `docker-compose.local.yml` : il neutralise le volume
-  Ubuntu, publie l'API sur `8000` et évite le conflit PostgreSQL sur `8105`.
-- La base de test existante est accessible depuis le conteneur uniquement via
-  `host.docker.internal:8105`, jamais via `127.0.0.1:8105`.
-- Ne créer le réseau `traefik_web` qu'après avoir constaté explicitement qu'il
-  est absent. Ne pas recréer les volumes ou la base pour résoudre un problème
-  d'authentification.
-- En cas d'échec, consulter d'abord un extrait borné :
+- Backend seul : test JUnit ciblé, puis `mvn test` si le changement est
+  transversal.
+- Frontend seul : test Jasmine ciblé lorsque possible, puis `npm run build`.
+- Contrat API ou fonctionnalité de bout en bout : tests backend, build frontend
+  et vérification des deux côtés du contrat.
+- Configuration/Docker : commencer par
+  `docker compose -f docker-compose.yml -f docker-compose.local.yml config`,
+  puis vérifier l'état sans supprimer les services ou volumes existants.
+- Toute livraison : `git diff --check`, inspection du diff ciblé et
+  `git status --short`.
 
-  ```sh
-  docker compose -f docker-compose.yml -f docker-compose.local.yml logs --tail=80 app_adhesion
-  ```
+Si une vérification n'a pas pu être lancée à cause d'un outil, d'un navigateur,
+d'une base ou d'un secret manquant, le signaler clairement ; ne pas présenter
+la validation comme réussie.
 
-  Ne demander des logs plus longs que si les 80 dernières lignes ne montrent
-  pas l'erreur de connexion ou le message de démarrage.
+## Git
 
-### 3. Interface et navigateur
-
-- Vérifier l'URL et le serveur avant toute inspection navigateur :
-
-  ```sh
-  curl --silent http://127.0.0.1:4201/adhesion/ | head -20
-  ```
-
-  La page doit contenir le titre `ALOD`. Un autre titre indique qu'un autre
-  projet utilise le port ; démarrer Adhesion sur `4201`, sans tuer ce projet.
-- Ne démarrer qu'une seule instance Angular : vérifier le port avec `lsof`
-  avant `npm start`.
-- Utiliser le navigateur seulement si `curl` confirme que la bonne interface
-  est servie mais que le rendu reste incorrect. Lire d'abord le DOM et les
-  erreurs de console, sans captures d'écran, navigation répétée ni inspection
-  de stockage local.
-
-
+- Ne pas écraser, restaurer, mettre en stash ou inclure les changements locaux
+  d'un autre travail.
+- Ajouter explicitement les seuls fichiers de la tâche ; éviter `git add -A`
+  dans un arbre de travail partagé ou sale.
+- Ne pas versionner `.env*`, fichiers d'IDE, logs, sorties de build ou données
+  exportées.
+- Ne créer ni commit, ni branche, ni push, ni pull request sans demande
+  explicite.

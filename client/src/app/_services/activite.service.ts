@@ -1,11 +1,30 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { Activite, Adherent,ActiviteNm1, ActiviteDropDown, HoraireDropDown } from '../models';
+import { Activite, Adherent, AdherentLite, ActiviteNm1, ActiviteDropDown, HoraireDropDown } from '../models';
 import { CalendrierGoogle, Seance, SeanceCalendrier } from '../models/seance';
 
 const API_URL = environment.server + '/activite/';
+
+export interface ActivitePage {
+  content: Activite[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+}
+
+export interface ActivitePageQuery {
+  page: number;
+  size: number;
+  search?: string;
+  tarif?: number;
+  complete?: boolean;
+  reinscription?: boolean;
+  age?: number;
+  genre?: string;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -19,6 +38,10 @@ export class ActiviteService {
 
   getSeances(activiteId: number): Observable<Seance[]> {
     return this.http.get<Seance[]>(API_URL + activiteId + '/seances', { responseType: 'json' });
+  }
+
+  getReferentsCandidates(activiteId: number): Observable<AdherentLite[]> {
+    return this.http.get<AdherentLite[]>(API_URL + activiteId + '/referents/candidats', { responseType: 'json' });
   }
 
   getCalendrier(dateDebut: string, dateFin: string, tribuUuid?: string): Observable<SeanceCalendrier[]> {
@@ -77,6 +100,31 @@ export class ActiviteService {
   }
   getAll(): Observable<Activite[]> {
     return this.http.get<Activite[]>(API_URL + 'all', { responseType: 'json' });
+  }
+
+  getPage(query: ActivitePageQuery): Observable<ActivitePage> {
+    let params = new HttpParams()
+      .set('page', query.page)
+      .set('size', query.size);
+    if (query.search) {
+      params = params.set('search', query.search);
+    }
+    if (query.tarif !== undefined) {
+      params = params.set('tarif', query.tarif);
+    }
+    if (query.complete !== undefined) {
+      params = params.set('complete', query.complete);
+    }
+    if (query.reinscription !== undefined) {
+      params = params.set('reinscription', query.reinscription);
+    }
+    if (query.age !== undefined) {
+      params = params.set('age', query.age);
+    }
+    if (query.genre) {
+      params = params.set('genre', query.genre);
+    }
+    return this.http.get<ActivitePage>(API_URL + 'page', { params, responseType: 'json' });
   }
 
 

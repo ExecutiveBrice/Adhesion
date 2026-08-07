@@ -11,6 +11,8 @@ import jakarta.validation.Valid;
 import jakarta.websocket.server.PathParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -36,6 +38,18 @@ ActiviteServices activiteServices;
 	@GetMapping("/all")
 	public ResponseEntity<?> getAll() {
 		return ResponseEntity.ok(activiteServices.getAll());
+	}
+
+	@GetMapping("/page")
+	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+	public ResponseEntity<?> getPage(@RequestParam(defaultValue = "") String search,
+			@RequestParam(required = false) Integer tarif,
+			@RequestParam(required = false) Boolean complete,
+			@RequestParam(required = false) Boolean reinscription,
+			@RequestParam(required = false) Integer age,
+			@RequestParam(defaultValue = "") String genre,
+			@PageableDefault(size = 20) Pageable pageable) {
+		return ResponseEntity.ok(activiteServices.getPage(search, tarif, complete, reinscription, age, genre, pageable));
 	}
 
 	@GetMapping("/allNm1")
@@ -69,6 +83,12 @@ ActiviteServices activiteServices;
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<?> getSeances(@PathVariable Long activiteId) {
 		return ResponseEntity.ok(activiteServices.getSeances(activiteId));
+	}
+
+	@GetMapping("/{activiteId}/referents/candidats")
+	@PreAuthorize("hasRole('USER')")
+	public ResponseEntity<?> getReferentsCandidates(@PathVariable Long activiteId) {
+		return ResponseEntity.ok(activiteServices.getReferentsCandidates(activiteId));
 	}
 
 	@PostMapping("/{activiteId}/seances")

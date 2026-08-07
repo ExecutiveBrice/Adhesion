@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { User, UserLite } from '../models';
+import { PresenceSeance, SeanceDuJour } from '../models/seance';
 
 const API_URL = environment.server+'/user/';
 
@@ -14,6 +15,24 @@ export class UserService {
 
   getConnectedUser(): Observable<User> {
     return this.http.get<User>(API_URL + 'connecteduser', { responseType: 'json' });
+  }
+
+  getSeancesDuJour(): Observable<SeanceDuJour[]> {
+    return this.http.get<SeanceDuJour[]>(API_URL + 'seancesDuJour', { responseType: 'json' });
+  }
+
+  getPresences(seanceId: number): Observable<PresenceSeance[]> {
+    return this.http.get<PresenceSeance[]>(API_URL + 'seances/' + seanceId + '/presences', { responseType: 'json' });
+  }
+
+  updatePresence(seanceId: number, presenceId: number, presence: boolean): Observable<PresenceSeance> {
+    return this.http.patch<PresenceSeance>(API_URL + 'seances/' + seanceId + '/presences/' + presenceId,
+      { presence }, { responseType: 'json' });
+  }
+
+  updateCommentaireSeance(seanceId: number, commentaire: string | null): Observable<SeanceDuJour> {
+    return this.http.patch<SeanceDuJour>(API_URL + 'seances/' + seanceId + '/commentaire',
+      { commentaire }, { responseType: 'json' });
   }
   getUserByMail(userEmail: String): Observable<User> {
     let params = new HttpParams().set('userEmail', '' + userEmail + '');

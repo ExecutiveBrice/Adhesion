@@ -174,6 +174,7 @@ public class AdherentController {
         return ResponseEntity.ok(adherentServices.getByRole(roleId));
     }
 
+
     @GetMapping("/addAccord")
     @PreAuthorize("hasRole('SECRETAIRE') or hasRole('ADMIN')")
     public ResponseEntity<?> addAccord(Authentication principal, @PathParam("adherentId") Long adherentId, @PathParam("nomAccord") String nomAccord) {

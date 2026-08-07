@@ -4,6 +4,11 @@ import com.wild.corp.adhesion.models.ERole;
 import com.wild.corp.adhesion.models.User;
 import com.wild.corp.adhesion.repository.AdherentRepository;
 import com.wild.corp.adhesion.services.UserServices;
+import com.wild.corp.adhesion.services.PresenceServices;
+import com.wild.corp.adhesion.services.SeanceServices;
+import com.wild.corp.adhesion.models.resources.CommentaireSeanceRequest;
+import com.wild.corp.adhesion.models.resources.SeanceDuJourResponse;
+import com.wild.corp.adhesion.models.resources.PresenceUpdateRequest;
 import jakarta.websocket.server.PathParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,15 +26,41 @@ public class UserController {
 
 @Autowired
 UserServices userServices;
+@Autowired
+PresenceServices presenceServices;
+@Autowired
+SeanceServices seanceServices;
 
 	@Autowired
 	AdherentRepository adherentRepository;
 
 
 	@GetMapping("/seancesDuJour")
+	@PreAuthorize("hasAnyRole('PROF', 'REFERENT')")
 	public ResponseEntity<?> getSeancesDuJour(Authentication principal) {
 		log.info("getAllCours by " + principal.getName() );
 		return ResponseEntity.ok(userServices.getSeancesDuJourForUser(principal.getName()));
+	}
+
+	@GetMapping("/seances/{seanceId}/presences")
+	@PreAuthorize("hasAnyRole('PROF', 'REFERENT')")
+	public ResponseEntity<?> getPresences(@PathVariable Long seanceId, Authentication principal) {
+		return ResponseEntity.ok(presenceServices.getPresences(seanceId, principal.getName()));
+	}
+
+	@PatchMapping("/seances/{seanceId}/presences/{presenceId}")
+	@PreAuthorize("hasAnyRole('PROF', 'REFERENT')")
+	public ResponseEntity<?> updatePresence(@PathVariable Long seanceId, @PathVariable Long presenceId,
+			@RequestBody PresenceUpdateRequest request, Authentication principal) {
+		return ResponseEntity.ok(presenceServices.updatePresence(seanceId, presenceId, request.presence(), principal.getName()));
+	}
+
+	@PatchMapping("/seances/{seanceId}/commentaire")
+	@PreAuthorize("hasAnyRole('PROF', 'REFERENT')")
+	public ResponseEntity<?> updateCommentaire(@PathVariable Long seanceId,
+			@RequestBody CommentaireSeanceRequest request, Authentication principal) {
+		return ResponseEntity.ok(SeanceDuJourResponse.from(
+				seanceServices.updateCommentaireForManager(seanceId, request.commentaire(), principal.getName())));
 	}
 
 

@@ -70,6 +70,11 @@ public class ParamBooleanServices {
                     .paramName("Mail_Annulation")
                     .paramValue(false).build());
         }
+        if(!paramBooleanRepository.existsByParamName("Envoi_Mails")) {
+            paramBooleanRepository.save(ParamBoolean.builder()
+                    .paramName("Envoi_Mails")
+                    .paramValue(true).build());
+        }
         if(!paramBooleanRepository.existsByParamName("Show_HelloAsso")) {
             paramBooleanRepository.save(ParamBoolean.builder()
                     .paramName("Show_HelloAsso")

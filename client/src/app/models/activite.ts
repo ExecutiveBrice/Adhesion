@@ -20,10 +20,13 @@ export class Activite {
   lien!: string;
   salle?: SalleConfiguration;
   profs!: Adherent[];
+  referents!: Adherent[];
   nbPlaces!: number;
   nbAdhesionsEnCours!: number;
   nbAdhesionsCompletes!: number;
   nbAdhesionsAttente!: number;
+  nbSeancesRealisees!: number;
+  nbSeancesTotal!: number;
   montantCollecte!: number;
   adhesions!: Adhesion[];
   priseEnCharge!: boolean;
@@ -41,6 +44,7 @@ export class Activite {
   constructor() {
 
     this.profs = [];
+    this.referents = [];
     this.adhesions = [];
 
     this.nom = 'nouvelle activité'

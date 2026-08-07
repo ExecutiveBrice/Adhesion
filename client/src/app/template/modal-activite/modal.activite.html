@@ -91,6 +91,27 @@
         </div>
       </div>
 
+      <div class="form-group">
+        <label for="referent">Référent</label>
+        <div *ngIf="activite.referents.length > 0">
+          <div *ngFor="let referent of activite.referents | orderBy:'id':true">
+            {{referent.prenom}} {{referent.nom}}
+            <fa-icon class="pointer" (click)="retirerReferent(activite, referent)"
+              [icon]="faSquareMinus"></fa-icon>
+          </div>
+        </div>
+
+        <div ngbDropdown class="d-inline-block col-md-12">
+          <button type="button" class="btn btn-block btn-primary" id="dropdownReferent" ngbDropdownToggle>
+            Ajouter un référent
+          </button>
+          <div ngbDropdownMenu aria-labelledby="dropdownReferent">
+            <div ngbDropdownItem *ngFor="let referent of referents | orderBy:'ordre':false"
+              (click)="ajouterReferent(activite, referent)">{{referent.prenom}} {{referent.nom}}</div>
+          </div>
+        </div>
+      </div>
+
     </div>
     <div class="col-12 col-sm-6">
 
@@ -328,11 +349,11 @@
                 </select>
               </td>
               <td class="commentaire-seance">
-                <input type="text" class="form-control form-control-sm" maxlength="255"
-                       [name]="'commentaireSeance-' + seance.id" [(ngModel)]="seance.commentaire"
-                       (ngModelChange)="planifierEnregistrementCommentaire(seance)"
-                       (blur)="enregistrerCommentaireAuBlur(seance)"
-                       [disabled]="suppressionSeances.has(seance.id)" placeholder="Ajouter un commentaire" />
+                <textarea class="form-control form-control-sm" maxlength="255" rows="3"
+                          [name]="'commentaireSeance-' + seance.id" [(ngModel)]="seance.commentaire"
+                          (ngModelChange)="planifierEnregistrementCommentaire(seance)"
+                          (blur)="enregistrerCommentaireAuBlur(seance)"
+                          [disabled]="suppressionSeances.has(seance.id)" placeholder="Ajouter un commentaire"></textarea>
                 <small *ngIf="enregistrementSeances.has(seance.id)" class="text-muted">Enregistrement…</small>
               </td>
               <td class="text-center action-seance">

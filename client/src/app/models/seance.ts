@@ -12,6 +12,26 @@ export class Seance {
   heureEdition!: string;
 }
 
+export interface SeanceDuJour {
+  id: number;
+  activite: string;
+  debut: string;
+  fin: string;
+  lieu: string | null;
+  adresse: string | null;
+  commentaire: string | null;
+  etatSeance: 'PROGRAMMEE' | 'REALISEE' | 'ANNULEE' | 'MODIFIEE';
+  nombreParticipants: number;
+}
+
+export interface PresenceSeance {
+  id: number;
+  adherentId: number;
+  nom: string;
+  prenom: string;
+  presence: boolean;
+}
+
 export interface SeanceCalendrier {
   id: number;
   activiteId: number;

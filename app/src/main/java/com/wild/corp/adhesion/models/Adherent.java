@@ -84,6 +84,13 @@ public class Adherent {
     @JsonIgnore
     private Set<Activite> cours = new HashSet<>();
 
+    @ManyToMany
+    @JoinTable(name = "adherent_referent_activites",
+            joinColumns = @JoinColumn(name = "adherent_id"),
+            inverseJoinColumns = @JoinColumn(name = "activite_id"))
+    @JsonIgnore
+    private Set<Activite> activitesReferent = new HashSet<>();
+
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties({"adherent", "tokens"})
     private User user;

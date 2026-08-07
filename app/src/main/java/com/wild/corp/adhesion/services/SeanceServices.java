@@ -40,6 +40,9 @@ public class SeanceServices {
     @Autowired
     SalleRepository salleRepository;
 
+    @Autowired
+    PresenceServices presenceServices;
+
     private final DatasetApi vacancesApi;
     private final DatasetApi joursFeriesApi;
     private final String zone;
@@ -82,6 +85,15 @@ public class SeanceServices {
                 .toList();
     }
 
+    public int realiserSeancesDu(LocalDate date) {
+        LocalDateTime debut = date.atStartOfDay();
+        return seanceRepository.updateEtatForDebutBetweenAndEtatIn(
+                debut,
+                date.plusDays(1).atStartOfDay(),
+                List.of(ESeance.PROGRAMMEE, ESeance.MODIFIEE),
+                ESeance.REALISEE);
+    }
+
     public Seance addFirstSeance(Activite activite, LocalDate date) {
         Seance nouvelleSeance = new Seance();
         nouvelleSeance.setActivite(activite);
@@ -113,7 +125,7 @@ public class SeanceServices {
         for (int i = 0; i < nbWeeks; i++) {
             LocalDate date = firstDate.plusWeeks(i);
             if (!unavailableDates.contains(date)) {
-                activite.getSeances().add(addFirstSeance(activite, date));
+                addSeanceWithPresences(activite, date);
             }
         }
     }
@@ -153,8 +165,7 @@ public class SeanceServices {
             }
 
             if (!unavailableDates.contains(candidate) && !existingDates.contains(candidate)) {
-                Seance seance = addFirstSeance(activite, candidate);
-                activite.getSeances().add(seance);
+                Seance seance = addSeanceWithPresences(activite, candidate);
                 created.add(seance);
                 existingDates.add(candidate);
             }
@@ -171,6 +182,13 @@ public class SeanceServices {
         if (activite.getDuree() <= 0) {
             throw new IllegalArgumentException("La durée de l'activité doit être supérieure à zéro");
         }
+    }
+
+    private Seance addSeanceWithPresences(Activite activite, LocalDate date) {
+        Seance seance = addFirstSeance(activite, date);
+        activite.getSeances().add(seance);
+        presenceServices.fillPresences(seance);
+        return seance;
     }
 
     private Set<LocalDate> getUnavailableDates(String schoolZone, LocalDate start, LocalDate end) {
@@ -266,6 +284,13 @@ public class SeanceServices {
 
     public void deleteSeance(Long activiteId, Long seanceId) {
         seanceRepository.delete(getSeance(activiteId, seanceId));
+    }
+
+    public Seance updateCommentaireForManager(Long seanceId, String commentaire, String username) {
+        Seance seance = seanceRepository.findByIdAndManagerUsername(seanceId, username)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Séance introuvable"));
+        seance.setCommentaire(commentaire == null || commentaire.isBlank() ? null : commentaire.trim());
+        return seance;
     }
 
     private Seance getSeance(Long activiteId, Long seanceId) {

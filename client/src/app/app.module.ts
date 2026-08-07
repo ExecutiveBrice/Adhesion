@@ -52,6 +52,7 @@ import { SimpleFilterPipe } from './_helpers/simpleFilter.pipe';
 import {OrderSimplePipe} from "./_helpers/sort-simple.pipe";
 import {OrderObjectByPipe} from "./_helpers/sortObject.pipe";
 import { CalendrierComponent } from './template/calendrier/calendrier.component';
+import { SeancesComponent } from './page/seances/seances.component';
 import localeFr from '@angular/common/locales/fr';
 registerLocaleData(localeFr);
 
@@ -77,6 +78,7 @@ registerLocaleData(localeFr);
     UserComponent,
     SwitchComponent,
     CalendrierComponent,
+    SeancesComponent,
     OrderByPipe,
     FilterByPipe,
 

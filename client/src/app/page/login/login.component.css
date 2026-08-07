@@ -14,7 +14,6 @@
   box-shadow: 0 14px 36px rgba(38, 51, 56, 0.12);
 }
 
-.calendrier-entete,
 .detail-jour-entete,
 .google-agenda-actions {
   display: flex;
@@ -23,39 +22,53 @@
   gap: 1rem;
 }
 
-.calendrier-entete h2 {
-  color: var(--encre);
-  font-size: clamp(1.45rem, 3vw, 2rem);
-  margin: 0.2rem 0;
-}
-
-.calendrier-entete p {
-  margin: 0;
-}
-
-.calendrier-surtitre {
-  color: #387e75;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
 .calendrier-navigation {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  justify-content: center;
+  gap: clamp(0.35rem, 1vw, 0.75rem);
+  width: 100%;
 }
 
-.calendrier-navigation .btn {
-  min-width: 42px;
-  border-radius: 10px;
+.calendrier-navigation-bouton {
+  align-items: center;
+  background: var(--vert-pale);
+  border: 1px solid #b8e4dd;
+  border-radius: 50%;
+  color: var(--encre);
+  display: inline-flex;
+  font-size: clamp(1.7rem, 4vw, 2.2rem);
+  height: clamp(2.5rem, 6vw, 3rem);
+  justify-content: center;
+  line-height: 1;
+  padding: 0 0 0.25rem;
+  width: clamp(2.5rem, 6vw, 3rem);
 }
 
 .calendrier-mois {
-  color: var(--encre);
-  font-size: 1.35rem;
+  background: var(--encre);
+  border: 1px solid var(--encre);
+  border-radius: 999px;
+  color: #fff;
+  font-size: clamp(1rem, 2.8vw, 1.55rem);
   font-weight: 750;
-  margin: 0;
+  line-height: 1.2;
+  min-width: min(16rem, calc(100vw - 9rem));
+  padding: clamp(0.55rem, 1.5vw, 0.75rem) clamp(0.9rem, 3vw, 1.5rem);
   text-transform: capitalize;
+}
+
+.calendrier-navigation-bouton:hover,
+.calendrier-navigation-bouton:focus-visible {
+  background: #d6f0eb;
+  border-color: var(--vert-alod);
+}
+
+.calendrier-mois:hover,
+.calendrier-mois:focus-visible {
+  background: #387e75;
+  border-color: #387e75;
+  color: #fff;
 }
 
 .calendrier-tableau {
@@ -369,19 +382,6 @@
 }
 
 @media (max-width: 767px) {
-  .calendrier-entete {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .calendrier-navigation {
-    justify-content: space-between;
-  }
-
-  .calendrier-navigation .aujourd-hui {
-    flex: 1;
-  }
-
   .detail-seance {
     grid-template-columns: 1fr auto;
   }

@@ -47,9 +47,16 @@ public class EmailService {
     ParamTextServices paramTextServices;
 
     @Autowired
+    ParamBooleanServices paramBooleanServices;
+
+    @Autowired
     private Environment environment;
 
     public Historique sendMessage(EmailContent mail) {
+        if (!isMailSendingEnabled()) {
+            log.info("L'envoi d'e-mails est désactivé dans les paramètres.");
+            return null;
+        }
         Historique historique = null;
         List<String> listMail = new ArrayList<>();
         if(!mail.getDiffusion().isEmpty()) {
@@ -100,6 +107,10 @@ public class EmailService {
     }
 
     public void sendAutoMail(Adhesion adhesion, String sujetName, String corpsName, boolean attachement) {
+        if (!isMailSendingEnabled()) {
+            log.info("L'envoi d'e-mails est désactivé dans les paramètres.");
+            return;
+        }
         EmailContent mail = new EmailContent();
         mail.getDestinataires().add(Boolean.TRUE.equals(adhesion.getAdherent().getEmailRepresentant()) && adhesion.getAdherent().getRepresentant() != null ? adhesion.getAdherent().getRepresentant().getUser().getUsername() : adhesion.getAdherent().getUser().getUsername());
         String sujet = paramTextServices.getParamValue(sujetName);
@@ -121,6 +132,10 @@ public class EmailService {
 
 
     public void singleMessage(List<String> destinataires, EmailContent mail, Adhesion adhesion, boolean attachement) {
+        if (!isMailSendingEnabled()) {
+            log.info("L'envoi d'e-mails est désactivé dans les paramètres.");
+            return;
+        }
 
         Properties prop = new Properties();
         prop.put("mail.debug", "false");
@@ -211,6 +226,10 @@ public class EmailService {
     }
 
     public Historique diffusionTemplate(List<Groupe> maillingListe, Long templateId) {
+        if (!isMailSendingEnabled()) {
+            log.info("L'envoi d'e-mails est désactivé dans les paramètres.");
+            return null;
+        }
         Historique historique = null;
         echecs = 0;
         reussis = 0;
@@ -254,6 +273,10 @@ public class EmailService {
 
 
     public void sendTemplate(String email, Long templateId) {
+        if (!isMailSendingEnabled()) {
+            log.info("L'envoi d'e-mails est désactivé dans les paramètres.");
+            return;
+        }
 
         Properties prop = new Properties();
         prop.put("mail.debug", "false");
@@ -300,6 +323,10 @@ public class EmailService {
 
             log.warn("Exception occurred: " + e.getMessage());
         }
+    }
+
+    public boolean isMailSendingEnabled() {
+        return paramBooleanServices.findByParamValue("Envoi_Mails");
     }
 
 }

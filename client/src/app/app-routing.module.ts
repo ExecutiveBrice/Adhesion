@@ -18,6 +18,7 @@ import { MaintenanceComponent } from './page/maintenance/maintenance.component';
 import { ReportingComponent } from './page/reporting/reporting.component';
 import { ProfsComponent } from './page/profs/profs.component';
 import { ComptaComponent } from './page/compta/compta.component';
+import { SeancesComponent } from './page/seances/seances.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -32,6 +33,7 @@ const routes: Routes = [
   { path: 'reporting', component: ReportingComponent },
   { path: 'compta', component: ComptaComponent },
   { path: 'profs', component: ProfsComponent },
+  { path: 'seances', component: SeancesComponent },
   { path: 'mail/:adherentId', component: MaillingComponent },
   { path: '', redirectTo: 'login', pathMatch: 'full' }
 ];

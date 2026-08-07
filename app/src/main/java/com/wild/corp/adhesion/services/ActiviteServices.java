@@ -5,20 +5,33 @@ import com.wild.corp.adhesion.models.resources.SeanceResponse;
 import com.wild.corp.adhesion.repository.ActiviteNm1Repository;
 import com.wild.corp.adhesion.repository.ActiviteRepository;
 import com.wild.corp.adhesion.repository.SalleRepository;
+import com.wild.corp.adhesion.repository.RoleRepository;
+import com.wild.corp.adhesion.utils.Status;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 
 @Service
 @Transactional
 public class ActiviteServices {
+
+    private static final Sort ACTIVITE_SORT = Sort.by(Sort.Direction.ASC, "groupeFiltre", "nom", "horaire");
 
     @Autowired
     ActiviteRepository activiteRepository;
@@ -31,6 +44,8 @@ public class ActiviteServices {
     SeanceServices seanceServices;
     @Autowired
     SalleRepository salleRepository;
+    @Autowired
+    RoleRepository roleRepository;
 
     public List<Seance> getSeancesDuJour(Long activiteId) {
 
@@ -71,23 +86,90 @@ public class ActiviteServices {
 
     public List<Activite> getAll() {
         List<Activite> activites = activiteRepository.findAll();
-        activites.stream().forEach(activite -> {
-            activite.setNbAdhesionsCompletes(activite.getAdhesions().stream().filter(Adhesion::isValide).count());
-            activite.setNbAdhesionsEnCours(activite.getAdhesions().stream().filter(Adhesion::isEnCours).count());
-            activite.setNbAdhesionsAttente(activite.getAdhesions().stream().filter(Adhesion::isEnAttente).count());
-        });
+        activites.forEach(this::completerCompteurs);
         return activites;
+    }
+
+    public Page<Activite> getPage(String search, Integer tarif, Boolean complete, Boolean reinscription,
+                                  Integer age, String genre, Pageable pageable) {
+        Pageable activitePageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), ACTIVITE_SORT);
+        Page<Activite> activites;
+        if (StringUtils.hasText(search) || tarif != null || complete != null || reinscription != null || age != null
+                || StringUtils.hasText(genre)) {
+            activites = activiteRepository.findAll(specificationFiltre(search, tarif, complete, reinscription, age,
+                    genre), activitePageable);
+        } else {
+            activites = activiteRepository.findAll(activitePageable);
+        }
+        return activites.map(this::completerCompteurs);
+    }
+
+    private Specification<Activite> specificationFiltre(String recherche, Integer tarif, Boolean complete,
+                                                          Boolean reinscription, Integer age, String genre) {
+        return (root, query, criteriaBuilder) -> {
+            jakarta.persistence.criteria.Predicate filtre = criteriaBuilder.conjunction();
+            if (StringUtils.hasText(recherche)) {
+                String rechercheLike = toLikePattern(recherche);
+                filtre = criteriaBuilder.and(filtre, criteriaBuilder.or(
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("nom")), rechercheLike, '\\'),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("groupeFiltre")), rechercheLike, '\\'),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("horaire")), rechercheLike, '\\')
+                ));
+            }
+            if (tarif != null) {
+                filtre = criteriaBuilder.and(filtre, criteriaBuilder.equal(root.get("tarif"), tarif));
+            }
+            if (complete != null) {
+                filtre = criteriaBuilder.and(filtre, criteriaBuilder.equal(root.get("complete"), complete));
+            }
+            if (reinscription != null) {
+                filtre = criteriaBuilder.and(filtre, criteriaBuilder.equal(root.get("reinscription"), reinscription));
+            }
+            if (age != null) {
+                filtre = criteriaBuilder.and(filtre,
+                        criteriaBuilder.lessThanOrEqualTo(root.get("ageMin"), age),
+                        criteriaBuilder.greaterThanOrEqualTo(root.get("ageMax"), age));
+            }
+            if (StringUtils.hasText(genre)) {
+                filtre = criteriaBuilder.and(filtre, criteriaBuilder.equal(root.get("genre"), genre));
+            }
+            return filtre;
+        };
+    }
+
+    private String toLikePattern(String valeur) {
+        String valeurEchappee = valeur.trim().toLowerCase(Locale.ROOT)
+                .replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_");
+        return "%" + valeurEchappee + "%";
+    }
+
+    private Activite completerCompteurs(Activite activite) {
+        activite.setNbAdhesionsCompletes(activite.getAdhesions().stream().filter(Adhesion::isValide).count());
+        activite.setNbAdhesionsEnCours(activite.getAdhesions().stream().filter(Adhesion::isEnCours).count());
+        activite.setNbAdhesionsAttente(activite.getAdhesions().stream().filter(Adhesion::isEnAttente).count());
+        activite.setNbSeancesRealisees(activite.getSeances().stream()
+                .filter(seance -> ESeance.REALISEE.equals(seance.getEtatSeance()))
+                .count());
+        activite.setNbSeancesTotal(activite.getSeances().stream()
+                .filter(seance -> !ESeance.ANNULEE.equals(seance.getEtatSeance()))
+                .count());
+        return activite;
     }
 
     public Activite save(Activite activite) {
         Salle salle = trouverSalle(activite.getSalle());
         if (activite.getId() != null) {
             Activite activiteInDB = activiteRepository.findById(activite.getId()).orElseThrow();
+            Set<Adherent> anciensReferents = new HashSet<>(activiteInDB.getReferents());
             activiteInDB.getProfs().forEach(adherent -> adherent.getCours().remove(activiteInDB));
+            activiteInDB.getReferents().forEach(adherent -> adherent.getActivitesReferent().remove(activiteInDB));
 
             BeanUtils.copyProperties(activite, activiteInDB,
-                    "id", "adhesions", "sousClassement", "profs", "seances",
-                    "nbAdhesionsEnCours", "nbAdhesionsCompletes", "nbAdhesionsAttente", "montantCollecte", "salle");
+                    "id", "adhesions", "sousClassement", "profs", "referents", "seances",
+                    "nbAdhesionsEnCours", "nbAdhesionsCompletes", "nbAdhesionsAttente", "nbSeancesRealisees",
+                    "nbSeancesTotal", "montantCollecte", "salle");
             activiteInDB.setSalle(salle);
 
             activiteInDB.setProfs(activite.getProfs().stream()
@@ -95,10 +177,25 @@ public class ActiviteServices {
                     .collect(Collectors.toSet()));
             activiteInDB.getProfs().forEach(adherent -> adherent.getCours().add(activiteInDB));
 
+            activiteInDB.setReferents(resoudreReferentsValides(activiteInDB, activite.getReferents()));
+            activiteInDB.getReferents().forEach(adherent -> adherent.getActivitesReferent().add(activiteInDB));
+            activiteInDB.getReferents().forEach(this::ajouterRoleReferent);
+            anciensReferents.stream()
+                    .filter(adherent -> !activiteInDB.getReferents().contains(adherent))
+                    .filter(adherent -> adherent.getActivitesReferent().isEmpty())
+                    .forEach(this::retirerRoleReferent);
+
             return activiteRepository.save(activiteInDB);
         }
 
         activite.setSalle(salle);
+        activite.setProfs(activite.getProfs().stream()
+                .map(adherent -> adherentServices.getById(adherent.getId()))
+                .collect(Collectors.toSet()));
+        activite.getProfs().forEach(adherent -> adherent.getCours().add(activite));
+        if (!activite.getReferents().isEmpty()) {
+            throw new IllegalArgumentException("Les référents peuvent être ajoutés après l'enregistrement de l'activité");
+        }
         seanceServices.fillSeances(activite, 29);
         return activiteRepository.save(activite);
     }
@@ -111,10 +208,47 @@ public class ActiviteServices {
                 .orElseThrow(() -> new IllegalArgumentException("La salle sélectionnée n'existe plus"));
     }
 
+    private Set<Adherent> resoudreReferentsValides(Activite activite, Set<Adherent> referents) {
+        Set<Long> adherentsValides = activite.getAdhesions().stream()
+                .filter(adhesion -> Status.VALIDEE.label.equals(adhesion.getStatutActuel()))
+                .map(adhesion -> adhesion.getAdherent().getId())
+                .collect(Collectors.toSet());
+        Set<Adherent> referentsResolus = referents.stream()
+                .map(referent -> adherentServices.getById(referent.getId()))
+                .collect(Collectors.toSet());
+        if (!referentsResolus.stream().allMatch(referent -> adherentsValides.contains(referent.getId()))) {
+            throw new IllegalArgumentException("Un référent doit avoir une adhésion validée à cette activité");
+        }
+        return referentsResolus;
+    }
+
+    private void ajouterRoleReferent(Adherent adherent) {
+        if (adherent.getUser() != null && adherent.getUser().getRoles().stream()
+                .noneMatch(role -> role.getName() == ERole.ROLE_REFERENT)) {
+            Role roleReferent = roleRepository.findByName(ERole.ROLE_REFERENT).orElseThrow();
+            adherent.getUser().getRoles().add(roleReferent);
+        }
+    }
+
+    private void retirerRoleReferent(Adherent adherent) {
+        if (adherent.getUser() != null) {
+            adherent.getUser().getRoles().removeIf(role -> role.getName() == ERole.ROLE_REFERENT);
+        }
+    }
+
+    public List<com.wild.corp.adhesion.models.resources.AdherentLite> getReferentsCandidates(Long activiteId) {
+        Activite activite = getById(activiteId);
+        return adherentServices.getLites(activite.getAdhesions().stream()
+                .filter(adhesion -> Status.VALIDEE.label.equals(adhesion.getStatutActuel()))
+                .map(Adhesion::getAdherent)
+                .collect(Collectors.toSet()));
+    }
+
     public Activite addReferent(Long activiteId, Long adherentId) {
         Activite activiteDB = activiteRepository.findById(activiteId).get();
         Adherent adherent = adherentServices.getById(adherentId);
         activiteDB.getProfs().add(adherent);
+        adherent.getCours().add(activiteDB);
 
         return activiteRepository.save(activiteDB);
     }
