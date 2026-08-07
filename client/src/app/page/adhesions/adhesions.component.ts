@@ -126,8 +126,8 @@ export class AdhesionsComponent implements OnInit, OnDestroy {
         this.choixSection = "activite#Basket"
         this.visuelselection = "Basket-Tous horaires"
       } else {
-        this.choixSection = "activite#Aquagym"
-        this.visuelselection = "Aquagym-Tous horaires"
+        this.choixSection = "Toutes"
+        this.visuelselection = "Toutes les adhésions"
       }
     } else {
       this.router.navigate(['login']);
@@ -241,6 +241,20 @@ export class AdhesionsComponent implements OnInit, OnDestroy {
 
   get lastResult(): number {
     return Math.min(this.page * this.pageSize, this.totalElements);
+  }
+
+  get visiblePages(): number[] {
+    const windowSize = Math.min(4, this.totalPages);
+    const start = Math.max(1, Math.min(this.page - 1, this.totalPages - windowSize + 1));
+    return Array.from({length: windowSize}, (_, index) => start + index);
+  }
+
+  get showLeadingEllipsis(): boolean {
+    return this.visiblePages[0] > 1;
+  }
+
+  get showTrailingEllipsis(): boolean {
+    return this.visiblePages[this.visiblePages.length - 1] < this.totalPages;
   }
 
   get hasActiveFilters(): boolean {

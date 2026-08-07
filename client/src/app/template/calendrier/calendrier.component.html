@@ -1,18 +1,14 @@
 <section class="calendriers-accueil" aria-labelledby="titre-calendrier-seances">
   <div class="card calendrier-card">
     <div class="calendrier-entete">
-      <div>
-        <span class="calendrier-surtitre">Vie de l'association</span>
-        <h2 id="titre-calendrier-seances">Calendrier des séances</h2>
-        <p>Consultez les séances de l'association et les événements de vos Google Agendas publics.</p>
-      </div>
+      <div class="calendrier-mois" aria-live="polite">{{libelleMois}}</div>
       <div class="calendrier-navigation" aria-label="Navigation dans le calendrier">
-        <button type="button" class="btn btn-outline-secondary" (click)="changerMois(-1)" aria-label="Mois précédent">‹</button>
+        <button type="button" class="btn btn-outline-secondary" (click)="changerMois(-1)" aria-label="Mois précédent">Mois précédent</button>
         <button type="button" class="btn btn-outline-secondary aujourd-hui" (click)="revenirAujourdhui()">Aujourd'hui</button>
-        <button type="button" class="btn btn-outline-secondary" (click)="changerMois(1)" aria-label="Mois suivant">›</button>
+        <button type="button" class="btn btn-outline-secondary" (click)="changerMois(1)" aria-label="Mois suivant">Mois suivant</button>
       </div>
     </div>
-    <div class="calendrier-mois" aria-live="polite">{{libelleMois}}</div>
+
     <div *ngIf="erreurCalendrier" class="alert alert-warning mb-3" role="alert">{{erreurCalendrier}}</div>
     <div *ngIf="chargementCalendrier" class="calendrier-chargement" aria-live="polite">Chargement des séances…</div>
     <div class="calendrier-tableau">

@@ -1,59 +1,158 @@
-.ligne:hover{
-    background-color: rgba(188, 219, 205, 255)!important;
-  }
+:host {
+  display: block;
+  min-height: calc(100vh - 64px);
+  background: #f4f7f6;
+}
+
+.adherents-page {
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  color: #18322b;
+}
+
+.page-actions {
+  margin-bottom: 1rem;
+}
+
 .filter-panel {
   display: flex;
-  align-items: end;
+  align-items: flex-end;
+  flex-wrap: wrap;
   gap: 1rem;
-  padding: .85rem 0 .25rem;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid #dce6e2;
+  border-radius: .75rem;
+  box-shadow: 0 4px 18px rgba(22, 58, 48, .06);
 }
 
-.filter-field {
-  min-width: min(28rem, 100%);
-}
+.filter-field { min-width: min(28rem, 100%); }
+.filter-field:not(.search-field) { min-width: min(16rem, 100%); }
 
-.filter-field label {
+.filter-field label,
+.table-toolbar label {
   display: block;
-  margin-bottom: .35rem;
-  font-size: .85rem;
+  margin-bottom: .3rem;
+  color: #425d55;
+  font-size: .78rem;
   font-weight: 700;
-  color: #526861;
 }
 
-.reset-button {
-  white-space: nowrap;
-}
-
-@media (max-width: 576px) {
-  .filter-panel {
-    align-items: stretch;
-    flex-direction: column;
-  }
-}
+.reset-button { height: 38px; white-space: nowrap; }
 
 .table-toolbar,
-.toolbar-page-controls,
-.table-toolbar label {
+.toolbar-page-controls {
   display: flex;
   align-items: center;
   gap: .75rem;
 }
 
 .table-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   padding: .85rem 0 .6rem;
   color: #526861;
+  font-size: .9rem;
 }
 
-.toolbar-page-controls {
-  margin-left: auto;
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
 }
+
+.page-number { min-width: 2.25rem; }
+.page-number.active { color: #fff; background: #0d6efd; border-color: #0d6efd; }
+.pagination-ellipsis { padding: 0 .15rem; font-size: 1.15rem; line-height: 1; }
+
+.toolbar-page-controls { justify-content: flex-end; margin-left: 0; white-space: nowrap; }
 
 .table-toolbar label {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
   margin: 0;
-  font-size: .85rem;
-  font-weight: 700;
 }
 
-.table-toolbar select {
-  width: auto;
+.table-toolbar select { width: auto; }
+
+.adherent-table-wrapper {
+  background: #fff;
+  border: 1px solid #dce6e2;
+  border-radius: .75rem;
+  box-shadow: 0 4px 18px rgba(22, 58, 48, .06);
+}
+
+.adherent-table { min-width: 1120px; margin: 0; font-size: .88rem; }
+
+.adherent-table thead th {
+  padding: .85rem .75rem;
+  background: #eaf2ef;
+  border-bottom: 1px solid #ccdbd6;
+  color: #29483f;
+  font-size: .76rem;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.adherent-table td {
+  padding: .85rem .75rem;
+  border-color: #edf1ef;
+  vertical-align: top;
+}
+
+.adherent-table tbody tr:hover { background: #f7fbf9; }
+
+.icon-action {
+  min-width: 1.75rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #526861;
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.icon-action:hover { color: #0d6efd; }
+.member-cell { min-width: 230px; }
+.member-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: .65rem;
+}
+.member-summary .icon-action { flex: 0 0 auto; margin-top: .1rem; }
+.member-info { min-width: 0; }
+.member-info strong,
+.member-info span,
+.birth-cell span { display: block; }
+.member-info span { margin-top: .2rem; overflow-wrap: anywhere; }
+.phone-cell { min-width: 130px; white-space: nowrap; }
+.address-cell { min-width: 220px; }
+.birth-cell { min-width: 155px; }
+.birth-cell span + span { margin-top: .2rem; color: #6a7b76; }
+.details-cell { min-width: 175px; white-space: pre-line; }
+.agreement-detail { display: flex; align-items: baseline; gap: .4rem; }
+.agreement-accepted { color: #198754; }
+.agreement-refused { color: #dc6b19; }
+
+.empty-state {
+  padding: 3rem !important;
+  color: #63756f;
+  text-align: center;
+}
+
+@media (max-width: 700px) {
+  .adherents-page { padding: 1rem .65rem; }
+  .filter-panel { flex-direction: column; align-items: stretch; }
+  .filter-field { min-width: 0; }
+  .table-toolbar { display: flex; flex-wrap: wrap; }
+  .pagination-controls { order: 3; width: 100%; justify-content: center; }
+  .toolbar-page-controls {
+    width: 100%;
+    margin-left: 0;
+    overflow-x: auto;
+    padding-bottom: .15rem;
+  }
 }

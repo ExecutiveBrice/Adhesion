@@ -34,11 +34,13 @@ export class AdherentsComponent implements OnInit {
   faPencilSquare = faPencilSquare;
   adherents: AdherentFlat[] = [];
   page = 1;
-  pageSize = 20;
+  pageSize = 10;
   readonly pageSizes = [10, 20, 50, 100];
   totalElements = 0;
   totalPages = 0;
   searchTerm = '';
+  activitySearchTerm = '';
+  activityNm1SearchTerm = '';
   private readonly searchChanges = new Subject<string>();
   private readonly destroy$ = new Subject<void>();
 
@@ -99,9 +101,18 @@ export class AdherentsComponent implements OnInit {
       this.page = 1;
     }
     this.loadder = true;
-    this.adherentService.getPage(this.page - 1, this.pageSize, this.searchTerm.trim()).subscribe({
+    this.adherentService.getPage(
+      this.page - 1,
+      this.pageSize,
+      this.searchTerm.trim(),
+      this.activitySearchTerm.trim(),
+      this.activityNm1SearchTerm.trim()
+    ).subscribe({
       next: (data) => {
-        this.adherents = data.content;
+        this.adherents = data.content.sort((first, second) =>
+          (first.nom || '').localeCompare(second.nom || '', 'fr', {sensitivity: 'base'}) ||
+          (first.prenom || '').localeCompare(second.prenom || '', 'fr', {sensitivity: 'base'})
+        );
         this.totalElements = data.totalElements;
         this.totalPages = data.totalPages;
         this.page = data.number + 1;
@@ -121,6 +132,8 @@ export class AdherentsComponent implements OnInit {
 
   resetFilters() {
     this.searchTerm = '';
+    this.activitySearchTerm = '';
+    this.activityNm1SearchTerm = '';
     this.getAdherents(true);
   }
 
@@ -142,6 +155,30 @@ export class AdherentsComponent implements OnInit {
 
   get lastResult(): number {
     return Math.min(this.page * this.pageSize, this.totalElements);
+  }
+
+  get visiblePages(): number[] {
+    const windowSize = Math.min(4, this.totalPages);
+    const start = Math.max(1, Math.min(this.page - 1, this.totalPages - windowSize + 1));
+    return Array.from({length: windowSize}, (_, index) => start + index);
+  }
+
+  get showLeadingEllipsis(): boolean {
+    return this.visiblePages[0] > 1;
+  }
+
+  get showTrailingEllipsis(): boolean {
+    return this.visiblePages[this.visiblePages.length - 1] < this.totalPages;
+  }
+
+  accordsDetails(accords: string): { nom: string, etat: boolean }[] {
+    return (accords || '')
+      .split(/\r?\n/)
+      .filter(accord => accord.trim().length > 0)
+      .map(accord => ({
+        nom: accord.replace(/\s+(true|false)$/, ''),
+        etat: accord.trim().endsWith('true')
+      }));
   }
 
 
