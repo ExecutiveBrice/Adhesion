@@ -31,6 +31,19 @@
   white-space: normal;
 }
 
+.activity-header {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+}
+
+.activity-header .section-picker .btn {
+  color: #fff;
+  font-size: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+}
+
 .section-menu {
   max-height: 70vh;
   min-width: 320px;
@@ -76,30 +89,26 @@
 }
 
 .table-toolbar {
-  flex-wrap: nowrap;
-  overflow-x: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   padding: .85rem 0 .6rem;
   color: #526861;
   font-size: .9rem;
 }
 
-.toolbar-section-picker {
-  flex: 0 0 auto;
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
 }
 
-.toolbar-section-picker .btn {
-  width: auto;
-  white-space: nowrap;
-}
-
-.toolbar-results {
-  flex: 1 0 auto;
-  white-space: nowrap;
-}
+.page-number { min-width: 2.25rem; }
+.page-number.active { color: #fff; background: #0d6efd; border-color: #0d6efd; }
+.pagination-ellipsis { padding: 0 .15rem; font-size: 1.15rem; line-height: 1; }
 
 .toolbar-page-controls {
-  flex: 0 0 auto;
-  margin-left: auto;
+  justify-content: flex-end;
+  margin-left: 0;
   white-space: nowrap;
 }
 
@@ -307,6 +316,24 @@
   .section-menu {
     width: 100%;
     min-width: 0;
+  }
+
+  .table-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .pagination-controls {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .toolbar-page-controls {
+    width: 100%;
+    margin-left: 0;
+    overflow-x: auto;
+    padding-bottom: .15rem;
   }
 
 }

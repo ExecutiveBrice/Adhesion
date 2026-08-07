@@ -6,15 +6,11 @@
   <form name="form" (ngSubmit)="f.form.valid && onSubmitAddUser(newUser)" #f="ngForm" novalidate>
     <div class="modal-body">
       Veuillez saisir l'adresse email de référence (qui servira de connexion)
-
       <div class="form-group">
-
         <label for="email">Email</label>
         <input type="email" class="form-control" name="email" [(ngModel)]="newUser" />
 
-
-
-        Choissez une ou plusieurs activités dans les listes ci-après pour permettre à cet adhérent ou à un membre de sa
+        Choisissez une ou plusieurs activités dans les listes ci-après pour permettre à cet adhérent ou à un membre de sa
         famille de se <b>réinscrire</b> à une activité
 
         <div ngbDropdown class="d-inline-block">
@@ -35,125 +31,113 @@
             <fa-icon *ngIf="activite.selected" class="green fa-xl" [icon]="faCircleCheck"></fa-icon>
           </div>
         </div>
-
-
       </div>
     </div>
     <div class="modal-footer">
       <button type="submit" class="btn btn-primary">Ajouter ce nouvel adherent</button>
     </div>
   </form>
-
 </ng-template>
 
-<div class="row">
+<section class="adherents-page">
 
-  <div class="col-md-6 center">
-    <div class="btn-group btn-group-sm col-4" role="group">
-      <button class="btn btn-sm btn-primary" (click)="openModalAddUser(newAdherentModal)">Nouvel
-        adherent</button>
+
+  <div class="filter-panel">
+    <div class="filter-field search-field">
+      <input id="adherent-search" type="search" class="form-control" [(ngModel)]="searchTerm"
+        (ngModelChange)="onSearchChange($event)" placeholder="Nom, prénom, e-mail, téléphone ou adresse">
     </div>
-
-  </div>
-  <div class="col-6 center">
-
-
-
-
-  </div>
-</div>
-
-<div class="row">
-
-  <div class="col-12">
-    <div class="filter-panel">
-      <div class="filter-field search-field">
-        <label for="adherent-search">Recherche</label>
-        <input id="adherent-search" type="search" class="form-control" [(ngModel)]="searchTerm"
-          (ngModelChange)="onSearchChange($event)" placeholder="Nom, prénom, e-mail, téléphone ou adresse">
-      </div>
-      <button type="button" class="btn btn-outline-secondary reset-button" (click)="resetFilters()"
-        [disabled]="!searchTerm">Réinitialiser</button>
+    <div class="filter-field">
+      <label for="activity-search">Activités</label>
+      <input id="activity-search" type="search" class="form-control" [(ngModel)]="activitySearchTerm"
+        (ngModelChange)="onSearchChange($event)" placeholder="Activité ou horaire">
     </div>
+    <div class="filter-field">
+      <label for="activity-nm1-search">Activités N-1</label>
+      <input id="activity-nm1-search" type="search" class="form-control" [(ngModel)]="activityNm1SearchTerm"
+        (ngModelChange)="onSearchChange($event)" placeholder="Activité ou horaire">
+    </div>
+    <button type="button" class="btn btn-outline-secondary reset-button" (click)="resetFilters()"
+      [disabled]="!searchTerm && !activitySearchTerm && !activityNm1SearchTerm">Réinitialiser</button>
+
   </div>
 
-  <div class="col-12 center">
-    <div class="table-toolbar">
+  <div class="table-toolbar">
+    <div class="toolbar-results">
       <span *ngIf="!loadder">Résultats {{firstResult}}–{{lastResult}} sur {{totalElements}}</span>
       <span *ngIf="loadder"><span class="spinner-border spinner-border-sm"></span> Chargement…</span>
-      <div class="toolbar-page-controls">
-        <label for="adherent-page-size">Lignes par page
-          <select id="adherent-page-size" class="form-select form-select-sm" [(ngModel)]="pageSize"
-            (ngModelChange)="onPageSizeChange()">
-            <option *ngFor="let size of pageSizes" [ngValue]="size">{{size}}</option>
-          </select>
-        </label>
-        <span *ngIf="totalPages > 0">Page {{page}} sur {{totalPages}}</span>
-        <div *ngIf="totalPages > 0" class="btn-group" role="group" aria-label="Pagination des adhérents">
-          <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="page <= 1"
-            (click)="goToPage(page - 1)">Précédente</button>
-          <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="page >= totalPages"
-            (click)="goToPage(page + 1)">Suivante</button>
-        </div>
-      </div>
     </div>
-    <table class="table table-striped">
+    <div *ngIf="totalPages > 0" class="pagination-controls" aria-label="Pagination des adhérents">
+      <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="page === 1"
+        (click)="goToPage(1)">Première</button>
+      <span *ngIf="showLeadingEllipsis" class="pagination-ellipsis">…</span>
+      <button *ngFor="let pageNumber of visiblePages" type="button" class="btn btn-outline-primary btn-sm page-number"
+        [class.active]="pageNumber === page" [attr.aria-current]="pageNumber === page ? 'page' : null"
+        (click)="goToPage(pageNumber)">{{pageNumber}}</button>
+      <span *ngIf="showTrailingEllipsis" class="pagination-ellipsis">…</span>
+      <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="page === totalPages"
+        (click)="goToPage(totalPages)">Dernière</button>
+    </div>
+    <div class="toolbar-page-controls">
+      <label for="adherent-page-size">Lignes par page
+        <select id="adherent-page-size" class="form-select form-select-sm" [(ngModel)]="pageSize"
+          (ngModelChange)="onPageSizeChange()">
+          <option *ngFor="let size of pageSizes" [ngValue]="size">{{size}}</option>
+        </select>
+      </label>
+      <span *ngIf="totalPages > 0">Page {{page}} sur {{totalPages}}</span>
+
+    </div>
+  </div>
+
+  <div class="table-responsive adherent-table-wrapper">
+    <table class="table adherent-table">
       <thead>
         <tr>
-          <th class="center col-1" scope="col">Edit</th>
-          <th class="center col-2" scope="col">
-            Adhérent
-          </th>
-
-          <th class="center col-1" scope="col">Telephone</th>
-          <th class="center col-2" scope="col">Adresse</th>
-          <th class="center col-1" scope="col">Naissance / Lieu</th>
-          <th class="center col-1" scope="col">Accords</th>
-          <th class="center col-2" scope="col">Activitées</th>
-          <th class="center col-2" scope="col">Activitées Nm1</th>
+          <th scope="col">Adhérent     <button type="button" class="btn btn-primary" (click)="openModalAddUser(newAdherentModal)">Nouvel adhérent</button></th>
+          <th scope="col">Téléphone</th>
+          <th scope="col">Adresse</th>
+          <th scope="col">Naissance / Lieu</th>
+          <th scope="col">Accords</th>
+          <th scope="col">Activités</th>
+          <th scope="col">Activités N-1</th>
         </tr>
       </thead>
-      <div *ngIf="loadder" class="spinner-border text-info"></div>
-      <tbody *ngIf="!loadder">
-        <tr *ngFor="let adherent of adherents ">
-          <td class="center">
-            <fa-icon class="fa-2xl pointer" (click)="opennewTab('#/inscription/'+adherent.tribuId)" [icon]="faUsersRays"></fa-icon>
+      <tbody>
+        <tr *ngIf="loadder && adherents.length === 0">
+          <td colspan="7" class="empty-state"><span class="spinner-border text-primary"></span><br>Chargement des adhérents…</td>
+        </tr>
+        <tr *ngIf="!loadder && adherents.length === 0">
+          <td colspan="7" class="empty-state"><strong>Aucun adhérent trouvé</strong><br>Modifiez votre recherche pour élargir les résultats.</td>
+        </tr>
+        <tr *ngFor="let adherent of adherents">
+          <td class="member-cell">
+            <div class="member-summary">
+              <button type="button" class="icon-action" title="Ouvrir la fiche adhérent"
+                (click)="opennewTab('#/inscription/' + adherent.tribuId)"><fa-icon [icon]="faUsersRays"></fa-icon></button>
+              <div class="member-info">
+                <strong>{{adherent.nom}} {{adherent.prenom}}</strong>
+                <span>{{adherent.email}}</span>
+              </div>
+            </div>
           </td>
-          <td>
-            {{adherent.nom}} {{adherent.prenom}}<br />
-            {{adherent.email}}
+          <td class="phone-cell">{{adherent.telephone}}</td>
+          <td class="address-cell">{{adherent.adresse}}</td>
+          <td class="birth-cell">
+            <span>{{adherent.naissance}}</span>
+            <span>{{adherent.lieuNaissance}}</span>
           </td>
-          <td>
-            {{adherent.telephone}}
+          <td class="details-cell agreements-cell">
+            <div *ngFor="let accord of accordsDetails(adherent.accords)" class="agreement-detail">
+              <fa-icon [class.agreement-accepted]="accord.etat" [class.agreement-refused]="!accord.etat"
+                [icon]="accord.etat ? faCircleCheck : faCircleXmark"></fa-icon>
+              <span>{{accord.nom}}</span>
+            </div>
           </td>
-          <td>
-            {{adherent.adresse}}
-          </td>
-          <td>
-            {{adherent.naissance}}<br />
-            {{adherent.lieuNaissance}}
-          </td>
-          <td>
- {{adherent.accords}}
-          </td>
-
-          <td>
-
-
-            {{adherent.adhesions}}
-          </td>
-          <td>
-
-              {{adherent.activitesNm1}}
-
-
-
-
-          </td>
+          <td class="details-cell">{{adherent.adhesions}}</td>
+          <td class="details-cell">{{adherent.activitesNm1}}</td>
         </tr>
       </tbody>
     </table>
-
   </div>
-
-</div>
+</section>

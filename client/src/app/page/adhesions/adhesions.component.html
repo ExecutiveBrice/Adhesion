@@ -46,30 +46,21 @@
   </div>
 
   <div class="table-toolbar">
-    <div ngbDropdown class="section-picker toolbar-section-picker">
-      <button type="button" class="btn btn-primary" id="section-filter-button" ngbDropdownToggle>
-        {{visuelselection || 'Choisir une activité'}}
-      </button>
-      <div *ngIf="activites.length > 0" ngbDropdownMenu aria-labelledby="section-filter-button" class="section-menu">
-        <button ngbDropdownItem (click)="selectSection('Toutes', 'Toutes les adhésions')">Toutes les adhésions</button>
-        <div *ngFor="let activite of activites | orderBy:'nom':false" class="section-group">
-          <button ngbDropdownItem class="section-name"
-            (click)="selectSection('activite#' + activite.nom, activite.nom + ' · Tous horaires')">
-            {{activite.nom}}
-          </button>
-          <button *ngFor="let horaire of activite.horaires" ngbDropdownItem class="schedule-name"
-            (click)="selectSection('horaire#' + horaire.id, activite.nom + ' · ' + horaire.nom)">
-            {{horaire.nom}}
-          </button>
-        </div>
-      </div>
-    </div>
-
     <div class="toolbar-results">
       <span *ngIf="!loadder">Résultats {{firstResult}}–{{lastResult}} sur {{totalElements}}</span>
       <span *ngIf="loadder" class="loading-label"><span class="spinner-border spinner-border-sm"></span> Chargement…</span>
     </div>
-
+    <div *ngIf="totalPages > 0" class="pagination-controls" aria-label="Pagination des adhésions">
+      <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="page === 1"
+        (click)="goToPage(1)">Première</button>
+      <span *ngIf="showLeadingEllipsis" class="pagination-ellipsis">…</span>
+      <button *ngFor="let pageNumber of visiblePages" type="button" class="btn btn-outline-primary btn-sm page-number"
+        [class.active]="pageNumber === page" [attr.aria-current]="pageNumber === page ? 'page' : null"
+        (click)="goToPage(pageNumber)">{{pageNumber}}</button>
+      <span *ngIf="showTrailingEllipsis" class="pagination-ellipsis">…</span>
+      <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="page === totalPages"
+        (click)="goToPage(totalPages)">Dernière</button>
+    </div>
     <div class="toolbar-page-controls">
       <label for="page-size">Lignes par page
         <select id="page-size" class="form-select form-select-sm" [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange()">
@@ -77,12 +68,6 @@
         </select>
       </label>
       <span *ngIf="totalPages > 0" class="page-counter">Page {{page}} sur {{totalPages}}</span>
-      <div *ngIf="totalPages > 0" class="btn-group" role="group" aria-label="Pagination des adhésions">
-        <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="page <= 1"
-          (click)="goToPage(page - 1)">Précédente</button>
-        <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="page >= totalPages"
-          (click)="goToPage(page + 1)">Suivante</button>
-      </div>
     </div>
   </div>
 
@@ -90,7 +75,29 @@
     <table class="table adhesion-table">
       <thead>
         <tr>
-          <th scope="col"><button class="sort-button" (click)="changeSort('activite.nom')">Activité {{sortIndicator('activite.nom')}}</button></th>
+          <th scope="col" class="activity-header">
+            <div ngbDropdown container="body" class="section-picker">
+              <button type="button" class="btn btn-primary btn-sm" id="section-filter-button" ngbDropdownToggle>
+                {{visuelselection || 'Activité'}}
+              </button>
+              <div *ngIf="activites.length > 0" ngbDropdownMenu aria-labelledby="section-filter-button" class="section-menu">
+                <button ngbDropdownItem (click)="selectSection('Toutes', 'Toutes les adhésions')">Toutes les adhésions</button>
+                <div *ngFor="let activite of activites | orderBy:'nom':false" class="section-group">
+                  <button ngbDropdownItem class="section-name"
+                    (click)="selectSection('activite#' + activite.nom, activite.nom + ' · Tous horaires')">
+                    {{activite.nom}}
+                  </button>
+                  <button *ngFor="let horaire of activite.horaires" ngbDropdownItem class="schedule-name"
+                    (click)="selectSection('horaire#' + horaire.id, activite.nom + ' · ' + horaire.nom)">
+                    {{horaire.nom}}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <button class="sort-button" (click)="changeSort('activite.nom')" aria-label="Trier par activité">
+              {{sortIndicator('activite.nom')}}
+            </button>
+          </th>
           <th scope="col"><button class="sort-button" (click)="changeSort('adherent.nom')">Adhérent {{sortIndicator('adherent.nom')}}</button></th>
           <th scope="col">Paiement</th>
           <th scope="col">Documents</th>

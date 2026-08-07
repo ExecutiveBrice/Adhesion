@@ -10,12 +10,17 @@ import com.wild.corp.adhesion.repository.AdherentRepository;
 import com.wild.corp.adhesion.repository.AdhesionRepository;
 import com.wild.corp.adhesion.repository.NotificationRepository;
 import jakarta.transaction.Transactional;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -469,22 +474,49 @@ public class AdherentServices {
                 .collect(Collectors.toList());
     }
 
-    public Page<AdherentFlat> getPage(String search, Pageable pageable) {
+    public Page<AdherentFlat> getPage(String search, String activite, String activiteNm1, Pageable pageable) {
         Specification<Adherent> specification = (root, query, criteriaBuilder) -> {
-            if (search == null || search.isBlank()) {
-                return criteriaBuilder.conjunction();
+            List<Predicate> predicates = new ArrayList<>();
+            if (search != null && !search.isBlank()) {
+                String pattern = "%" + search.trim().toLowerCase() + "%";
+                predicates.add(criteriaBuilder.or(
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("nom")), pattern),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("prenom")), pattern),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("telephone")), pattern),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("adresse")), pattern),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("ville")), pattern),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("user").get("username")), pattern)
+                ));
             }
-            String pattern = "%" + search.trim().toLowerCase() + "%";
-            return criteriaBuilder.or(
-                    criteriaBuilder.like(criteriaBuilder.lower(root.get("nom")), pattern),
-                    criteriaBuilder.like(criteriaBuilder.lower(root.get("prenom")), pattern),
-                    criteriaBuilder.like(criteriaBuilder.lower(root.get("telephone")), pattern),
-                    criteriaBuilder.like(criteriaBuilder.lower(root.get("adresse")), pattern),
-                    criteriaBuilder.like(criteriaBuilder.lower(root.get("ville")), pattern),
-                    criteriaBuilder.like(criteriaBuilder.lower(root.get("user").get("username")), pattern)
-            );
+            if (activite != null && !activite.isBlank()) {
+                String pattern = "%" + activite.trim().toLowerCase() + "%";
+                Join<Adherent, Adhesion> adhesions = root.join("adhesions", JoinType.LEFT);
+                Join<Adhesion, Activite> activites = adhesions.join("activite", JoinType.LEFT);
+                predicates.add(criteriaBuilder.or(
+                        criteriaBuilder.like(criteriaBuilder.lower(activites.get("nom")), pattern),
+                        criteriaBuilder.like(criteriaBuilder.lower(activites.get("horaire")), pattern)
+                ));
+            }
+            if (activiteNm1 != null && !activiteNm1.isBlank()) {
+                String pattern = "%" + activiteNm1.trim().toLowerCase() + "%";
+                Join<Adherent, ActiviteNm1> activitesNm1 = root.join("activitesNm1", JoinType.LEFT);
+                predicates.add(criteriaBuilder.or(
+                        criteriaBuilder.like(criteriaBuilder.lower(activitesNm1.get("nom")), pattern),
+                        criteriaBuilder.like(criteriaBuilder.lower(activitesNm1.get("horaire")), pattern)
+                ));
+            }
+            query.distinct(true);
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
-        return adherentRepository.findAll(specification, pageable).map(this::toAdherentFlat);
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(
+                        Sort.Order.asc("nom").ignoreCase(),
+                        Sort.Order.asc("prenom").ignoreCase()
+                )
+        );
+        return adherentRepository.findAll(specification, sortedPageable).map(this::toAdherentFlat);
     }
 
     private AdherentFlat toAdherentFlat(Adherent adherent) {
