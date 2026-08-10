@@ -3,6 +3,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap'
 import { ActiviteDropDown } from 'src/app/models';
 import { faExternalLinkSquareAlt } from '@fortawesome/free-solid-svg-icons';
 @Component({
+  standalone: false,
   selector: 'modal',
   templateUrl: './modal.choixactivite.html',
   styleUrls: ['./modal.choixactivite.css']
@@ -24,4 +25,3 @@ export class ModalChoixActivite {
 
 
 }
-

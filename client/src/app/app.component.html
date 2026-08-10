@@ -9,56 +9,91 @@
 
     <div class="collapse navbar-collapse" [ngbCollapse]="isCollapsed" id="navbarToggler">
       <ul class="navbar-nav mr-auto" routerLinkActive="active">
-        <li class="nav-item" *ngIf="showAdmin" (click)="isCollapsed = true">
-          <a href="/admin" class="nav-link blanc" routerLink="admin">Administration</a>
-        </li>
-        <li class="nav-item" *ngIf="showAdmin || showSecretaire"  (click)="isCollapsed = true">
-          <a href="/activites" class="nav-link blanc" routerLink="activites">Activites</a>
-        </li>
-        <li class="nav-item" *ngIf="showAdmin || showSecretaire"  (click)="isCollapsed = true">
-          <a href="/adherents" class="nav-link blanc" routerLink="adherents">Adhérents</a>
-        </li>
-        <li class="nav-item" *ngIf="showAdmin || showSecretaire"  (click)="isCollapsed = true">
-          <a href="/adhesions" class="nav-link blanc" routerLink="adhesions">Adhésions</a>
-        </li>
-        <li class="nav-item" *ngIf="showAdmin || showSecretaire "  (click)="isCollapsed = true">
-          <a href="/mail" class="nav-link blanc" *ngIf="isLoggedIn" [routerLink]="['/mail', 'listing']">Mailling</a>
-        </li>
+        @if (showAdmin) {
+          <li class="nav-item" (click)="isCollapsed = true">
+            <a href="/admin" class="nav-link blanc" routerLink="admin">Administration</a>
+          </li>
+        }
+        @if (showAdmin || showSecretaire) {
+          <li class="nav-item"  (click)="isCollapsed = true">
+            <a href="/activites" class="nav-link blanc" routerLink="activites">Activites</a>
+          </li>
+        }
+        @if (showAdmin || showSecretaire) {
+          <li class="nav-item"  (click)="isCollapsed = true">
+            <a href="/adherents" class="nav-link blanc" routerLink="adherents">Adhérents</a>
+          </li>
+        }
+        @if (showAdmin || showSecretaire) {
+          <li class="nav-item"  (click)="isCollapsed = true">
+            <a href="/adhesions" class="nav-link blanc" routerLink="adhesions">Adhésions</a>
+          </li>
+        }
+        @if (showAdmin || showSecretaire ) {
+          <li class="nav-item"  (click)="isCollapsed = true">
+            @if (isLoggedIn) {
+              <a href="/mail" class="nav-link blanc" [routerLink]="['/mail', 'listing']">Mailling</a>
+            }
+          </li>
+        }
         <li class="nav-item"  (click)="isCollapsed = true">
-          <a href="/inscription" class="nav-link blanc" *ngIf="isLoggedIn" [routerLink]="['/inscription', '']">{{showSecretaire?"Inscriptions Manuelles":"Mes adhésions"}}</a>
+          @if (isLoggedIn) {
+            <a href="/inscription" class="nav-link blanc" [routerLink]="['/inscription', '']">{{showSecretaire?"Inscriptions Manuelles":"Mes adhésions"}}</a>
+          }
         </li>
-        <li class="nav-item" *ngIf="showAdmin || showSecretaire || showAdminstrateur || showBureau"  (click)="isCollapsed = true">
-          <a href="/reporting" class="nav-link blanc" routerLink="reporting">Reporting</a>
-        </li>
-        <li class="nav-item" *ngIf="showProf"  (click)="isCollapsed = true">
-          <a href="/profs" class="nav-link blanc" routerLink="profs">Mes équipes</a>
-        </li>
-        <li class="nav-item" *ngIf="showSeances" (click)="isCollapsed = true">
-          <a href="/seances" class="nav-link blanc" routerLink="seances">Séances</a>
-        </li>
-        <li class="nav-item" *ngIf="showAdmin || showComptable"  (click)="isCollapsed = true">
-          <a href="/compta" class="nav-link blanc" routerLink="compta">Compta</a>
-        </li>
+        @if (showAdmin || showSecretaire || showAdminstrateur || showBureau) {
+          <li class="nav-item"  (click)="isCollapsed = true">
+            <a href="/reporting" class="nav-link blanc" routerLink="reporting">Reporting</a>
+          </li>
+        }
+        @if (showProf) {
+          <li class="nav-item"  (click)="isCollapsed = true">
+            <a href="/profs" class="nav-link blanc" routerLink="profs">Mes équipes</a>
+          </li>
+        }
+        @if (showSeances) {
+          <li class="nav-item" (click)="isCollapsed = true">
+            <a href="/seances" class="nav-link blanc" routerLink="seances">Séances</a>
+          </li>
+        }
+        @if (showAdmin || showComptable) {
+          <li class="nav-item"  (click)="isCollapsed = true">
+            <a href="/compta" class="nav-link blanc" routerLink="compta">Compta</a>
+          </li>
+        }
 
       </ul>
 
-      <ul class="navbar-nav ml-auto" *ngIf="!isLoggedIn">
+      @if (!isLoggedIn) {
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item"  (click)="isCollapsed = true">
+            <a href="/login" class="nav-link blanc" routerLink="login">Connexion</a>
+          </li>
+        </ul>
+      }
 
-        <li class="nav-item"  (click)="isCollapsed = true">
-          <a href="/login" class="nav-link blanc" routerLink="login">Connexion</a>
-        </li>
-      </ul>
-
-      <ul class="navbar-nav ml-auto" *ngIf="isLoggedIn">
-
-        <li class="nav-item" (click)="isCollapsed = true">
-          <a href class="nav-link blanc" (click)="logout()">Deconnexion</a>
-        </li>
-      </ul>
+      @if (isLoggedIn) {
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item" (click)="isCollapsed = true">
+            <a href class="nav-link blanc" (click)="logout()">Deconnexion</a>
+          </li>
+        </ul>
+      }
     </div>
   </nav>
 
   <div class="container-fluid">
     <router-outlet></router-outlet>
+  </div>
+
+  <div class="toast-container position-fixed top-0 start-0 p-3">
+    @for (toast of toastService.toasts; track toast.id) {
+      <ngb-toast [class]="'text-bg-' + toast.type" [autohide]="true" [delay]="10000" (hidden)="toastService.remove(toast)">
+        <ng-template ngbToastHeader>
+          <strong class="me-auto">{{ toast.title }}</strong>
+        </ng-template>
+        <span [innerHTML]="toast.message"></span>
+      </ngb-toast>
+    }
   </div>
 </div>

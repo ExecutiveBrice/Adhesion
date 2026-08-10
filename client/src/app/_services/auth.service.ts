@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
@@ -10,7 +10,8 @@ const AUTH_API = environment.server+'/auth/';
   providedIn: 'root'
 })
 export class AuthService {
-  constructor(private http: HttpClient) { }
+  private http = inject(HttpClient);
+
 
 
   impersonate(username: string): Observable<any> {

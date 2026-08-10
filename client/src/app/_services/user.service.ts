@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
@@ -11,7 +11,8 @@ const API_URL = environment.server+'/user/';
   providedIn: 'root'
 })
 export class UserService {
-  constructor(private http: HttpClient) { }
+  private http = inject(HttpClient);
+
 
   getConnectedUser(): Observable<User> {
     return this.http.get<User>(API_URL + 'connecteduser', { responseType: 'json' });

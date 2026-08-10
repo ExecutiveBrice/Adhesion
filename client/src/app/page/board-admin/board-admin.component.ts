@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { UserService } from '../../_services/user.service';
 import { ParamService } from '../../_services/param.service';
 
@@ -12,11 +12,18 @@ import {TokenStorageService} from "../../_services/token-storage.service";
 
 
 @Component({
+  standalone: false,
   selector: 'app-board-admin',
   templateUrl: './board-admin.component.html',
   styleUrls: ['./board-admin.component.css']
 })
 export class BoardAdminComponent implements OnInit {
+  private tokenStorage = inject(TokenStorageService);
+  private authService = inject(AuthService);
+  private paramService = inject(ParamService);
+  private userService = inject(UserService);
+  private adherentService = inject(AdherentService);
+
   faEnvelope = faEnvelope;
   faCircleXmark = faCircleXmark;
   faCircleCheck = faCircleCheck;
@@ -48,9 +55,6 @@ export class BoardAdminComponent implements OnInit {
   secretairesLite: UserLite[] = [];
   profsLite: UserLite[] = [];
   comptablesLite: UserLite[] = [];
-
-
-  constructor(    private tokenStorage: TokenStorageService,private authService: AuthService, private paramService: ParamService, private userService: UserService,  private adherentService: AdherentService) { }
 
   ngOnInit(): void {
     this.getAllBoolean()

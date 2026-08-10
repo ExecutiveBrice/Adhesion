@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { TokenStorageService } from '../../_services/token-storage.service';
 
 import { ReportingService } from 'src/app/_services/reporting.service';
@@ -10,11 +10,16 @@ import { ParamService } from 'src/app/_services/param.service';
 
 
 @Component({
+  standalone: false,
   selector: 'app-compta',
   templateUrl: './compta.component.html',
   styleUrls: ['./compta.component.css']
 })
 export class ComptaComponent implements OnInit {
+  private datePipe = inject(DatePipe);
+  private comptaService = inject(ComptaService);
+  private paramService = inject(ParamService);
+
   currentUser: any;
   dataCompta: ComptaActivite[] = []
   debutPlage: string | null = "";
@@ -29,8 +34,6 @@ export class ComptaComponent implements OnInit {
   totalPS: number = 0
   totalE: number = 0
   totalA: number = 0
-
-  constructor(private datePipe: DatePipe, private comptaService: ComptaService, private paramService: ParamService) { }
 
   ngOnInit(): void {
 

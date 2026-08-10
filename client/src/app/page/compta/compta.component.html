@@ -1,14 +1,14 @@
 <div class="container">
 
   <div class="row">
-    
+
     <div class="col-5">
       <div class="input-group">
         <div class="input-group-prepend">
           <span class="input-group-text">Début plage</span>
         </div>
-      <input type="date" class="form-control" name="debutPlage" [(ngModel)]="debutPlage"
-        required />
+        <input type="date" class="form-control" name="debutPlage" [(ngModel)]="debutPlage"
+          required />
       </div>
     </div>
 
@@ -17,14 +17,14 @@
         <div class="input-group-prepend">
           <span class="input-group-text">Fin plage</span>
         </div>
-      <input type="date"  class="form-control" id="finPlage" [(ngModel)]="finPlage"
-       required />
+        <input type="date"  class="form-control" id="finPlage" [(ngModel)]="finPlage"
+          required />
       </div>
     </div>
 
     <div class="col-2">
 
-        <div class="btn btn-primary" (click)="updateDate(debutPlage, finPlage)">MAJ</div>
+      <div class="btn btn-primary" (click)="updateDate(debutPlage, finPlage)">MAJ</div>
 
     </div>
     <div class="col-12">
@@ -43,17 +43,19 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let comtpa of dataCompta  | orderBy:'nomActivite':false ">
-            <td>{{comtpa.nomActivite}}</td>
-            <td>{{comtpa.helloAsso}}</td>
-            <td>{{comtpa.helloAsso3x}}</td>
-            <td>{{comtpa.cheque}}</td>
-            <td>{{comtpa.cheque3x}}</td>
-            <td>{{comtpa.passport}}</td>
-            <td>{{comtpa.espece}}</td>
-            <td>{{comtpa.autre}}</td>
-            <td>{{comtpa.helloAsso + comtpa.helloAsso3x + comtpa.cheque + comtpa.cheque3x + comtpa.passport + comtpa.espece + comtpa.autre}}</td>
-          </tr>
+          @for (comtpa of dataCompta  | orderBy:'nomActivite':false ; track comtpa) {
+            <tr>
+              <td>{{comtpa.nomActivite}}</td>
+              <td>{{comtpa.helloAsso}}</td>
+              <td>{{comtpa.helloAsso3x}}</td>
+              <td>{{comtpa.cheque}}</td>
+              <td>{{comtpa.cheque3x}}</td>
+              <td>{{comtpa.passport}}</td>
+              <td>{{comtpa.espece}}</td>
+              <td>{{comtpa.autre}}</td>
+              <td>{{comtpa.helloAsso + comtpa.helloAsso3x + comtpa.cheque + comtpa.cheque3x + comtpa.passport + comtpa.espece + comtpa.autre}}</td>
+            </tr>
+          }
 
 
           <tr>
@@ -70,9 +72,9 @@
         </tbody>
       </table>
     </div>
-    
 
- 
+
+
   </div>
- 
+
 </div>

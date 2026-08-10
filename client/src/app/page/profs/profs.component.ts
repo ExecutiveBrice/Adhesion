@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { AdherentService } from '../../_services/adherent.service';
 import { ActiviteLite, Adherent, AdherentLite } from 'src/app/models';
 import { faSquareCaretLeft, faSquareCaretDown, faSkull, faUsers, faEnvelope, faCircleXmark, faFlag, faPiggyBank, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
@@ -10,11 +10,19 @@ import { AuthService } from 'src/app/_services/auth.service';
 import { ParamService } from 'src/app/_services/param.service';
 
 @Component({
+  standalone: false,
   selector: 'app-profs',
   templateUrl: './profs.component.html',
   styleUrls: ['./profs.component.css']
 })
 export class ProfsComponent implements OnInit {
+  private authService = inject(AuthService);
+  private adherentService = inject(AdherentService);
+  private tokenStorageService = inject(TokenStorageService);
+  private modalService = inject(NgbModal);
+  paramService = inject(ParamService);
+  router = inject(Router);
+
   faSquareCaretLeft=faSquareCaretLeft;
   faSquareCaretDown=faSquareCaretDown;
   faCircleCheck=faCircleCheck;
@@ -35,15 +43,6 @@ export class ProfsComponent implements OnInit {
   showAdmin: boolean = false;
   filtres: Map<string, boolean> = new Map<string, boolean>();
   subscription = new Subscription()
-
-  constructor(
-
-    private authService: AuthService,
-    private adherentService: AdherentService,
-    private tokenStorageService: TokenStorageService,
-    private modalService: NgbModal,
-    public paramService: ParamService,
-    public router: Router) { }
 
   ngOnInit(): void {
     if (this.tokenStorageService.getUser().roles) {

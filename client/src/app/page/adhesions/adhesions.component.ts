@@ -1,4 +1,4 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import {
   ActiviteDropDown,
   AdhesionLite,
@@ -22,16 +22,26 @@ import {Router} from '@angular/router';
 import {ParamService} from 'src/app/_services/param.service';
 import {ActiviteService} from 'src/app/_services/activite.service';
 import {AdherentService} from 'src/app/_services/adherent.service';
-import {ToastrService} from 'ngx-toastr';
+import { ToastService } from '../../_services/toast.service';
 import {Subject, debounceTime, distinctUntilChanged, takeUntil} from 'rxjs';
 
 
 @Component({
+  standalone: false,
   selector: 'app-adherents',
   templateUrl: './adhesions.component.html',
   styleUrls: ['./adhesions.component.css']
 })
 export class AdhesionsComponent implements OnInit, OnDestroy {
+  private toastr = inject(ToastService);
+  private adherentService = inject(AdherentService);
+  private activiteService = inject(ActiviteService);
+  private adhesionService = inject(AdhesionService);
+  private tokenStorageService = inject(TokenStorageService);
+  private modalService = inject(NgbModal);
+  paramService = inject(ParamService);
+  router = inject(Router);
+
   faCircleUser = faCircleUser
   faCircleExclamation = faCircleExclamation
   faPen = faPen
@@ -88,18 +98,6 @@ export class AdhesionsComponent implements OnInit, OnDestroy {
   showSecretaire: boolean = false;
   choixSection: string = ""
   visuelselection: string = "";
-
-  constructor(
-    private toastr: ToastrService,
-    private adherentService: AdherentService,
-    private activiteService: ActiviteService,
-    private adhesionService: AdhesionService,
-    private tokenStorageService: TokenStorageService,
-    private modalService: NgbModal,
-    public paramService: ParamService,
-    public router: Router
-  ) {
-  }
 
   showSuccess(message: string) {
     this.toastr.info(message, 'Information');

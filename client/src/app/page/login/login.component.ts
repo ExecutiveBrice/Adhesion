@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { AuthService } from '../../_services/auth.service';
 import { TokenStorageService } from '../../_services/token-storage.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -6,7 +6,7 @@ import { ParamTransmissionService } from 'src/app/_helpers/transmission.service'
 import { faBook, faCheck, faClock, faCloudDownloadAlt, faPencilSquare, faScaleBalanced, faSquareMinus, faSquarePlus, faTriangleExclamation, faUserPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { catchError, forkJoin, of, Subscription } from 'rxjs';
 import { ParamService } from 'src/app/_services/param.service';
-import { ToastrService } from 'ngx-toastr';
+import { ToastService } from '../../_services/toast.service';
 import { ActiviteService } from 'src/app/_services/activite.service';
 import { EvenementGoogleAgenda, SeanceCalendrier } from 'src/app/models/seance';
 import { AgendaGoogleConfiguration } from 'src/app/models';
@@ -38,11 +38,21 @@ interface JourCalendrier {
 }
 
 @Component({
+  standalone: false,
   selector: 'app-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
 export class LoginComponent implements OnInit {
+  private toastr = inject(ToastService);
+  transmissionService = inject(ParamTransmissionService);
+  private authService = inject(AuthService);
+  private tokenStorage = inject(TokenStorageService);
+  router = inject(Router);
+  private route = inject(ActivatedRoute);
+  paramService = inject(ParamService);
+  private activiteService = inject(ActiviteService);
+
 
   form: any = {
     username: null,
@@ -84,17 +94,6 @@ export class LoginComponent implements OnInit {
   validRgpd = false;
   testRgpd = false;
   inscriptionOpen: boolean = false;
-
-
-  constructor(
-    private toastr: ToastrService,
-    public transmissionService: ParamTransmissionService,
-    private authService: AuthService,
-    private tokenStorage: TokenStorageService,
-    public router: Router,
-    private route: ActivatedRoute,
-    public paramService: ParamService,
-    private activiteService: ActiviteService) { }
 
   ngOnInit(): void {
 

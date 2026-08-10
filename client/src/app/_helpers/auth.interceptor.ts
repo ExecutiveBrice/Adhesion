@@ -1,5 +1,5 @@
 import { HTTP_INTERCEPTORS, HttpErrorResponse, HttpEvent } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpInterceptor, HttpHandler, HttpRequest } from '@angular/common/http';
 import { Router } from '@angular/router';
 
@@ -11,7 +11,9 @@ const TOKEN_HEADER_KEY = 'Authorization';   // for Node.js Express back-end
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
-  constructor(private token: TokenStorageService, private router: Router) { }
+  private token = inject(TokenStorageService);
+  private router = inject(Router);
+
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     let authReq = req;

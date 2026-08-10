@@ -4,140 +4,141 @@
     @if ( pageReady){
 
       <span type='button'
-           class="btn btn-primary alod btn-independent" (click)="role_bouton = !role_bouton">mailing par role</span>
+      class="btn btn-primary alod btn-independent" (click)="role_bouton = !role_bouton">mailing par role</span>
 
       @if ( role_bouton){
-      @for (groupe of roleListe.controls | orderObjectBy:"value.ordre":false;track $index){
-      <label class="checkbox">
-        <input type="checkbox" [formControl]="getControl(groupe)" (change)="selectGroupe(groupe)" />
-        <span><b>{{groupe.get('text')?.value}}</b></span>
-      </label>
-      @for (horaire of groupe.get('horaires')?.controls | orderObjectBy:"value.ordre":false;track $index){
-        <label class="indentation checkbox">
-          <input type="checkbox" [formControl]="getControl(horaire)" (change)="evaluateMailing(groupe, horaire)" />
-          <span >{{horaire.get('text')?.value}}</span>
-        </label>
-      }
-    }
+        @for (groupe of roleListe.controls | orderObjectBy:"value.ordre":false;track $index){
+          <label class="checkbox">
+            <input type="checkbox" [formControl]="getControl(groupe)" (change)="selectGroupe(groupe)" />
+            <span><b>{{groupe.get('text')?.value}}</b></span>
+          </label>
+          @for (horaire of groupe.get('horaires')?.controls | orderObjectBy:"value.ordre":false;track $index){
+            <label class="indentation checkbox">
+              <input type="checkbox" [formControl]="getControl(horaire)" (change)="evaluateMailing(groupe, horaire)" />
+              <span >{{horaire.get('text')?.value}}</span>
+            </label>
+          }
+        }
       }
       <span type='button'
-           class="btn btn-primary alod btn-independent" (click)="activite_bouton = !activite_bouton">mailing pour les activités de 2025/2026</span>
+      class="btn btn-primary alod btn-independent" (click)="activite_bouton = !activite_bouton">mailing pour les activités de 2025/2026</span>
 
       @if ( activite_bouton){
-    @for (groupe of activiteListe.controls | orderObjectBy:"value.ordre":false;track $index){
-      <label class="checkbox">
-        <input type="checkbox" [formControl]="getControl(groupe)" (change)="selectGroupe(groupe)" />
-        <span><b>{{groupe.get('text')?.value}}</b></span>
-      </label>
-      @for (horaire of groupe.get('horaires')?.controls | orderObjectBy:"value.ordre":false;track $index){
-        <label class="indentation checkbox">
-          <input type="checkbox" [formControl]="getControl(horaire)" (change)="evaluateMailing(groupe, horaire)" />
-          <span >{{horaire.get('text')?.value}}</span>
-        </label>
-      }
-    }
+        @for (groupe of activiteListe.controls | orderObjectBy:"value.ordre":false;track $index){
+          <label class="checkbox">
+            <input type="checkbox" [formControl]="getControl(groupe)" (change)="selectGroupe(groupe)" />
+            <span><b>{{groupe.get('text')?.value}}</b></span>
+          </label>
+          @for (horaire of groupe.get('horaires')?.controls | orderObjectBy:"value.ordre":false;track $index){
+            <label class="indentation checkbox">
+              <input type="checkbox" [formControl]="getControl(horaire)" (change)="evaluateMailing(groupe, horaire)" />
+              <span >{{horaire.get('text')?.value}}</span>
+            </label>
+          }
+        }
       }
       <span type='button'
-           class="btn btn-primary alod btn-independent" (click)="activiteNm1_bouton = !activiteNm1_bouton">mailing pour les activités de 2026/2027</span>
+      class="btn btn-primary alod btn-independent" (click)="activiteNm1_bouton = !activiteNm1_bouton">mailing pour les activités de 2026/2027</span>
 
       @if ( activiteNm1_bouton){
-    @for (groupe of activiteNm1Liste.controls | orderObjectBy:"value.ordre":false;track $index){
-      <label class="checkbox">
-        <input type="checkbox" [formControl]="getControl(groupe)" (change)="selectGroupe(groupe)" />
-        <span><b>{{groupe.get('text')?.value}}</b></span>
-      </label>
-      @for (horaire of groupe.get('horaires')?.controls | orderObjectBy:"value.ordre":false;track $index){
-        <label class="indentation checkbox">
-          <input type="checkbox" [formControl]="getControl(horaire)" (change)="evaluateMailing(groupe, horaire)" />
-          <span >{{horaire.get('text')?.value}}</span>
-        </label>
+        @for (groupe of activiteNm1Liste.controls | orderObjectBy:"value.ordre":false;track $index){
+          <label class="checkbox">
+            <input type="checkbox" [formControl]="getControl(groupe)" (change)="selectGroupe(groupe)" />
+            <span><b>{{groupe.get('text')?.value}}</b></span>
+          </label>
+          @for (horaire of groupe.get('horaires')?.controls | orderObjectBy:"value.ordre":false;track $index){
+            <label class="indentation checkbox">
+              <input type="checkbox" [formControl]="getControl(horaire)" (change)="evaluateMailing(groupe, horaire)" />
+              <span >{{horaire.get('text')?.value}}</span>
+            </label>
+          }
+        }
       }
-    }
-    }
     }
   </div>
   <div class="col-4">
     <div class="btn-group btn-group-sm " role="group">
       <div (click)="template=0" [ngClass]="template==0? 'btn-primary' : 'btn-pomme'" class="btn btn-block"
-           type='button'>Un mail manuel
+        type='button'>Un mail manuel
       </div>
       <div (click)="template=2" [ngClass]="template==2? 'btn-primary' : 'btn-pomme'" class="btn btn-block"
-           type='button'>Le template Brevo n°2 : newsletter
+        type='button'>Le template Brevo n°2 : newsletter
       </div>
       <div (click)="template=6" [ngClass]="template==6? 'btn-primary' : 'btn-pomme'" class="btn btn-block"
-           type='button'>Le template Brevo n°6 : Convocation AG
+        type='button'>Le template Brevo n°6 : Convocation AG
       </div>
     </div>
 
 
-    <div *ngIf="template==0" class="row">
-      <div class="col-sm-12 ">
-        <div class="form-group">
-          <label for="prenom">Objet : <span class="orange" container="body">*</span></label>
-          <input type="text" class="form-control" name="prenom" [(ngModel)]="subject" required
-                 minlength="10" maxlength="255" />
-
+    @if (template==0) {
+      <div class="row">
+        <div class="col-sm-12 ">
+          <div class="form-group">
+            <label for="prenom">Objet : <span class="orange" container="body">*</span></label>
+            <input type="text" class="form-control" name="prenom" [(ngModel)]="subject" required
+              minlength="10" maxlength="255" />
+          </div>
+        </div>
+        <div class="col-sm-12">
+          <angular-editor  [config]="editorConfig" [(ngModel)]="content"></angular-editor>
+        </div>
+        <div class="col-sm-12">
+          <button (click)="envoiMail(subject)" [disabled]="inProgress" class="btn btn-block btn-primary">
+            Envoyer ce message à la liste de diffusion
+          </button>
         </div>
       </div>
-      <div class="col-sm-12">
+    }
 
-
-          <angular-editor  [config]="editorConfig" [(ngModel)]="content"></angular-editor>
-
+    @if (template!=0) {
+      <div class="row">
+        <div class="col-sm-12">
+          <button (click)="envoiTemplate()" [disabled]="inProgress" class="btn btn-block btn-primary">
+            Envoyer ce template à la liste de diffusion
+          </button>
+        </div>
       </div>
-      <div class="col-sm-12">
-        <button (click)="envoiMail(subject)" [disabled]="inProgress" class="btn btn-block btn-primary">
-          Envoyer ce message à la liste de diffusion
-        </button>
-      </div>
-    </div>
-
-    <div *ngIf="template!=0" class="row">
-      <div class="col-sm-12">
-        <button (click)="envoiTemplate()" [disabled]="inProgress" class="btn btn-block btn-primary">
-          Envoyer ce template à la liste de diffusion
-        </button>
-      </div>
-    </div>
+    }
   </div>
   <div class="col-4">
 
     <table>
       <thead>
-      <tr>
-        <th class="center">
-          Date d'envoi
+        <tr>
+          <th class="center">
+            Date d'envoi
 
-        </th>
-        <th class="center">
-          Objet
+          </th>
+          <th class="center">
+            Objet
 
-        </th>
-        <th class="center">
-          Maling Liste
-        </th>
-        <th class="center">
-          Réussis/Echoués
-        </th>
-      </tr>
+          </th>
+          <th class="center">
+            Maling Liste
+          </th>
+          <th class="center">
+            Réussis/Echoués
+          </th>
+        </tr>
       </thead>
       <tbody>
-      <tr
-        *ngFor="let historique of historiques | orderSimpleBy:'dateEnvoi':true">
-        <td>
-          {{ historique.dateEnvoi | date:'EEEE, MMMM d, y, hh:mm' }}
-        </td>
-        <td>
-          {{ historique.subject }}
-        </td>
-        <td>
-          {{ historique.listing }}
-        </td>
-        <td>
-          {{ historique.nombre }}/{{ historique.echecs }}
-        </td>
-
-      </tr>
+        @for (historique of historiques | orderSimpleBy:'dateEnvoi':true; track historique) {
+          <tr
+            >
+            <td>
+              {{ historique.dateEnvoi | date:'EEEE, MMMM d, y, hh:mm' }}
+            </td>
+            <td>
+              {{ historique.subject }}
+            </td>
+            <td>
+              {{ historique.listing }}
+            </td>
+            <td>
+              {{ historique.nombre }}/{{ historique.echecs }}
+            </td>
+          </tr>
+        }
       </tbody>
     </table>
 

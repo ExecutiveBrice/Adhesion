@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { AdherentService } from '../../_services/adherent.service';
 import { Activite, ActiviteDropDown, Adherent } from 'src/app/models';
 import { faPen, faUsersRays, faSkull, faUsers, faEnvelope, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
@@ -13,15 +13,26 @@ import { FilterAdhesionByPipe } from 'src/app/_helpers/filterAdhesion.pipe';
 import { ActiviteService } from 'src/app/_services/activite.service';
 import { ActiviteNm1 } from 'src/app/models/activiteNm1';
 import { TribuService } from 'src/app/_services/tribu.service';
-import { ToastrService } from 'ngx-toastr';
+import { ToastService } from '../../_services/toast.service';
 import {AdherentFlat} from "../../models/adherentFlat";
 
 @Component({
+  standalone: false,
   selector: 'app-adherents',
   templateUrl: './adherents.component.html',
   styleUrls: ['./adherents.component.css']
 })
 export class AdherentsComponent implements OnInit {
+  private toastr = inject(ToastService);
+  activiteService = inject(ActiviteService);
+  tribuService = inject(TribuService);
+  private authService = inject(AuthService);
+  private adherentService = inject(AdherentService);
+  private tokenStorageService = inject(TokenStorageService);
+  private modalService = inject(NgbModal);
+  paramService = inject(ParamService);
+  router = inject(Router);
+
   faCircleCheck = faCircleCheck
   faCircleXmark = faCircleXmark
   faSquareMinus = faSquareMinus
@@ -53,17 +64,6 @@ export class AdherentsComponent implements OnInit {
 
   activitesListe: ActiviteDropDown[] = [];
   activites: Activite[] = []
-  constructor(
-    private toastr: ToastrService,
-    public activiteService: ActiviteService,
-    public tribuService: TribuService,
-
-    private authService: AuthService,
-    private adherentService: AdherentService,
-    private tokenStorageService: TokenStorageService,
-    private modalService: NgbModal,
-    public paramService: ParamService,
-    public router: Router) { }
 
 
   showError(message: string) {

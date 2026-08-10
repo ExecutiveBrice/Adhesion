@@ -7,14 +7,20 @@ import { AdherentService } from 'src/app/_services/adherent.service';
 import { ActiviteService } from 'src/app/_services/activite.service';
 import { ParamService } from 'src/app/_services/param.service';
 import { faCircleQuestion, faEnvelope, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { ToastrService } from 'ngx-toastr';
+import { ToastService } from '../../_services/toast.service';
 
 @Component({
+  standalone: false,
   selector: 'modal',
   templateUrl: './modal.activite.html',
   styleUrls: ['./modal.activite.css']
 })
 export class ModalActivite implements OnInit, OnDestroy {
+  private toastr = inject(ToastService);
+  private adherentService = inject(AdherentService);
+  activiteService = inject(ActiviteService);
+  private paramService = inject(ParamService);
+
   faCircleQuestion = faCircleQuestion
   faEnvelope = faEnvelope;
   faCircleXmark = faCircleXmark;
@@ -55,13 +61,6 @@ export class ModalActivite implements OnInit, OnDestroy {
     { valeur: 'SATURDAY', libelle: 'Samedi' },
     { valeur: 'SUNDAY', libelle: 'Dimanche' },
   ];
-
-  constructor(
-    private toastr: ToastrService,
-    private adherentService: AdherentService,
-    public activiteService: ActiviteService,
-    private paramService: ParamService,
-  ) { }
 
   ngOnInit(): void {
     this.activite.profs ??= [];

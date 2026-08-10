@@ -52,330 +52,400 @@
       <div class="form-group">
         <label for="salle">Salle</label>
         <div class="selecteur-salle">
-          <span *ngIf="activite.salle" class="couleur-salle" [style.background-color]="activite.salle.couleur"
-                [title]="'Couleur : ' + activite.salle.couleur" aria-hidden="true"></span>
+          @if (activite.salle) {
+            <span class="couleur-salle" [style.background-color]="activite.salle.couleur"
+            [title]="'Couleur : ' + activite.salle.couleur" aria-hidden="true"></span>
+          }
           <select id="salle" class="form-select" name="salle" [(ngModel)]="activite.salle"
-                  [compareWith]="comparerSalles">
-          <option [ngValue]="undefined">Aucune salle</option>
-          <option *ngFor="let salle of salles" [ngValue]="salle">
-            {{salle.nom}} — {{salle.adresse}} · {{salle.couleur}}
-          </option>
+            [compareWith]="comparerSalles">
+            <option [ngValue]="undefined">Aucune salle</option>
+            @for (salle of salles; track salle) {
+              <option [ngValue]="salle">
+                {{salle.nom}} — {{salle.adresse}} · {{salle.couleur}}
+              </option>
+            }
           </select>
         </div>
-        <small *ngIf="activite.salle" class="text-muted">
-          La couleur {{activite.salle.couleur}} sera utilisée pour les nouvelles séances dans le calendrier.
-        </small>
+        @if (activite.salle) {
+          <small class="text-muted">
+            La couleur {{activite.salle.couleur}} sera utilisée pour les nouvelles séances dans le calendrier.
+          </small>
+        }
       </div>
 
       <div class="form-group">
         <label for="prof">Prof</label>
-        <div *ngIf="activite.profs.length > 0">
-          <div *ngFor="let prof of activite.profs | orderBy:'id':true ">
-            {{prof.prenom}} {{prof.nom}} <fa-icon class="pointer" (click)="retirerProf(activite,prof)"
+        @if (activite.profs.length > 0) {
+          <div>
+            @for (prof of activite.profs | orderBy:'id':true ; track prof) {
+              <div>
+                {{prof.prenom}} {{prof.nom}} <fa-icon class="pointer" (click)="retirerProf(activite,prof)"
               [icon]="faSquareMinus"></fa-icon>
-          </div>
+            </div>
+          }
         </div>
+      }
 
-        <div ngbDropdown class="d-inline-block col-md-12 ">
-          <button type="button" class="btn btn-block btn-primary" id="dropdownBasic1" ngbDropdownToggle>
-            Ajouter un prof
-          </button>
-
-
-          <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-
-            <div ngbDropdownItem *ngFor="let prof of profs  | orderBy:'ordre':false"
-              (click)="ajouterProf(activite,prof)">{{prof.prenom}} {{prof.nom}}</div>
-
-          </div>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label for="referent">Référent</label>
-        <div *ngIf="activite.referents.length > 0">
-          <div *ngFor="let referent of activite.referents | orderBy:'id':true">
-            {{referent.prenom}} {{referent.nom}}
-            <fa-icon class="pointer" (click)="retirerReferent(activite, referent)"
-              [icon]="faSquareMinus"></fa-icon>
-          </div>
-        </div>
-
-        <div ngbDropdown class="d-inline-block col-md-12">
-          <button type="button" class="btn btn-block btn-primary" id="dropdownReferent" ngbDropdownToggle>
-            Ajouter un référent
-          </button>
-          <div ngbDropdownMenu aria-labelledby="dropdownReferent">
-            <div ngbDropdownItem *ngFor="let referent of referents | orderBy:'ordre':false"
-              (click)="ajouterReferent(activite, referent)">{{referent.prenom}} {{referent.nom}}</div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-    <div class="col-12 col-sm-6">
-
-      <div class="form-group">
-        <label for="nbPlaces">Nombre de Place Maximale</label>
-        <input type="number" class="form-control" name="nbPlaces" [(ngModel)]="activite.nbPlaces" />
-      </div>
-
-
-      <div class="form-group">
-        <div class="form-check form-switch">
-          <input class="form-check-input big-checkbox" [(ngModel)]="activite.reinscription"
-            type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
-            Reinscription <fa-icon *ngIf="activite.reinscription" class="green"
-            [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!activite.reinscription" class="orange"
-            [icon]="faCircleXmark"></fa-icon>
-        </div>
-
-      </div>
-      <div class="form-group">
-        <div class="form-check form-switch">
-          <input class="form-check-input big-checkbox" [(ngModel)]="activite.globaleSpecifique"
-                 type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
-          Globale/Spécifique <fa-icon *ngIf="activite.globaleSpecifique" class="green"
-                                 [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!activite.globaleSpecifique" class="orange"
-                                                                           [icon]="faCircleXmark"></fa-icon>
-        </div>
-
-      </div>
-      <div class="form-group">
-        <div class="form-check form-switch">
-          <input class="form-check-input big-checkbox" [(ngModel)]="activite.complete"
-            type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
-            Complete <fa-icon *ngIf="activite.complete" class="green"
-            [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!activite.complete" class="orange"
-            [icon]="faCircleXmark"></fa-icon>
-        </div>
-      </div>
-      <div class="form-group">
-        <div class="form-check form-switch">
-          <input class="form-check-input big-checkbox" [(ngModel)]="activite.majoration"
-                 type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
-          Majoration <fa-icon *ngIf="activite.majoration" class="green"
-                            [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!activite.majoration" class="orange"
-                                                                      [icon]="faCircleXmark"></fa-icon>
-        </div>
-      </div>
-
-
-      <div class="form-group">
-        <label for="ageMax">Age Maximal</label>
-        <input type="number" class="form-control" name="ageMax" [(ngModel)]="activite.ageMax" />
-        <label for="ageMin">Age Minimal</label>
-        <input type="number" class="form-control" name="ageMin" [(ngModel)]="activite.ageMin" />
-      </div>
-
-
-      <div ngbDropdown class="d-inline-block">
-        <button type="button" class="btn btn-primary" id="dropdownBasic1" ngbDropdownToggle>
-          Activité {{activite.genre}}
+      <div ngbDropdown class="d-inline-block col-md-12 ">
+        <button type="button" class="btn btn-block btn-primary" id="dropdownBasic1" ngbDropdownToggle>
+          Ajouter un prof
         </button>
 
 
         <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-          <div ngbDropdownItem (click)="activite.genre = 'Non genrée'">Non genrée</div>
-          <div ngbDropdownItem (click)="activite.genre = 'Masculine'">Masculine</div>
-          <div ngbDropdownItem (click)="activite.genre = 'Féminine'">Féminine</div>
+
+          @for (prof of profs  | orderBy:'ordre':false; track prof) {
+            <div ngbDropdownItem
+            (click)="ajouterProf(activite,prof)">{{prof.prenom}} {{prof.nom}}</div>
+          }
+
         </div>
       </div>
+    </div>
 
-      <div class="form-group">
-        <div class="form-check form-switch">
-          <input class="form-check-input big-checkbox" [(ngModel)]="activite.certificatMedical"
-            type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
-            Document Certificat Médical ? <fa-icon *ngIf="activite.certificatMedical" class="green"
-            [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!activite.certificatMedical" class="orange"
-            [icon]="faCircleXmark"></fa-icon>
+    <div class="form-group">
+      <label for="referent">Référent</label>
+      @if (activite.referents.length > 0) {
+        <div>
+          @for (referent of activite.referents | orderBy:'id':true; track referent) {
+            <div>
+              {{referent.prenom}} {{referent.nom}}
+              <fa-icon class="pointer" (click)="retirerReferent(activite, referent)"
+              [icon]="faSquareMinus"></fa-icon>
+            </div>
+          }
+        </div>
+      }
+
+      <div ngbDropdown class="d-inline-block col-md-12">
+        <button type="button" class="btn btn-block btn-primary" id="dropdownReferent" ngbDropdownToggle>
+          Ajouter un référent
+        </button>
+        <div ngbDropdownMenu aria-labelledby="dropdownReferent">
+          @for (referent of referents | orderBy:'ordre':false; track referent) {
+            <div ngbDropdownItem
+            (click)="ajouterReferent(activite, referent)">{{referent.prenom}} {{referent.nom}}</div>
+          }
         </div>
       </div>
-      <div *ngIf="activite.certificatMedical" class="form-group">
-        <label for="dureeVieCertif">Nb année validité max</label>
-        <input type="number" class="form-control" name="dureeVieCertif" [(ngModel)]="activite.dureeVieCertif" />
-      </div>
+    </div>
 
-      <div class="form-group">
-        <div class="form-check form-switch">
-          <input class="form-check-input big-checkbox" [(ngModel)]="activite.priseEnCharge"
-            type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
-            Accord de Prise en Charge ? <fa-icon *ngIf="activite.priseEnCharge" class="green"
-            [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!activite.priseEnCharge" class="orange"
-            [icon]="faCircleXmark"></fa-icon>
-        </div>
-      </div>
+  </div>
+  <div class="col-12 col-sm-6">
 
-      <div class="form-group">
-        <div class="form-check form-switch">
-          <input class="form-check-input big-checkbox" [(ngModel)]="activite.autorisationParentale"
-            type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
-            Accord Autorisation Parentale ? <fa-icon *ngIf="activite.autorisationParentale" class="green"
-            [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!activite.autorisationParentale" class="orange"
-            [icon]="faCircleXmark"></fa-icon>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <div class="form-check form-switch">
-          <input class="form-check-input big-checkbox" [(ngModel)]="activite.charteAmicale"
-            type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
-            Accord Charte Amicale ? <fa-icon *ngIf="activite.charteAmicale" class="green"
-            [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!activite.charteAmicale" class="orange"
-            [icon]="faCircleXmark"></fa-icon>
-        </div>
+    <div class="form-group">
+      <label for="nbPlaces">Nombre de Place Maximale</label>
+      <input type="number" class="form-control" name="nbPlaces" [(ngModel)]="activite.nbPlaces" />
+    </div>
 
 
+    <div class="form-group">
+      <div class="form-check form-switch">
+        <input class="form-check-input big-checkbox" [(ngModel)]="activite.reinscription"
+          type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+        Reinscription @if (activite.reinscription) {
+        <fa-icon class="green"
+        [icon]="faCircleCheck"></fa-icon>
+        }@if (!activite.reinscription) {
+        <fa-icon class="orange"
+        [icon]="faCircleXmark"></fa-icon>
+      }
+    </div>
 
-      </div>
-      <div class="form-group">
-        <div class="form-check form-switch">
-          <input class="form-check-input big-checkbox" [(ngModel)]="activite.vieClub"
-            type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
-            Accord Vie du Club ? <fa-icon *ngIf="activite.vieClub" class="green"
-            [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!activite.vieClub" class="orange"
-            [icon]="faCircleXmark"></fa-icon>
-        </div>
-      </div>
+  </div>
+  <div class="form-group">
+    <div class="form-check form-switch">
+      <input class="form-check-input big-checkbox" [(ngModel)]="activite.globaleSpecifique"
+        type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+      Globale/Spécifique @if (activite.globaleSpecifique) {
+      <fa-icon class="green"
+      [icon]="faCircleCheck"></fa-icon>
+      }@if (!activite.globaleSpecifique) {
+      <fa-icon class="orange"
+      [icon]="faCircleXmark"></fa-icon>
+    }
+  </div>
+
+</div>
+<div class="form-group">
+  <div class="form-check form-switch">
+    <input class="form-check-input big-checkbox" [(ngModel)]="activite.complete"
+      type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+    Complete @if (activite.complete) {
+    <fa-icon class="green"
+    [icon]="faCircleCheck"></fa-icon>
+    }@if (!activite.complete) {
+    <fa-icon class="orange"
+    [icon]="faCircleXmark"></fa-icon>
+  }
+</div>
+</div>
+<div class="form-group">
+  <div class="form-check form-switch">
+    <input class="form-check-input big-checkbox" [(ngModel)]="activite.majoration"
+      type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+    Majoration @if (activite.majoration) {
+    <fa-icon class="green"
+    [icon]="faCircleCheck"></fa-icon>
+    }@if (!activite.majoration) {
+    <fa-icon class="orange"
+    [icon]="faCircleXmark"></fa-icon>
+  }
+</div>
+</div>
+
+
+<div class="form-group">
+  <label for="ageMax">Age Maximal</label>
+  <input type="number" class="form-control" name="ageMax" [(ngModel)]="activite.ageMax" />
+  <label for="ageMin">Age Minimal</label>
+  <input type="number" class="form-control" name="ageMin" [(ngModel)]="activite.ageMin" />
+</div>
+
+
+<div ngbDropdown class="d-inline-block">
+  <button type="button" class="btn btn-primary" id="dropdownBasic1" ngbDropdownToggle>
+    Activité {{activite.genre}}
+  </button>
+
+
+  <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+    <div ngbDropdownItem (click)="activite.genre = 'Non genrée'">Non genrée</div>
+    <div ngbDropdownItem (click)="activite.genre = 'Masculine'">Masculine</div>
+    <div ngbDropdownItem (click)="activite.genre = 'Féminine'">Féminine</div>
+  </div>
+</div>
+
+<div class="form-group">
+  <div class="form-check form-switch">
+    <input class="form-check-input big-checkbox" [(ngModel)]="activite.certificatMedical"
+      type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+    Document Certificat Médical ? @if (activite.certificatMedical) {
+    <fa-icon class="green"
+    [icon]="faCircleCheck"></fa-icon>
+    }@if (!activite.certificatMedical) {
+    <fa-icon class="orange"
+    [icon]="faCircleXmark"></fa-icon>
+  }
+</div>
+</div>
+@if (activite.certificatMedical) {
+  <div class="form-group">
+    <label for="dureeVieCertif">Nb année validité max</label>
+    <input type="number" class="form-control" name="dureeVieCertif" [(ngModel)]="activite.dureeVieCertif" />
+  </div>
+}
+
+<div class="form-group">
+  <div class="form-check form-switch">
+    <input class="form-check-input big-checkbox" [(ngModel)]="activite.priseEnCharge"
+      type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+    Accord de Prise en Charge ? @if (activite.priseEnCharge) {
+    <fa-icon class="green"
+    [icon]="faCircleCheck"></fa-icon>
+    }@if (!activite.priseEnCharge) {
+    <fa-icon class="orange"
+    [icon]="faCircleXmark"></fa-icon>
+  }
+</div>
+</div>
+
+<div class="form-group">
+  <div class="form-check form-switch">
+    <input class="form-check-input big-checkbox" [(ngModel)]="activite.autorisationParentale"
+      type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+    Accord Autorisation Parentale ? @if (activite.autorisationParentale) {
+    <fa-icon class="green"
+    [icon]="faCircleCheck"></fa-icon>
+    }@if (!activite.autorisationParentale) {
+    <fa-icon class="orange"
+    [icon]="faCircleXmark"></fa-icon>
+  }
+</div>
+</div>
+
+<div class="form-group">
+  <div class="form-check form-switch">
+    <input class="form-check-input big-checkbox" [(ngModel)]="activite.charteAmicale"
+      type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+    Accord Charte Amicale ? @if (activite.charteAmicale) {
+    <fa-icon class="green"
+    [icon]="faCircleCheck"></fa-icon>
+    }@if (!activite.charteAmicale) {
+    <fa-icon class="orange"
+    [icon]="faCircleXmark"></fa-icon>
+  }
+</div>
+
+
+
+</div>
+<div class="form-group">
+  <div class="form-check form-switch">
+    <input class="form-check-input big-checkbox" [(ngModel)]="activite.vieClub"
+      type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+    Accord Vie du Club ? @if (activite.vieClub) {
+    <fa-icon class="green"
+    [icon]="faCircleCheck"></fa-icon>
+    }@if (!activite.vieClub) {
+    <fa-icon class="orange"
+    [icon]="faCircleXmark"></fa-icon>
+  }
+</div>
+</div>
+</div>
+</div>
+
+<section class="seances-section">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+      <h5 class="mb-1">Séances</h5>
+      <small class="text-muted">Les séances sont créées chaque semaine selon la planification ci-dessous, hors vacances et jours fériés.</small>
+    </div>
+    @if (activite.id) {
+      <span class="badge bg-secondary">{{seances.length}} séance(s)</span>
+    }
+  </div>
+
+  <div class="row g-2 align-items-end planification-seances mb-3">
+    <div class="col-12">
+      <h6 class="mb-0">Planification hebdomadaire</h6>
+    </div>
+    <div class="col-12 col-sm-4">
+      <label for="jourSeance" class="form-label">Jour</label>
+      <select id="jourSeance" name="jourSeance" class="form-select" [(ngModel)]="activite.jour">
+        <option value="" disabled>Sélectionner un jour</option>
+        @for (jour of joursSemaine; track jour) {
+          <option [value]="jour.valeur">{{jour.libelle}}</option>
+        }
+      </select>
+    </div>
+    <div class="col-12 col-sm-4">
+      <label for="horaireDebut" class="form-label">Heure de début</label>
+      <input id="horaireDebut" type="time" class="form-control" name="horaireDebut"
+        [(ngModel)]="activite.horaireDebut" />
+    </div>
+    <div class="col-12 col-sm-4">
+      <label for="duree" class="form-label">Durée (minutes)</label>
+      <input id="duree" type="number" min="1" class="form-control" name="duree"
+        [(ngModel)]="activite.duree" />
     </div>
   </div>
 
-  <section class="seances-section">
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-      <div>
-        <h5 class="mb-1">Séances</h5>
-        <small class="text-muted">Les séances sont créées chaque semaine selon la planification ci-dessous, hors vacances et jours fériés.</small>
-      </div>
-      <span *ngIf="activite.id" class="badge bg-secondary">{{seances.length}} séance(s)</span>
-    </div>
-
-    <div class="row g-2 align-items-end planification-seances mb-3">
-      <div class="col-12">
-        <h6 class="mb-0">Planification hebdomadaire</h6>
-      </div>
-      <div class="col-12 col-sm-4">
-        <label for="jourSeance" class="form-label">Jour</label>
-        <select id="jourSeance" name="jourSeance" class="form-select" [(ngModel)]="activite.jour">
-          <option value="" disabled>Sélectionner un jour</option>
-          <option *ngFor="let jour of joursSemaine" [value]="jour.valeur">{{jour.libelle}}</option>
-        </select>
-      </div>
-      <div class="col-12 col-sm-4">
-        <label for="horaireDebut" class="form-label">Heure de début</label>
-        <input id="horaireDebut" type="time" class="form-control" name="horaireDebut"
-               [(ngModel)]="activite.horaireDebut" />
-      </div>
-      <div class="col-12 col-sm-4">
-        <label for="duree" class="form-label">Durée (minutes)</label>
-        <input id="duree" type="number" min="1" class="form-control" name="duree"
-               [(ngModel)]="activite.duree" />
-      </div>
-    </div>
-
-    <div *ngIf="activite.id; else activiteNonEnregistree">
+  @if (activite.id) {
+    <div>
       <div class="row g-2 align-items-end ajout-seances">
         <div class="col-12 col-sm-4">
           <label for="nombreSeances" class="form-label">Nombre de séances</label>
           <input id="nombreSeances" name="nombreSeances" type="number" min="1" max="200"
-                 class="form-control" [(ngModel)]="nombreSeances" />
+            class="form-control" [(ngModel)]="nombreSeances" />
         </div>
         <div class="col-12 col-sm-4">
           <label for="dateDebutSeances" class="form-label">À partir du</label>
           <input id="dateDebutSeances" name="dateDebutSeances" type="date"
-                 class="form-control" [(ngModel)]="dateDebutSeances" />
+            class="form-control" [(ngModel)]="dateDebutSeances" />
         </div>
         <div class="col-12 col-sm-4 d-grid">
           <button type="button" class="btn btn-primary" (click)="ajouterSeances()"
-                  [disabled]="ajoutSeancesEnCours || !dateDebutSeances || nombreSeances < 1 || nombreSeances > 200">
+            [disabled]="ajoutSeancesEnCours || !dateDebutSeances || nombreSeances < 1 || nombreSeances > 200">
             {{ajoutSeancesEnCours ? 'Ajout en cours…' : 'Ajouter les séances'}}
           </button>
         </div>
       </div>
-
-      <div *ngIf="chargementSeances" class="text-center text-muted py-4">Chargement des séances…</div>
-
-      <div *ngIf="!chargementSeances && seances.length === 0" class="alert alert-light border mt-3 mb-0">
-        Aucune séance planifiée pour cette activité.
-      </div>
-
-      <div *ngIf="!chargementSeances && seances.length > 0" class="table-responsive seances-liste">
-        <table class="table table-sm table-striped align-middle mb-0">
-          <thead>
-            <tr>
-              <th scope="col">Date</th>
-              <th scope="col">Heure</th>
-              <th scope="col">Salle</th>
-              <th scope="col">État</th>
-              <th scope="col">Commentaire</th>
-              <th scope="col" class="text-center"><span class="visually-hidden">Actions</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let seance of seances">
-              <td class="date-seance">
-                <input type="date" class="form-control form-control-sm"
-                       [name]="'dateSeance-' + seance.id" [(ngModel)]="seance.dateEdition"
-                       (ngModelChange)="planifierEnregistrementHoraire(seance)"
-                       (blur)="enregistrerHoraireAuBlur(seance)"
-                       [disabled]="suppressionSeances.has(seance.id)" />
-                <small class="text-muted text-capitalize">{{seance.debut | date:'EEEE'}}</small>
-              </td>
-              <td class="horaire-seance">
-                <input type="time" class="form-control form-control-sm"
-                       [name]="'heureSeance-' + seance.id" [(ngModel)]="seance.heureEdition"
-                       (ngModelChange)="planifierEnregistrementHoraire(seance)"
-                       (blur)="enregistrerHoraireAuBlur(seance)"
-                       [disabled]="suppressionSeances.has(seance.id)" />
-                <small class="text-muted">Fin : {{seance.fin | date:'HH:mm'}}</small>
-              </td>
-              <td class="salle-seance">
-                <select class="form-select form-select-sm" [(ngModel)]="seance.salle"
-                        [name]="'salleSeance-' + seance.id" [compareWith]="comparerSalles"
-                        (ngModelChange)="enregistrerSalleSeance(seance)"
-                        [disabled]="suppressionSeances.has(seance.id)">
-                  <option [ngValue]="undefined">Aucune salle</option>
-                  <option *ngFor="let salle of salles" [ngValue]="salle">{{salle.nom}}</option>
-                </select>
-              </td>
-              <td class="etat-seance">
-                <select class="form-select form-select-sm" [(ngModel)]="seance.etatSeance"
-                        [name]="'etatSeance-' + seance.id" (ngModelChange)="enregistrerEtatSeance(seance)"
-                        [disabled]="suppressionSeances.has(seance.id)"
-                        [ngClass]="seance.etatSeance === 'ANNULEE' ? 'etat-annulee' : (seance.etatSeance === 'REALISEE' ? 'etat-realisee' : (seance.etatSeance === 'MODIFIEE' ? 'etat-modifiee' : 'etat-programmee'))">
-                  <option value="PROGRAMMEE">Programmée</option>
-                  <option value="REALISEE">Réalisée</option>
-                  <option value="ANNULEE">Annulée</option>
-                  <option value="MODIFIEE">Modifiée</option>
-                </select>
-              </td>
-              <td class="commentaire-seance">
-                <textarea class="form-control form-control-sm" maxlength="255" rows="3"
-                          [name]="'commentaireSeance-' + seance.id" [(ngModel)]="seance.commentaire"
-                          (ngModelChange)="planifierEnregistrementCommentaire(seance)"
-                          (blur)="enregistrerCommentaireAuBlur(seance)"
-                          [disabled]="suppressionSeances.has(seance.id)" placeholder="Ajouter un commentaire"></textarea>
-                <small *ngIf="enregistrementSeances.has(seance.id)" class="text-muted">Enregistrement…</small>
-              </td>
-              <td class="text-center action-seance">
-                <button type="button" class="btn btn-sm btn-outline-danger" title="Supprimer la séance"
-                        [attr.aria-label]="'Supprimer la séance du ' + (seance.debut | date:'d MMMM y')"
-                        (click)="supprimerSeance(seance)"
-                        [disabled]="suppressionSeances.has(seance.id) || enregistrementSeances.has(seance.id)">
-                  <fa-icon [icon]="faTrash"></fa-icon>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      @if (chargementSeances) {
+        <div class="text-center text-muted py-4">Chargement des séances…</div>
+      }
+      @if (!chargementSeances && seances.length === 0) {
+        <div class="alert alert-light border mt-3 mb-0">
+          Aucune séance planifiée pour cette activité.
+        </div>
+      }
+      @if (!chargementSeances && seances.length > 0) {
+        <div class="table-responsive seances-liste">
+          <table class="table table-sm table-striped align-middle mb-0">
+            <thead>
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Heure</th>
+                <th scope="col">Salle</th>
+                <th scope="col">État</th>
+                <th scope="col">Commentaire</th>
+                <th scope="col" class="text-center"><span class="visually-hidden">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (seance of seances; track seance) {
+                <tr>
+                  <td class="date-seance">
+                    <input type="date" class="form-control form-control-sm"
+                      [name]="'dateSeance-' + seance.id" [(ngModel)]="seance.dateEdition"
+                      (ngModelChange)="planifierEnregistrementHoraire(seance)"
+                      (blur)="enregistrerHoraireAuBlur(seance)"
+                      [disabled]="suppressionSeances.has(seance.id)" />
+                    <small class="text-muted text-capitalize">{{seance.debut | date:'EEEE'}}</small>
+                  </td>
+                  <td class="horaire-seance">
+                    <input type="time" class="form-control form-control-sm"
+                      [name]="'heureSeance-' + seance.id" [(ngModel)]="seance.heureEdition"
+                      (ngModelChange)="planifierEnregistrementHoraire(seance)"
+                      (blur)="enregistrerHoraireAuBlur(seance)"
+                      [disabled]="suppressionSeances.has(seance.id)" />
+                    <small class="text-muted">Fin : {{seance.fin | date:'HH:mm'}}</small>
+                  </td>
+                  <td class="salle-seance">
+                    <select class="form-select form-select-sm" [(ngModel)]="seance.salle"
+                      [name]="'salleSeance-' + seance.id" [compareWith]="comparerSalles"
+                      (ngModelChange)="enregistrerSalleSeance(seance)"
+                      [disabled]="suppressionSeances.has(seance.id)">
+                      <option [ngValue]="undefined">Aucune salle</option>
+                      @for (salle of salles; track salle) {
+                        <option [ngValue]="salle">{{salle.nom}}</option>
+                      }
+                    </select>
+                  </td>
+                  <td class="etat-seance">
+                    <select class="form-select form-select-sm" [(ngModel)]="seance.etatSeance"
+                      [name]="'etatSeance-' + seance.id" (ngModelChange)="enregistrerEtatSeance(seance)"
+                      [disabled]="suppressionSeances.has(seance.id)"
+                      [ngClass]="seance.etatSeance === 'ANNULEE' ? 'etat-annulee' : (seance.etatSeance === 'REALISEE' ? 'etat-realisee' : (seance.etatSeance === 'MODIFIEE' ? 'etat-modifiee' : 'etat-programmee'))">
+                      <option value="PROGRAMMEE">Programmée</option>
+                      <option value="REALISEE">Réalisée</option>
+                      <option value="ANNULEE">Annulée</option>
+                      <option value="MODIFIEE">Modifiée</option>
+                    </select>
+                  </td>
+                  <td class="commentaire-seance">
+                    <textarea class="form-control form-control-sm" maxlength="255" rows="3"
+                      [name]="'commentaireSeance-' + seance.id" [(ngModel)]="seance.commentaire"
+                      (ngModelChange)="planifierEnregistrementCommentaire(seance)"
+                      (blur)="enregistrerCommentaireAuBlur(seance)"
+                    [disabled]="suppressionSeances.has(seance.id)" placeholder="Ajouter un commentaire"></textarea>
+                    @if (enregistrementSeances.has(seance.id)) {
+                      <small class="text-muted">Enregistrement…</small>
+                    }
+                  </td>
+                  <td class="text-center action-seance">
+                    <button type="button" class="btn btn-sm btn-outline-danger" title="Supprimer la séance"
+                      [attr.aria-label]="'Supprimer la séance du ' + (seance.debut | date:'d MMMM y')"
+                      (click)="supprimerSeance(seance)"
+                      [disabled]="suppressionSeances.has(seance.id) || enregistrementSeances.has(seance.id)">
+                      <fa-icon [icon]="faTrash"></fa-icon>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
     </div>
+  } @else {
+    <div class="alert alert-info mb-0">
+      Enregistrez d'abord l'activité, puis rouvrez-la pour ajouter et consulter ses séances.
+    </div>
+  }
 
-    <ng-template #activiteNonEnregistree>
-      <div class="alert alert-info mb-0">
-        Enregistrez d'abord l'activité, puis rouvrez-la pour ajouter et consulter ses séances.
-      </div>
-    </ng-template>
-  </section>
+</section>
 
 
 </div>

@@ -1,18 +1,13 @@
 import {Component, OnInit, inject} from '@angular/core';
-import {UserService} from '../../_services/user.service';
 import {
   Accord,
-  Activite,
-  ActiviteDropDown,
   Adherent,
   Adhesion,
-  Document,
-  HoraireDropDown,
   ParamText,
   Tribu,
   User
 } from '../../models';
-import {NgbDateStruct, NgbCalendar, NgbModal} from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal} from '@ng-bootstrap/ng-bootstrap';
 import {ActiviteService} from '../../_services/activite.service';
 import {AdherentService} from 'src/app/_services/adherent.service';
 import {
@@ -34,25 +29,34 @@ import {
   faCircleCheck,
   faUserPlus
 } from '@fortawesome/free-solid-svg-icons';
-import {AdhesionService} from 'src/app/_services/adhesion.service';
 import {ActivatedRoute, Router} from '@angular/router';
 import {TokenStorageService} from 'src/app/_services/token-storage.service';
 import {Subscription} from 'rxjs';
 import {ParamService} from 'src/app/_services/param.service';
-import {jsPDF} from "jspdf";
+
 import {DatePipe} from '@angular/common';
 import {TribuService} from 'src/app/_services/tribu.service';
-import {ToastrService} from 'ngx-toastr';
+import { ToastService } from '../../_services/toast.service';
 import {UserComponent} from 'src/app/template/user/user.component';
 import {UtilService} from 'src/app/_services/util.service';
-import {FileService} from 'src/app/_services/file.service';
 
 @Component({
+  standalone: false,
   selector: 'app-board-user',
   templateUrl: './board-user.component.html',
   styleUrls: ['./board-user.component.css']
 })
 export class BoardUserComponent implements OnInit {
+  private toastr = inject(ToastService);
+  private tribuService = inject(TribuService);
+  private adherentService = inject(AdherentService);
+  private utilService = inject(UtilService);
+  activiteService = inject(ActiviteService);
+  router = inject(Router);
+  route = inject(ActivatedRoute);
+  private tokenStorageService = inject(TokenStorageService);
+  paramService = inject(ParamService);
+
   faClock = faClock
   faCirclePause = faCirclePause
   faFileSignature = faFileSignature;
@@ -74,12 +78,6 @@ export class BoardUserComponent implements OnInit {
   date: { year: number; month: number } | undefined;
   content?: string;
   edit?: boolean
-  swticj: boolean = false
-  editAdhRefActivite?: boolean
-
-  activitesMajeur: ActiviteDropDown[] = [];
-  activitesMineur: ActiviteDropDown[] = [];
-  newAdhesions: Adhesion[] = [];
 
   tribu: Tribu = new Tribu;
   helloassoAlod: boolean = false;
@@ -88,14 +86,8 @@ export class BoardUserComponent implements OnInit {
   helloassoAlodMajoration: boolean = false;
   helloassoAlod3XMajoration: boolean = false;
 
-  testRgpd: boolean = false
   isFailed = false;
-  validSecretariat: boolean = false;
-  validDossier: boolean = false;
   mobile: boolean = false;
-  dossierIncomplet = false;
-  adherentsOpen = false
-  adhesionsOpen = false
   PaiementsOpen = false
   totalRestantDu = 0;
   tribuUuid: string = "";
@@ -107,22 +99,6 @@ export class BoardUserComponent implements OnInit {
   showHelloAsso?: boolean = false;
   showHelloAsso3X?: boolean = false;
 
-  // Default export is a4 paper, portrait, using millimeters for units
-  doc: jsPDF = new jsPDF('p', 'mm', 'a4', true);
-
-  constructor(
-    private toastr: ToastrService,
-    private tribuService: TribuService,
-    private adherentService: AdherentService,
-    private utilService: UtilService,
-    public activiteService: ActiviteService,
-    public router: Router,
-    public route: ActivatedRoute,
-    private tokenStorageService: TokenStorageService,
-    public paramService: ParamService,
-    public fileService: FileService,
-    private datePipe: DatePipe) {
-  }
 
   showSuccess(message: string) {
     this.toastr.info(message, 'Information');

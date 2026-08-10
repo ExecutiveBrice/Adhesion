@@ -1,14 +1,19 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../_services/auth.service';
 
 
 @Component({
+  standalone: false,
   selector: 'app-login',
   templateUrl: './resetpassword.component.html',
   styleUrls: ['./resetpassword.component.css']
 })
 export class ResetPasswordComponent implements OnInit {
+  private authService = inject(AuthService);
+  route = inject(ActivatedRoute);
+  router = inject(Router);
+
   form: any = {
     username: null,
     password: null
@@ -19,12 +24,6 @@ export class ResetPasswordComponent implements OnInit {
   errorMessage = '';
   token: string = "";
   serverAnswer: string[] = [];
-
-  constructor(
-    private authService: AuthService,
-    public route: ActivatedRoute,
-    public router: Router
-  ) { }
 
   ngOnInit(): void {
     let token = this.route.snapshot.paramMap.get('token');

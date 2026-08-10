@@ -10,7 +10,9 @@
       <label for="status-filter">Statut</label>
       <select id="status-filter" class="form-select" [(ngModel)]="statutActuel" (ngModelChange)="applyFilters()">
         <option value="">Tous les statuts</option>
-        <option *ngFor="let status of statusOptions" [value]="status">{{status}}</option>
+        @for (status of statusOptions; track status) {
+          <option [value]="status">{{status}}</option>
+        }
       </select>
     </div>
 
@@ -42,32 +44,48 @@
     </div>
 
     <button type="button" class="btn btn-outline-secondary reset-button" (click)="resetFilters()"
-      [disabled]="!hasActiveFilters">Réinitialiser</button>
+    [disabled]="!hasActiveFilters">Réinitialiser</button>
   </div>
 
   <div class="table-toolbar">
     <div class="toolbar-results">
-      <span *ngIf="!loadder">Résultats {{firstResult}}–{{lastResult}} sur {{totalElements}}</span>
-      <span *ngIf="loadder" class="loading-label"><span class="spinner-border spinner-border-sm"></span> Chargement…</span>
+      @if (!loadder) {
+        <span>Résultats {{firstResult}}–{{lastResult}} sur {{totalElements}}</span>
+      }
+      @if (loadder) {
+        <span class="loading-label"><span class="spinner-border spinner-border-sm"></span> Chargement…</span>
+      }
     </div>
-    <div *ngIf="totalPages > 0" class="pagination-controls" aria-label="Pagination des adhésions">
-      <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="page === 1"
+    @if (totalPages > 0) {
+      <div class="pagination-controls" aria-label="Pagination des adhésions">
+        <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="page === 1"
         (click)="goToPage(1)">Première</button>
-      <span *ngIf="showLeadingEllipsis" class="pagination-ellipsis">…</span>
-      <button *ngFor="let pageNumber of visiblePages" type="button" class="btn btn-outline-primary btn-sm page-number"
-        [class.active]="pageNumber === page" [attr.aria-current]="pageNumber === page ? 'page' : null"
-        (click)="goToPage(pageNumber)">{{pageNumber}}</button>
-      <span *ngIf="showTrailingEllipsis" class="pagination-ellipsis">…</span>
-      <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="page === totalPages"
+        @if (showLeadingEllipsis) {
+          <span class="pagination-ellipsis">…</span>
+        }
+        @for (pageNumber of visiblePages; track pageNumber) {
+          <button type="button" class="btn btn-outline-primary btn-sm page-number"
+            [class.active]="pageNumber === page" [attr.aria-current]="pageNumber === page ? 'page' : null"
+          (click)="goToPage(pageNumber)">{{pageNumber}}</button>
+        }
+        @if (showTrailingEllipsis) {
+          <span class="pagination-ellipsis">…</span>
+        }
+        <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="page === totalPages"
         (click)="goToPage(totalPages)">Dernière</button>
-    </div>
+      </div>
+    }
     <div class="toolbar-page-controls">
       <label for="page-size">Lignes par page
         <select id="page-size" class="form-select form-select-sm" [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange()">
-          <option *ngFor="let size of pageSizes" [ngValue]="size">{{size}}</option>
+          @for (size of pageSizes; track size) {
+            <option [ngValue]="size">{{size}}</option>
+          }
         </select>
       </label>
-      <span *ngIf="totalPages > 0" class="page-counter">Page {{page}} sur {{totalPages}}</span>
+      @if (totalPages > 0) {
+        <span class="page-counter">Page {{page}} sur {{totalPages}}</span>
+      }
     </div>
   </div>
 
@@ -80,19 +98,25 @@
               <button type="button" class="btn btn-primary btn-sm" id="section-filter-button" ngbDropdownToggle>
                 {{visuelselection || 'Activité'}}
               </button>
-              <div *ngIf="activites.length > 0" ngbDropdownMenu aria-labelledby="section-filter-button" class="section-menu">
-                <button ngbDropdownItem (click)="selectSection('Toutes', 'Toutes les adhésions')">Toutes les adhésions</button>
-                <div *ngFor="let activite of activites | orderBy:'nom':false" class="section-group">
-                  <button ngbDropdownItem class="section-name"
-                    (click)="selectSection('activite#' + activite.nom, activite.nom + ' · Tous horaires')">
-                    {{activite.nom}}
-                  </button>
-                  <button *ngFor="let horaire of activite.horaires" ngbDropdownItem class="schedule-name"
-                    (click)="selectSection('horaire#' + horaire.id, activite.nom + ' · ' + horaire.nom)">
-                    {{horaire.nom}}
-                  </button>
+              @if (activites.length > 0) {
+                <div ngbDropdownMenu aria-labelledby="section-filter-button" class="section-menu">
+                  <button ngbDropdownItem (click)="selectSection('Toutes', 'Toutes les adhésions')">Toutes les adhésions</button>
+                  @for (activite of activites | orderBy:'nom':false; track activite) {
+                    <div class="section-group">
+                      <button ngbDropdownItem class="section-name"
+                        (click)="selectSection('activite#' + activite.nom, activite.nom + ' · Tous horaires')">
+                        {{activite.nom}}
+                      </button>
+                      @for (horaire of activite.horaires; track horaire) {
+                        <button ngbDropdownItem class="schedule-name"
+                          (click)="selectSection('horaire#' + horaire.id, activite.nom + ' · ' + horaire.nom)">
+                          {{horaire.nom}}
+                        </button>
+                      }
+                    </div>
+                  }
                 </div>
-              </div>
+              }
             </div>
             <button class="sort-button" (click)="changeSort('activite.nom')" aria-label="Trier par activité">
               {{sortIndicator('activite.nom')}}
@@ -107,210 +131,232 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngIf="loadder && adhesions.length === 0">
-          <td colspan="7" class="empty-state"><span class="spinner-border text-primary"></span><br>Chargement des adhésions…</td>
-        </tr>
-        <tr *ngIf="!loadder && adhesions.length === 0">
-          <td colspan="7" class="empty-state"><strong>Aucune adhésion trouvée</strong><br>Modifiez les filtres ou la section sélectionnée.</td>
-        </tr>
-        <tr *ngFor="let adhesion of adhesions; trackBy: trackByAdhesion">
-          <td class="activity-cell">
-            <strong>{{adhesion.activite.nom}}</strong>
-            <span>{{adhesion.activite.horaire}}</span>
-          </td>
-
-          <td class="member-cell">
-            <div class="member-name">
-              <strong>{{adhesion.adherent.nom}} {{adhesion.adherent.prenom}}</strong>
-              <button type="button" class="icon-action" title="Ouvrir la fiche adhérent"
-                (click)="opennewTab('#/inscription/' + adhesion.adherent.tribuId)"><fa-icon [icon]="faPen"></fa-icon></button>
-            </div>
-            <a [href]="'mailto:' + adhesion.adherent.email">{{adhesion.adherent.email}}</a>
-            <span *ngIf="adhesion.adherent.adresse">{{adhesion.adherent.adresse}}</span>
-            <small *ngIf="adhesion.adherent.naissance">Né(e) le {{adhesion.adherent.naissance | date:'dd/MM/yyyy'}}</small>
-          </td>
-
-          <td class="payment-cell">
-            <div *ngFor="let paiement of adhesion.paiements | orderBy:'id':false" class="detail-line">
-              <strong>{{paiement.montant}} €</strong> · {{paiement.typeReglement}}
-              <small *ngIf="paiement.dateReglement">{{paiement.dateReglement | date:'dd/MM/yyyy'}}</small>
-            </div>
-            <div *ngIf="adhesion.paiements.length === 0" class="muted">Aucun règlement</div>
-            <div class="cell-actions">
-              <span class="total-amount">Total {{calculSomme(adhesion)}} €</span>
-              <button type="button" class="icon-action success" [class.active]="adhesion.validPaiementSecretariat"
-                title="Marquer le paiement comme validé" (click)="updatePaiementSecretariat(adhesion, true)"><fa-icon [icon]="faCircleCheck"></fa-icon></button>
-              <button type="button" class="icon-action warning" [class.active]="!adhesion.validPaiementSecretariat"
-                title="Marquer le paiement comme à vérifier" (click)="updatePaiementSecretariat(adhesion, false)"><fa-icon [icon]="faCircleXmark"></fa-icon></button>
-              <button type="button" class="btn btn-sm btn-outline-primary" (click)="openModal(editProfileModal, adhesion)">Gérer</button>
-            </div>
-          </td>
-
-          <td class="documents-cell">
-            <div *ngFor="let accord of adhesion.accords | orderBy:'id':false" class="detail-line">
-              <fa-icon [ngClass]="accord.etat ? 'green' : 'orange'" [icon]="accord.etat ? faCircleCheck : faCircleXmark"></fa-icon>
-              {{accord.nom}}
-            </div>
-            <div *ngIf="adhesion.accords.length === 0" class="muted">Aucun document</div>
-            <div class="cell-actions">
-              <button type="button" class="icon-action success" [class.active]="adhesion.validDocumentSecretariat"
-                title="Marquer les documents comme validés" (click)="updateDocumentsSecretariat(adhesion, true)"><fa-icon [icon]="faCircleCheck"></fa-icon></button>
-              <button type="button" class="icon-action warning" [class.active]="!adhesion.validDocumentSecretariat"
-                title="Marquer les documents comme à vérifier" (click)="updateDocumentsSecretariat(adhesion, false)"><fa-icon [icon]="faCircleXmark"></fa-icon></button>
-            </div>
-          </td>
-
-          <td class="status-cell">
-            <select class="form-select form-select-sm" [ngModel]="adhesion.statutActuel"
-              (ngModelChange)="choisirStatut(adhesion, $event)">
-              <option *ngFor="let status of statusesFor(adhesion)" [value]="status">{{status}}</option>
-            </select>
-            <small *ngIf="adhesion.dateChangementStatut">Depuis le {{adhesion.dateChangementStatut | date:'dd/MM/yyyy'}}</small>
-          </td>
-
-          <td class="note-cell">
-            <textarea class="form-control" [(ngModel)]="adhesion.remarqueSecretariat" rows="3"
-              placeholder="Ajouter une note…" (blur)="enregistrerRemarque(adhesion)"></textarea>
-          </td>
-
-          <td class="tracking-cell">
-            <button type="button" class="icon-action warning" [class.active]="adhesion.flag"
-              [title]="adhesion.flag ? 'Retirer le signalement' : 'Signaler cette adhésion'"
-              (click)="updateFlag(adhesion, !adhesion.flag)"><fa-icon [icon]="faFlag"></fa-icon></button>
-            <button type="button" class="icon-action" [class.attention]="verifyAdhesion(adhesion)"
-              title="Marquer les modifications de l’adhésion comme vues" [disabled]="!verifyAdhesion(adhesion)"
-              (click)="updateVisiteAdhesion(adhesion)"><fa-icon [icon]="faCircleExclamation"></fa-icon></button>
-            <button type="button" class="icon-action" [class.attention]="verifyAdherent(adhesion)"
-              title="Marquer les modifications de l’adhérent comme vues" [disabled]="!verifyAdherent(adhesion)"
-              (click)="updateVisiteAdherent(adhesion)"><fa-icon [icon]="faCircleUser"></fa-icon></button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-</section>
-<ng-template #editProfileModal let-c="close" let-d="dismiss">
-  <div class="modal-header">
-    <h4 class="modal-title" id="modal-basic-title">Facturation</h4>
-    <button type="button" class="btn-close" aria-label="Close" (click)="dismiss(selectedAdhesion)"></button>
-  </div>
-  <div class="modal-body">
-    <form name="form" (ngSubmit)="f.form.valid && onSubmit()" #f="ngForm" novalidate>
-
-
-      <div class="row">
-        <div class="col-12">
-          Règlement de {{selectedAdhesion.activite?selectedAdhesion.activite.nom:''}}
-          {{selectedAdhesion.activite?selectedAdhesion.activite.horaire:''}} pour
-          {{selectedAdhesion.adherent?selectedAdhesion.adherent.prenom:''}}
-          {{selectedAdhesion.adherent?selectedAdhesion.adherent.nom:''}}
-        </div>
-        <div *ngIf="selectedAdhesion.paiements.length > 0">
-
-          <table class="table table-striped">
-            <thead>
-              <tr>
-                <th class="center" scope="col truncate">Montant</th>
-                <th class="center" scope="col truncate">Date</th>
-                <th class="center" scope="col truncate">Type</th>
-                <th class="center" scope="col truncate"></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let paiement of selectedAdhesion.paiements | orderBy:'id':false ">
-
-                <td class="truncate">
-
-                  <div class="form-group">
-                    <input type="number" class="form-control" name="{{'montant'+paiement.id}}"
-                      [(ngModel)]="paiement.montant" (blur)="updatePaiement(selectedAdhesion,paiement)"
-                      #montant="ngModel" />
+        @if (loadder && adhesions.length === 0) {
+          <tr>
+            <td colspan="7" class="empty-state"><span class="spinner-border text-primary"></span><br>Chargement des adhésions…</td>
+          </tr>
+        }
+        @if (!loadder && adhesions.length === 0) {
+          <tr>
+            <td colspan="7" class="empty-state"><strong>Aucune adhésion trouvée</strong><br>Modifiez les filtres ou la section sélectionnée.</td>
+          </tr>
+        }
+        @for (adhesion of adhesions; track trackByAdhesion($index, adhesion)) {
+          <tr>
+            <td class="activity-cell">
+              <strong>{{adhesion.activite.nom}}</strong>
+              <span>{{adhesion.activite.horaire}}</span>
+            </td>
+            <td class="member-cell">
+              <div class="member-name">
+                <strong>{{adhesion.adherent.nom}} {{adhesion.adherent.prenom}}</strong>
+                <button type="button" class="icon-action" title="Ouvrir la fiche adhérent"
+                  (click)="opennewTab('#/inscription/' + adhesion.adherent.tribuId)"><fa-icon [icon]="faPen"></fa-icon></button>
+                </div>
+                <a [href]="'mailto:' + adhesion.adherent.email">{{adhesion.adherent.email}}</a>
+                @if (adhesion.adherent.adresse) {
+                  <span>{{adhesion.adherent.adresse}}</span>
+                }
+                @if (adhesion.adherent.naissance) {
+                  <small>Né(e) le {{adhesion.adherent.naissance | date:'dd/MM/yyyy'}}</small>
+                }
+              </td>
+              <td class="payment-cell">
+                @for (paiement of adhesion.paiements | orderBy:'id':false; track paiement) {
+                  <div class="detail-line">
+                    <strong>{{paiement.montant}} €</strong> · {{paiement.typeReglement}}
+                    @if (paiement.dateReglement) {
+                      <small>{{paiement.dateReglement | date:'dd/MM/yyyy'}}</small>
+                    }
                   </div>
-                </td>
-                <td class="truncate">
-                  <div class="form-group">
-                    <input type="date" class="form-control" name="{{'dateReglement'+paiement.id}}"
-                      [ngModel]="paiement.dateReglement" (ngModelChange)="paiement.dateReglement = $event"
-                      #dateReglement="ngModel" required (blur)="updatePaiement(selectedAdhesion,paiement)" />
-                    <div class="alert-danger" *ngIf="dateReglement.errors && f.submitted">
-                      <div *ngIf="dateReglement.errors.required">Date de reglement obligatoire</div>
+                }
+                @if (adhesion.paiements.length === 0) {
+                  <div class="muted">Aucun règlement</div>
+                }
+                <div class="cell-actions">
+                  <span class="total-amount">Total {{calculSomme(adhesion)}} €</span>
+                  <button type="button" class="icon-action success" [class.active]="adhesion.validPaiementSecretariat"
+                    title="Marquer le paiement comme validé" (click)="updatePaiementSecretariat(adhesion, true)"><fa-icon [icon]="faCircleCheck"></fa-icon></button>
+                    <button type="button" class="icon-action warning" [class.active]="!adhesion.validPaiementSecretariat"
+                      title="Marquer le paiement comme à vérifier" (click)="updatePaiementSecretariat(adhesion, false)"><fa-icon [icon]="faCircleXmark"></fa-icon></button>
+                      <button type="button" class="btn btn-sm btn-outline-primary" (click)="openModal(editProfileModal, adhesion)">Gérer</button>
                     </div>
-                  </div>
-                </td>
-                <td class="truncate">
-                  <div ngbDropdown class="d-inline-block">
-                    <div type="button"
-                      [ngClass]="paiement.typeReglement.length>0 ? 'btn-outline-secondary' : 'btn-primary'" class="btn"
-                      id="dropdownBasic1" ngbDropdownToggle>
-                      {{paiement.typeReglement.length>0?paiement.typeReglement:"Aucun"}}
-                    </div>
-
-                    <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-                      <div ngbDropdownItem
-                        (click)="paiement.typeReglement ='HelloAsso'; updatePaiement(selectedAdhesion,paiement)">
-                        HelloAsso</div>
-                      <div ngbDropdownItem
-                        (click)="paiement.typeReglement='HelloAsso 3X'; updatePaiement(selectedAdhesion,paiement)">
-                        HelloAsso 3X</div>
-                      <div ngbDropdownItem
-                        (click)="paiement.typeReglement='Chèque'; updatePaiement(selectedAdhesion,paiement)">Chèque
+                  </td>
+                  <td class="documents-cell">
+                    @for (accord of adhesion.accords | orderBy:'id':false; track accord) {
+                      <div class="detail-line">
+                        <fa-icon [ngClass]="accord.etat ? 'green' : 'orange'" [icon]="accord.etat ? faCircleCheck : faCircleXmark"></fa-icon>
+                        {{accord.nom}}
                       </div>
-                      <div ngbDropdownItem
-                        (click)="paiement.typeReglement = 'Chèque 3X'; updatePaiement(selectedAdhesion,paiement)">Chèque
-                        3X</div>
-                      <div ngbDropdownItem
-                        (click)="paiement.typeReglement ='Pass sport'; updatePaiement(selectedAdhesion,paiement)">Pass
-                        sport</div>
-                      <div ngbDropdownItem
-                        (click)="paiement.typeReglement = 'Espèces'; updatePaiement(selectedAdhesion,paiement)">Espèces
+                    }
+                    @if (adhesion.accords.length === 0) {
+                      <div class="muted">Aucun document</div>
+                    }
+                    <div class="cell-actions">
+                      <button type="button" class="icon-action success" [class.active]="adhesion.validDocumentSecretariat"
+                        title="Marquer les documents comme validés" (click)="updateDocumentsSecretariat(adhesion, true)"><fa-icon [icon]="faCircleCheck"></fa-icon></button>
+                        <button type="button" class="icon-action warning" [class.active]="!adhesion.validDocumentSecretariat"
+                          title="Marquer les documents comme à vérifier" (click)="updateDocumentsSecretariat(adhesion, false)"><fa-icon [icon]="faCircleXmark"></fa-icon></button>
+                        </div>
+                      </td>
+                      <td class="status-cell">
+                        <select class="form-select form-select-sm" [ngModel]="adhesion.statutActuel"
+                          (ngModelChange)="choisirStatut(adhesion, $event)">
+                          @for (status of statusesFor(adhesion); track status) {
+                            <option [value]="status">{{status}}</option>
+                          }
+                        </select>
+                        @if (adhesion.dateChangementStatut) {
+                          <small>Depuis le {{adhesion.dateChangementStatut | date:'dd/MM/yyyy'}}</small>
+                        }
+                      </td>
+                      <td class="note-cell">
+                        <textarea class="form-control" [(ngModel)]="adhesion.remarqueSecretariat" rows="3"
+                        placeholder="Ajouter une note…" (blur)="enregistrerRemarque(adhesion)"></textarea>
+                      </td>
+                      <td class="tracking-cell">
+                        <button type="button" class="icon-action warning" [class.active]="adhesion.flag"
+                          [title]="adhesion.flag ? 'Retirer le signalement' : 'Signaler cette adhésion'"
+                          (click)="updateFlag(adhesion, !adhesion.flag)"><fa-icon [icon]="faFlag"></fa-icon></button>
+                          <button type="button" class="icon-action" [class.attention]="verifyAdhesion(adhesion)"
+                            title="Marquer les modifications de l’adhésion comme vues" [disabled]="!verifyAdhesion(adhesion)"
+                            (click)="updateVisiteAdhesion(adhesion)"><fa-icon [icon]="faCircleExclamation"></fa-icon></button>
+                            <button type="button" class="icon-action" [class.attention]="verifyAdherent(adhesion)"
+                              title="Marquer les modifications de l’adhérent comme vues" [disabled]="!verifyAdherent(adhesion)"
+                              (click)="updateVisiteAdherent(adhesion)"><fa-icon [icon]="faCircleUser"></fa-icon></button>
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+
+                </section>
+                <ng-template #editProfileModal let-c="close" let-d="dismiss">
+                  <div class="modal-header">
+                    <h4 class="modal-title" id="modal-basic-title">Facturation</h4>
+                    <button type="button" class="btn-close" aria-label="Close" (click)="dismiss(selectedAdhesion)"></button>
+                  </div>
+                  <div class="modal-body">
+                    <form name="form" (ngSubmit)="f.form.valid && onSubmit()" #f="ngForm" novalidate>
+
+
+                      <div class="row">
+                        <div class="col-12">
+                          Règlement de {{selectedAdhesion.activite?selectedAdhesion.activite.nom:''}}
+                          {{selectedAdhesion.activite?selectedAdhesion.activite.horaire:''}} pour
+                          {{selectedAdhesion.adherent?selectedAdhesion.adherent.prenom:''}}
+                          {{selectedAdhesion.adherent?selectedAdhesion.adherent.nom:''}}
+                        </div>
+                        @if (selectedAdhesion.paiements.length > 0) {
+                          <div>
+                            <table class="table table-striped">
+                              <thead>
+                                <tr>
+                                  <th class="center" scope="col truncate">Montant</th>
+                                  <th class="center" scope="col truncate">Date</th>
+                                  <th class="center" scope="col truncate">Type</th>
+                                  <th class="center" scope="col truncate"></th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                @for (paiement of selectedAdhesion.paiements | orderBy:'id':false ; track paiement) {
+                                  <tr>
+                                    <td class="truncate">
+                                      <div class="form-group">
+                                        <input type="number" class="form-control" name="{{'montant'+paiement.id}}"
+                                          [(ngModel)]="paiement.montant" (blur)="updatePaiement(selectedAdhesion,paiement)"
+                                          #montant="ngModel" />
+                                      </div>
+                                    </td>
+                                    <td class="truncate">
+                                      <div class="form-group">
+                                        <input type="date" class="form-control" name="{{'dateReglement'+paiement.id}}"
+                                          [ngModel]="paiement.dateReglement" (ngModelChange)="paiement.dateReglement = $event"
+                                          #dateReglement="ngModel" required (blur)="updatePaiement(selectedAdhesion,paiement)" />
+                                        @if (dateReglement.errors && f.submitted) {
+                                          <div class="alert-danger">
+                                            @if (dateReglement.errors.required) {
+                                              <div>Date de reglement obligatoire</div>
+                                            }
+                                          </div>
+                                        }
+                                      </div>
+                                    </td>
+                                    <td class="truncate">
+                                      <div ngbDropdown class="d-inline-block">
+                                        <div type="button"
+                                          [ngClass]="paiement.typeReglement.length>0 ? 'btn-outline-secondary' : 'btn-primary'" class="btn"
+                                          id="dropdownBasic1" ngbDropdownToggle>
+                                          {{paiement.typeReglement.length>0?paiement.typeReglement:"Aucun"}}
+                                        </div>
+                                        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+                                          <div ngbDropdownItem
+                                            (click)="paiement.typeReglement ='HelloAsso'; updatePaiement(selectedAdhesion,paiement)">
+                                          HelloAsso</div>
+                                          <div ngbDropdownItem
+                                            (click)="paiement.typeReglement='HelloAsso 3X'; updatePaiement(selectedAdhesion,paiement)">
+                                          HelloAsso 3X</div>
+                                          <div ngbDropdownItem
+                                            (click)="paiement.typeReglement='Chèque'; updatePaiement(selectedAdhesion,paiement)">Chèque
+                                          </div>
+                                          <div ngbDropdownItem
+                                            (click)="paiement.typeReglement = 'Chèque 3X'; updatePaiement(selectedAdhesion,paiement)">Chèque
+                                          3X</div>
+                                          <div ngbDropdownItem
+                                            (click)="paiement.typeReglement ='Pass sport'; updatePaiement(selectedAdhesion,paiement)">Pass
+                                          sport</div>
+                                          <div ngbDropdownItem
+                                            (click)="paiement.typeReglement = 'Espèces'; updatePaiement(selectedAdhesion,paiement)">Espèces
+                                          </div>
+                                          <div ngbDropdownItem
+                                          (click)="paiement.typeReglement = 'CB'; updatePaiement(selectedAdhesion,paiement)">CB</div>
+                                          <div ngbDropdownItem
+                                          (click)="paiement.typeReglement = 'Intermarché'; updatePaiement(selectedAdhesion,paiement)">Intermarché</div>
+                                          <div ngbDropdownItem
+                                            (click)="paiement.typeReglement = 'Autre'; updatePaiement(selectedAdhesion,paiement)">Autre
+                                          paiement</div>
+                                        </div>
+                                      </div>
+                                    </td>
+                                    <td class="truncate">
+                                      @if (showAdmin || showSecretaire) {
+                                        <fa-icon class="fa-2xl"
+                                        (click)="retraitPaiement(selectedAdhesion,paiement.id)" [icon]="faSquareMinus"></fa-icon>
+                                      }
+                                    </td>
+                                  </tr>
+                                }
+                              </tbody>
+                            </table>
+                          </div>
+                        }
+                        <div type="button" (click)="addNewPaiement(selectedAdhesion)" class="btn btn-primary">Ajouter un paiement</div>
                       </div>
-                      <div ngbDropdownItem
-                        (click)="paiement.typeReglement = 'CB'; updatePaiement(selectedAdhesion,paiement)">CB</div>
-                        <div ngbDropdownItem
-                        (click)="paiement.typeReglement = 'Intermarché'; updatePaiement(selectedAdhesion,paiement)">Intermarché</div>
-                        <div ngbDropdownItem
-                        (click)="paiement.typeReglement = 'Autre'; updatePaiement(selectedAdhesion,paiement)">Autre
-                        paiement</div>
-                    </div>
+                      <div class="modal-footer">
+
+                      </div>
+
+                    </form>
+                  </div>
+                </ng-template>
+
+
+
+
+
+
+                <ng-template #confirmModal let-c="close" let-d="dismiss">
+                  <div class="modal-header">
+                    <h4 class="modal-title" id="modal-basic-title">Suppression</h4>
+                    <button type="button" class="btn-close" aria-label="Close" (click)="dismissSupress()"></button>
+                  </div>
+                  <div class="modal-body">
+                    Vous êtes sur le point de supprimer l'adhesion de {{selectedAdhesion.adherent.prenom}} au
+                    {{selectedAdhesion.activite.nom}} {{selectedAdhesion.activite.horaire}}
 
                   </div>
-                </td>
-                <td class="truncate">
-                  <fa-icon class="fa-2xl" *ngIf="showAdmin || showSecretaire"
-                    (click)="retraitPaiement(selectedAdhesion,paiement.id)" [icon]="faSquareMinus"></fa-icon>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-
-        </div>
-        <div type="button" (click)="addNewPaiement(selectedAdhesion)" class="btn btn-primary">Ajouter un paiement</div>
-      </div>
-      <div class="modal-footer">
-
-      </div>
-
-    </form>
-  </div>
-</ng-template>
-
-
-
-
-
-
-<ng-template #confirmModal let-c="close" let-d="dismiss">
-  <div class="modal-header">
-    <h4 class="modal-title" id="modal-basic-title">Suppression</h4>
-    <button type="button" class="btn-close" aria-label="Close" (click)="dismissSupress()"></button>
-  </div>
-  <div class="modal-body">
-    Vous êtes sur le point de supprimer l'adhesion de {{selectedAdhesion.adherent.prenom}} au
-    {{selectedAdhesion.activite.nom}} {{selectedAdhesion.activite.horaire}}
-
-  </div>
-  <div class="modal-footer">
-    <button type="submit" class="btn btn-primary" (click)="acceptSupress(selectedAdhesion)">Valider</button>
-  </div>
-</ng-template>
+                  <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary" (click)="acceptSupress(selectedAdhesion)">Valider</button>
+                  </div>
+                </ng-template>

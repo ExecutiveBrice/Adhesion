@@ -13,11 +13,14 @@ export let pdfDefaultOptions = {
 
 
 @Component({
+  standalone: false,
   selector: 'modal-pdf',
   templateUrl: './modal-pdf.component.html',
   styleUrls: ['./modal-pdf.component.css']
 })
 export class ModalPDFComponent {
+  fileService = inject(FileService);
+
   activeModal = inject(NgbActiveModal);
 
   @Input()
@@ -27,9 +30,6 @@ export class ModalPDFComponent {
   adherentId!: number;
 
   pdfFile: Document = new Document;
-
-  constructor(
-    public fileService: FileService) { }
 
   ngOnInit(): void {
     if (this.documentName) {
@@ -70,4 +70,3 @@ export class ModalPDFComponent {
 
 
 }
-

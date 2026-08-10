@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient} from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
@@ -10,7 +10,8 @@ const API_URL = environment.server+'/param/';
   providedIn: 'root'
 })
 export class ParamService {
-  constructor(private http: HttpClient) { }
+  private http = inject(HttpClient);
+
 
   getAllText(): Observable<ParamText[]> {
     return this.http.get<ParamText[]>(API_URL + 'allText', { responseType: 'json' });

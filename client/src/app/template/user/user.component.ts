@@ -8,9 +8,7 @@ import { AdhesionService } from 'src/app/_services/adhesion.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ParamService } from 'src/app/_services/param.service';
-import { jsPDF } from "jspdf";
-import { DatePipe } from '@angular/common';
-import { ToastrService } from 'ngx-toastr';
+import { ToastService } from '../../_services/toast.service';
 import { UtilService } from 'src/app/_services/util.service';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FileService } from 'src/app/_services/file.service';
@@ -18,11 +16,23 @@ import { TokenStorageService } from 'src/app/_services/token-storage.service';
 
 
 @Component({
+  standalone: false,
   selector: 'app-user',
   templateUrl: './user.component.html',
   styleUrls: ['./user.component.css']
 })
 export class UserComponent implements OnInit {
+  private toastr = inject(ToastService);
+  private adherentService = inject(AdherentService);
+  private adhesionService = inject(AdhesionService);
+  activiteService = inject(ActiviteService);
+  utilService = inject(UtilService);
+  private tokenStorageService = inject(TokenStorageService);
+  router = inject(Router);
+  route = inject(ActivatedRoute);
+  paramService = inject(ParamService);
+  fileService = inject(FileService);
+
 
 
   @Input()
@@ -56,23 +66,10 @@ export class UserComponent implements OnInit {
   content?: string;
   edit?: boolean
   adultes: Adherent[] = []
-  editAdhRefActivite?: boolean
-  openActivites: boolean = false;
   activitesListe: ActiviteDropDown[] = [];
-  newAdhesions: Adhesion[] = [];
   adhesions: Adhesion[] = [];
-  helloassoAlod: boolean = false;
-  helloassoAlod3X: boolean = false;
-  testRgpd: boolean = false
   isFailed = false;
-  validSecretariat: boolean = false;
-  validDossier: boolean = false;
   mobile: boolean = false;
-  dossierIncomplet = false;
-  adherentsOpen = false
-  adhesionsOpen = false
-  PaiementsOpen = false
-  totalRestantDu = 0;
   isOpen: boolean = false;
   isInscriptionOpen: boolean = false;
   subscription = new Subscription()
@@ -80,24 +77,7 @@ export class UserComponent implements OnInit {
   showAdmin: boolean = false;
   showSecretaire: boolean = false;
 
-  showHelloAsso: boolean | null = false;
-
   activites: Activite[] = []
-  // Default export is a4 paper, portrait, using millimeters for units
-  doc: jsPDF = new jsPDF('p', 'mm', 'a4', true);
-
-  constructor(
-    private toastr: ToastrService,
-    private adherentService: AdherentService,
-    private adhesionService: AdhesionService,
-    public activiteService: ActiviteService,
-    public utilService: UtilService,
-    private tokenStorageService: TokenStorageService,
-    public router: Router,
-    public route: ActivatedRoute,
-    public paramService: ParamService,
-    public fileService: FileService,
-    private datePipe: DatePipe) { }
 
   showSuccess(message: string) {
     this.toastr.success(message, 'Information');

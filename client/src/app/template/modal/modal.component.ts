@@ -2,6 +2,7 @@ import { Component, inject, Input } from '@angular/core'
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap'
 
 @Component({
+  standalone: false,
   selector: 'modal',
   templateUrl: './modal.component.html',
   styleUrls: ['./modal.component.css']
@@ -27,4 +28,3 @@ export class ModalComponent {
 
 
 }
-

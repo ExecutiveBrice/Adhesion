@@ -10,11 +10,17 @@ import { faCircleCheck, faCircleXmark, faCartPlus, faPencilSquare } from '@forta
 import { ModalActivite } from 'src/app/template/modal-activite/modal.activite';
 
 @Component({
+  standalone: false,
   selector: 'ngbd-modal-component',
   templateUrl: './activites.component.html',
   styleUrls: ['./activites.component.css'],
 })
 export class ActivitesComponent implements OnInit, OnDestroy {
+  activiteService = inject(ActiviteService);
+  paramService = inject(ParamService);
+  private tokenStorageService = inject(TokenStorageService);
+  router = inject(Router);
+
   faCircleXmark = faCircleXmark;
   faCircleCheck = faCircleCheck;
   faPencilSquare = faPencilSquare;
@@ -43,13 +49,6 @@ export class ActivitesComponent implements OnInit, OnDestroy {
   private readonly searchChanges = new Subject<string>();
   private readonly destroy$ = new Subject<void>();
   private readonly modalService = inject(NgbModal);
-
-  constructor(
-    public activiteService: ActiviteService,
-    public paramService: ParamService,
-    private tokenStorageService: TokenStorageService,
-    public router: Router
-  ) { }
 
   ngOnInit(): void {
     if (this.tokenStorageService.getUser().roles) {

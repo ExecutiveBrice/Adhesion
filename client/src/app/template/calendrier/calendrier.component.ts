@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
 import { catchError, forkJoin, of } from 'rxjs';
 import { ActiviteService } from 'src/app/_services/activite.service';
 import { ParamService } from 'src/app/_services/param.service';
@@ -33,11 +33,15 @@ interface JourCalendrier {
 }
 
 @Component({
+  standalone: false,
   selector: 'app-calendrier',
   templateUrl: './calendrier.component.html',
   styleUrls: ['../../page/login/login.component.css']
 })
 export class CalendrierComponent implements OnInit, OnChanges {
+  private paramService = inject(ParamService);
+  private activiteService = inject(ActiviteService);
+
   @Input() tribuUuid?: string;
 
   calendrier: JourCalendrier[] = [];
@@ -53,8 +57,6 @@ export class CalendrierComponent implements OnInit, OnChanges {
   faXmark = faXmark;
   faCheck = faCheck;
   faTriangleExclamation = faTriangleExclamation;
-
-  constructor(private paramService: ParamService, private activiteService: ActiviteService) {}
 
   ngOnInit(): void { this.chargerConfigurationAgendas(); }
 

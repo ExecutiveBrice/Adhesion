@@ -24,7 +24,6 @@ import { ModalActivite } from './template/modal-activite/modal.activite';
 import { NgxExtendedPdfViewerModule } from 'ngx-extended-pdf-viewer';
 import { ngfModule } from "angular-file"
 
-import { ToastrModule } from 'ngx-toastr';
 import { UserComponent } from './template/user/user.component';
 import { SwitchComponent } from './template/switch/swtch';
 
@@ -99,15 +98,6 @@ registerLocaleData(localeFr);
     FontAwesomeModule,
     ngfModule,
     AngularEditorModule,
-    ToastrModule.forRoot({
-      enableHtml: true,
-      timeOut: 10000,
-      closeButton: true,
-      tapToDismiss: true,
-      progressBar: true,
-      positionClass: 'toast-top-left-wide',
-      preventDuplicates: true,
-    }),
 
     OrderSimplePipe,
     FilterAdhesionByPipe,
