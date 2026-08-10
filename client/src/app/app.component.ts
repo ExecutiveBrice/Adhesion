@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { TokenStorageService } from './_services/token-storage.service';
 import { ParamService } from './_services/param.service';
-import { ParamTransmissionService } from './_helpers/transmission.service';
+import { ParamTransmissionService } from './_services/transmission.service';
 import { ToastService } from './_services/toast.service';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap/collapse';
 import { RouterLinkActive, RouterLink, RouterOutlet } from '@angular/router';

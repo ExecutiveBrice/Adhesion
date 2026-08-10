@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { AuthService } from '../../_services/auth.service';
 import { TokenStorageService } from '../../_services/token-storage.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ParamTransmissionService } from 'src/app/_helpers/transmission.service';
+import { ParamTransmissionService } from 'src/app/_services/transmission.service';
 import { faBook, faCheck, faClock, faCloudDownloadAlt, faPencilSquare, faScaleBalanced, faSquareMinus, faSquarePlus, faTriangleExclamation, faUserPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { catchError, forkJoin, of } from 'rxjs';
 import { ParamService } from 'src/app/_services/param.service';
