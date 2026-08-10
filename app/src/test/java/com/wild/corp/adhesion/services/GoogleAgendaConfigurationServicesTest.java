@@ -1,6 +1,6 @@
 package com.wild.corp.adhesion.services;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.wild.corp.adhesion.models.GoogleAgenda;
 import com.wild.corp.adhesion.models.resources.AgendaGoogleConfiguration;
 import com.wild.corp.adhesion.repository.GoogleAgendaRepository;
@@ -33,7 +33,7 @@ class GoogleAgendaConfigurationServicesTest {
                 googleAgendaRepository,
                 paramTextServices,
                 new GoogleAgendaServices(HttpClient.newHttpClient()),
-                new ObjectMapper());
+                new JsonMapper());
     }
 
     @Test

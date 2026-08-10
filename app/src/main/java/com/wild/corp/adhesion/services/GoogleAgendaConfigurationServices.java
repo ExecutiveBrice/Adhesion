@@ -1,7 +1,7 @@
 package com.wild.corp.adhesion.services;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 import com.wild.corp.adhesion.models.GoogleAgenda;
 import com.wild.corp.adhesion.models.ParamText;
 import com.wild.corp.adhesion.models.resources.AgendaGoogleConfiguration;
@@ -30,16 +30,16 @@ public class GoogleAgendaConfigurationServices {
     private final GoogleAgendaRepository googleAgendaRepository;
     private final ParamTextServices paramTextServices;
     private final GoogleAgendaServices googleAgendaServices;
-    private final ObjectMapper objectMapper;
+    private final JsonMapper jsonMapper;
 
     public GoogleAgendaConfigurationServices(GoogleAgendaRepository googleAgendaRepository,
                                               ParamTextServices paramTextServices,
                                               GoogleAgendaServices googleAgendaServices,
-                                              ObjectMapper objectMapper) {
+                                              JsonMapper jsonMapper) {
         this.googleAgendaRepository = googleAgendaRepository;
         this.paramTextServices = paramTextServices;
         this.googleAgendaServices = googleAgendaServices;
-        this.objectMapper = objectMapper;
+        this.jsonMapper = jsonMapper;
     }
 
     @Transactional
@@ -146,7 +146,7 @@ public class GoogleAgendaConfigurationServices {
         List<AgendaGoogleConfiguration> configurations = new ArrayList<>();
         if (valeur.startsWith("[")) {
             try {
-                JsonNode racine = objectMapper.readTree(valeur);
+                JsonNode racine = jsonMapper.readTree(valeur);
                 if (racine.isArray()) {
                     for (JsonNode noeud : racine) {
                         configurations.add(new AgendaGoogleConfiguration(
