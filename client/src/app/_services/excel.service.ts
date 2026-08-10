@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import * as FileSaver from 'file-saver';
 import * as XLSX from 'xlsx';
 
 const EXCEL_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
@@ -71,7 +70,21 @@ export class ExcelService {
     const data: Blob = new Blob([buffer], {
       type: EXCEL_TYPE
     });
-    FileSaver.saveAs(data, fileName + '_date_' + new Date().getTime() + EXCEL_EXTENSION);
+    this.saveFile(data, fileName + '_date_' + new Date().getTime() + EXCEL_EXTENSION);
+  }
+
+  private saveFile(blob: Blob, filename: string): void {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    link.href = url;
+    link.download = filename;
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    URL.revokeObjectURL(url);
   }
 
 }
