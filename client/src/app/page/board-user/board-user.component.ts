@@ -31,20 +31,22 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import {ActivatedRoute, Router} from '@angular/router';
 import {TokenStorageService} from 'src/app/_services/token-storage.service';
-import {Subscription} from 'rxjs';
 import {ParamService} from 'src/app/_services/param.service';
 
-import {DatePipe} from '@angular/common';
+import { DatePipe, NgClass } from '@angular/common';
 import {TribuService} from 'src/app/_services/tribu.service';
 import { ToastService } from '../../_services/toast.service';
 import {UserComponent} from 'src/app/template/user/user.component';
 import {UtilService} from 'src/app/_services/util.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CalendrierComponent } from '../../template/calendrier/calendrier.component';
+import { OrderByPipe } from '../../_helpers/sort.pipe';
 
 @Component({
-  standalone: false,
-  selector: 'app-board-user',
-  templateUrl: './board-user.component.html',
-  styleUrls: ['./board-user.component.css']
+    selector: 'app-board-user',
+    templateUrl: './board-user.component.html',
+    styleUrls: ['./board-user.component.css'],
+    imports: [NgClass, FaIconComponent, CalendrierComponent, OrderByPipe]
 })
 export class BoardUserComponent implements OnInit {
   private toastr = inject(ToastService);
@@ -91,8 +93,6 @@ export class BoardUserComponent implements OnInit {
   PaiementsOpen = false
   totalRestantDu = 0;
   tribuUuid: string = "";
-  subscription = new Subscription()
-
   showAdmin: boolean = false;
   showSecretaire: boolean = false;
 

@@ -6,14 +6,16 @@ import { ComptaService } from 'src/app/_services/compta.service';
 import { ComptaActivite } from 'src/app/models/comptaActivite';
 import { DatePipe } from '@angular/common';
 import { ParamService } from 'src/app/_services/param.service';
+import { FormsModule } from '@angular/forms';
+import { OrderByPipe } from '../../_helpers/sort.pipe';
 
 
 
 @Component({
-  standalone: false,
-  selector: 'app-compta',
-  templateUrl: './compta.component.html',
-  styleUrls: ['./compta.component.css']
+    selector: 'app-compta',
+    templateUrl: './compta.component.html',
+    styleUrls: ['./compta.component.css'],
+    imports: [FormsModule, OrderByPipe]
 })
 export class ComptaComponent implements OnInit {
   private datePipe = inject(DatePipe);

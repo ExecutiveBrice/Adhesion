@@ -1,16 +1,18 @@
 import { Component, inject } from '@angular/core';
 import { TokenStorageService } from './_services/token-storage.service';
 import { ParamService } from './_services/param.service';
-import { Subscription } from 'rxjs';
 import { ParamTransmissionService } from './_helpers/transmission.service';
 import { ToastService } from './_services/toast.service';
+import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap/collapse';
+import { RouterLinkActive, RouterLink, RouterOutlet } from '@angular/router';
+import { NgbToast, NgbToastHeader } from '@ng-bootstrap/ng-bootstrap/toast';
 
 
 @Component({
-  standalone: false,
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+    selector: 'app-root',
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.css'],
+    imports: [NgbCollapse, RouterLinkActive, RouterLink, RouterOutlet, NgbToast, NgbToastHeader]
 })
 export class AppComponent {
   readonly toastService = inject(ToastService);
@@ -31,8 +33,6 @@ export class AppComponent {
   showComptable=false;
   username?: string;
   maintenance: Boolean = false
-  subscription = new Subscription()
-
   ngOnInit(): void {
     this.isLoggedIn = !!this.tokenStorageService.getToken();
 

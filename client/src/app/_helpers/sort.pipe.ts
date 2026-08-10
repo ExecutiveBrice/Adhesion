@@ -1,9 +1,6 @@
 import {Pipe, PipeTransform} from '@angular/core'
 
-@Pipe({
-  standalone: false,
-  name: 'orderBy'
-})
+@Pipe({ name: 'orderBy' })
 export class OrderByPipe implements PipeTransform {
   transform(values: number[]|string[]|object[], key?: string, reverse?: boolean) {
     if (!Array.isArray(values) || values.length <= 0) {

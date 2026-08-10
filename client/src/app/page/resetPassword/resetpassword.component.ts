@@ -1,13 +1,14 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../_services/auth.service';
+import { FormsModule } from '@angular/forms';
 
 
 @Component({
-  standalone: false,
-  selector: 'app-login',
-  templateUrl: './resetpassword.component.html',
-  styleUrls: ['./resetpassword.component.css']
+    selector: 'app-login',
+    templateUrl: './resetpassword.component.html',
+    styleUrls: ['./resetpassword.component.css'],
+    imports: [FormsModule]
 })
 export class ResetPasswordComponent implements OnInit {
   private authService = inject(AuthService);

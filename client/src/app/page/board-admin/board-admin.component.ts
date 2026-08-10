@@ -8,14 +8,20 @@ import { faCalendarDays, faCircleCheck, faCircleXmark, faEnvelope, faLocationDot
 import { AdherentService } from 'src/app/_services/adherent.service';
 import {AuthService} from "../../_services/auth.service";
 import {TokenStorageService} from "../../_services/token-storage.service";
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
+import { NgClass } from '@angular/common';
+import { NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap/dropdown';
+import { RouterLink } from '@angular/router';
+import { OrderByPipe } from '../../_helpers/sort.pipe';
 
 
 
 @Component({
-  standalone: false,
-  selector: 'app-board-admin',
-  templateUrl: './board-admin.component.html',
-  styleUrls: ['./board-admin.component.css']
+    selector: 'app-board-admin',
+    templateUrl: './board-admin.component.html',
+    styleUrls: ['./board-admin.component.css'],
+    imports: [FaIconComponent, FormsModule, NgClass, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, RouterLink, OrderByPipe]
 })
 export class BoardAdminComponent implements OnInit {
   private tokenStorage = inject(TokenStorageService);

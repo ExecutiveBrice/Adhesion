@@ -8,13 +8,15 @@ import {AuthService} from "../../_services/auth.service";
 import {AdherentService} from "../../_services/adherent.service";
 import {HttpErrorResponse} from "@angular/common/http";
 import { ToastService } from '../../_services/toast.service';
+import { DecimalPipe } from '@angular/common';
+import { OrderByPipe } from '../../_helpers/sort.pipe';
 
 
 @Component({
-  standalone: false,
-  selector: 'app-reporting',
-  templateUrl: './reporting.component.html',
-  styleUrls: ['./reporting.component.css']
+    selector: 'app-reporting',
+    templateUrl: './reporting.component.html',
+    styleUrls: ['./reporting.component.css'],
+    imports: [DecimalPipe, OrderByPipe]
 })
 export class ReportingComponent implements OnInit {
   private toastr = inject(ToastService);

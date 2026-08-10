@@ -5,6 +5,8 @@ import { ParamService } from 'src/app/_services/param.service';
 import { AgendaGoogleConfiguration } from 'src/app/models';
 import { EvenementGoogleAgenda, SeanceCalendrier } from 'src/app/models/seance';
 import { faCheck, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { NgClass, SlicePipe, DatePipe } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 interface EvenementCalendrier {
   id: string;
@@ -33,10 +35,10 @@ interface JourCalendrier {
 }
 
 @Component({
-  standalone: false,
-  selector: 'app-calendrier',
-  templateUrl: './calendrier.component.html',
-  styleUrls: ['../../page/login/login.component.css']
+    selector: 'app-calendrier',
+    templateUrl: './calendrier.component.html',
+    styleUrls: ['../../page/login/login.component.css'],
+    imports: [NgClass, FaIconComponent, SlicePipe, DatePipe]
 })
 export class CalendrierComponent implements OnInit, OnChanges {
   private paramService = inject(ParamService);

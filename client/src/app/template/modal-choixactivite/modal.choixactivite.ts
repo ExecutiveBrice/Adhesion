@@ -2,11 +2,12 @@ import { Component, inject, Input } from '@angular/core'
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap'
 import { ActiviteDropDown } from 'src/app/models';
 import { faExternalLinkSquareAlt } from '@fortawesome/free-solid-svg-icons';
+import { OrderByPipe } from '../../_helpers/sort.pipe';
 @Component({
-  standalone: false,
-  selector: 'modal',
-  templateUrl: './modal.choixactivite.html',
-  styleUrls: ['./modal.choixactivite.css']
+    selector: 'modal',
+    templateUrl: './modal.choixactivite.html',
+    styleUrls: ['./modal.choixactivite.css'],
+    imports: [OrderByPipe]
 })
 export class ModalChoixActivite {
 	activeModal = inject(NgbActiveModal);

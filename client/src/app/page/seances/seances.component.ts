@@ -6,12 +6,15 @@ import { TokenStorageService } from 'src/app/_services/token-storage.service';
 import { UserService } from 'src/app/_services/user.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { faCheck, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { NgClass, DatePipe } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
 
 @Component({
-  standalone: false,
-  selector: 'app-seances',
-  templateUrl: './seances.component.html',
-  styleUrls: ['./seances.component.css']
+    selector: 'app-seances',
+    templateUrl: './seances.component.html',
+    styleUrls: ['./seances.component.css'],
+    imports: [NgClass, FaIconComponent, FormsModule, DatePipe]
 })
 export class SeancesComponent implements OnInit {
   private tokenStorageService = inject(TokenStorageService);

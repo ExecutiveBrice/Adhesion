@@ -6,20 +6,25 @@ import { AdherentService } from 'src/app/_services/adherent.service';
 import { faRefresh, faCirclePause, faClock, faPiggyBank, faSkull, faFileSignature, faSquareCaretLeft, faSquareCaretDown, faEye, faCircleQuestion, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { AdhesionService } from 'src/app/_services/adhesion.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
 import { ParamService } from 'src/app/_services/param.service';
 import { ToastService } from '../../_services/toast.service';
 import { UtilService } from 'src/app/_services/util.service';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FileService } from 'src/app/_services/file.service';
 import { TokenStorageService } from 'src/app/_services/token-storage.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgClass, DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap/dropdown';
+import { OrderByPipe } from '../../_helpers/sort.pipe';
+import { SimpleFilterPipe } from '../../_helpers/simpleFilter.pipe';
 
 
 @Component({
-  standalone: false,
-  selector: 'app-user',
-  templateUrl: './user.component.html',
-  styleUrls: ['./user.component.css']
+    selector: 'app-user',
+    templateUrl: './user.component.html',
+    styleUrls: ['./user.component.css'],
+    imports: [FaIconComponent, NgClass, FormsModule, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, DatePipe, OrderByPipe, SimpleFilterPipe]
 })
 export class UserComponent implements OnInit {
   private toastr = inject(ToastService);
@@ -72,8 +77,6 @@ export class UserComponent implements OnInit {
   mobile: boolean = false;
   isOpen: boolean = false;
   isInscriptionOpen: boolean = false;
-  subscription = new Subscription()
-
   showAdmin: boolean = false;
   showSecretaire: boolean = false;
 

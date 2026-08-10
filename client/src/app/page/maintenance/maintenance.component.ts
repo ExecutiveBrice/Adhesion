@@ -2,10 +2,9 @@ import { Component, OnInit, inject } from '@angular/core';
 import { TokenStorageService } from '../../_services/token-storage.service';
 
 @Component({
-  standalone: false,
-  selector: 'app-maintenance',
-  templateUrl: './maintenance.component.html',
-  styleUrls: ['./maintenance.component.css']
+    selector: 'app-maintenance',
+    templateUrl: './maintenance.component.html',
+    styleUrls: ['./maintenance.component.css']
 })
 export class MaintenanceComponent implements OnInit {
   private token = inject(TokenStorageService);

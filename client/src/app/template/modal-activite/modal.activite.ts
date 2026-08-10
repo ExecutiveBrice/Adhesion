@@ -8,12 +8,17 @@ import { ActiviteService } from 'src/app/_services/activite.service';
 import { ParamService } from 'src/app/_services/param.service';
 import { faCircleQuestion, faEnvelope, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ToastService } from '../../_services/toast.service';
+import { NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap/dropdown';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgClass, DatePipe } from '@angular/common';
+import { OrderByPipe } from '../../_helpers/sort.pipe';
 
 @Component({
-  standalone: false,
-  selector: 'modal',
-  templateUrl: './modal.activite.html',
-  styleUrls: ['./modal.activite.css']
+    selector: 'modal',
+    templateUrl: './modal.activite.html',
+    styleUrls: ['./modal.activite.css'],
+    imports: [NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, FormsModule, FaIconComponent, NgClass, DatePipe, OrderByPipe]
 })
 export class ModalActivite implements OnInit, OnDestroy {
   private toastr = inject(ToastService);

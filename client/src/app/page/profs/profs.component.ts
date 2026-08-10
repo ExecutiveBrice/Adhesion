@@ -5,15 +5,17 @@ import { faSquareCaretLeft, faSquareCaretDown, faSkull, faUsers, faEnvelope, faC
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TokenStorageService } from 'src/app/_services/token-storage.service';
 import { Router } from '@angular/router';
-import { Subscription } from 'rxjs';
 import { AuthService } from 'src/app/_services/auth.service';
 import { ParamService } from 'src/app/_services/param.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DatePipe } from '@angular/common';
+import { OrderByPipe } from '../../_helpers/sort.pipe';
 
 @Component({
-  standalone: false,
-  selector: 'app-profs',
-  templateUrl: './profs.component.html',
-  styleUrls: ['./profs.component.css']
+    selector: 'app-profs',
+    templateUrl: './profs.component.html',
+    styleUrls: ['./profs.component.css'],
+    imports: [FaIconComponent, DatePipe, OrderByPipe]
 })
 export class ProfsComponent implements OnInit {
   private authService = inject(AuthService);
@@ -42,8 +44,6 @@ export class ProfsComponent implements OnInit {
   sens: boolean = false;
   showAdmin: boolean = false;
   filtres: Map<string, boolean> = new Map<string, boolean>();
-  subscription = new Subscription()
-
   ngOnInit(): void {
     if (this.tokenStorageService.getUser().roles) {
       this.showAdmin = this.tokenStorageService.getUser().roles.includes('ROLE_ADMIN');
