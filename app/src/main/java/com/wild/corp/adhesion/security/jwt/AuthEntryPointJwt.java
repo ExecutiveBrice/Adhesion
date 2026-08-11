@@ -1,6 +1,6 @@
 package com.wild.corp.adhesion.security.jwt;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +17,12 @@ import java.util.Map;
 @Slf4j
 public class AuthEntryPointJwt implements AuthenticationEntryPoint {
 
+  private final JsonMapper jsonMapper;
+
+  public AuthEntryPointJwt(JsonMapper jsonMapper) {
+    this.jsonMapper = jsonMapper;
+  }
+
 
   @Override
   public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
@@ -32,8 +38,7 @@ public class AuthEntryPointJwt implements AuthenticationEntryPoint {
     body.put("message", authException.getMessage());
     body.put("path", request.getServletPath());
 
-    final ObjectMapper mapper = new ObjectMapper();
-    mapper.writeValue(response.getOutputStream(), body);
+    jsonMapper.writeValue(response.getOutputStream(), body);
 
 //    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Error: Unauthorized");
   }
