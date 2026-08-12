@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, Input } from '@angular/core';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { Accord, Activite, ActiviteDropDown, Adherent, Adhesion, Document, Tribu } from '../../models';
 
 import { ActiviteService } from '../../_services/activite.service';
@@ -27,6 +28,7 @@ import { SimpleFilterPipe } from '../../_helpers/simpleFilter.pipe';
     imports: [FaIconComponent, NgClass, FormsModule, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, DatePipe, OrderByPipe, SimpleFilterPipe]
 })
 export class UserComponent implements OnInit {
+  private readonly apiViewRefresh = registerApiViewRefresh();
   private toastr = inject(ToastService);
   private adherentService = inject(AdherentService);
   private adhesionService = inject(AdhesionService);

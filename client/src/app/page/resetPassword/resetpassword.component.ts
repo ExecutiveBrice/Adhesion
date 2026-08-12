@@ -1,4 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../_services/auth.service';
 import { FormsModule } from '@angular/forms';
@@ -11,6 +12,7 @@ import { FormsModule } from '@angular/forms';
     imports: [FormsModule]
 })
 export class ResetPasswordComponent implements OnInit {
+  private readonly apiViewRefresh = registerApiViewRefresh();
   private authService = inject(AuthService);
   route = inject(ActivatedRoute);
   router = inject(Router);

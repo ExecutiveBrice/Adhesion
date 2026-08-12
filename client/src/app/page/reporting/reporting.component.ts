@@ -1,4 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { TokenStorageService } from '../../_services/token-storage.service';
 import Chart from 'chart.js/auto';
 import { ReportingService } from 'src/app/_services/reporting.service';
@@ -19,6 +20,7 @@ import { OrderByPipe } from '../../_helpers/sort.pipe';
     imports: [DecimalPipe, OrderByPipe]
 })
 export class ReportingComponent implements OnInit {
+  private readonly apiViewRefresh = registerApiViewRefresh();
   private toastr = inject(ToastService);
   private excelService = inject(ExcelService);
   private adherentService = inject(AdherentService);

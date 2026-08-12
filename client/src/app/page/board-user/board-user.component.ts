@@ -1,4 +1,5 @@
 import {Component, OnInit, inject} from '@angular/core';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import {
   Accord,
   Adherent,
@@ -49,6 +50,7 @@ import { OrderByPipe } from '../../_helpers/sort.pipe';
     imports: [NgClass, FaIconComponent, CalendrierComponent, OrderByPipe]
 })
 export class BoardUserComponent implements OnInit {
+  private readonly apiViewRefresh = registerApiViewRefresh();
   private toastr = inject(ToastService);
   private tribuService = inject(TribuService);
   private adherentService = inject(AdherentService);

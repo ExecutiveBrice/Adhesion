@@ -1,4 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { AdherentService } from '../../_services/adherent.service';
 import { ActiviteLite, Adherent, AdherentLite } from 'src/app/models';
 import { faSquareCaretLeft, faSquareCaretDown, faSkull, faUsers, faEnvelope, faCircleXmark, faFlag, faPiggyBank, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
@@ -18,6 +19,7 @@ import { OrderByPipe } from '../../_helpers/sort.pipe';
     imports: [FaIconComponent, DatePipe, OrderByPipe]
 })
 export class ProfsComponent implements OnInit {
+  private readonly apiViewRefresh = registerApiViewRefresh();
   private authService = inject(AuthService);
   private adherentService = inject(AdherentService);
   private tokenStorageService = inject(TokenStorageService);

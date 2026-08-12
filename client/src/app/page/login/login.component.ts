@@ -12,6 +12,7 @@ import { EvenementGoogleAgenda, SeanceCalendrier } from 'src/app/models/seance';
 import { AgendaGoogleConfiguration } from 'src/app/models';
 import { FormsModule } from '@angular/forms';
 import { CalendrierComponent } from '../../template/calendrier/calendrier.component';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 
 interface EvenementCalendrier {
   id: string;
@@ -46,6 +47,7 @@ interface JourCalendrier {
     imports: [FormsModule, CalendrierComponent]
 })
 export class LoginComponent implements OnInit {
+  private readonly apiViewRefresh = registerApiViewRefresh();
   private toastr = inject(ToastService);
   transmissionService = inject(ParamTransmissionService);
   private authService = inject(AuthService);

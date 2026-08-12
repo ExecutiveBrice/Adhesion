@@ -1,4 +1,5 @@
 import { Component, inject, Input, OnDestroy, OnInit } from '@angular/core'
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap'
 import { Activite, Adherent, AdherentLite, SalleConfiguration } from 'src/app/models';
 import { Seance } from 'src/app/models/seance';
@@ -21,6 +22,7 @@ import { OrderByPipe } from '../../_helpers/sort.pipe';
     imports: [NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, FormsModule, FaIconComponent, NgClass, DatePipe, OrderByPipe]
 })
 export class ModalActivite implements OnInit, OnDestroy {
+  private readonly apiViewRefresh = registerApiViewRefresh();
   private toastr = inject(ToastService);
   private adherentService = inject(AdherentService);
   activiteService = inject(ActiviteService);

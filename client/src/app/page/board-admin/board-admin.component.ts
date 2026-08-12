@@ -1,4 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { UserService } from '../../_services/user.service';
 import { ParamService } from '../../_services/param.service';
 
@@ -24,6 +25,7 @@ import { OrderByPipe } from '../../_helpers/sort.pipe';
     imports: [FaIconComponent, FormsModule, NgClass, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, RouterLink, OrderByPipe]
 })
 export class BoardAdminComponent implements OnInit {
+  private readonly apiViewRefresh = registerApiViewRefresh();
   private tokenStorage = inject(TokenStorageService);
   private authService = inject(AuthService);
   private paramService = inject(ParamService);

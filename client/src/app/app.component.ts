@@ -3,6 +3,7 @@ import { TokenStorageService } from './_services/token-storage.service';
 import { ParamService } from './_services/param.service';
 import { ParamTransmissionService } from './_services/transmission.service';
 import { ToastService } from './_services/toast.service';
+import { registerApiViewRefresh } from './_services/api-render.service';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap/collapse';
 import { RouterLinkActive, RouterLink, RouterOutlet } from '@angular/router';
 import { NgbToast, NgbToastHeader } from '@ng-bootstrap/ng-bootstrap/toast';
@@ -15,6 +16,7 @@ import { NgbToast, NgbToastHeader } from '@ng-bootstrap/ng-bootstrap/toast';
     imports: [NgbCollapse, RouterLinkActive, RouterLink, RouterOutlet, NgbToast, NgbToastHeader]
 })
 export class AppComponent {
+  private readonly apiViewRefresh = registerApiViewRefresh();
   readonly toastService = inject(ToastService);
   transmissionService = inject(ParamTransmissionService);
   private paramService = inject(ParamService);

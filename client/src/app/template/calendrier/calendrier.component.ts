@@ -7,6 +7,7 @@ import { EvenementGoogleAgenda, SeanceCalendrier } from 'src/app/models/seance';
 import { faCheck, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { NgClass, SlicePipe, DatePipe } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 
 interface EvenementCalendrier {
   id: string;
@@ -41,6 +42,7 @@ interface JourCalendrier {
     imports: [NgClass, FaIconComponent, SlicePipe, DatePipe]
 })
 export class CalendrierComponent implements OnInit, OnChanges {
+  private readonly apiViewRefresh = registerApiViewRefresh();
   private paramService = inject(ParamService);
   private activiteService = inject(ActiviteService);
 

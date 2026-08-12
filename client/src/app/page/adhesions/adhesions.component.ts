@@ -1,4 +1,5 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   ActiviteDropDown,
@@ -39,6 +40,7 @@ import { OrderByPipe } from '../../_helpers/sort.pipe';
     imports: [FormsModule, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownButtonItem, NgbDropdownItem, FaIconComponent, NgClass, DatePipe, OrderByPipe]
 })
 export class AdhesionsComponent implements OnInit {
+  private readonly apiViewRefresh = registerApiViewRefresh();
   private toastr = inject(ToastService);
   private adherentService = inject(AdherentService);
   private activiteService = inject(ActiviteService);

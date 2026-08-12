@@ -1,4 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { TokenStorageService } from '../../_services/token-storage.service';
 
 import { ReportingService } from 'src/app/_services/reporting.service';
@@ -18,6 +19,7 @@ import { OrderByPipe } from '../../_helpers/sort.pipe';
     imports: [FormsModule, OrderByPipe]
 })
 export class ComptaComponent implements OnInit {
+  private readonly apiViewRefresh = registerApiViewRefresh();
   private datePipe = inject(DatePipe);
   private comptaService = inject(ComptaService);
   private paramService = inject(ParamService);

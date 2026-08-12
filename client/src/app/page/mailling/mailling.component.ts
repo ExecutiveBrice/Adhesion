@@ -1,4 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import {MailService} from '../../_services/mail.service';
 import {Activite, ActiviteNm1, Email, Groupe} from '../../models';
 import {Router} from '@angular/router';
@@ -22,6 +23,7 @@ import { OrderObjectByPipe } from '../../_helpers/sortObject.pipe';
 })
 
 export class MaillingComponent implements OnInit {
+  private readonly apiViewRefresh = registerApiViewRefresh();
   private toastr = inject(ToastService);
   fb = inject(FormBuilder);
   activiteService = inject(ActiviteService);

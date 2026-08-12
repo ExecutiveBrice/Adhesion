@@ -1,4 +1,5 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
@@ -24,6 +25,7 @@ import { NgClass } from '@angular/common';
     ],
 })
 export class ActivitesComponent implements OnInit {
+  private readonly apiViewRefresh = registerApiViewRefresh();
   activiteService = inject(ActiviteService);
   paramService = inject(ParamService);
   private tokenStorageService = inject(TokenStorageService);

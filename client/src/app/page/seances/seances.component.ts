@@ -1,4 +1,5 @@
 import { Component, OnInit, TemplateRef, inject } from '@angular/core';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { PresenceSeance, SeanceDuJour } from 'src/app/models/seance';
@@ -17,6 +18,7 @@ import { FormsModule } from '@angular/forms';
     imports: [NgClass, FaIconComponent, FormsModule, DatePipe]
 })
 export class SeancesComponent implements OnInit {
+  private readonly apiViewRefresh = registerApiViewRefresh();
   private tokenStorageService = inject(TokenStorageService);
   private userService = inject(UserService);
   private modalService = inject(NgbModal);
