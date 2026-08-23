@@ -2,28 +2,38 @@
   <h2>Séances du {{ today | date:'fullDate':'':'fr-FR' }}</h2>
 
 
-  <div *ngIf="isFailed" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+  @if (isFailed) {
+    <div class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+  }
 
-  <div *ngIf="!isFailed && seances.length === 0" class="alert alert-info">
-    Aucune séance prévue aujourd’hui.
-  </div>
-
-  <article *ngFor="let seance of seances" class="card seance-card" role="button" tabindex="0"
-           (click)="ouvrirPresences(seance, presencesModal)"
-           (keydown.enter)="ouvrirPresences(seance, presencesModal)">
-    <div class="card-body">
-      <h3 class="card-title">{{ seance.activite }}</h3>
-      <dl>
-        <div><dt>Horaire</dt><dd>{{ seance.debut | date:'HH:mm' }} – {{ seance.fin | date:'HH:mm' }}</dd></div>
-        <div><dt>Lieu</dt><dd>{{ seance.lieu || 'Lieu non renseigné' }}<span *ngIf="seance.adresse">, {{ seance.adresse }}</span></dd></div>
-        <div><dt>Statut</dt><dd class="etat-seance" [ngClass]="'etat-' + seance.etatSeance.toLowerCase()">
-          <fa-icon *ngIf="iconeEtat(seance.etatSeance)" [icon]="iconeEtat(seance.etatSeance)!"></fa-icon>
-          {{ libelleEtat(seance.etatSeance) }}
-        </dd></div>
-        <div><dt>Participants</dt><dd>{{ seance.nombreParticipants }}</dd></div>
-      </dl>
+  @if (!isFailed && seances.length === 0) {
+    <div class="alert alert-info">
+      Aucune séance prévue aujourd’hui.
     </div>
-  </article>
+  }
+
+  @for (seance of seances; track seance) {
+    <article class="card seance-card" role="button" tabindex="0"
+      (click)="ouvrirPresences(seance, presencesModal)"
+      (keydown.enter)="ouvrirPresences(seance, presencesModal)">
+      <div class="card-body">
+        <h3 class="card-title">{{ seance.activite }}</h3>
+        <dl>
+          <div><dt>Horaire</dt><dd>{{ seance.debut | date:'HH:mm' }} – {{ seance.fin | date:'HH:mm' }}</dd></div>
+          <div><dt>Lieu</dt><dd>{{ seance.lieu || 'Lieu non renseigné' }}@if (seance.adresse) {
+          <span>, {{ seance.adresse }}</span>
+        }</dd></div>
+        <div><dt>Statut</dt><dd class="etat-seance" [ngClass]="'etat-' + seance.etatSeance.toLowerCase()">
+        @if (iconeEtat(seance.etatSeance)) {
+          <fa-icon [icon]="iconeEtat(seance.etatSeance)!"></fa-icon>
+        }
+        {{ libelleEtat(seance.etatSeance) }}
+      </dd></div>
+      <div><dt>Participants</dt><dd>{{ seance.nombreParticipants }}</dd></div>
+    </dl>
+  </div>
+</article>
+}
 </section>
 
 <ng-template #presencesModal let-modal>
@@ -36,26 +46,34 @@
       <label for="commentaireSeance" class="form-label">Commentaire de la séance</label>
       <div class="input-group">
         <textarea id="commentaireSeance" class="form-control" maxlength="255" rows="3"
-                  [(ngModel)]="seanceSelectionnee!.commentaire" placeholder="Ajouter un commentaire"></textarea>
+        [(ngModel)]="seanceSelectionnee!.commentaire" placeholder="Ajouter un commentaire"></textarea>
 
       </div>
       <button type="button" class="btn btn-primary" (click)="enregistrerCommentaire()"
-              [disabled]="enregistrementCommentaire">
+        [disabled]="enregistrementCommentaire">
         {{ enregistrementCommentaire ? 'Enregistrement…' : 'Enregistrer' }}
       </button>
     </div>
-    <div *ngIf="chargementPresences" class="text-center text-muted py-3">Chargement des présences…</div>
-    <div *ngIf="erreurPresences" class="alert alert-danger" role="alert">{{ erreurPresences }}</div>
-    <div *ngIf="!chargementPresences && !erreurPresences && presences.length === 0" class="alert alert-info">
-      Aucun adhérent inscrit à cette séance.
-    </div>
-    <div *ngFor="let presence of presences" class="presence-ligne">
-      <span>{{ presence.prenom }} {{ presence.nom }}</span>
-      <button type="button" class="btn btn-sm" [class.btn-success]="presence.presence"
-              [class.btn-outline-secondary]="!presence.presence" (click)="changerPresence(presence)"
-              [disabled]="miseAJourPresences.has(presence.id)">
-        {{ presence.presence ? 'Présent' : 'Absent' }}
-      </button>
-    </div>
+    @if (chargementPresences) {
+      <div class="text-center text-muted py-3">Chargement des présences…</div>
+    }
+    @if (erreurPresences) {
+      <div class="alert alert-danger" role="alert">{{ erreurPresences }}</div>
+    }
+    @if (!chargementPresences && !erreurPresences && presences.length === 0) {
+      <div class="alert alert-info">
+        Aucun adhérent inscrit à cette séance.
+      </div>
+    }
+    @for (presence of presences; track presence) {
+      <div class="presence-ligne">
+        <span>{{ presence.prenom }} {{ presence.nom }}</span>
+        <button type="button" class="btn btn-sm" [class.btn-success]="presence.presence"
+          [class.btn-outline-secondary]="!presence.presence" (click)="changerPresence(presence)"
+          [disabled]="miseAJourPresences.has(presence.id)">
+          {{ presence.presence ? 'Présent' : 'Absent' }}
+        </button>
+      </div>
+    }
   </div>
 </ng-template>

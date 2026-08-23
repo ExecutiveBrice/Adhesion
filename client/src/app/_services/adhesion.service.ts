@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams} from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
@@ -30,7 +30,8 @@ export interface AdhesionPageQuery {
   providedIn: 'root'
 })
 export class AdhesionService {
-  constructor(private http: HttpClient) { }
+  private http = inject(HttpClient);
+
   
   deleteAdhesion(adhesionId: number): Observable<any> {
     let params = new HttpParams().set('adhesionId', '' + adhesionId + '');

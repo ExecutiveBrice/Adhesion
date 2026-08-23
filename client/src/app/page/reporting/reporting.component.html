@@ -25,18 +25,18 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let activite of dataGeneral  | orderBy:'nomActivite':false ">
-            <td>{{activite.nomActivite}}</td>
-            <td>{{activite.nbInitee}}</td>
-            <td>{{activite.nbPayee}}</td>
-            <td>{{activite.nbValidee}}</td>
-            <td>{{activite.nbF}} / {{(activite.nbF/activite.nbValidee)*100 | number : '1.0-0'}}%</td>
-            <td>{{activite.nbM}} / {{(activite.nbM/activite.nbValidee)*100 | number : '1.0-0'}}%</td>
-            <td>{{(activite.nbValidee / totalValideeG)*100 | number : '1.0-0'}}%</td>
-            <td>{{activite.cotisations}}€</td>
-
-
-          </tr>
+          @for (activite of dataGeneral  | orderBy:'nomActivite':false ; track activite) {
+            <tr>
+              <td>{{activite.nomActivite}}</td>
+              <td>{{activite.nbInitee}}</td>
+              <td>{{activite.nbPayee}}</td>
+              <td>{{activite.nbValidee}}</td>
+              <td>{{activite.nbF}} / {{(activite.nbF/activite.nbValidee)*100 | number : '1.0-0'}}%</td>
+              <td>{{activite.nbM}} / {{(activite.nbM/activite.nbValidee)*100 | number : '1.0-0'}}%</td>
+              <td>{{(activite.nbValidee / totalValideeG)*100 | number : '1.0-0'}}%</td>
+              <td>{{activite.cotisations}}€</td>
+            </tr>
+          }
           <tr>
             <td><b>Totaux</b></td>
             <td><b>{{totalIniteeG}}</b></td>
@@ -68,18 +68,18 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let activite of dataBasket">
-            <td>{{activite.nomActivite}}</td>
-            <td>{{activite.nbInitee}}</td>
-            <td>{{activite.nbPayee}}</td>
-            <td>{{activite.nbValidee}}</td>
-            <td>{{activite.nbF}} / {{(activite.nbF/activite.nbValidee)*100 | number : '1.0-0'}}%</td>
-            <td>{{activite.nbM}} / {{(activite.nbM/activite.nbValidee)*100 | number : '1.0-0'}}%</td>
-            <td>{{(activite.nbValidee / totalValideeB)*100 | number : '1.0-0'}}%</td>
-            <td>{{activite.cotisations}}€</td>
-
-
-          </tr>
+          @for (activite of dataBasket; track activite) {
+            <tr>
+              <td>{{activite.nomActivite}}</td>
+              <td>{{activite.nbInitee}}</td>
+              <td>{{activite.nbPayee}}</td>
+              <td>{{activite.nbValidee}}</td>
+              <td>{{activite.nbF}} / {{(activite.nbF/activite.nbValidee)*100 | number : '1.0-0'}}%</td>
+              <td>{{activite.nbM}} / {{(activite.nbM/activite.nbValidee)*100 | number : '1.0-0'}}%</td>
+              <td>{{(activite.nbValidee / totalValideeB)*100 | number : '1.0-0'}}%</td>
+              <td>{{activite.cotisations}}€</td>
+            </tr>
+          }
           <tr>
             <td><b>Totaux</b></td>
             <td><b>{{totalIniteeB}}</b></td>

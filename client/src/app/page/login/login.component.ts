@@ -1,15 +1,18 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { AuthService } from '../../_services/auth.service';
 import { TokenStorageService } from '../../_services/token-storage.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ParamTransmissionService } from 'src/app/_helpers/transmission.service';
+import { ParamTransmissionService } from 'src/app/_services/transmission.service';
 import { faBook, faCheck, faClock, faCloudDownloadAlt, faPencilSquare, faScaleBalanced, faSquareMinus, faSquarePlus, faTriangleExclamation, faUserPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { catchError, forkJoin, of, Subscription } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 import { ParamService } from 'src/app/_services/param.service';
-import { ToastrService } from 'ngx-toastr';
+import { ToastService } from '../../_services/toast.service';
 import { ActiviteService } from 'src/app/_services/activite.service';
 import { EvenementGoogleAgenda, SeanceCalendrier } from 'src/app/models/seance';
 import { AgendaGoogleConfiguration } from 'src/app/models';
+import { FormsModule } from '@angular/forms';
+import { CalendrierComponent } from '../../template/calendrier/calendrier.component';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 
 interface EvenementCalendrier {
   id: string;
@@ -38,11 +41,22 @@ interface JourCalendrier {
 }
 
 @Component({
-  selector: 'app-login',
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+    selector: 'app-login',
+    templateUrl: './login.component.html',
+    styleUrls: ['./login.component.css'],
+    imports: [FormsModule, CalendrierComponent]
 })
 export class LoginComponent implements OnInit {
+  private readonly apiViewRefresh = registerApiViewRefresh();
+  private toastr = inject(ToastService);
+  transmissionService = inject(ParamTransmissionService);
+  private authService = inject(AuthService);
+  private tokenStorage = inject(TokenStorageService);
+  router = inject(Router);
+  private route = inject(ActivatedRoute);
+  paramService = inject(ParamService);
+  private activiteService = inject(ActiviteService);
+
 
   form: any = {
     username: null,
@@ -53,7 +67,6 @@ export class LoginComponent implements OnInit {
   faXmark = faXmark;
   faCheck = faCheck;
   faTriangleExclamation = faTriangleExclamation;
-  subscription = new Subscription()
   isLoggedIn = false;
   isLoginFailed = false;
   isresetFailed = false;
@@ -84,17 +97,6 @@ export class LoginComponent implements OnInit {
   validRgpd = false;
   testRgpd = false;
   inscriptionOpen: boolean = false;
-
-
-  constructor(
-    private toastr: ToastrService,
-    public transmissionService: ParamTransmissionService,
-    private authService: AuthService,
-    private tokenStorage: TokenStorageService,
-    public router: Router,
-    private route: ActivatedRoute,
-    public paramService: ParamService,
-    private activiteService: ActiviteService) { }
 
   ngOnInit(): void {
 

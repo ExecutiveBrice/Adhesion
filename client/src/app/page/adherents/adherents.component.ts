@@ -1,11 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AdherentService } from '../../_services/adherent.service';
 import { Activite, ActiviteDropDown, Adherent } from 'src/app/models';
 import { faPen, faUsersRays, faSkull, faUsers, faEnvelope, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TokenStorageService } from 'src/app/_services/token-storage.service';
 import { Router } from '@angular/router';
-import { Subject, Subscription, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
+import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { AuthService } from 'src/app/_services/auth.service';
 import { ParamService } from 'src/app/_services/param.service';
 import { ExcelService } from 'src/app/_services/excel.service';
@@ -13,15 +15,31 @@ import { FilterAdhesionByPipe } from 'src/app/_helpers/filterAdhesion.pipe';
 import { ActiviteService } from 'src/app/_services/activite.service';
 import { ActiviteNm1 } from 'src/app/models/activiteNm1';
 import { TribuService } from 'src/app/_services/tribu.service';
-import { ToastrService } from 'ngx-toastr';
+import { ToastService } from '../../_services/toast.service';
 import {AdherentFlat} from "../../models/adherentFlat";
+import { FormsModule } from '@angular/forms';
+import { NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap/dropdown';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { OrderByPipe } from '../../_helpers/sort.pipe';
 
 @Component({
-  selector: 'app-adherents',
-  templateUrl: './adherents.component.html',
-  styleUrls: ['./adherents.component.css']
+    selector: 'app-adherents',
+    templateUrl: './adherents.component.html',
+    styleUrls: ['./adherents.component.css'],
+    imports: [FormsModule, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, FaIconComponent, OrderByPipe]
 })
 export class AdherentsComponent implements OnInit {
+  private readonly apiViewRefresh = registerApiViewRefresh();
+  private toastr = inject(ToastService);
+  activiteService = inject(ActiviteService);
+  tribuService = inject(TribuService);
+  private authService = inject(AuthService);
+  private adherentService = inject(AdherentService);
+  private tokenStorageService = inject(TokenStorageService);
+  private modalService = inject(NgbModal);
+  paramService = inject(ParamService);
+  router = inject(Router);
+
   faCircleCheck = faCircleCheck
   faCircleXmark = faCircleXmark
   faSquareMinus = faSquareMinus
@@ -42,7 +60,7 @@ export class AdherentsComponent implements OnInit {
   activitySearchTerm = '';
   activityNm1SearchTerm = '';
   private readonly searchChanges = new Subject<string>();
-  private readonly destroy$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
 
   loadder:boolean=true
   errorMessage = '';
@@ -53,17 +71,6 @@ export class AdherentsComponent implements OnInit {
 
   activitesListe: ActiviteDropDown[] = [];
   activites: Activite[] = []
-  constructor(
-    private toastr: ToastrService,
-    public activiteService: ActiviteService,
-    public tribuService: TribuService,
-
-    private authService: AuthService,
-    private adherentService: AdherentService,
-    private tokenStorageService: TokenStorageService,
-    private modalService: NgbModal,
-    public paramService: ParamService,
-    public router: Router) { }
 
 
   showError(message: string) {
@@ -84,16 +91,11 @@ export class AdherentsComponent implements OnInit {
     this.searchChanges.pipe(
       debounceTime(350),
       distinctUntilChanged(),
-      takeUntil(this.destroy$)
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => this.getAdherents(true));
 
     this.getAdherents();
     this.activiteService.fillObjects(this.activites, this.activitesListe, undefined);
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   getAdherents(resetPage: boolean = false) {

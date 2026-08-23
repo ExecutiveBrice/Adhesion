@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { UserService } from '../../_services/user.service';
 import { ParamService } from '../../_services/param.service';
 
@@ -8,15 +9,29 @@ import { faCalendarDays, faCircleCheck, faCircleXmark, faEnvelope, faLocationDot
 import { AdherentService } from 'src/app/_services/adherent.service';
 import {AuthService} from "../../_services/auth.service";
 import {TokenStorageService} from "../../_services/token-storage.service";
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
+import { NgClass } from '@angular/common';
+import { NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap/dropdown';
+import { RouterLink } from '@angular/router';
+import { OrderByPipe } from '../../_helpers/sort.pipe';
 
 
 
 @Component({
-  selector: 'app-board-admin',
-  templateUrl: './board-admin.component.html',
-  styleUrls: ['./board-admin.component.css']
+    selector: 'app-board-admin',
+    templateUrl: './board-admin.component.html',
+    styleUrls: ['./board-admin.component.css'],
+    imports: [FaIconComponent, FormsModule, NgClass, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, RouterLink, OrderByPipe]
 })
 export class BoardAdminComponent implements OnInit {
+  private readonly apiViewRefresh = registerApiViewRefresh();
+  private tokenStorage = inject(TokenStorageService);
+  private authService = inject(AuthService);
+  private paramService = inject(ParamService);
+  private userService = inject(UserService);
+  private adherentService = inject(AdherentService);
+
   faEnvelope = faEnvelope;
   faCircleXmark = faCircleXmark;
   faCircleCheck = faCircleCheck;
@@ -48,9 +63,6 @@ export class BoardAdminComponent implements OnInit {
   secretairesLite: UserLite[] = [];
   profsLite: UserLite[] = [];
   comptablesLite: UserLite[] = [];
-
-
-  constructor(    private tokenStorage: TokenStorageService,private authService: AuthService, private paramService: ParamService, private userService: UserService,  private adherentService: AdherentService) { }
 
   ngOnInit(): void {
     this.getAllBoolean()

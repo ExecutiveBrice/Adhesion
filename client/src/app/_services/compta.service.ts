@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
@@ -10,7 +10,8 @@ const API_URL = environment.server+'/compta/';
   providedIn: 'root'
 })
 export class ComptaService {
-  constructor(private http: HttpClient) { }
+  private http = inject(HttpClient);
+
 
   getAll(dateDebutPeriode : Date, dateFinPeriode : Date): Observable<ComptaActivite[]> {
     let params = new HttpParams().set('dateDebutPeriode', '' + dateDebutPeriode.toISOString() + '').set('dateFinPeriode', '' + dateFinPeriode.toISOString() + '');

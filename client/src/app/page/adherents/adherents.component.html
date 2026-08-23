@@ -24,13 +24,19 @@
         </div>
 
         <label for="email"><u>Liste des activités</u></label>
-        <div *ngIf="activitesListe.length > 0">
-          <div *ngFor="let activite of activitesListe | orderBy:'nom':false" class="ligne pointer"
-            (click)="activite.selected = !activite.selected">
-            <b>{{activite.nom}}</b>
-            <fa-icon *ngIf="activite.selected" class="green fa-xl" [icon]="faCircleCheck"></fa-icon>
+        @if (activitesListe.length > 0) {
+          <div>
+            @for (activite of activitesListe | orderBy:'nom':false; track activite) {
+              <div class="ligne pointer"
+                (click)="activite.selected = !activite.selected">
+                <b>{{activite.nom}}</b>
+                @if (activite.selected) {
+                  <fa-icon class="green fa-xl" [icon]="faCircleCheck"></fa-icon>
+                }
+              </div>
+            }
           </div>
-        </div>
+        }
       </div>
     </div>
     <div class="modal-footer">
@@ -58,34 +64,50 @@
         (ngModelChange)="onSearchChange($event)" placeholder="Activité ou horaire">
     </div>
     <button type="button" class="btn btn-outline-secondary reset-button" (click)="resetFilters()"
-      [disabled]="!searchTerm && !activitySearchTerm && !activityNm1SearchTerm">Réinitialiser</button>
+    [disabled]="!searchTerm && !activitySearchTerm && !activityNm1SearchTerm">Réinitialiser</button>
 
   </div>
 
   <div class="table-toolbar">
     <div class="toolbar-results">
-      <span *ngIf="!loadder">Résultats {{firstResult}}–{{lastResult}} sur {{totalElements}}</span>
-      <span *ngIf="loadder"><span class="spinner-border spinner-border-sm"></span> Chargement…</span>
+      @if (!loadder) {
+        <span>Résultats {{firstResult}}–{{lastResult}} sur {{totalElements}}</span>
+      }
+      @if (loadder) {
+        <span><span class="spinner-border spinner-border-sm"></span> Chargement…</span>
+      }
     </div>
-    <div *ngIf="totalPages > 0" class="pagination-controls" aria-label="Pagination des adhérents">
-      <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="page === 1"
+    @if (totalPages > 0) {
+      <div class="pagination-controls" aria-label="Pagination des adhérents">
+        <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="page === 1"
         (click)="goToPage(1)">Première</button>
-      <span *ngIf="showLeadingEllipsis" class="pagination-ellipsis">…</span>
-      <button *ngFor="let pageNumber of visiblePages" type="button" class="btn btn-outline-primary btn-sm page-number"
-        [class.active]="pageNumber === page" [attr.aria-current]="pageNumber === page ? 'page' : null"
-        (click)="goToPage(pageNumber)">{{pageNumber}}</button>
-      <span *ngIf="showTrailingEllipsis" class="pagination-ellipsis">…</span>
-      <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="page === totalPages"
+        @if (showLeadingEllipsis) {
+          <span class="pagination-ellipsis">…</span>
+        }
+        @for (pageNumber of visiblePages; track pageNumber) {
+          <button type="button" class="btn btn-outline-primary btn-sm page-number"
+            [class.active]="pageNumber === page" [attr.aria-current]="pageNumber === page ? 'page' : null"
+          (click)="goToPage(pageNumber)">{{pageNumber}}</button>
+        }
+        @if (showTrailingEllipsis) {
+          <span class="pagination-ellipsis">…</span>
+        }
+        <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="page === totalPages"
         (click)="goToPage(totalPages)">Dernière</button>
-    </div>
+      </div>
+    }
     <div class="toolbar-page-controls">
       <label for="adherent-page-size">Lignes par page
         <select id="adherent-page-size" class="form-select form-select-sm" [(ngModel)]="pageSize"
           (ngModelChange)="onPageSizeChange()">
-          <option *ngFor="let size of pageSizes" [ngValue]="size">{{size}}</option>
+          @for (size of pageSizes; track size) {
+            <option [ngValue]="size">{{size}}</option>
+          }
         </select>
       </label>
-      <span *ngIf="totalPages > 0">Page {{page}} sur {{totalPages}}</span>
+      @if (totalPages > 0) {
+        <span>Page {{page}} sur {{totalPages}}</span>
+      }
 
     </div>
   </div>
@@ -104,40 +126,48 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngIf="loadder && adherents.length === 0">
-          <td colspan="7" class="empty-state"><span class="spinner-border text-primary"></span><br>Chargement des adhérents…</td>
-        </tr>
-        <tr *ngIf="!loadder && adherents.length === 0">
-          <td colspan="7" class="empty-state"><strong>Aucun adhérent trouvé</strong><br>Modifiez votre recherche pour élargir les résultats.</td>
-        </tr>
-        <tr *ngFor="let adherent of adherents">
-          <td class="member-cell">
-            <div class="member-summary">
-              <button type="button" class="icon-action" title="Ouvrir la fiche adhérent"
-                (click)="opennewTab('#/inscription/' + adherent.tribuId)"><fa-icon [icon]="faUsersRays"></fa-icon></button>
-              <div class="member-info">
-                <strong>{{adherent.nom}} {{adherent.prenom}}</strong>
-                <span>{{adherent.email}}</span>
-              </div>
-            </div>
-          </td>
-          <td class="phone-cell">{{adherent.telephone}}</td>
-          <td class="address-cell">{{adherent.adresse}}</td>
-          <td class="birth-cell">
-            <span>{{adherent.naissance}}</span>
-            <span>{{adherent.lieuNaissance}}</span>
-          </td>
-          <td class="details-cell agreements-cell">
-            <div *ngFor="let accord of accordsDetails(adherent.accords)" class="agreement-detail">
-              <fa-icon [class.agreement-accepted]="accord.etat" [class.agreement-refused]="!accord.etat"
-                [icon]="accord.etat ? faCircleCheck : faCircleXmark"></fa-icon>
-              <span>{{accord.nom}}</span>
-            </div>
-          </td>
-          <td class="details-cell">{{adherent.adhesions}}</td>
-          <td class="details-cell">{{adherent.activitesNm1}}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</section>
+        @if (loadder && adherents.length === 0) {
+          <tr>
+            <td colspan="7" class="empty-state"><span class="spinner-border text-primary"></span><br>Chargement des adhérents…</td>
+          </tr>
+        }
+        @if (!loadder && adherents.length === 0) {
+          <tr>
+            <td colspan="7" class="empty-state"><strong>Aucun adhérent trouvé</strong><br>Modifiez votre recherche pour élargir les résultats.</td>
+          </tr>
+        }
+        @for (adherent of adherents; track adherent) {
+          <tr>
+            <td class="member-cell">
+              <div class="member-summary">
+                <button type="button" class="icon-action" title="Ouvrir la fiche adhérent"
+                  (click)="opennewTab('#/inscription/' + adherent.tribuId)"><fa-icon [icon]="faUsersRays"></fa-icon></button>
+                  <div class="member-info">
+                    <strong>{{adherent.nom}} {{adherent.prenom}}</strong>
+                    <span>{{adherent.email}}</span>
+                  </div>
+                </div>
+              </td>
+              <td class="phone-cell">{{adherent.telephone}}</td>
+              <td class="address-cell">{{adherent.adresse}}</td>
+              <td class="birth-cell">
+                <span>{{adherent.naissance}}</span>
+                <span>{{adherent.lieuNaissance}}</span>
+              </td>
+              <td class="details-cell agreements-cell">
+                @for (accord of accordsDetails(adherent.accords); track accord) {
+                  <div class="agreement-detail">
+                    <fa-icon [class.agreement-accepted]="accord.etat" [class.agreement-refused]="!accord.etat"
+                    [icon]="accord.etat ? faCircleCheck : faCircleXmark"></fa-icon>
+                    <span>{{accord.nom}}</span>
+                  </div>
+                }
+              </td>
+              <td class="details-cell">{{adherent.adhesions}}</td>
+              <td class="details-cell">{{adherent.activitesNm1}}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>

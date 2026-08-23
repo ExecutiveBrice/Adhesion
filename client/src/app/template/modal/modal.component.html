@@ -12,11 +12,17 @@
 
 
 <div class="modal-footer">
-  <button type="button" class="btn btn-outline-dark" *ngIf="consultation"
+  @if (consultation) {
+    <button type="button" class="btn btn-outline-dark"
     (click)="activeModal.dismiss('fermer')">Fermer</button>
-  <button type="button" class="btn btn-success" *ngIf="accepter && !consultation"
+  }
+  @if (accepter && !consultation) {
+    <button type="button" class="btn btn-success"
     (click)="activeModal.close('accepter')">Accepter</button>
-  <button type="button" class="btn btn-danger" *ngIf="refuser && !consultation"
+  }
+  @if (refuser && !consultation) {
+    <button type="button" class="btn btn-danger"
     (click)="activeModal.dismiss('refuser')">Refuser</button>
+  }
 
 </div>

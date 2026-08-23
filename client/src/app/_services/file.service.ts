@@ -1,14 +1,12 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { environment } from 'src/environments/environment';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class FileService {
-  apiUrl = environment.server + '/files';
+  private http = inject(HttpClient);
 
-  constructor(
-    private http: HttpClient
-  ) { }
+  apiUrl = environment.server + '/files';
 
   update(adherentId: number, fileName: string, fileContent: any) {
     let params = new HttpParams().set('adherentId', '' + adherentId + '').set('fileName', '' + fileName + '');

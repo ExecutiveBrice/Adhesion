@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { TokenStorageService } from '../../_services/token-storage.service';
 import Chart from 'chart.js/auto';
 import { ReportingService } from 'src/app/_services/reporting.service';
@@ -7,15 +8,24 @@ import {ExcelService} from "../../_services/excel.service";
 import {AuthService} from "../../_services/auth.service";
 import {AdherentService} from "../../_services/adherent.service";
 import {HttpErrorResponse} from "@angular/common/http";
-import {ToastrService} from "ngx-toastr";
+import { ToastService } from '../../_services/toast.service';
+import { DecimalPipe } from '@angular/common';
+import { OrderByPipe } from '../../_helpers/sort.pipe';
 
 
 @Component({
-  selector: 'app-reporting',
-  templateUrl: './reporting.component.html',
-  styleUrls: ['./reporting.component.css']
+    selector: 'app-reporting',
+    templateUrl: './reporting.component.html',
+    styleUrls: ['./reporting.component.css'],
+    imports: [DecimalPipe, OrderByPipe]
 })
 export class ReportingComponent implements OnInit {
+  private readonly apiViewRefresh = registerApiViewRefresh();
+  private toastr = inject(ToastService);
+  private excelService = inject(ExcelService);
+  private adherentService = inject(AdherentService);
+  private reportingService = inject(ReportingService);
+
   currentUser: any;
   chart: any = []
   dataBasket: ReportingActivite[] = []
@@ -34,13 +44,6 @@ export class ReportingComponent implements OnInit {
   totalFG: number = 0
   totalMG: number = 0
   totalCotisG: number = 0
-
-
-  constructor(
-    private toastr: ToastrService,
-    private excelService: ExcelService,
-    private adherentService: AdherentService,
-    private reportingService: ReportingService) { }
 
   ngOnInit(): void {
 

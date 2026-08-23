@@ -1,4 +1,5 @@
-import { Component, OnInit, TemplateRef } from '@angular/core';
+import { Component, OnInit, TemplateRef, inject } from '@angular/core';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { PresenceSeance, SeanceDuJour } from 'src/app/models/seance';
@@ -6,13 +7,23 @@ import { TokenStorageService } from 'src/app/_services/token-storage.service';
 import { UserService } from 'src/app/_services/user.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { faCheck, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { NgClass, DatePipe } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-seances',
-  templateUrl: './seances.component.html',
-  styleUrls: ['./seances.component.css']
+    selector: 'app-seances',
+    templateUrl: './seances.component.html',
+    styleUrls: ['./seances.component.css'],
+    imports: [NgClass, FaIconComponent, FormsModule, DatePipe]
 })
 export class SeancesComponent implements OnInit {
+  private readonly apiViewRefresh = registerApiViewRefresh();
+  private tokenStorageService = inject(TokenStorageService);
+  private userService = inject(UserService);
+  private modalService = inject(NgbModal);
+  private router = inject(Router);
+
   seances: SeanceDuJour[] = [];
   isFailed = false;
   errorMessage = '';
@@ -26,12 +37,6 @@ export class SeancesComponent implements OnInit {
   faCheck = faCheck;
   faXmark = faXmark;
   faTriangleExclamation = faTriangleExclamation;
-
-  constructor(
-    private tokenStorageService: TokenStorageService,
-    private userService: UserService,
-    private modalService: NgbModal,
-    private router: Router) { }
 
   ngOnInit(): void {
     const roles = this.tokenStorageService.getUser().roles as string[] | undefined;

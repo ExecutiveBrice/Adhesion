@@ -1,6 +1,8 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
+import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { ActivitePageQuery, ActiviteService } from 'src/app/_services/activite.service';
 import { ParamService } from 'src/app/_services/param.service';
 import { TokenStorageService } from 'src/app/_services/token-storage.service';
@@ -8,13 +10,27 @@ import { Activite } from 'src/app/models';
 import { Router } from '@angular/router';
 import { faCircleCheck, faCircleXmark, faCartPlus, faPencilSquare } from '@fortawesome/free-solid-svg-icons';
 import { ModalActivite } from 'src/app/template/modal-activite/modal.activite';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgClass } from '@angular/common';
 
 @Component({
-  selector: 'ngbd-modal-component',
-  templateUrl: './activites.component.html',
-  styleUrls: ['./activites.component.css'],
+    selector: 'ngbd-modal-component',
+    templateUrl: './activites.component.html',
+    styleUrls: ['./activites.component.css'],
+    imports: [
+        FormsModule,
+        FaIconComponent,
+        NgClass,
+    ],
 })
-export class ActivitesComponent implements OnInit, OnDestroy {
+export class ActivitesComponent implements OnInit {
+  private readonly apiViewRefresh = registerApiViewRefresh();
+  activiteService = inject(ActiviteService);
+  paramService = inject(ParamService);
+  private tokenStorageService = inject(TokenStorageService);
+  router = inject(Router);
+
   faCircleXmark = faCircleXmark;
   faCircleCheck = faCircleCheck;
   faPencilSquare = faPencilSquare;
@@ -41,15 +57,8 @@ export class ActivitesComponent implements OnInit, OnDestroy {
   showSecretaire = false;
 
   private readonly searchChanges = new Subject<string>();
-  private readonly destroy$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
   private readonly modalService = inject(NgbModal);
-
-  constructor(
-    public activiteService: ActiviteService,
-    public paramService: ParamService,
-    private tokenStorageService: TokenStorageService,
-    public router: Router
-  ) { }
 
   ngOnInit(): void {
     if (this.tokenStorageService.getUser().roles) {
@@ -63,15 +72,10 @@ export class ActivitesComponent implements OnInit, OnDestroy {
     this.searchChanges.pipe(
       debounceTime(350),
       distinctUntilChanged(),
-      takeUntil(this.destroy$)
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => this.getActivites(true));
 
     this.getActivites();
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   openActivite(activite: Activite): void {

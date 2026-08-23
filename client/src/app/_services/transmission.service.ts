@@ -3,7 +3,7 @@ import { Subject } from 'rxjs';
 import { ParamText } from '../models/paramText';
 
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ParamTransmissionService {
 
   // Observable string sources

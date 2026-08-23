@@ -1,4 +1,5 @@
 import { Component, inject, Input, OnDestroy, OnInit } from '@angular/core'
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap'
 import { Activite, Adherent, AdherentLite, SalleConfiguration } from 'src/app/models';
 import { Seance } from 'src/app/models/seance';
@@ -7,14 +8,26 @@ import { AdherentService } from 'src/app/_services/adherent.service';
 import { ActiviteService } from 'src/app/_services/activite.service';
 import { ParamService } from 'src/app/_services/param.service';
 import { faCircleQuestion, faEnvelope, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { ToastrService } from 'ngx-toastr';
+import { ToastService } from '../../_services/toast.service';
+import { NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap/dropdown';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgClass, DatePipe } from '@angular/common';
+import { OrderByPipe } from '../../_helpers/sort.pipe';
 
 @Component({
-  selector: 'modal',
-  templateUrl: './modal.activite.html',
-  styleUrls: ['./modal.activite.css']
+    selector: 'modal',
+    templateUrl: './modal.activite.html',
+    styleUrls: ['./modal.activite.css'],
+    imports: [NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, FormsModule, FaIconComponent, NgClass, DatePipe, OrderByPipe]
 })
 export class ModalActivite implements OnInit, OnDestroy {
+  private readonly apiViewRefresh = registerApiViewRefresh();
+  private toastr = inject(ToastService);
+  private adherentService = inject(AdherentService);
+  activiteService = inject(ActiviteService);
+  private paramService = inject(ParamService);
+
   faCircleQuestion = faCircleQuestion
   faEnvelope = faEnvelope;
   faCircleXmark = faCircleXmark;
@@ -55,13 +68,6 @@ export class ModalActivite implements OnInit, OnDestroy {
     { valeur: 'SATURDAY', libelle: 'Samedi' },
     { valeur: 'SUNDAY', libelle: 'Dimanche' },
   ];
-
-  constructor(
-    private toastr: ToastrService,
-    private adherentService: AdherentService,
-    public activiteService: ActiviteService,
-    private paramService: ParamService,
-  ) { }
 
   ngOnInit(): void {
     this.activite.profs ??= [];

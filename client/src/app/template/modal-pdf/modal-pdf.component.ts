@@ -2,6 +2,7 @@ import { Component, inject, Input } from '@angular/core'
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap'
 import { FileService } from 'src/app/_services/file.service';
 import { Document } from 'src/app/models';
+import { NgxExtendedPdfViewerModule } from 'ngx-extended-pdf-viewer';
 
 export let pdfDefaultOptions = {
   externalLinkTarget: 0,
@@ -13,11 +14,14 @@ export let pdfDefaultOptions = {
 
 
 @Component({
-  selector: 'modal-pdf',
-  templateUrl: './modal-pdf.component.html',
-  styleUrls: ['./modal-pdf.component.css']
+    selector: 'modal-pdf',
+    templateUrl: './modal-pdf.component.html',
+    styleUrls: ['./modal-pdf.component.css'],
+    imports: [NgxExtendedPdfViewerModule]
 })
 export class ModalPDFComponent {
+  fileService = inject(FileService);
+
   activeModal = inject(NgbActiveModal);
 
   @Input()
@@ -27,9 +31,6 @@ export class ModalPDFComponent {
   adherentId!: number;
 
   pdfFile: Document = new Document;
-
-  constructor(
-    public fileService: FileService) { }
 
   ngOnInit(): void {
     if (this.documentName) {
@@ -70,4 +71,3 @@ export class ModalPDFComponent {
 
 
 }
-

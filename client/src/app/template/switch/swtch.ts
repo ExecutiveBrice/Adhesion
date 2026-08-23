@@ -4,7 +4,7 @@ import { Component, Input } from "@angular/core";
     selector: 'switch',
     templateUrl: './switch.html',
     styleUrls: ['./switch.css']
-  })
+})
   export class SwitchComponent  {
 
     @Input()

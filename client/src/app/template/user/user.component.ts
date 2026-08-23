@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, Input } from '@angular/core';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { Accord, Activite, ActiviteDropDown, Adherent, Adhesion, Document, Tribu } from '../../models';
 
 import { ActiviteService } from '../../_services/activite.service';
@@ -6,23 +7,39 @@ import { AdherentService } from 'src/app/_services/adherent.service';
 import { faRefresh, faCirclePause, faClock, faPiggyBank, faSkull, faFileSignature, faSquareCaretLeft, faSquareCaretDown, faEye, faCircleQuestion, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { AdhesionService } from 'src/app/_services/adhesion.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
 import { ParamService } from 'src/app/_services/param.service';
-import { jsPDF } from "jspdf";
-import { DatePipe } from '@angular/common';
-import { ToastrService } from 'ngx-toastr';
+import { ToastService } from '../../_services/toast.service';
 import { UtilService } from 'src/app/_services/util.service';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FileService } from 'src/app/_services/file.service';
 import { TokenStorageService } from 'src/app/_services/token-storage.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgClass, DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap/dropdown';
+import { OrderByPipe } from '../../_helpers/sort.pipe';
+import { SimpleFilterPipe } from '../../_helpers/simpleFilter.pipe';
 
 
 @Component({
-  selector: 'app-user',
-  templateUrl: './user.component.html',
-  styleUrls: ['./user.component.css']
+    selector: 'app-user',
+    templateUrl: './user.component.html',
+    styleUrls: ['./user.component.css'],
+    imports: [FaIconComponent, NgClass, FormsModule, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, DatePipe, OrderByPipe, SimpleFilterPipe]
 })
 export class UserComponent implements OnInit {
+  private readonly apiViewRefresh = registerApiViewRefresh();
+  private toastr = inject(ToastService);
+  private adherentService = inject(AdherentService);
+  private adhesionService = inject(AdhesionService);
+  activiteService = inject(ActiviteService);
+  utilService = inject(UtilService);
+  private tokenStorageService = inject(TokenStorageService);
+  router = inject(Router);
+  route = inject(ActivatedRoute);
+  paramService = inject(ParamService);
+  fileService = inject(FileService);
+
 
 
   @Input()
@@ -56,48 +73,16 @@ export class UserComponent implements OnInit {
   content?: string;
   edit?: boolean
   adultes: Adherent[] = []
-  editAdhRefActivite?: boolean
-  openActivites: boolean = false;
   activitesListe: ActiviteDropDown[] = [];
-  newAdhesions: Adhesion[] = [];
   adhesions: Adhesion[] = [];
-  helloassoAlod: boolean = false;
-  helloassoAlod3X: boolean = false;
-  testRgpd: boolean = false
   isFailed = false;
-  validSecretariat: boolean = false;
-  validDossier: boolean = false;
   mobile: boolean = false;
-  dossierIncomplet = false;
-  adherentsOpen = false
-  adhesionsOpen = false
-  PaiementsOpen = false
-  totalRestantDu = 0;
   isOpen: boolean = false;
   isInscriptionOpen: boolean = false;
-  subscription = new Subscription()
-
   showAdmin: boolean = false;
   showSecretaire: boolean = false;
 
-  showHelloAsso: boolean | null = false;
-
   activites: Activite[] = []
-  // Default export is a4 paper, portrait, using millimeters for units
-  doc: jsPDF = new jsPDF('p', 'mm', 'a4', true);
-
-  constructor(
-    private toastr: ToastrService,
-    private adherentService: AdherentService,
-    private adhesionService: AdhesionService,
-    public activiteService: ActiviteService,
-    public utilService: UtilService,
-    private tokenStorageService: TokenStorageService,
-    public router: Router,
-    public route: ActivatedRoute,
-    public paramService: ParamService,
-    public fileService: FileService,
-    private datePipe: DatePipe) { }
 
   showSuccess(message: string) {
     this.toastr.success(message, 'Information');

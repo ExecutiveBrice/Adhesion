@@ -1,10 +1,13 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
 import { catchError, forkJoin, of } from 'rxjs';
 import { ActiviteService } from 'src/app/_services/activite.service';
 import { ParamService } from 'src/app/_services/param.service';
 import { AgendaGoogleConfiguration } from 'src/app/models';
 import { EvenementGoogleAgenda, SeanceCalendrier } from 'src/app/models/seance';
 import { faCheck, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { NgClass, SlicePipe, DatePipe } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 
 interface EvenementCalendrier {
   id: string;
@@ -33,11 +36,16 @@ interface JourCalendrier {
 }
 
 @Component({
-  selector: 'app-calendrier',
-  templateUrl: './calendrier.component.html',
-  styleUrls: ['../../page/login/login.component.css']
+    selector: 'app-calendrier',
+    templateUrl: './calendrier.component.html',
+    styleUrls: ['../../page/login/login.component.css'],
+    imports: [NgClass, FaIconComponent, SlicePipe, DatePipe]
 })
 export class CalendrierComponent implements OnInit, OnChanges {
+  private readonly apiViewRefresh = registerApiViewRefresh();
+  private paramService = inject(ParamService);
+  private activiteService = inject(ActiviteService);
+
   @Input() tribuUuid?: string;
 
   calendrier: JourCalendrier[] = [];
@@ -53,8 +61,6 @@ export class CalendrierComponent implements OnInit, OnChanges {
   faXmark = faXmark;
   faCheck = faCheck;
   faTriangleExclamation = faTriangleExclamation;
-
-  constructor(private paramService: ParamService, private activiteService: ActiviteService) {}
 
   ngOnInit(): void { this.chargerConfigurationAgendas(); }
 

@@ -1,4 +1,6 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   ActiviteDropDown,
   AdhesionLite,
@@ -22,16 +24,32 @@ import {Router} from '@angular/router';
 import {ParamService} from 'src/app/_services/param.service';
 import {ActiviteService} from 'src/app/_services/activite.service';
 import {AdherentService} from 'src/app/_services/adherent.service';
-import {ToastrService} from 'ngx-toastr';
-import {Subject, debounceTime, distinctUntilChanged, takeUntil} from 'rxjs';
+import { ToastService } from '../../_services/toast.service';
+import {Subject, debounceTime, distinctUntilChanged} from 'rxjs';
+import { FormsModule } from '@angular/forms';
+import { NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownButtonItem, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap/dropdown';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgClass, DatePipe } from '@angular/common';
+import { OrderByPipe } from '../../_helpers/sort.pipe';
 
 
 @Component({
-  selector: 'app-adherents',
-  templateUrl: './adhesions.component.html',
-  styleUrls: ['./adhesions.component.css']
+    selector: 'app-adherents',
+    templateUrl: './adhesions.component.html',
+    styleUrls: ['./adhesions.component.css'],
+    imports: [FormsModule, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownButtonItem, NgbDropdownItem, FaIconComponent, NgClass, DatePipe, OrderByPipe]
 })
-export class AdhesionsComponent implements OnInit, OnDestroy {
+export class AdhesionsComponent implements OnInit {
+  private readonly apiViewRefresh = registerApiViewRefresh();
+  private toastr = inject(ToastService);
+  private adherentService = inject(AdherentService);
+  private activiteService = inject(ActiviteService);
+  private adhesionService = inject(AdhesionService);
+  private tokenStorageService = inject(TokenStorageService);
+  private modalService = inject(NgbModal);
+  paramService = inject(ParamService);
+  router = inject(Router);
+
   faCircleUser = faCircleUser
   faCircleExclamation = faCircleExclamation
   faPen = faPen
@@ -80,7 +98,7 @@ export class AdhesionsComponent implements OnInit, OnDestroy {
   ];
 
   private readonly searchChanges = new Subject<string>();
-  private readonly destroy$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
 
 
 
@@ -88,18 +106,6 @@ export class AdhesionsComponent implements OnInit, OnDestroy {
   showSecretaire: boolean = false;
   choixSection: string = ""
   visuelselection: string = "";
-
-  constructor(
-    private toastr: ToastrService,
-    private adherentService: AdherentService,
-    private activiteService: ActiviteService,
-    private adhesionService: AdhesionService,
-    private tokenStorageService: TokenStorageService,
-    private modalService: NgbModal,
-    public paramService: ParamService,
-    public router: Router
-  ) {
-  }
 
   showSuccess(message: string) {
     this.toastr.info(message, 'Information');
@@ -137,17 +143,12 @@ export class AdhesionsComponent implements OnInit, OnDestroy {
     this.searchChanges.pipe(
       debounceTime(350),
       distinctUntilChanged(),
-      takeUntil(this.destroy$)
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => this.applyFilters());
 
     this.getAdhesion();
     this.getActivites();
     this.getStatuses();
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   loadder: boolean = true

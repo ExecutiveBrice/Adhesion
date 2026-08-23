@@ -1,16 +1,27 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { TokenStorageService } from './_services/token-storage.service';
 import { ParamService } from './_services/param.service';
-import { Subscription } from 'rxjs';
-import { ParamTransmissionService } from './_helpers/transmission.service';
+import { ParamTransmissionService } from './_services/transmission.service';
+import { ToastService } from './_services/toast.service';
+import { registerApiViewRefresh } from './_services/api-render.service';
+import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap/collapse';
+import { RouterLinkActive, RouterLink, RouterOutlet } from '@angular/router';
+import { NgbToast, NgbToastHeader } from '@ng-bootstrap/ng-bootstrap/toast';
 
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+    selector: 'app-root',
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.css'],
+    imports: [NgbCollapse, RouterLinkActive, RouterLink, RouterOutlet, NgbToast, NgbToastHeader]
 })
 export class AppComponent {
+  private readonly apiViewRefresh = registerApiViewRefresh();
+  readonly toastService = inject(ToastService);
+  transmissionService = inject(ParamTransmissionService);
+  private paramService = inject(ParamService);
+  private tokenStorageService = inject(TokenStorageService);
+
   isCollapsed = true
   private roles: string[] = [];
   isLoggedIn = false;
@@ -24,14 +35,6 @@ export class AppComponent {
   showComptable=false;
   username?: string;
   maintenance: Boolean = false
-  subscription = new Subscription()
-
-  constructor(
-    public transmissionService: ParamTransmissionService,
-    private paramService: ParamService,
-    private tokenStorageService: TokenStorageService
-    ) { }
-
   ngOnInit(): void {
     this.isLoggedIn = !!this.tokenStorageService.getToken();
 

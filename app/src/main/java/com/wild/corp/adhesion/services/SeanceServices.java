@@ -51,7 +51,7 @@ public class SeanceServices {
 
     public SeanceServices(@Qualifier("vacancesDatasetApi") DatasetApi vacancesApi,
                           @Qualifier("joursFeriesDatasetApi") DatasetApi joursFeriesApi,
-                          @Value("${adhesion.calendrier.zone:C}") String zone,
+                          @Value("${adhesion.calendrier.zone:B}") String zone,
                           @Value("${adhesion.calendrier.vacances-dataset:fr-en-calendrier-scolaire}") String vacancesDataset,
                           @Value("${adhesion.calendrier.jours-feries-dataset:jours-ouvres-week-end-feries-france-2010-a-2030}") String joursFeriesDataset) {
         this.vacancesApi = vacancesApi;

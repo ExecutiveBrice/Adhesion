@@ -1,22 +1,36 @@
-import {Component,  OnInit} from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import {MailService} from '../../_services/mail.service';
 import {Activite, ActiviteNm1, Email, Groupe} from '../../models';
 import {Router} from '@angular/router';
 
 import {ActiviteService} from 'src/app/_services/activite.service';
 import {ParamService} from 'src/app/_services/param.service';
-import {ToastrService} from 'ngx-toastr';
+import { ToastService } from '../../_services/toast.service';
 import {Historique} from "../../models/historique";
 
-import {FormArray, FormBuilder, FormControl, FormGroup} from '@angular/forms';
+import { FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { NgClass, DatePipe } from '@angular/common';
+import { AngularEditorModule } from '@wfpena/angular-wysiwyg';
+import { OrderSimplePipe } from '../../_helpers/sort-simple.pipe';
+import { OrderObjectByPipe } from '../../_helpers/sortObject.pipe';
 
 @Component({
-  selector: 'app-mailling',
-  templateUrl: './mailling.component.html',
-  styleUrls: ['./mailling.component.scss']
+    selector: 'app-mailling',
+    templateUrl: './mailling.component.html',
+    styleUrls: ['./mailling.component.scss'],
+    imports: [FormsModule, ReactiveFormsModule, NgClass, AngularEditorModule, DatePipe, OrderSimplePipe, OrderObjectByPipe]
 })
 
 export class MaillingComponent implements OnInit {
+  private readonly apiViewRefresh = registerApiViewRefresh();
+  private toastr = inject(ToastService);
+  fb = inject(FormBuilder);
+  activiteService = inject(ActiviteService);
+  router = inject(Router);
+  mailService = inject(MailService);
+  paramService = inject(ParamService);
+
   pageReady: boolean = false;
   inProgress: boolean = false;
   role_bouton: boolean = false;
@@ -58,15 +72,6 @@ export class MaillingComponent implements OnInit {
 
 
   };
-
-  constructor(
-    private toastr: ToastrService,
-    public fb: FormBuilder,
-    public activiteService: ActiviteService,
-    public router: Router,
-    public mailService: MailService,
-    public paramService: ParamService) {
-  }
 
 
   ngOnInit(): void {
