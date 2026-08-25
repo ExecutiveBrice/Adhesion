@@ -99,15 +99,23 @@ ActiviteServices activiteServices;
 				activiteId, request.nombreSeances(), request.dateDebut()));
 	}
 
+	@PostMapping("/{activiteId}/planifications/{planificationId}/seances")
+	@PreAuthorize("hasRole('USER')")
+	public ResponseEntity<?> addSeancesPlanifiees(@PathVariable Long activiteId,
+			@PathVariable Long planificationId, @RequestBody @Valid AjoutSeancesRequest request) {
+		return ResponseEntity.ok(activiteServices.addSeances(
+				activiteId, planificationId, request.nombreSeances(), request.dateDebut()));
+	}
+
 	@PatchMapping("/{activiteId}/seances/{seanceId}")
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<?> updateSeance(@PathVariable Long activiteId,
 			@PathVariable Long seanceId,
 			@RequestBody @Valid MiseAJourSeanceRequest request) {
 		return ResponseEntity.ok(SeanceResponse.from(seanceServices.updateSeance(
-				activiteId, seanceId, request.etatSeance(), request.commentaire(), request.commentairePresent(),
-				request.date(), request.heureDebut(), request.horairePresent(),
-				request.salleId(), request.sallePresente())));
+				activiteId, seanceId, request.etatSeance(), request.commentaire(), Boolean.TRUE.equals(request.commentairePresent()),
+				request.date(), request.heureDebut(), Boolean.TRUE.equals(request.horairePresent()),
+				request.salleId(), Boolean.TRUE.equals(request.sallePresente()))));
 	}
 
 	@DeleteMapping("/{activiteId}/seances/{seanceId}")

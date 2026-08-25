@@ -50,30 +50,6 @@
       </div>
 
       <div class="form-group">
-        <label for="salle">Salle</label>
-        <div class="selecteur-salle">
-          @if (activite.salle) {
-            <span class="couleur-salle" [style.background-color]="activite.salle.couleur"
-            [title]="'Couleur : ' + activite.salle.couleur" aria-hidden="true"></span>
-          }
-          <select id="salle" class="form-select" name="salle" [(ngModel)]="activite.salle"
-            [compareWith]="comparerSalles">
-            <option [ngValue]="undefined">Aucune salle</option>
-            @for (salle of salles; track salle) {
-              <option [ngValue]="salle">
-                {{salle.nom}} — {{salle.adresse}} · {{salle.couleur}}
-              </option>
-            }
-          </select>
-        </div>
-        @if (activite.salle) {
-          <small class="text-muted">
-            La couleur {{activite.salle.couleur}} sera utilisée pour les nouvelles séances dans le calendrier.
-          </small>
-        }
-      </div>
-
-      <div class="form-group">
         <label for="prof">Prof</label>
         @if (activite.profs.length > 0) {
           <div>
@@ -297,61 +273,95 @@
 </div>
 
 <section class="seances-section">
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <div>
-      <h5 class="mb-1">Séances</h5>
-      <small class="text-muted">Les séances sont créées chaque semaine selon la planification ci-dessous, hors vacances et jours fériés.</small>
+
+  <div class="planification-seances mb-3">
+    <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+
+      <div>
+        <h5 class="mb-1">Catégorie de séance</h5>
+      </div>
+
+      <button type="button" class="btn btn-outline-primary btn-sm" (click)="ajouterPlanificationHebdomadaire()">
+        <fa-icon [icon]="faSquarePlus"></fa-icon> Ajouter une catégorie
+      </button>
     </div>
-    @if (activite.id) {
-      <span class="badge bg-secondary">{{seances.length}} séance(s)</span>
+    @if (activite.planificationsHebdomadaires.length === 0) {
+      <div class="text-muted">Aucune catégorie de séance n'est renseignée.</div>
     }
-  </div>
-
-  <div class="row g-2 align-items-end planification-seances mb-3">
-    <div class="col-12">
-      <h6 class="mb-0">Planification hebdomadaire</h6>
-    </div>
-    <div class="col-12 col-sm-4">
-      <label for="jourSeance" class="form-label">Jour</label>
-      <select id="jourSeance" name="jourSeance" class="form-select" [(ngModel)]="activite.jour">
-        <option value="" disabled>Sélectionner un jour</option>
-        @for (jour of joursSemaine; track jour) {
-          <option [value]="jour.valeur">{{jour.libelle}}</option>
-        }
-      </select>
-    </div>
-    <div class="col-12 col-sm-4">
-      <label for="horaireDebut" class="form-label">Heure de début</label>
-      <input id="horaireDebut" type="time" class="form-control" name="horaireDebut"
-        [(ngModel)]="activite.horaireDebut" />
-    </div>
-    <div class="col-12 col-sm-4">
-      <label for="duree" class="form-label">Durée (minutes)</label>
-      <input id="duree" type="number" min="1" class="form-control" name="duree"
-        [(ngModel)]="activite.duree" />
-    </div>
-  </div>
-
-  @if (activite.id) {
-    <div>
-      <div class="row g-2 align-items-end ajout-seances">
-        <div class="col-12 col-sm-4">
-          <label for="nombreSeances" class="form-label">Nombre de séances</label>
-          <input id="nombreSeances" name="nombreSeances" type="number" min="1" max="200"
-            class="form-control" [(ngModel)]="nombreSeances" />
+    @for (planification of activite.planificationsHebdomadaires; track planification; let index = $index) {
+      <div class="row g-2 align-items-end planification-ligne" [class.mb-3]="!$last">
+        <div class="col-12 col-md-2">
+          <label [for]="'jourSeance-' + index" class="form-label">Jour</label>
+          <select [id]="'jourSeance-' + index" [name]="'jourSeance-' + index" class="form-select"
+            [(ngModel)]="planification.jour">
+            <option value="" disabled>Sélectionner un jour</option>
+            @for (jour of joursSemaine; track jour.valeur) {
+              <option [value]="jour.valeur">{{jour.libelle}}</option>
+            }
+          </select>
         </div>
-        <div class="col-12 col-sm-4">
-          <label for="dateDebutSeances" class="form-label">À partir du</label>
-          <input id="dateDebutSeances" name="dateDebutSeances" type="date"
-            class="form-control" [(ngModel)]="dateDebutSeances" />
+        <div class="col-12 col-md-2">
+          <label [for]="'horaireDebut-' + index" class="form-label">Horaire</label>
+          <input [id]="'horaireDebut-' + index" type="time" class="form-control"
+            [name]="'horaireDebut-' + index" [(ngModel)]="planification.horaireDebut" />
         </div>
-        <div class="col-12 col-sm-4 d-grid">
-          <button type="button" class="btn btn-primary" (click)="ajouterSeances()"
-            [disabled]="ajoutSeancesEnCours || !dateDebutSeances || nombreSeances < 1 || nombreSeances > 200">
-            {{ajoutSeancesEnCours ? 'Ajout en cours…' : 'Ajouter les séances'}}
+        <div class="col-12 col-md-2">
+          <label [for]="'duree-' + index" class="form-label">Durée (min.)</label>
+          <input [id]="'duree-' + index" type="number" min="1" class="form-control"
+            [name]="'duree-' + index" [(ngModel)]="planification.duree" />
+        </div>
+        <div class="col-12 col-md-2">
+          <label [for]="'descriptif-' + index" class="form-label">Descriptif court</label>
+          <input [id]="'descriptif-' + index" type="text" class="form-control"
+            [name]="'descriptif-' + index" maxlength="100" placeholder="Ex. Adultes débutants"
+            [(ngModel)]="planification.descriptif" />
+        </div>
+        <div class="col-12 col-md-2">
+          <label [for]="'salle-' + index" class="form-label">Salle</label>
+          <div class="selecteur-salle">
+            @if (planification.salle) {
+              <span class="couleur-salle" [style.background-color]="planification.salle.couleur"
+                [title]="'Couleur : ' + planification.salle.couleur" aria-hidden="true"></span>
+            }
+            <select [id]="'salle-' + index" class="form-select" [name]="'salle-' + index"
+              [(ngModel)]="planification.salle" [compareWith]="comparerSalles">
+              <option [ngValue]="undefined">Aucune salle</option>
+              @for (salle of salles; track salle.id) {
+                <option [ngValue]="salle">{{salle.nom}} — {{salle.adresse}}</option>
+              }
+            </select>
+          </div>
+        </div>
+        <div class="col-12 col-md-2 d-flex gap-2">
+          <button type="button" class="btn btn-outline-primary flex-fill" title="Ajouter des séances à ce créneau"
+            [attr.aria-label]="'Ajouter des séances pour la planification ' + (index + 1)"
+            (click)="ouvrirModalAjoutSeances(planification)"
+            [disabled]="!activite.id || !planification.id">
+            <fa-icon [icon]="faSquarePlus"></fa-icon>
+          </button>
+          <button type="button" class="btn btn-outline-danger" title="Retirer cette séance"
+            [attr.aria-label]="'Retirer la séance ' + (index + 1)"
+            (click)="retirerPlanificationHebdomadaire(index)">
+            <fa-icon [icon]="faTrash"></fa-icon>
           </button>
         </div>
       </div>
+    }
+  </div>
+
+  <div class="planification-seances mb-3">
+    <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+
+      <div>
+        <h5 class="mb-1">Calendrier des séances</h5>
+      </div>
+      @if (activite.id) {
+        <span class="badge bg-primary">{{seances.length}} séance(s)</span>
+      }
+
+    </div>
+  @if (activite.id) {
+    <div>
       @if (chargementSeances) {
         <div class="text-center text-muted py-4">Chargement des séances…</div>
       }
@@ -377,12 +387,13 @@
               @for (seance of seances; track seance) {
                 <tr>
                   <td class="date-seance">
+                    <small class="text-muted text-capitalize">{{seance.debut | date:'EEEE'}}</small>
                     <input type="date" class="form-control form-control-sm"
                       [name]="'dateSeance-' + seance.id" [(ngModel)]="seance.dateEdition"
                       (ngModelChange)="planifierEnregistrementHoraire(seance)"
                       (blur)="enregistrerHoraireAuBlur(seance)"
                       [disabled]="suppressionSeances.has(seance.id)" />
-                    <small class="text-muted text-capitalize">{{seance.debut | date:'EEEE'}}</small>
+
                   </td>
                   <td class="horaire-seance">
                     <input type="time" class="form-control form-control-sm"
@@ -444,8 +455,45 @@
       Enregistrez d'abord l'activité, puis rouvrez-la pour ajouter et consulter ses séances.
     </div>
   }
-
+  </div>
 </section>
+
+@if (modalAjoutSeancesOuverte && planificationAjout) {
+  <div class="modal-backdrop fade show ajout-seances-backdrop" (click)="fermerModalAjoutSeances()"></div>
+  <div class="modal d-block ajout-seances-modal" role="dialog" aria-modal="true"
+    aria-labelledby="titre-ajout-seances" (click)="fermerModalAjoutSeances()">
+    <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 id="titre-ajout-seances" class="modal-title">Ajouter des séances</h5>
+          <button type="button" class="btn-close" aria-label="Fermer" (click)="fermerModalAjoutSeances()"
+            [disabled]="ajoutSeancesEnCours"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted">Créneau : {{libelleJour(planificationAjout.jour)}} à {{planificationAjout.horaireDebut}}</p>
+          <div class="mb-3">
+            <label for="nombreSemainesPlanification" class="form-label">Nombre de semaines</label>
+            <input id="nombreSemainesPlanification" name="nombreSemainesPlanification" type="number" min="1" max="200"
+              class="form-control" [(ngModel)]="nombreSeances" />
+          </div>
+          <div>
+            <label for="dateDebutPlanification" class="form-label">À partir du</label>
+            <input id="dateDebutPlanification" name="dateDebutPlanification" type="date"
+              class="form-control" [(ngModel)]="dateDebutSeances" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" (click)="fermerModalAjoutSeances()"
+            [disabled]="ajoutSeancesEnCours">Annuler</button>
+          <button type="button" class="btn btn-primary" (click)="ajouterSeances()"
+            [disabled]="ajoutSeancesEnCours || !dateDebutSeances || nombreSeances < 1 || nombreSeances > 200">
+            {{ajoutSeancesEnCours ? 'Ajout en cours…' : 'Ajouter les séances'}}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
 
 
 </div>

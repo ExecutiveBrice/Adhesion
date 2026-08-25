@@ -25,7 +25,7 @@ public record SeanceCalendrierResponse(
         return new SeanceCalendrierResponse(
                 seance.getId(),
                 activite.getId(),
-                activite.getNom(),
+                nomActivite(seance),
                 activite.getHoraire(),
                 salle != null ? salle.getNom() : null,
                 salle != null ? salle.getAdresse() : null,
@@ -36,5 +36,20 @@ public record SeanceCalendrierResponse(
                 seance.getFin(),
                 seance.getEtatSeance()
         );
+    }
+
+    private static String nomActivite(Seance seance) {
+        String descriptif = seance.getActivite().getPlanificationsHebdomadaires().stream()
+                .filter(planification -> planification.getJour() != null && planification.getHoraireDebut() != null)
+                .filter(planification -> seance.getDebut() != null
+                        && planification.getJour().equals(seance.getDebut().getDayOfWeek())
+                        && planification.getHoraireDebut().equals(seance.getDebut().toLocalTime()))
+                .map(planification -> planification.getDescriptif())
+                .filter(valeur -> valeur != null && !valeur.isBlank())
+                .findFirst()
+                .orElse(seance.getDescriptif());
+        return descriptif == null || descriptif.isBlank()
+                ? seance.getActivite().getNom()
+                : seance.getActivite().getNom() + " – " + descriptif.trim();
     }
 }

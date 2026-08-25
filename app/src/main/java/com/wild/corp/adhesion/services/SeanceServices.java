@@ -95,11 +95,16 @@ public class SeanceServices {
     }
 
     public Seance addFirstSeance(Activite activite, LocalDate date) {
+        return addFirstSeance(activite, date, planificationHistorique(activite));
+    }
+
+    private Seance addFirstSeance(Activite activite, LocalDate date, PlanificationHebdomadaire planification) {
         Seance nouvelleSeance = new Seance();
         nouvelleSeance.setActivite(activite);
-        nouvelleSeance.setSalle(activite.getSalle());
-        nouvelleSeance.setDebut(LocalDateTime.of(date, activite.getHoraireDebut()));
-        nouvelleSeance.setFin(nouvelleSeance.getDebut().plusMinutes(activite.getDuree()));
+        nouvelleSeance.setSalle(planification.getSalle());
+        nouvelleSeance.setDescriptif(planification.getDescriptif());
+        nouvelleSeance.setDebut(LocalDateTime.of(date, planification.getHoraireDebut()));
+        nouvelleSeance.setFin(nouvelleSeance.getDebut().plusMinutes(planification.getDuree()));
         nouvelleSeance.setEtatSeance(ESeance.PROGRAMMEE);
         return nouvelleSeance;
     }
@@ -108,9 +113,10 @@ public class SeanceServices {
         fillSeances(activite, nbWeeks, zone, LocalDate.now());
     }
 
-    /** Creates one session per week, except during holidays for the requested school zone. */
+    /** Creates each planned weekly session, except during holidays for the requested school zone. */
     public void fillSeances(Activite activite, int nbWeeks, String schoolZone, LocalDate from) {
-        validateSchedule(activite);
+        List<PlanificationHebdomadaire> planifications = planifications(activite);
+        validateSchedules(planifications);
         if (nbWeeks < 0) {
             throw new IllegalArgumentException("Le nombre de semaines ne peut pas être négatif");
         }
@@ -118,29 +124,50 @@ public class SeanceServices {
             return;
         }
 
-        LocalDate firstDate = from.with(TemporalAdjusters.nextOrSame(activite.getJour()));
-        LocalDate lastDate = firstDate.plusWeeks(Math.max(0, nbWeeks - 1L));
+        LocalDate firstDate = planifications.stream()
+                .map(planification -> from.with(TemporalAdjusters.nextOrSame(planification.getJour())))
+                .min(LocalDate::compareTo)
+                .orElseThrow();
+        LocalDate lastDate = planifications.stream()
+                .map(planification -> from.with(TemporalAdjusters.nextOrSame(planification.getJour()))
+                        .plusWeeks(Math.max(0, nbWeeks - 1L)))
+                .max(LocalDate::compareTo)
+                .orElseThrow();
         Set<LocalDate> unavailableDates = getUnavailableDates(schoolZone, firstDate, lastDate);
+        Set<LocalDateTime> existingStarts = startsExistants(activite);
 
-        for (int i = 0; i < nbWeeks; i++) {
-            LocalDate date = firstDate.plusWeeks(i);
-            if (!unavailableDates.contains(date)) {
-                addSeanceWithPresences(activite, date);
+        for (PlanificationHebdomadaire planification : planifications) {
+            LocalDate date = from.with(TemporalAdjusters.nextOrSame(planification.getJour()));
+            for (int i = 0; i < nbWeeks; i++) {
+                LocalDateTime debut = LocalDateTime.of(date, planification.getHoraireDebut());
+                if (!unavailableDates.contains(date) && existingStarts.add(debut)) {
+                    addSeanceWithPresences(activite, date, planification);
+                }
+                date = date.plusWeeks(1);
             }
         }
     }
 
     /**
-     * Adds the requested number of weekly sessions from a date, skipping unavailable
-     * and already scheduled dates. Unlike {@link #fillSeances(Activite, int, String, LocalDate)},
-     * the number represents sessions rather than a number of calendar weeks.
+     * Adds the requested number of occurrences for every weekly schedule from a date,
+     * skipping unavailable and already scheduled sessions.
      */
     public List<Seance> addSeances(Activite activite, int nbSeances, LocalDate from) {
         return addSeances(activite, nbSeances, zone, from);
     }
 
     public List<Seance> addSeances(Activite activite, int nbSeances, String schoolZone, LocalDate from) {
-        validateSchedule(activite);
+        return addSeances(activite, planifications(activite), nbSeances, schoolZone, from);
+    }
+
+    public List<Seance> addSeances(Activite activite, PlanificationHebdomadaire planification,
+                                    int nbSeances, LocalDate from) {
+        return addSeances(activite, List.of(planification), nbSeances, zone, from);
+    }
+
+    private List<Seance> addSeances(Activite activite, List<PlanificationHebdomadaire> planifications,
+                                    int nbSeances, String schoolZone, LocalDate from) {
+        validateSchedules(planifications);
         if (from == null) {
             throw new IllegalArgumentException("La date de début est obligatoire");
         }
@@ -148,44 +175,85 @@ public class SeanceServices {
             throw new IllegalArgumentException("Le nombre de séances doit être supérieur à zéro");
         }
 
-        LocalDate candidate = from.with(TemporalAdjusters.nextOrSame(activite.getJour()));
-        LocalDate unavailableThrough = candidate.plusWeeks(nbSeances + 52L);
-        Set<LocalDate> unavailableDates = getUnavailableDates(schoolZone, candidate, unavailableThrough);
-        Set<LocalDate> existingDates = activite.getSeances().stream()
-                .filter(seance -> seance.getDebut() != null)
-                .map(seance -> seance.getDebut().toLocalDate())
-                .collect(Collectors.toSet());
+        LocalDate earliestCandidate = planifications.stream()
+                .map(planification -> from.with(TemporalAdjusters.nextOrSame(planification.getJour())))
+                .min(LocalDate::compareTo)
+                .orElseThrow();
+        LocalDate unavailableThrough = earliestCandidate.plusWeeks(nbSeances + 52L);
+        Set<LocalDate> unavailableDates = getUnavailableDates(schoolZone, earliestCandidate, unavailableThrough);
+        Set<LocalDateTime> existingStarts = startsExistants(activite);
         List<Seance> created = new ArrayList<>();
 
-        while (created.size() < nbSeances) {
-            if (candidate.isAfter(unavailableThrough)) {
-                LocalDate nextRangeStart = unavailableThrough.plusDays(1);
-                unavailableThrough = unavailableThrough.plusWeeks(nbSeances + 52L);
-                unavailableDates.addAll(getUnavailableDates(schoolZone, nextRangeStart, unavailableThrough));
-            }
+        for (PlanificationHebdomadaire planification : planifications) {
+            LocalDate candidate = from.with(TemporalAdjusters.nextOrSame(planification.getJour()));
+            int createdForPlanification = 0;
+            while (createdForPlanification < nbSeances) {
+                if (candidate.isAfter(unavailableThrough)) {
+                    LocalDate nextRangeStart = unavailableThrough.plusDays(1);
+                    unavailableThrough = unavailableThrough.plusWeeks(nbSeances + 52L);
+                    unavailableDates.addAll(getUnavailableDates(schoolZone, nextRangeStart, unavailableThrough));
+                }
 
-            if (!unavailableDates.contains(candidate) && !existingDates.contains(candidate)) {
-                Seance seance = addSeanceWithPresences(activite, candidate);
-                created.add(seance);
-                existingDates.add(candidate);
+                LocalDateTime debut = LocalDateTime.of(candidate, planification.getHoraireDebut());
+                if (!unavailableDates.contains(candidate) && existingStarts.add(debut)) {
+                    created.add(addSeanceWithPresences(activite, candidate, planification));
+                    createdForPlanification++;
+                }
+                candidate = candidate.plusWeeks(1);
             }
-            candidate = candidate.plusWeeks(1);
         }
 
         return created;
     }
 
-    private void validateSchedule(Activite activite) {
-        if (activite.getJour() == null || activite.getHoraireDebut() == null || activite.getDuree() == null) {
-            throw new IllegalArgumentException("Le jour, l'heure de début et la durée de l'activité sont obligatoires");
+    private void validateSchedules(List<PlanificationHebdomadaire> planifications) {
+        if (planifications.isEmpty()) {
+            throw new IllegalArgumentException("Au moins une séance hebdomadaire est obligatoire");
         }
-        if (activite.getDuree() <= 0) {
-            throw new IllegalArgumentException("La durée de l'activité doit être supérieure à zéro");
+        for (PlanificationHebdomadaire planification : planifications) {
+            if (planification.getJour() == null || planification.getHoraireDebut() == null
+                    || planification.getDuree() == null) {
+                throw new IllegalArgumentException("Le jour, l'heure de début et la durée de chaque séance sont obligatoires");
+            }
+            if (planification.getDuree() <= 0) {
+                throw new IllegalArgumentException("La durée de chaque séance doit être supérieure à zéro");
+            }
+        }
+        long distinctSlots = planifications.stream()
+                .map(planification -> planification.getJour() + "-" + planification.getHoraireDebut())
+                .distinct()
+                .count();
+        if (distinctSlots != planifications.size()) {
+            throw new IllegalArgumentException("Deux séances hebdomadaires ne peuvent pas avoir le même jour et le même horaire");
         }
     }
 
-    private Seance addSeanceWithPresences(Activite activite, LocalDate date) {
-        Seance seance = addFirstSeance(activite, date);
+    private List<PlanificationHebdomadaire> planifications(Activite activite) {
+        if (activite.getPlanificationsHebdomadaires() != null && !activite.getPlanificationsHebdomadaires().isEmpty()) {
+            return activite.getPlanificationsHebdomadaires();
+        }
+        return List.of(planificationHistorique(activite));
+    }
+
+    private PlanificationHebdomadaire planificationHistorique(Activite activite) {
+        PlanificationHebdomadaire planification = new PlanificationHebdomadaire();
+        planification.setJour(activite.getJour());
+        planification.setHoraireDebut(activite.getHoraireDebut());
+        planification.setDuree(activite.getDuree());
+        planification.setSalle(activite.getSalle());
+        return planification;
+    }
+
+    private Set<LocalDateTime> startsExistants(Activite activite) {
+        return activite.getSeances().stream()
+                .map(Seance::getDebut)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toSet());
+    }
+
+    private Seance addSeanceWithPresences(Activite activite, LocalDate date,
+                                          PlanificationHebdomadaire planification) {
+        Seance seance = addFirstSeance(activite, date, planification);
         activite.getSeances().add(seance);
         presenceServices.fillPresences(seance);
         return seance;

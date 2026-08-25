@@ -50,6 +50,10 @@ public class Seance {
 
     private String commentaire;
 
+    /** Short label inherited from the weekly schedule for calendar display. */
+    @Column(length = 100)
+    private String descriptif;
+
     @OneToMany(mappedBy = "seance", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Presence> presences = new ArrayList<>();
 

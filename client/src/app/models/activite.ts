@@ -1,6 +1,7 @@
 import { Adherent } from "./adherent";
 import { Adhesion } from "./adhesion";
 import { SalleConfiguration } from './salle';
+import { PlanificationHebdomadaire } from './planificationHebdomadaire';
 
 export class Activite {
 
@@ -13,6 +14,7 @@ export class Activite {
   jour!: string;
   horaireDebut!: string;
   duree!: number;
+  planificationsHebdomadaires!: PlanificationHebdomadaire[];
   ageMin!: number;
   ageMax!: number;
   genre!: string;
@@ -46,6 +48,7 @@ export class Activite {
     this.profs = [];
     this.referents = [];
     this.adhesions = [];
+    this.planificationsHebdomadaires = [];
 
     this.nom = 'nouvelle activité'
     this.groupeFiltre = 'Amicaliste'

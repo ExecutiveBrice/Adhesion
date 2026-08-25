@@ -77,6 +77,14 @@ public class Activite {
 
     private Long duree;
 
+    /**
+     * Weekly schedules. The legacy day/time/duration fields above are kept so
+     * existing exports and integrations remain compatible.
+     */
+    @OneToMany(mappedBy = "activite", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("jour ASC, horaireDebut ASC")
+    private List<PlanificationHebdomadaire> planificationsHebdomadaires = new ArrayList<>();
+
     private boolean certificatMedical;
 
     private boolean complete;

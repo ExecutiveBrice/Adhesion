@@ -55,6 +55,19 @@
   border-left: .25rem solid #0d6efd;
 }
 
+.planification-ligne + .planification-ligne {
+  border-top: 1px solid #dee2e6;
+  padding-top: 1rem;
+}
+
+.ajout-seances-backdrop {
+  z-index: 1060;
+}
+
+.ajout-seances-modal {
+  z-index: 1061;
+}
+
 .seances-liste {
   border: 1px solid #dee2e6;
   border-radius: .5rem;

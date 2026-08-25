@@ -9,11 +9,11 @@ import java.time.LocalTime;
 public record MiseAJourSeanceRequest(
         ESeance etatSeance,
         @Size(max = 255) String commentaire,
-        boolean commentairePresent,
+        Boolean commentairePresent,
         LocalDate date,
         LocalTime heureDebut,
-        boolean horairePresent,
+        Boolean horairePresent,
         Long salleId,
-        boolean sallePresente
+        Boolean sallePresente
 ) {
 }

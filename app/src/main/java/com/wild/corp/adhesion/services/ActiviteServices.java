@@ -67,6 +67,18 @@ public class ActiviteServices {
         activiteRepository.save(activite);
         return getSeances(activiteId);
     }
+
+    public List<SeanceResponse> addSeances(Long activiteId, Long planificationId, int nombreSemaines,
+                                            LocalDate dateDebut) {
+        Activite activite = getById(activiteId);
+        PlanificationHebdomadaire planification = activite.getPlanificationsHebdomadaires().stream()
+                .filter(element -> planificationId.equals(element.getId()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("La planification sélectionnée est introuvable"));
+        seanceServices.addSeances(activite, planification, nombreSemaines, dateDebut);
+        activiteRepository.save(activite);
+        return getSeances(activiteId);
+    }
     public List<ActiviteNm1> getAllNm1() {
         List<ActiviteNm1> activites = activiteNm1Repository.findAll();
 
@@ -159,7 +171,18 @@ public class ActiviteServices {
     }
 
     public Activite save(Activite activite) {
-        Salle salle = trouverSalle(activite.getSalle());
+        List<PlanificationHebdomadaire> planifications = normaliserPlanifications(activite);
+        if (planifications.isEmpty()) {
+            if (activite.getPlanificationsHebdomadaires() != null && !activite.getPlanificationsHebdomadaires().isEmpty()) {
+                activite.setJour(null);
+                activite.setHoraireDebut(null);
+                activite.setDuree(null);
+                activite.setSalle(null);
+            } else {
+                activite.setSalle(trouverSalle(activite.getSalle()));
+            }
+        }
+        synchroniserChampsHistoriques(activite, planifications);
         if (activite.getId() != null) {
             Activite activiteInDB = activiteRepository.findById(activite.getId()).orElseThrow();
             Set<Adherent> anciensReferents = new HashSet<>(activiteInDB.getReferents());
@@ -169,8 +192,9 @@ public class ActiviteServices {
             BeanUtils.copyProperties(activite, activiteInDB,
                     "id", "adhesions", "sousClassement", "profs", "referents", "seances",
                     "nbAdhesionsEnCours", "nbAdhesionsCompletes", "nbAdhesionsAttente", "nbSeancesRealisees",
-                    "nbSeancesTotal", "montantCollecte", "salle");
-            activiteInDB.setSalle(salle);
+                    "nbSeancesTotal", "montantCollecte", "salle", "planificationsHebdomadaires");
+            activiteInDB.setSalle(activite.getSalle());
+            remplacerPlanifications(activiteInDB, planifications);
 
             activiteInDB.setProfs(activite.getProfs().stream()
                     .map(adherent -> adherentServices.getById(adherent.getId()))
@@ -188,7 +212,7 @@ public class ActiviteServices {
             return activiteRepository.save(activiteInDB);
         }
 
-        activite.setSalle(salle);
+        remplacerPlanifications(activite, planifications);
         activite.setProfs(activite.getProfs().stream()
                 .map(adherent -> adherentServices.getById(adherent.getId()))
                 .collect(Collectors.toSet()));
@@ -196,8 +220,72 @@ public class ActiviteServices {
         if (!activite.getReferents().isEmpty()) {
             throw new IllegalArgumentException("Les référents peuvent être ajoutés après l'enregistrement de l'activité");
         }
-        seanceServices.fillSeances(activite, 29);
+        if (!planifications.isEmpty()) {
+            seanceServices.fillSeances(activite, 29);
+        }
         return activiteRepository.save(activite);
+    }
+
+    private List<PlanificationHebdomadaire> normaliserPlanifications(Activite activite) {
+        List<PlanificationHebdomadaire> planifications = activite.getPlanificationsHebdomadaires();
+        if (planifications == null) {
+            return List.of();
+        }
+
+        List<PlanificationHebdomadaire> planificationsNormalisees = planifications.stream()
+                .filter(this::estValide)
+                .map(planification -> {
+                    PlanificationHebdomadaire copie = new PlanificationHebdomadaire();
+                    copie.setJour(planification.getJour());
+                    copie.setHoraireDebut(planification.getHoraireDebut());
+                    copie.setDuree(planification.getDuree());
+                    copie.setDescriptif(normaliserDescriptif(planification.getDescriptif()));
+                    copie.setSalle(trouverSalle(planification.getSalle()));
+                    return copie;
+                }).toList();
+        long creneauxDistincts = planificationsNormalisees.stream()
+                .map(planification -> planification.getJour() + "-" + planification.getHoraireDebut())
+                .distinct()
+                .count();
+        if (creneauxDistincts != planificationsNormalisees.size()) {
+            throw new IllegalArgumentException("Deux séances hebdomadaires ne peuvent pas avoir le même jour et le même horaire");
+        }
+        return planificationsNormalisees;
+    }
+
+    private boolean estValide(PlanificationHebdomadaire planification) {
+        return planification.getJour() != null && planification.getHoraireDebut() != null
+                && planification.getDuree() != null && planification.getDuree() > 0;
+    }
+
+    private String normaliserDescriptif(String descriptif) {
+        if (descriptif == null || descriptif.isBlank()) {
+            return null;
+        }
+        String valeur = descriptif.trim();
+        if (valeur.length() > 100) {
+            throw new IllegalArgumentException("Le descriptif d'une séance ne peut pas dépasser 100 caractères");
+        }
+        return valeur;
+    }
+
+    private void remplacerPlanifications(Activite activite, List<PlanificationHebdomadaire> planifications) {
+        activite.getPlanificationsHebdomadaires().clear();
+        for (PlanificationHebdomadaire planification : planifications) {
+            planification.setActivite(activite);
+            activite.getPlanificationsHebdomadaires().add(planification);
+        }
+    }
+
+    private void synchroniserChampsHistoriques(Activite activite, List<PlanificationHebdomadaire> planifications) {
+        if (planifications.isEmpty()) {
+            return;
+        }
+        PlanificationHebdomadaire premierePlanification = planifications.getFirst();
+        activite.setJour(premierePlanification.getJour());
+        activite.setHoraireDebut(premierePlanification.getHoraireDebut());
+        activite.setDuree(premierePlanification.getDuree());
+        activite.setSalle(premierePlanification.getSalle());
     }
 
     private Salle trouverSalle(Salle salle) {

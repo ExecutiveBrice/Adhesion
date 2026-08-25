@@ -64,6 +64,15 @@ export class ActiviteService {
     }, { responseType: 'json' });
   }
 
+  ajouterSeancesPlanification(activiteId: number, planificationId: number, nombreSemaines: number,
+    dateDebut: string): Observable<Seance[]> {
+    return this.http.post<Seance[]>(
+      API_URL + activiteId + '/planifications/' + planificationId + '/seances',
+      { nombreSeances: nombreSemaines, dateDebut },
+      { responseType: 'json' }
+    );
+  }
+
   modifierEtatSeance(activiteId: number, seance: Seance): Observable<Seance> {
     return this.http.patch<Seance>(API_URL + activiteId + '/seances/' + seance.id, {
       etatSeance: seance.etatSeance
@@ -136,7 +145,16 @@ export class ActiviteService {
   }
 
   save(activite: Activite): Observable<Activite> {
-    return this.http.post<Activite>(API_URL + 'save', activite, { responseType: 'json' });
+    // Les listes de profs et de référents sont obtenues via des DTO "lite".
+    // L'API d'enregistrement n'a besoin que de leurs identifiants : envoyer le
+    // DTO complet peut inclure des sous-objets incompatibles avec l'entité
+    // Adherent attendue par le backend.
+    const activiteAEnregistrer = {
+      ...activite,
+      profs: activite.profs.map(({ id }) => ({ id })),
+      referents: activite.referents.map(({ id }) => ({ id }))
+    };
+    return this.http.post<Activite>(API_URL + 'save', activiteAEnregistrer, { responseType: 'json' });
   }
 
   fillObjects(activites: Activite[], activitesListe: ActiviteDropDown[], adherent?: Adherent) {

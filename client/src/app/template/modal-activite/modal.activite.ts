@@ -1,7 +1,7 @@
 import { Component, inject, Input, OnDestroy, OnInit } from '@angular/core'
 import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap'
-import { Activite, Adherent, AdherentLite, SalleConfiguration } from 'src/app/models';
+import { Activite, Adherent, AdherentLite, PlanificationHebdomadaire, SalleConfiguration } from 'src/app/models';
 import { Seance } from 'src/app/models/seance';
 import { faExternalLinkSquareAlt } from '@fortawesome/free-solid-svg-icons';
 import { AdherentService } from 'src/app/_services/adherent.service';
@@ -53,6 +53,8 @@ export class ModalActivite implements OnInit, OnDestroy {
   seances: Seance[] = [];
   nombreSeances = 1;
   dateDebutSeances = '';
+  planificationAjout?: PlanificationHebdomadaire;
+  modalAjoutSeancesOuverte = false;
   chargementSeances = false;
   ajoutSeancesEnCours = false;
   enregistrementSeances = new Set<number>();
@@ -72,6 +74,7 @@ export class ModalActivite implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.activite.profs ??= [];
     this.activite.referents ??= [];
+    this.initialiserPlanificationsHebdomadaires();
     this.dateDebutSeances = this.aujourdHui();
     this.getProfs();
     if (this.activite.id) {
@@ -90,7 +93,7 @@ export class ModalActivite implements OnInit, OnDestroy {
 
 
   enregistrer() {
-
+    this.retirerPlanificationHistoriqueSiVide();
     this.activiteService.save(this.activite).subscribe(
       data => {
         this.showSucces(data.nom + " " + data.horaire)
@@ -152,6 +155,41 @@ export class ModalActivite implements OnInit, OnDestroy {
     return salleA?.id === salleB?.id;
   }
 
+  libelleJour(valeur: string): string {
+    return this.joursSemaine.find(jour => jour.valeur === valeur)?.libelle ?? valeur;
+  }
+
+  ajouterPlanificationHebdomadaire(): void {
+    this.activite.planificationsHebdomadaires.push({
+      jour: '',
+      horaireDebut: '',
+      duree: null,
+      descriptif: '',
+      salle: undefined
+    });
+  }
+
+  retirerPlanificationHebdomadaire(index: number): void {
+    this.activite.planificationsHebdomadaires.splice(index, 1);
+  }
+
+  ouvrirModalAjoutSeances(planification: PlanificationHebdomadaire): void {
+    if (!this.activite.id || !planification.id) {
+      return;
+    }
+    this.planificationAjout = planification;
+    this.nombreSeances = 1;
+    this.dateDebutSeances = this.aujourdHui();
+    this.modalAjoutSeancesOuverte = true;
+  }
+
+  fermerModalAjoutSeances(): void {
+    if (!this.ajoutSeancesEnCours) {
+      this.modalAjoutSeancesOuverte = false;
+      this.planificationAjout = undefined;
+    }
+  }
+
   getSeances() {
     this.chargementSeances = true;
     this.activiteService.getSeances(this.activite.id).subscribe({
@@ -167,13 +205,14 @@ export class ModalActivite implements OnInit, OnDestroy {
   }
 
   ajouterSeances() {
-    if (!this.activite.id || !this.dateDebutSeances || this.nombreSeances < 1) {
+    if (!this.activite.id || !this.planificationAjout?.id || !this.dateDebutSeances || this.nombreSeances < 1) {
       return;
     }
 
     this.ajoutSeancesEnCours = true;
-    this.activiteService.ajouterSeances(
+    this.activiteService.ajouterSeancesPlanification(
       this.activite.id,
+      this.planificationAjout.id,
       this.nombreSeances,
       this.dateDebutSeances
     ).subscribe({
@@ -181,9 +220,10 @@ export class ModalActivite implements OnInit, OnDestroy {
         this.seances = this.preparerSeances(data);
         this.ajoutSeancesEnCours = false;
         this.toastr.success(
-          `${this.nombreSeances} séance(s) ajoutée(s)`,
+          `${data.length} séance(s) ajoutée(s)`,
           'Séances enregistrées'
         );
+        this.fermerModalAjoutSeances();
       },
       error: err => {
         this.ajoutSeancesEnCours = false;
@@ -345,6 +385,37 @@ export class ModalActivite implements OnInit, OnDestroy {
     const maintenant = new Date();
     const dateLocale = new Date(maintenant.getTime() - maintenant.getTimezoneOffset() * 60_000);
     return dateLocale.toISOString().slice(0, 10);
+  }
+
+  private initialiserPlanificationsHebdomadaires(): void {
+    this.activite.planificationsHebdomadaires ??= [];
+    if (this.activite.planificationsHebdomadaires.length > 0) {
+      return;
+    }
+
+    // Les activités existantes n'avaient qu'un créneau : on le rend éditable
+    // comme première ligne de la nouvelle planification.
+    const planification: PlanificationHebdomadaire = {
+      jour: this.activite.jour ?? '',
+      horaireDebut: this.activite.horaireDebut ?? '',
+      duree: this.activite.duree ?? null,
+      descriptif: '',
+      salle: this.activite.salle
+    };
+    this.activite.planificationsHebdomadaires.push(planification);
+  }
+
+  private retirerPlanificationHistoriqueSiVide(): void {
+    const aUnCreneau = this.activite.planificationsHebdomadaires.some(planification =>
+      !!planification.jour || !!planification.horaireDebut || planification.duree != null
+    );
+    if (!aUnCreneau) {
+      // Les anciennes propriétés ne doivent pas recréer un créneau supprimé.
+      this.activite.jour = undefined!;
+      this.activite.horaireDebut = undefined!;
+      this.activite.duree = undefined!;
+      this.activite.salle = undefined;
+    }
   }
 
   private preparerSeances(seances: Seance[]): Seance[] {
