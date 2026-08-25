@@ -26,3 +26,4 @@ export * from './activiteDropDown';
 export * from './agendaGoogle';
 export * from './salle';
 export * from './planificationHebdomadaire';
+export * from './utilisateurSelectionnable';

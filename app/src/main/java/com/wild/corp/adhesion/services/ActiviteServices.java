@@ -23,6 +23,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -195,31 +196,14 @@ public class ActiviteServices {
                     "nbSeancesTotal", "montantCollecte", "salle", "planificationsHebdomadaires");
             activiteInDB.setSalle(activite.getSalle());
             remplacerPlanifications(activiteInDB, planifications);
-
-            activiteInDB.setProfs(activite.getProfs().stream()
-                    .map(adherent -> adherentServices.getById(adherent.getId()))
-                    .collect(Collectors.toSet()));
-            activiteInDB.getProfs().forEach(adherent -> adherent.getCours().add(activiteInDB));
-
-            activiteInDB.setReferents(resoudreReferentsValides(activiteInDB, activite.getReferents()));
-            activiteInDB.getReferents().forEach(adherent -> adherent.getActivitesReferent().add(activiteInDB));
-            activiteInDB.getReferents().forEach(this::ajouterRoleReferent);
-            anciensReferents.stream()
-                    .filter(adherent -> !activiteInDB.getReferents().contains(adherent))
-                    .filter(adherent -> adherent.getActivitesReferent().isEmpty())
-                    .forEach(this::retirerRoleReferent);
+            associerSeancesHistoriquesAuxPlanifications(activiteInDB);
+            synchroniserIntervenantsPlanifications(activiteInDB, anciensReferents);
 
             return activiteRepository.save(activiteInDB);
         }
 
         remplacerPlanifications(activite, planifications);
-        activite.setProfs(activite.getProfs().stream()
-                .map(adherent -> adherentServices.getById(adherent.getId()))
-                .collect(Collectors.toSet()));
-        activite.getProfs().forEach(adherent -> adherent.getCours().add(activite));
-        if (!activite.getReferents().isEmpty()) {
-            throw new IllegalArgumentException("Les référents peuvent être ajoutés après l'enregistrement de l'activité");
-        }
+        synchroniserIntervenantsPlanifications(activite, Set.of());
         if (!planifications.isEmpty()) {
             seanceServices.fillSeances(activite, 29);
         }
@@ -241,6 +225,9 @@ public class ActiviteServices {
                     copie.setDuree(planification.getDuree());
                     copie.setDescriptif(normaliserDescriptif(planification.getDescriptif()));
                     copie.setSalle(trouverSalle(planification.getSalle()));
+                    copie.setId(planification.getId());
+                    copie.setProfs(resoudreAdherents(planification.getProfs()));
+                    copie.setReferents(resoudreAdherents(planification.getReferents()));
                     return copie;
                 }).toList();
         long creneauxDistincts = planificationsNormalisees.stream()
@@ -270,11 +257,83 @@ public class ActiviteServices {
     }
 
     private void remplacerPlanifications(Activite activite, List<PlanificationHebdomadaire> planifications) {
-        activite.getPlanificationsHebdomadaires().clear();
-        for (PlanificationHebdomadaire planification : planifications) {
-            planification.setActivite(activite);
-            activite.getPlanificationsHebdomadaires().add(planification);
+        Map<Long, PlanificationHebdomadaire> existantesParId = activite.getPlanificationsHebdomadaires().stream()
+                .filter(planification -> planification.getId() != null)
+                .collect(Collectors.toMap(PlanificationHebdomadaire::getId, planification -> planification));
+        Set<Long> idsConservees = planifications.stream()
+                .map(PlanificationHebdomadaire::getId)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (!existantesParId.keySet().containsAll(idsConservees)) {
+            throw new IllegalArgumentException("Une catégorie de séance est introuvable pour cette activité");
         }
+        activite.getSeances().stream()
+                .filter(seance -> seance.getPlanification() != null
+                        && seance.getPlanification().getId() != null
+                        && !idsConservees.contains(seance.getPlanification().getId()))
+                .forEach(seance -> seance.setPlanification(null));
+        activite.getPlanificationsHebdomadaires().removeIf(planification -> planification.getId() != null
+                && !idsConservees.contains(planification.getId()));
+        for (PlanificationHebdomadaire planification : planifications) {
+            PlanificationHebdomadaire cible = planification.getId() == null ? null
+                    : existantesParId.get(planification.getId());
+            if (cible == null) {
+                planification.setActivite(activite);
+                activite.getPlanificationsHebdomadaires().add(planification);
+            } else {
+                cible.setJour(planification.getJour());
+                cible.setHoraireDebut(planification.getHoraireDebut());
+                cible.setDuree(planification.getDuree());
+                cible.setDescriptif(planification.getDescriptif());
+                cible.setSalle(planification.getSalle());
+                cible.setProfs(planification.getProfs());
+                cible.setReferents(planification.getReferents());
+            }
+        }
+    }
+
+    /**
+     * Keeps the former activity-level relations as an aggregate for legacy screens
+     * and inverse mappings. Assignments themselves are stored per session category.
+     */
+    private void synchroniserIntervenantsPlanifications(Activite activite, Set<Adherent> anciensReferents) {
+        activite.getPlanificationsHebdomadaires().forEach(planification -> planification
+                .setReferents(resoudreReferentsValides(activite, planification.getReferents())));
+        Set<Adherent> profs = activite.getPlanificationsHebdomadaires().stream()
+                .flatMap(planification -> planification.getProfs().stream())
+                .collect(Collectors.toSet());
+        activite.setProfs(profs);
+        profs.forEach(adherent -> adherent.getCours().add(activite));
+
+        Set<Adherent> referents = activite.getPlanificationsHebdomadaires().stream()
+                .flatMap(planification -> planification.getReferents().stream())
+                .collect(Collectors.toSet());
+        activite.setReferents(referents);
+        referents.forEach(adherent -> adherent.getActivitesReferent().add(activite));
+        referents.forEach(this::ajouterRoleReferent);
+        anciensReferents.stream()
+                .filter(adherent -> !referents.contains(adherent))
+                .filter(adherent -> adherent.getActivitesReferent().isEmpty())
+                .forEach(this::retirerRoleReferent);
+    }
+
+    private void associerSeancesHistoriquesAuxPlanifications(Activite activite) {
+        activite.getSeances().stream()
+                .filter(seance -> seance.getPlanification() == null && seance.getDebut() != null)
+                .forEach(seance -> activite.getPlanificationsHebdomadaires().stream()
+                        .filter(planification -> planification.getJour() == seance.getDebut().getDayOfWeek()
+                                && planification.getHoraireDebut().equals(seance.getDebut().toLocalTime()))
+                        .findFirst()
+                        .ifPresent(seance::setPlanification));
+    }
+
+    private Set<Adherent> resoudreAdherents(Set<Adherent> adherents) {
+        if (adherents == null) {
+            return new HashSet<>();
+        }
+        return adherents.stream()
+                .map(adherent -> adherentServices.getById(adherent.getId()))
+                .collect(Collectors.toSet());
     }
 
     private void synchroniserChampsHistoriques(Activite activite, List<PlanificationHebdomadaire> planifications) {
@@ -297,6 +356,9 @@ public class ActiviteServices {
     }
 
     private Set<Adherent> resoudreReferentsValides(Activite activite, Set<Adherent> referents) {
+        if (referents == null) {
+            return new HashSet<>();
+        }
         Set<Long> adherentsValides = activite.getAdhesions().stream()
                 .filter(adhesion -> Status.VALIDEE.label.equals(adhesion.getStatutActuel()))
                 .map(adhesion -> adhesion.getAdherent().getId())

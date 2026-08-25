@@ -3,9 +3,8 @@ import { Role } from "./role";
 export class UserLite {
 
   id!: number;
-  prenom!: string;
-  nom!: string;
-  email!: string;
+  adherent!: string;
+  username!: string;
   roles!: Role[];
 
 

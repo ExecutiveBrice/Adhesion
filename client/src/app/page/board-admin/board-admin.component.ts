@@ -5,7 +5,7 @@ import { ParamService } from '../../_services/param.service';
 
 import { AgendaGoogleConfiguration, ParamBoolean, ParamNumber, ParamText, SalleConfiguration, UserLite } from 'src/app/models';
 import { forkJoin } from 'rxjs';
-import { faCalendarDays, faCircleCheck, faCircleXmark, faEnvelope, faLocationDot, faPlus, faSquareMinus, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarDays, faCircleCheck, faCircleXmark, faFont, faHashtag, faLocationDot, faPlus, faSliders, faTrash, faUserShield } from '@fortawesome/free-solid-svg-icons';
 import { AdherentService } from 'src/app/_services/adherent.service';
 import {AuthService} from "../../_services/auth.service";
 import {TokenStorageService} from "../../_services/token-storage.service";
@@ -13,16 +13,20 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { NgClass } from '@angular/common';
 import { NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap/dropdown';
-import { RouterLink } from '@angular/router';
+import { NgbAccordionBody, NgbAccordionButton, NgbAccordionCollapse, NgbAccordionDirective, NgbAccordionHeader, NgbAccordionItem } from '@ng-bootstrap/ng-bootstrap/accordion';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap/tooltip';
 import { OrderByPipe } from '../../_helpers/sort.pipe';
+import { UserCheckboxDropdownComponent } from '../../template/user-checkbox-dropdown/user-checkbox-dropdown.component';
+import { UtilisateurSelectionnable } from '../../models/utilisateurSelectionnable';
 
+type RoleUtilisateur = 'ROLE_ADMIN' | 'ROLE_ADMINISTRATEUR' | 'ROLE_BUREAU' | 'ROLE_SECRETAIRE' | 'ROLE_COMPTABLE' | 'ROLE_PROF';
 
 
 @Component({
     selector: 'app-board-admin',
     templateUrl: './board-admin.component.html',
     styleUrls: ['./board-admin.component.css'],
-    imports: [FaIconComponent, FormsModule, NgClass, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, RouterLink, OrderByPipe]
+    imports: [FaIconComponent, FormsModule, NgClass, NgbAccordionBody, NgbAccordionButton, NgbAccordionCollapse, NgbAccordionDirective, NgbAccordionHeader, NgbAccordionItem, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, NgbTooltip, OrderByPipe, UserCheckboxDropdownComponent]
 })
 export class BoardAdminComponent implements OnInit {
   private readonly apiViewRefresh = registerApiViewRefresh();
@@ -32,14 +36,16 @@ export class BoardAdminComponent implements OnInit {
   private userService = inject(UserService);
   private adherentService = inject(AdherentService);
 
-  faEnvelope = faEnvelope;
   faCircleXmark = faCircleXmark;
   faCircleCheck = faCircleCheck;
-  faSquareMinus = faSquareMinus;
   faCalendarDays = faCalendarDays;
   faLocationDot = faLocationDot;
   faPlus = faPlus;
   faTrash = faTrash;
+  faSliders = faSliders;
+  faHashtag = faHashtag;
+  faFont = faFont;
+  faUserShield = faUserShield;
   paramBooleans: ParamBoolean[] = [];
   paramTexts: ParamText[] = [];
   agendasGoogle: AgendaGoogleConfiguration[] = [];
@@ -57,12 +63,24 @@ export class BoardAdminComponent implements OnInit {
   salleMessage = '';
   salleErreur = '';
   usersLite: UserLite[] = [];
-  adminsLite: UserLite[] = [];
-  administrateursLite: UserLite[] = [];
-  bureauxLite: UserLite[] = [];
-  secretairesLite: UserLite[] = [];
-  profsLite: UserLite[] = [];
-  comptablesLite: UserLite[] = [];
+  utilisateursSelectionnables: UtilisateurSelectionnable[] = [];
+  selectionsRoles: Record<RoleUtilisateur, UtilisateurSelectionnable[]> = {
+    ROLE_ADMIN: [],
+    ROLE_ADMINISTRATEUR: [],
+    ROLE_BUREAU: [],
+    ROLE_SECRETAIRE: [],
+    ROLE_COMPTABLE: [],
+    ROLE_PROF: []
+  };
+  rolesEnCoursDeMiseAJour: Partial<Record<RoleUtilisateur, boolean>> = {};
+  readonly rolesUtilisateurs: { code: RoleUtilisateur; libelle: string }[] = [
+    { code: 'ROLE_ADMIN', libelle: 'Administrateurs du site' },
+    { code: 'ROLE_ADMINISTRATEUR', libelle: "Administrateurs de l’ALOD" },
+    { code: 'ROLE_BUREAU', libelle: 'Membres du bureau de l’ALOD' },
+    { code: 'ROLE_SECRETAIRE', libelle: 'Secrétaires de l’ALOD' },
+    { code: 'ROLE_COMPTABLE', libelle: 'Comptables de l’ALOD' },
+    { code: 'ROLE_PROF', libelle: 'Professeurs de l’ALOD' }
+  ];
 
   ngOnInit(): void {
     this.getAllBoolean()
@@ -77,19 +95,53 @@ export class BoardAdminComponent implements OnInit {
   fillLists() {
     this.userService.getAllLite().subscribe(
       data => {
-console.log(data)
         this.usersLite = data;
-        this.adminsLite = data.filter(adh => adh.roles.filter(role => role.name === 'ROLE_ADMIN').length > 0)
-        this.administrateursLite = data.filter(adh => adh.roles.filter(role => role.name === 'ROLE_ADMINISTRATEUR').length > 0)
-        this.bureauxLite = data.filter(adh => adh.roles.filter(role => role.name === 'ROLE_BUREAU').length > 0)
-        this.secretairesLite = data.filter(adh => adh.roles.filter(role => role.name === 'ROLE_SECRETAIRE').length > 0)
-        this.profsLite = data.filter(adh => adh.roles.filter(role => role.name === 'ROLE_PROF').length > 0)
-        this.comptablesLite = data.filter(adh => adh.roles.filter(role => role.name === 'ROLE_COMPTABLE').length > 0)
+        this.utilisateursSelectionnables = data.map(user => ({
+          id: user.id,
+          prenom: '',
+          nom: user.adherent || user.username
+        }));
+        this.selectionsRoles = this.rolesUtilisateurs.reduce((selections, role) => {
+          selections[role.code] = this.utilisateursSelectionnables.filter(utilisateur =>
+            data.some(user => user.id === utilisateur.id && user.roles.some(userRole => userRole.name === role.code)));
+          return selections;
+        }, {} as Record<RoleUtilisateur, UtilisateurSelectionnable[]>);
       },
       err => {
 
       }
     );
+  }
+
+  modifierUtilisateursRole(role: RoleUtilisateur, selection: UtilisateurSelectionnable[]): void {
+    const selectionPrecedente = this.selectionsRoles[role];
+    const idsSelectionnes = new Set(selection.map(utilisateur => utilisateur.id));
+    const idsPrecedents = new Set(selectionPrecedente.map(utilisateur => utilisateur.id));
+    const utilisateursAjoutes = selection.filter(utilisateur => !idsPrecedents.has(utilisateur.id));
+    const utilisateursRetires = selectionPrecedente.filter(utilisateur => !idsSelectionnes.has(utilisateur.id));
+
+    this.selectionsRoles = { ...this.selectionsRoles, [role]: selection };
+    const utilisateursParId = new Map(this.usersLite.map(utilisateur => [utilisateur.id, utilisateur]));
+    const misesAJour = [
+      ...utilisateursAjoutes.map(utilisateur => this.userService.grantUser(role, utilisateursParId.get(utilisateur.id)?.username ?? '')),
+      ...utilisateursRetires.map(utilisateur => this.userService.unGrantUser(role, utilisateursParId.get(utilisateur.id)?.username ?? ''))
+    ];
+
+    if (misesAJour.length === 0) {
+      return;
+    }
+
+    this.rolesEnCoursDeMiseAJour[role] = true;
+    forkJoin(misesAJour).subscribe({
+      next: () => {
+        this.rolesEnCoursDeMiseAJour[role] = false;
+        this.fillLists();
+      },
+      error: () => {
+        this.rolesEnCoursDeMiseAJour[role] = false;
+        this.fillLists();
+      }
+    });
   }
 
 
@@ -99,30 +151,6 @@ console.log(data)
         console.log(data)
         this.tokenStorage.saveToken(data.token);
         this.tokenStorage.saveUser(data);
-      },
-      err => {
-        ;
-      }
-    );
-  }
-
-  grantUser(email: string, role: string) {
-    this.userService.grantUser(role, email).subscribe(
-      data => {
-
-        this.fillLists()
-      },
-      err => {
-        ;
-      }
-    );
-  }
-
-  unGrantUser(email: string, role: string) {
-    this.userService.unGrantUser(role, email).subscribe(
-      data => {
-
-        this.fillLists()
       },
       err => {
         ;

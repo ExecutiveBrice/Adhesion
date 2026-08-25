@@ -145,14 +145,18 @@ export class ActiviteService {
   }
 
   save(activite: Activite): Observable<Activite> {
-    // Les listes de profs et de référents sont obtenues via des DTO "lite".
-    // L'API d'enregistrement n'a besoin que de leurs identifiants : envoyer le
-    // DTO complet peut inclure des sous-objets incompatibles avec l'entité
-    // Adherent attendue par le backend.
+    // Les intervenants sont associés aux catégories de séance. L'API attend
+    // uniquement leurs identifiants, afin d'éviter d'envoyer les sous-objets
+    // des DTO « lite ».
     const activiteAEnregistrer = {
       ...activite,
       profs: activite.profs.map(({ id }) => ({ id })),
-      referents: activite.referents.map(({ id }) => ({ id }))
+      referents: activite.referents.map(({ id }) => ({ id })),
+      planificationsHebdomadaires: activite.planificationsHebdomadaires.map(planification => ({
+        ...planification,
+        profs: (planification.profs ?? []).map(({ id }) => ({ id })),
+        referents: (planification.referents ?? []).map(({ id }) => ({ id }))
+      }))
     };
     return this.http.post<Activite>(API_URL + 'save', activiteAEnregistrer, { responseType: 'json' });
   }

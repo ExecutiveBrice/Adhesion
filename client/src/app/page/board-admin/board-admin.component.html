@@ -1,417 +1,124 @@
-<div class="row">
-
-  <div class="col-12">
-    <section class="card card-container agenda-admin" aria-labelledby="titre-agenda-admin">
-      <div class="agenda-admin-entete">
-        <div class="agenda-admin-titre">
-          <span class="agenda-admin-icone" aria-hidden="true"><fa-icon [icon]="faCalendarDays"></fa-icon></span>
-          <div>
-            <h2 id="titre-agenda-admin">Agenda</h2>
-            <p>Ajoutez des Google Agendas publics et choisissez leur couleur dans le calendrier d'accueil.</p>
-          </div>
-        </div>
-        <span class="agenda-compteur">{{agendasGoogle.length}} / 10</span>
-      </div>
-
-      <div class="agenda-ajout">
-        <div class="agenda-nom">
-          <label for="nouvelAgendaNom">Nom de l'agenda</label>
-          <input id="nouvelAgendaNom" type="text" class="form-control" maxlength="100"
-            [(ngModel)]="nouvelAgendaNom" placeholder="Ex. Événements de l'ALOD">
-        </div>
-        <div class="agenda-source">
-          <label for="nouvelAgendaSource">Identifiant ou URL publique Google Agenda</label>
-          <input id="nouvelAgendaSource" type="text" class="form-control"
-            [(ngModel)]="nouvelAgendaSource"
-            (keydown.enter)="ajouterAgenda()"
-            placeholder="exemple@group.calendar.google.com ou https://calendar.google.com/…">
-          </div>
-          <div class="agenda-couleur">
-            <label for="nouvelAgendaCouleur">Couleur</label>
-            <input id="nouvelAgendaCouleur" type="color" class="form-control form-control-color"
-              [(ngModel)]="nouvelAgendaCouleur" title="Choisir la couleur du nouvel agenda">
-          </div>
-          <button type="button" class="btn btn-primary agenda-ajouter"
-            [disabled]="agendaEnregistrement || agendasGoogle.length >= 10"
-            (click)="ajouterAgenda()">
-            <fa-icon [icon]="faPlus"></fa-icon>
-            Ajouter
-          </button>
-        </div>
-
-        @if (agendasGoogle.length > 0) {
-          <div class="agenda-liste">
-            @for (agenda of agendasGoogle; track agenda; let index = $index) {
-              <div class="agenda-ligne">
-                <span class="agenda-apercu" [style.background-color]="agenda.couleur" aria-hidden="true"></span>
-                <div class="agenda-nom">
-                  <label [for]="'agendaNom' + index">Nom</label>
-                  <input [id]="'agendaNom' + index" type="text" class="form-control" maxlength="100"
-                    [(ngModel)]="agenda.nom">
-                </div>
-                <div class="agenda-source">
-                  <label [for]="'agendaSource' + index">Identifiant public</label>
-                  <input [id]="'agendaSource' + index" type="text" class="form-control"
-                    [(ngModel)]="agenda.source">
-                </div>
-                <div class="agenda-couleur">
-                  <label [for]="'agendaCouleur' + index">Couleur</label>
-                  <input [id]="'agendaCouleur' + index" type="color" class="form-control form-control-color"
-                    [(ngModel)]="agenda.couleur" [title]="'Couleur de l’agenda ' + (index + 1)">
-                </div>
-                <button type="button" class="btn btn-outline-danger agenda-supprimer"
-                  [disabled]="agendaEnregistrement"
-                  (click)="supprimerAgenda(index)" [attr.aria-label]="'Supprimer l’agenda ' + (index + 1)">
-                  <fa-icon [icon]="faTrash"></fa-icon>
-                </button>
-              </div>
-            }
-            <div class="agenda-actions">
-              <small>Les modifications de nom, d'identifiant et de couleur sont appliquées après enregistrement.</small>
-              <button type="button" class="btn btn-outline-primary"
-                [disabled]="agendaEnregistrement" (click)="enregistrerAgendas()">
-                {{agendaEnregistrement ? 'Enregistrement…' : 'Enregistrer les modifications'}}
-              </button>
-            </div>
-          </div>
-        }
-
-        @if (agendasGoogle.length === 0 && !agendaErreur) {
-          <div class="agenda-vide">
-            Aucun agenda Google n'est configuré pour le moment.
-          </div>
-        }
-        @if (agendaMessage) {
-          <div class="alert alert-success agenda-retour" role="status">{{agendaMessage}}</div>
-        }
-        @if (agendaErreur) {
-          <div class="alert alert-danger agenda-retour" role="alert">{{agendaErreur}}</div>
-        }
-      </section>
-    </div>
-
-    <div class="col-12">
-      <section class="card card-container agenda-admin" aria-labelledby="titre-salles-admin">
-        <div class="agenda-admin-entete">
-          <div class="agenda-admin-titre">
-            <span class="agenda-admin-icone" aria-hidden="true"><fa-icon [icon]="faLocationDot"></fa-icon></span>
-            <div>
-              <h2 id="titre-salles-admin">Salles</h2>
-              <p>Enregistrez les salles utilisées par l’association, avec leur adresse et leur couleur.</p>
-            </div>
-          </div>
-          <span class="agenda-compteur">{{salles.length}}</span>
-        </div>
-
-        <div class="agenda-ajout">
-          <div class="agenda-nom">
-            <label for="nouvelleSalleNom">Nom de la salle</label>
-            <input id="nouvelleSalleNom" type="text" class="form-control" maxlength="100"
-              [(ngModel)]="nouvelleSalleNom" placeholder="Ex. Salle polyvalente">
-          </div>
-          <div class="agenda-source">
-            <label for="nouvelleSalleAdresse">Adresse</label>
-            <input id="nouvelleSalleAdresse" type="text" class="form-control" maxlength="500"
-              [(ngModel)]="nouvelleSalleAdresse" (keydown.enter)="ajouterSalle()"
-              placeholder="Ex. 8 rue de l’Ouche Dinier, 44400 Rezé">
-          </div>
-          <div class="agenda-couleur">
-            <label for="nouvelleSalleCouleur">Couleur</label>
-            <input id="nouvelleSalleCouleur" type="color" class="form-control form-control-color"
-              [(ngModel)]="nouvelleSalleCouleur" title="Choisir la couleur de la nouvelle salle">
-          </div>
-          <button type="button" class="btn btn-primary agenda-ajouter" [disabled]="salleEnregistrement"
-            (click)="ajouterSalle()">
-            <fa-icon [icon]="faPlus"></fa-icon>
-            Ajouter
-          </button>
-        </div>
-
-        @if (salles.length > 0) {
-          <div class="agenda-liste">
-            @for (salle of salles; track salle; let index = $index) {
-              <div class="agenda-ligne">
-                <span class="agenda-apercu" [style.background-color]="salle.couleur" aria-hidden="true"></span>
-                <div class="agenda-nom">
-                  <label [for]="'salleNom' + index">Nom</label>
-                  <input [id]="'salleNom' + index" type="text" class="form-control" maxlength="100"
-                    [(ngModel)]="salle.nom">
-                </div>
-                <div class="agenda-source">
-                  <label [for]="'salleAdresse' + index">Adresse</label>
-                  <input [id]="'salleAdresse' + index" type="text" class="form-control" maxlength="500"
-                    [(ngModel)]="salle.adresse">
-                </div>
-                <div class="agenda-couleur">
-                  <label [for]="'salleCouleur' + index">Couleur</label>
-                  <input [id]="'salleCouleur' + index" type="color" class="form-control form-control-color"
-                    [(ngModel)]="salle.couleur" [title]="'Couleur de la salle ' + (index + 1)">
-                </div>
-                <button type="button" class="btn btn-outline-danger agenda-supprimer" [disabled]="salleEnregistrement"
-                  (click)="supprimerSalle(index)" [attr.aria-label]="'Supprimer la salle ' + (index + 1)">
-                  <fa-icon [icon]="faTrash"></fa-icon>
-                </button>
-              </div>
-            }
-            <div class="agenda-actions">
-              <small>Les modifications de nom, d’adresse et de couleur sont appliquées après enregistrement.</small>
-              <button type="button" class="btn btn-outline-primary" [disabled]="salleEnregistrement"
-                (click)="enregistrerSalles()">
-                {{salleEnregistrement ? 'Enregistrement…' : 'Enregistrer les modifications'}}
-              </button>
-            </div>
-          </div>
-        }
-
-        @if (salles.length === 0 && !salleErreur) {
-          <div class="agenda-vide">
-            Aucune salle n'est configurée pour le moment.
-          </div>
-        }
-        @if (salleMessage) {
-          <div class="alert alert-success agenda-retour" role="status">{{salleMessage}}</div>
-        }
-        @if (salleErreur) {
-          <div class="alert alert-danger agenda-retour" role="alert">{{salleErreur}}</div>
-        }
-      </section>
-    </div>
-
-    <!--div class="col-md-12">
-    <div type='button' class="btn btn-block btn-primary" (click)="nouvelleAnnee()">Nouvelle Annee</div>
-  </div-->
-
-  <div class="col-md-6">
-    <div class="card card-container">
-      <h2>Paramètres Booleens</h2>
-      <div class="row">
-
-        @for (param of paramBooleans  | orderBy:'id':false; track param) {
-          <div class="center col-3">
-            <label for="emailReferent">{{param.paramName}} @if (param.paramValue == true) {
-              <fa-icon class="green"
-              [icon]="faCircleCheck"></fa-icon>
-              }@if (param.paramValue != true) {
-              <fa-icon class="orange"
-              [icon]="faCircleXmark"></fa-icon>
-            }</label>
-            <div class="btn-group btn-group-sm" role="group" aria-label="emailReferent">
-              <div type='button' class="btn btn-block"
-                [ngClass]="param.paramValue == true ? 'btn-primary' : ' btn-outline-secondary'"
-              (click)="param.paramValue = true; updateParamBoolean(param)">Oui</div>
-              <div type='button' class="btn btn-block"
-                [ngClass]="param.paramValue != true ? 'btn-primary' : ' btn-outline-secondary'"
-              (click)="param.paramValue = false; updateParamBoolean(param)">Non</div>
-            </div>
-          </div>
-        }
-
-      </div>
-    </div>
-  </div>
-  <div class="col-md-6">
-    <div class="card card-container">
-      <h2>Paramètres Nombres</h2>
-      <div class="row">
-        @for (param of paramNumbers  | orderBy:'id':false; track param) {
-          <div class="center col-3">
-            <label for="paramValue">{{param.paramName}}</label>
-            <input type="number" class="form-control" name="paramValue" [(ngModel)]="param.paramValue" />
-            <div type='button' class="btn btn-block btn-primary" (click)="updateParamNumber(param)">MAJ</div>
-          </div>
-        }
-      </div>
-    </div>
-  </div>
-  <div class="col-md-6">
-    <div class="card card-container">
-      <h2>Paramètres Textuels</h2>
-      <div class="row">
-        @for (param of paramTexts  | orderBy:'id':false; track param) {
-          <div class="col-6">
-            <div>
-              <h5>{{param.paramName}}</h5>
-            </div>
-            <div>
-              <textarea id="message" name="message" rows="4" cols="50" [(ngModel)]="param.paramValue">
-              </textarea>
-            </div>
-            <div>
-              <div type='button' class="btn btn-block btn-primary" (click)="updateParamText(param)">MAJ</div>
-            </div>
-          </div>
-        }
-      </div>
-    </div>
-  </div>
-  <div class="col-md-6">
-    <div class="card card-container">
-      <h2>Impersonnate</h2>
-      <div ngbDropdown class="col-md-12 ">
-        <button type="button" class="btn btn-block btn-primary" id="dropdownBasic1" ngbDropdownToggle>
-          Prendre la place de l'utilisateur
-        </button>
-        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-          @for (user of usersLite  | orderBy:'nom':false; track user) {
-            <div ngbDropdownItem
-            (click)="impersonate(user.username)"> {{user.adherent}}</div>
-          }
-        </div>
-
-
-      </div>
-
-
-
-
-      <h2>Roles des utilisateurs</h2>
-      <div ngbDropdown class="col-md-12 ">
-        <button type="button" class="btn btn-block btn-primary" id="dropdownBasic1" ngbDropdownToggle>
-          Ajouter en tant qu'Admin du site
-        </button>
-        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-          @for (user of usersLite  | orderBy:'nom':false; track user) {
-            <div ngbDropdownItem
-            (click)="grantUser(user.username,'ROLE_ADMIN')"> {{user.adherent}}</div>
-          }
-        </div>
-
-
-
-
-
-
-      </div>
-      @for (user of adminsLite | orderBy:'nom':false ; track user) {
-        <div>
-          <fa-icon class="pointer orange" [icon]="faSquareMinus"
-          (click)="unGrantUser(user.username, 'ROLE_ADMIN')"></fa-icon>
-          {{user.adherent}} {{user.username}} @if (user.username != null) {
-          <fa-icon
-          [routerLink]="['/mail', user.id]" class="pointer green" [icon]="faEnvelope"></fa-icon>
-        }
-      </div>
-    }
-
-    <div ngbDropdown class="d-inline-block col-md-12 ">
-      <button type="button" class="btn btn-block btn-primary" id="dropdownBasic1" ngbDropdownToggle>
-        Ajouter en tant qu'Administrateur de l'ALOD
-      </button>
-      <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-        @for (user of usersLite  | orderBy:'nom':false; track user) {
-          <div ngbDropdownItem
-          (click)="grantUser(user.username,'ROLE_ADMINISTRATEUR')">{{user.adherent}} </div>
-        }
-      </div>
-    </div>
-
-    @for (user of administrateursLite | orderBy:'nom':false ; track user) {
-      <div>
-        <fa-icon class="pointer orange" [icon]="faSquareMinus"
-        (click)="unGrantUser(user.username, 'ROLE_ADMINISTRATEUR')"></fa-icon>
-        {{user.adherent}} {{user.username}} @if (user.username != null) {
-        <fa-icon
-        [routerLink]="['/mail', user.id]" class="pointer green" [icon]="faEnvelope"></fa-icon>
-      }
-    </div>
-  }
-
-  <div ngbDropdown class="d-inline-block col-md-12 ">
-    <button type="button" class="btn btn-block btn-primary" id="dropdownBasic1" ngbDropdownToggle>
-      Ajouter en tant que membre du bureau de l'ALOD
-    </button>
-    <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-      @for (user of usersLite  | orderBy:'nom':false; track user) {
-        <div ngbDropdownItem
-        (click)="grantUser(user.username,'ROLE_BUREAU')">{{user.adherent}} </div>
-      }
-    </div>
-  </div>
-
-  @for (user of bureauxLite | orderBy:'nom':false ; track user) {
+<main class="admin-page">
+  <header class="admin-page-header">
     <div>
-      <fa-icon class="pointer orange" [icon]="faSquareMinus"
-      (click)="unGrantUser(user.username, 'ROLE_BUREAU')"></fa-icon>
-      {{user.adherent}} {{user.username}} @if (user.username != null) {
-      <fa-icon
-      [routerLink]="['/mail', user.id]" class="pointer green" [icon]="faEnvelope"></fa-icon>
-    }
+      <p class="admin-page-kicker">Espace de configuration</p>
+      <h1>Administration</h1>
+      <p class="mb-0">Gérez les paramètres, les lieux et les droits d’accès de l’association.</p>
+    </div>
+  </header>
+
+  <div ngbAccordion class="admin-accordion" [closeOthers]="false">
+    <section ngbAccordionItem="agendas" [collapsed]="false">
+      <h2 ngbAccordionHeader>
+        <button ngbAccordionButton>
+          <span class="admin-section-icon" aria-hidden="true"><fa-icon [icon]="faCalendarDays"></fa-icon></span>
+          <span class="admin-section-heading"><span>Agendas</span><small>Ajoutez les Google Agendas publics visibles sur l’accueil.</small></span>
+          <span class="badge rounded-pill text-bg-light ms-auto me-2">{{agendasGoogle.length}} / 10</span>
+        </button>
+      </h2>
+      <div ngbAccordionCollapse><div ngbAccordionBody><ng-template>
+        <div class="admin-section-content">
+          <div class="admin-form-panel"><div class="row g-3 align-items-end">
+            <div class="col-12 col-lg-3"><label class="form-label" for="nouvelAgendaNom">Nom de l’agenda</label><input id="nouvelAgendaNom" type="text" class="form-control" maxlength="100" [(ngModel)]="nouvelAgendaNom" placeholder="Ex. Événements de l’ALOD"></div>
+            <div class="col-12 col-lg"><label class="form-label" for="nouvelAgendaSource">Identifiant ou URL publique</label><input id="nouvelAgendaSource" type="text" class="form-control" [(ngModel)]="nouvelAgendaSource" (keydown.enter)="ajouterAgenda()" placeholder="exemple@group.calendar.google.com"></div>
+            <div class="col-6 col-sm-3 col-lg-2"><label class="form-label" for="nouvelAgendaCouleur">Couleur</label><input id="nouvelAgendaCouleur" type="color" class="form-control form-control-color w-100" [(ngModel)]="nouvelAgendaCouleur" title="Choisir la couleur du nouvel agenda"></div>
+            <div class="col-12 col-sm-auto"><button type="button" class="btn btn-primary w-100" [disabled]="agendaEnregistrement || agendasGoogle.length >= 10" (click)="ajouterAgenda()"><fa-icon [icon]="faPlus" class="me-1"></fa-icon>Ajouter</button></div>
+          </div></div>
+
+          @if (agendasGoogle.length > 0) {
+            <div class="list-group admin-configuration-list">
+              @for (agenda of agendasGoogle; track agenda; let index = $index) {
+                <div class="list-group-item"><div class="row g-3 align-items-end">
+                  <div class="col-auto d-none d-sm-block pb-1"><span class="configuration-colour" [style.background-color]="agenda.couleur" aria-hidden="true"></span></div>
+                  <div class="col-12 col-md-4 col-xl-3"><label class="form-label" [for]="'agendaNom' + index">Nom</label><input [id]="'agendaNom' + index" type="text" class="form-control" maxlength="100" [(ngModel)]="agenda.nom"></div>
+                  <div class="col-12 col-md col-xl"><label class="form-label" [for]="'agendaSource' + index">Identifiant public</label><input [id]="'agendaSource' + index" type="text" class="form-control" [(ngModel)]="agenda.source"></div>
+                  <div class="col-6 col-sm-3 col-md-2"><label class="form-label" [for]="'agendaCouleur' + index">Couleur</label><input [id]="'agendaCouleur' + index" type="color" class="form-control form-control-color w-100" [(ngModel)]="agenda.couleur" [title]="'Couleur de l’agenda ' + (index + 1)"></div>
+                  <div class="col-6 col-sm-auto"><button type="button" class="btn btn-outline-danger w-100" [disabled]="agendaEnregistrement" (click)="supprimerAgenda(index)" [attr.aria-label]="'Supprimer l’agenda ' + (index + 1)" ngbTooltip="Supprimer cet agenda"><fa-icon [icon]="faTrash"></fa-icon><span class="d-sm-none ms-1">Supprimer</span></button></div>
+                </div></div>
+              }
+            </div>
+            <div class="admin-section-actions"><small class="text-body-secondary">Les modifications sont appliquées après enregistrement.</small><button type="button" class="btn btn-outline-primary" [disabled]="agendaEnregistrement" (click)="enregistrerAgendas()">{{agendaEnregistrement ? 'Enregistrement…' : 'Enregistrer les modifications'}}</button></div>
+          } @else if (!agendaErreur) {
+            <p class="admin-empty-state mb-0">Aucun agenda Google n’est configuré pour le moment.</p>
+          }
+          @if (agendaMessage) { <div class="alert alert-success mb-0" role="status">{{agendaMessage}}</div> }
+          @if (agendaErreur) { <div class="alert alert-danger mb-0" role="alert">{{agendaErreur}}</div> }
+        </div>
+      </ng-template></div></div>
+    </section>
+
+    <section ngbAccordionItem="salles">
+      <h2 ngbAccordionHeader>
+        <button ngbAccordionButton>
+          <span class="admin-section-icon" aria-hidden="true"><fa-icon [icon]="faLocationDot"></fa-icon></span>
+          <span class="admin-section-heading"><span>Salles</span><small>Enregistrez les lieux utilisés par l’association.</small></span>
+          <span class="badge rounded-pill text-bg-light ms-auto me-2">{{salles.length}}</span>
+        </button>
+      </h2>
+      <div ngbAccordionCollapse><div ngbAccordionBody><ng-template>
+        <div class="admin-section-content">
+          <div class="admin-form-panel"><div class="row g-3 align-items-end">
+            <div class="col-12 col-lg-3"><label class="form-label" for="nouvelleSalleNom">Nom de la salle</label><input id="nouvelleSalleNom" type="text" class="form-control" maxlength="100" [(ngModel)]="nouvelleSalleNom" placeholder="Ex. Salle polyvalente"></div>
+            <div class="col-12 col-lg"><label class="form-label" for="nouvelleSalleAdresse">Adresse</label><input id="nouvelleSalleAdresse" type="text" class="form-control" maxlength="500" [(ngModel)]="nouvelleSalleAdresse" (keydown.enter)="ajouterSalle()" placeholder="Ex. 8 rue de l’Ouche Dinier, 44400 Rezé"></div>
+            <div class="col-6 col-sm-3 col-lg-2"><label class="form-label" for="nouvelleSalleCouleur">Couleur</label><input id="nouvelleSalleCouleur" type="color" class="form-control form-control-color w-100" [(ngModel)]="nouvelleSalleCouleur" title="Choisir la couleur de la nouvelle salle"></div>
+            <div class="col-12 col-sm-auto"><button type="button" class="btn btn-primary w-100" [disabled]="salleEnregistrement" (click)="ajouterSalle()"><fa-icon [icon]="faPlus" class="me-1"></fa-icon>Ajouter</button></div>
+          </div></div>
+
+          @if (salles.length > 0) {
+            <div class="list-group admin-configuration-list">
+              @for (salle of salles; track salle; let index = $index) {
+                <div class="list-group-item"><div class="row g-3 align-items-end">
+                  <div class="col-auto d-none d-sm-block pb-1"><span class="configuration-colour" [style.background-color]="salle.couleur" aria-hidden="true"></span></div>
+                  <div class="col-12 col-md-4 col-xl-3"><label class="form-label" [for]="'salleNom' + index">Nom</label><input [id]="'salleNom' + index" type="text" class="form-control" maxlength="100" [(ngModel)]="salle.nom"></div>
+                  <div class="col-12 col-md col-xl"><label class="form-label" [for]="'salleAdresse' + index">Adresse</label><input [id]="'salleAdresse' + index" type="text" class="form-control" maxlength="500" [(ngModel)]="salle.adresse"></div>
+                  <div class="col-6 col-sm-3 col-md-2"><label class="form-label" [for]="'salleCouleur' + index">Couleur</label><input [id]="'salleCouleur' + index" type="color" class="form-control form-control-color w-100" [(ngModel)]="salle.couleur" [title]="'Couleur de la salle ' + (index + 1)"></div>
+                  <div class="col-6 col-sm-auto"><button type="button" class="btn btn-outline-danger w-100" [disabled]="salleEnregistrement" (click)="supprimerSalle(index)" [attr.aria-label]="'Supprimer la salle ' + (index + 1)" ngbTooltip="Supprimer cette salle"><fa-icon [icon]="faTrash"></fa-icon><span class="d-sm-none ms-1">Supprimer</span></button></div>
+                </div></div>
+              }
+            </div>
+            <div class="admin-section-actions"><small class="text-body-secondary">Les modifications sont appliquées après enregistrement.</small><button type="button" class="btn btn-outline-primary" [disabled]="salleEnregistrement" (click)="enregistrerSalles()">{{salleEnregistrement ? 'Enregistrement…' : 'Enregistrer les modifications'}}</button></div>
+          } @else if (!salleErreur) {
+            <p class="admin-empty-state mb-0">Aucune salle n’est configurée pour le moment.</p>
+          }
+          @if (salleMessage) { <div class="alert alert-success mb-0" role="status">{{salleMessage}}</div> }
+          @if (salleErreur) { <div class="alert alert-danger mb-0" role="alert">{{salleErreur}}</div> }
+        </div>
+      </ng-template></div></div>
+    </section>
+
+    <section ngbAccordionItem="booleens">
+      <h2 ngbAccordionHeader><button ngbAccordionButton><span class="admin-section-icon" aria-hidden="true"><fa-icon [icon]="faSliders"></fa-icon></span><span class="admin-section-heading"><span>Paramètres booléens</span><small>Activez ou désactivez les options de l’application.</small></span></button></h2>
+      <div ngbAccordionCollapse><div ngbAccordionBody><ng-template><div class="admin-section-content"><div class="row g-3">
+        @for (param of paramBooleans | orderBy:'id':false; track param) {
+          <div class="col-12 col-sm-6 col-xl-4"><div class="parameter-card h-100"><div class="d-flex align-items-start justify-content-between gap-2 mb-3"><label class="mb-0">{{param.paramName}}</label><fa-icon [class.green]="param.paramValue === true" [class.orange]="param.paramValue !== true" [icon]="param.paramValue === true ? faCircleCheck : faCircleXmark" aria-hidden="true"></fa-icon></div><div class="btn-group w-100" role="group" [attr.aria-label]="param.paramName"><button type="button" class="btn" [ngClass]="param.paramValue === true ? 'btn-primary' : 'btn-outline-secondary'" (click)="param.paramValue = true; updateParamBoolean(param)">Oui</button><button type="button" class="btn" [ngClass]="param.paramValue !== true ? 'btn-primary' : 'btn-outline-secondary'" (click)="param.paramValue = false; updateParamBoolean(param)">Non</button></div></div></div>
+        }
+      </div></div></ng-template></div></div>
+    </section>
+
+    <section ngbAccordionItem="nombres">
+      <h2 ngbAccordionHeader><button ngbAccordionButton><span class="admin-section-icon" aria-hidden="true"><fa-icon [icon]="faHashtag"></fa-icon></span><span class="admin-section-heading"><span>Paramètres numériques</span><small>Modifiez les valeurs chiffrées de l’application.</small></span></button></h2>
+      <div ngbAccordionCollapse><div ngbAccordionBody><ng-template><div class="admin-section-content"><div class="row g-3">
+        @for (param of paramNumbers | orderBy:'id':false; track param) {
+          <div class="col-12 col-sm-6 col-xl-4"><div class="parameter-card h-100"><label class="form-label" [for]="'number' + param.id">{{param.paramName}}</label><div class="input-group"><input [id]="'number' + param.id" type="number" class="form-control" [(ngModel)]="param.paramValue"><button type="button" class="btn btn-primary" (click)="updateParamNumber(param)">Mettre à jour</button></div></div></div>
+        }
+      </div></div></ng-template></div></div>
+    </section>
+
+    <section ngbAccordionItem="textes">
+      <h2 ngbAccordionHeader><button ngbAccordionButton><span class="admin-section-icon" aria-hidden="true"><fa-icon [icon]="faFont"></fa-icon></span><span class="admin-section-heading"><span>Paramètres textuels</span><small>Personnalisez les contenus affichés dans l’application.</small></span></button></h2>
+      <div ngbAccordionCollapse><div ngbAccordionBody><ng-template><div class="admin-section-content"><div class="row g-3">
+        @for (param of paramTexts | orderBy:'id':false; track param) {
+          <div class="col-12 col-xl-6"><div class="parameter-card h-100"><label class="form-label" [for]="'text' + param.id">{{param.paramName}}</label><textarea [id]="'text' + param.id" class="form-control" rows="5" [(ngModel)]="param.paramValue"></textarea><button type="button" class="btn btn-primary mt-3" (click)="updateParamText(param)">Mettre à jour</button></div></div>
+        }
+      </div></div></ng-template></div></div>
+    </section>
+
+    <section ngbAccordionItem="utilisateurs">
+      <h2 ngbAccordionHeader><button ngbAccordionButton><span class="admin-section-icon" aria-hidden="true"><fa-icon [icon]="faUserShield"></fa-icon></span><span class="admin-section-heading"><span>Utilisateurs et rôles</span><small>Gérez l’accès et les responsabilités des utilisateurs.</small></span></button></h2>
+      <div ngbAccordionCollapse><div ngbAccordionBody><ng-template><div class="admin-section-content"><div class="row g-4">
+        <div class="col-12 col-lg-5"><div class="parameter-card h-100"><h3 class="h5">Impersonnalisation</h3><p class="text-body-secondary">Ouvrez une session à la place d’un utilisateur pour reproduire son expérience.</p><div ngbDropdown class="d-grid" [container]="'body'"><button type="button" class="btn btn-outline-primary" id="dropdownImpersonate" ngbDropdownToggle>Prendre la place d’un utilisateur</button><div ngbDropdownMenu aria-labelledby="dropdownImpersonate">@for (user of usersLite | orderBy:'adherent':false; track user) {<button type="button" ngbDropdownItem (click)="impersonate(user.username)">{{user.adherent}}</button>}</div></div></div></div>
+        <div class="col-12 col-lg-7"><div class="parameter-card h-100"><h3 class="h5">Rôles des utilisateurs</h3><p class="text-body-secondary">Cochez les utilisateurs auxquels attribuer le rôle, ou décochez-les pour le retirer.</p><div class="roles-utilisateurs-liste">@for (role of rolesUtilisateurs; track role.code) {<app-user-checkbox-dropdown [utilisateurs]="utilisateursSelectionnables" [selection]="selectionsRoles[role.code]" [libelle]="role.libelle" [disabled]="rolesEnCoursDeMiseAJour[role.code] === true" menuContainer="body" (selectionChange)="modifierUtilisateursRole(role.code, $event)"></app-user-checkbox-dropdown>}</div></div></div>
+      </div></div></ng-template></div></div>
+    </section>
   </div>
-}
-
-<div ngbDropdown class="d-inline-block col-md-12 ">
-  <button type="button" class="btn btn-block btn-primary" id="dropdownBasic1" ngbDropdownToggle>
-    Ajouter en tant que Secretaire de l'ALOD
-  </button>
-  <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-    @for (user of usersLite  | orderBy:'nom':false; track user) {
-      <div ngbDropdownItem
-      (click)="grantUser(user.username,'ROLE_SECRETAIRE')">{{user.adherent}} </div>
-    }
-  </div>
-</div>
-
-@for (user of secretairesLite | orderBy:'nom':false ; track user) {
-  <div>
-    <fa-icon class="pointer orange" [icon]="faSquareMinus"
-    (click)="unGrantUser(user.username, 'ROLE_SECRETAIRE')"></fa-icon>
-    {{user.adherent}} {{user.username}} @if (user.username != null) {
-    <fa-icon
-    [routerLink]="['/mail', user.id]" class="pointer green" [icon]="faEnvelope"></fa-icon>
-  }
-</div>
-}
-
-
-
-<div ngbDropdown class="d-inline-block col-md-12 ">
-  <button type="button" class="btn btn-block btn-primary" id="dropdownBasic1" ngbDropdownToggle>
-    Ajouter en tant que Comptable de l'ALOD
-  </button>
-  <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-    @for (user of usersLite  | orderBy:'nom':false; track user) {
-      <div ngbDropdownItem
-      (click)="grantUser(user.username,'ROLE_COMPTABLE')">{{user.adherent}} </div>
-    }
-  </div>
-</div>
-
-@for (user of comptablesLite | orderBy:'nom':false ; track user) {
-  <div>
-    <fa-icon class="pointer orange" [icon]="faSquareMinus"
-    (click)="unGrantUser(user.username, 'ROLE_PROF')"></fa-icon>
-    {{user.adherent}} {{user.username}} @if (user.username != null) {
-    <fa-icon
-    [routerLink]="['/mail', user.id]" class="pointer green" [icon]="faEnvelope"></fa-icon>
-  }
-</div>
-}
-
-
-
-<div ngbDropdown class="d-inline-block col-md-12 ">
-  <button type="button" class="btn btn-block btn-primary" id="dropdownBasic1" ngbDropdownToggle>
-    Ajouter en tant que Prof de l'ALOD
-  </button>
-  <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-    @for (user of usersLite  | orderBy:'nom':false; track user) {
-      <div ngbDropdownItem
-      (click)="grantUser(user.username,'ROLE_PROF')">{{user.adherent}} </div>
-    }
-  </div>
-</div>
-
-@for (user of profsLite | orderBy:'nom':false ; track user) {
-  <div>
-    <fa-icon class="pointer orange" [icon]="faSquareMinus"
-    (click)="unGrantUser(user.username, 'ROLE_PROF')"></fa-icon>
-    {{user.adherent}} {{user.username}} @if (user.username != null) {
-    <fa-icon
-    [routerLink]="['/mail', user.id]" class="pointer green" [icon]="faEnvelope"></fa-icon>
-  }
-</div>
-}
-
-</div>
-</div>
-</div>
+</main>

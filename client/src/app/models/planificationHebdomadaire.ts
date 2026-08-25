@@ -1,4 +1,5 @@
 import { SalleConfiguration } from './salle';
+import { UtilisateurSelectionnable } from './utilisateurSelectionnable';
 
 export interface PlanificationHebdomadaire {
   id?: number;
@@ -7,4 +8,6 @@ export interface PlanificationHebdomadaire {
   duree: number | null;
   descriptif?: string;
   salle?: SalleConfiguration;
+  profs?: UtilisateurSelectionnable[];
+  referents?: UtilisateurSelectionnable[];
 }

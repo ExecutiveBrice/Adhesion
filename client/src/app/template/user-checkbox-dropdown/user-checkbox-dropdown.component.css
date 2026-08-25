@@ -1,0 +1,20 @@
+.user-checkbox-dropdown-menu {
+  max-height: 18rem;
+  min-width: 15rem;
+  overflow-y: auto;
+  z-index: 1064;
+}
+
+.user-checkbox-search {
+  background: var(--bs-dropdown-bg);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.user-checkbox-option {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: .5rem;
+}

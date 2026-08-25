@@ -20,16 +20,22 @@ public interface SeanceRepository extends JpaRepository<Seance, Long> {
     List<Seance> findAllByDebutGreaterThanEqualAndDebutLessThanOrderByDebut(
             LocalDateTime debut, LocalDateTime fin);
 
-    @Query("select distinct s from Seance s join s.activite a left join a.profs p left join p.user pu " +
-            "left join a.referents r left join r.user ru " +
-            "where (pu.username = :username or ru.username = :username) " +
+    @Query("select distinct s from Seance s join s.activite a left join s.planification planification " +
+            "left join planification.profs pp left join pp.user ppu " +
+            "left join planification.referents pr left join pr.user pru " +
+            "left join a.profs p left join p.user pu left join a.referents r left join r.user ru " +
+            "where (ppu.username = :username or pru.username = :username " +
+            "or (planification is null and (pu.username = :username or ru.username = :username))) " +
             "and s.debut >= :debut and s.debut < :fin order by s.debut")
     List<Seance> findTodayByProfessorUsername(@Param("username") String username,
             @Param("debut") LocalDateTime debut, @Param("fin") LocalDateTime fin);
 
-    @Query("select distinct s from Seance s join s.activite a left join a.profs p left join p.user pu " +
-            "left join a.referents r left join r.user ru " +
-            "where s.id = :seanceId and (pu.username = :username or ru.username = :username)")
+    @Query("select distinct s from Seance s join s.activite a left join s.planification planification " +
+            "left join planification.profs pp left join pp.user ppu " +
+            "left join planification.referents pr left join pr.user pru " +
+            "left join a.profs p left join p.user pu left join a.referents r left join r.user ru " +
+            "where s.id = :seanceId and (ppu.username = :username or pru.username = :username " +
+            "or (planification is null and (pu.username = :username or ru.username = :username)))")
     Optional<Seance> findByIdAndManagerUsername(@Param("seanceId") Long seanceId, @Param("username") String username);
 
     @Query("select distinct s from Seance s join s.activite a join a.adhesions ad join ad.adherent h join h.tribu t " +

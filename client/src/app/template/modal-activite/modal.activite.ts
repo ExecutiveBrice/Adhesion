@@ -1,25 +1,25 @@
 import { Component, inject, Input, OnDestroy, OnInit } from '@angular/core'
 import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap'
-import { Activite, Adherent, AdherentLite, PlanificationHebdomadaire, SalleConfiguration } from 'src/app/models';
+import { Activite, AdherentLite, PlanificationHebdomadaire, SalleConfiguration } from 'src/app/models';
 import { Seance } from 'src/app/models/seance';
 import { faExternalLinkSquareAlt } from '@fortawesome/free-solid-svg-icons';
 import { AdherentService } from 'src/app/_services/adherent.service';
 import { ActiviteService } from 'src/app/_services/activite.service';
 import { ParamService } from 'src/app/_services/param.service';
-import { faCircleQuestion, faEnvelope, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCircleQuestion, faEnvelope, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faCircleCheck, faUserPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ToastService } from '../../_services/toast.service';
 import { NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap/dropdown';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass, DatePipe } from '@angular/common';
-import { OrderByPipe } from '../../_helpers/sort.pipe';
+import { UserCheckboxDropdownComponent } from '../user-checkbox-dropdown/user-checkbox-dropdown.component';
 
 @Component({
     selector: 'modal',
     templateUrl: './modal.activite.html',
     styleUrls: ['./modal.activite.css'],
-    imports: [NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, FormsModule, FaIconComponent, NgClass, DatePipe, OrderByPipe]
+    imports: [NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, FormsModule, FaIconComponent, NgClass, DatePipe, UserCheckboxDropdownComponent]
 })
 export class ModalActivite implements OnInit, OnDestroy {
   private readonly apiViewRefresh = registerApiViewRefresh();
@@ -36,7 +36,6 @@ export class ModalActivite implements OnInit, OnDestroy {
   faBook = faBook;
   faUserPlus = faUserPlus;
   faCircleCheck = faCircleCheck;
-  faSquareMinus = faSquareMinus;
   faPencilSquare = faPencilSquare;
   faSquarePlus = faSquarePlus;
   faTrash = faTrash;
@@ -55,6 +54,9 @@ export class ModalActivite implements OnInit, OnDestroy {
   dateDebutSeances = '';
   planificationAjout?: PlanificationHebdomadaire;
   modalAjoutSeancesOuverte = false;
+  categorieEnEdition?: PlanificationHebdomadaire;
+  indexCategorieEnEdition?: number;
+  modalEditionCategorieOuverte = false;
   chargementSeances = false;
   ajoutSeancesEnCours = false;
   enregistrementSeances = new Set<number>();
@@ -106,25 +108,6 @@ export class ModalActivite implements OnInit, OnDestroy {
   }
 
 
-  ajouterProf(newActivite: Activite, adherent: Adherent) {
-    newActivite.profs.push(adherent);
-  }
-
-  retirerProf(newActivite: Activite, adherent: Adherent) {
-    newActivite.profs = newActivite.profs.filter(prof => prof.id != adherent.id);
-  }
-
-  ajouterReferent(newActivite: Activite, adherent: Adherent) {
-    if (!newActivite.referents.some(referent => referent.id === adherent.id)) {
-      newActivite.referents.push(adherent);
-    }
-  }
-
-  retirerReferent(newActivite: Activite, adherent: Adherent) {
-    newActivite.referents = newActivite.referents.filter(referent => referent.id !== adherent.id);
-  }
-
-
   getProfs() {
     this.adherentService.getByRole(3).subscribe(
       data => {
@@ -159,14 +142,45 @@ export class ModalActivite implements OnInit, OnDestroy {
     return this.joursSemaine.find(jour => jour.valeur === valeur)?.libelle ?? valeur;
   }
 
-  ajouterPlanificationHebdomadaire(): void {
-    this.activite.planificationsHebdomadaires.push({
+  nomsUtilisateurs(utilisateurs?: { prenom: string; nom: string }[]): string {
+    return (utilisateurs ?? []).map(utilisateur => `${utilisateur.prenom} ${utilisateur.nom}`).join(', ');
+  }
+
+  ouvrirModalEditionCategorie(index?: number): void {
+    this.indexCategorieEnEdition = index;
+    const planification = index === undefined
+      ? {
       jour: '',
       horaireDebut: '',
       duree: null,
       descriptif: '',
-      salle: undefined
-    });
+      salle: undefined,
+      profs: [],
+      referents: []
+    }
+      : this.activite.planificationsHebdomadaires[index];
+    this.categorieEnEdition = this.copierPlanification(planification);
+    this.modalEditionCategorieOuverte = true;
+  }
+
+  fermerModalEditionCategorie(): void {
+    this.modalEditionCategorieOuverte = false;
+    this.categorieEnEdition = undefined;
+    this.indexCategorieEnEdition = undefined;
+  }
+
+  enregistrerCategorie(): void {
+    if (!this.categorieEnEdition) {
+      return;
+    }
+
+    const categorie = this.copierPlanification(this.categorieEnEdition);
+    if (this.indexCategorieEnEdition === undefined) {
+      this.activite.planificationsHebdomadaires.push(categorie);
+    } else {
+      this.activite.planificationsHebdomadaires[this.indexCategorieEnEdition] = categorie;
+    }
+    this.fermerModalEditionCategorie();
   }
 
   retirerPlanificationHebdomadaire(index: number): void {
@@ -390,6 +404,15 @@ export class ModalActivite implements OnInit, OnDestroy {
   private initialiserPlanificationsHebdomadaires(): void {
     this.activite.planificationsHebdomadaires ??= [];
     if (this.activite.planificationsHebdomadaires.length > 0) {
+      const categoriesSansIntervenant = this.activite.planificationsHebdomadaires.every(planification =>
+        !(planification.profs?.length || planification.referents?.length)
+      );
+      this.activite.planificationsHebdomadaires.forEach(planification => {
+        // Les affectations précédentes étaient enregistrées au niveau de l'activité.
+        // À la première édition, elles sont proposées pour chaque catégorie.
+        planification.profs = categoriesSansIntervenant ? [...this.activite.profs] : (planification.profs ?? []);
+        planification.referents = categoriesSansIntervenant ? [...this.activite.referents] : (planification.referents ?? []);
+      });
       return;
     }
 
@@ -400,7 +423,9 @@ export class ModalActivite implements OnInit, OnDestroy {
       horaireDebut: this.activite.horaireDebut ?? '',
       duree: this.activite.duree ?? null,
       descriptif: '',
-      salle: this.activite.salle
+      salle: this.activite.salle,
+      profs: [...this.activite.profs],
+      referents: [...this.activite.referents]
     };
     this.activite.planificationsHebdomadaires.push(planification);
   }
@@ -416,6 +441,14 @@ export class ModalActivite implements OnInit, OnDestroy {
       this.activite.duree = undefined!;
       this.activite.salle = undefined;
     }
+  }
+
+  private copierPlanification(planification: PlanificationHebdomadaire): PlanificationHebdomadaire {
+    return {
+      ...planification,
+      profs: [...(planification.profs ?? [])],
+      referents: [...(planification.referents ?? [])]
+    };
   }
 
   private preparerSeances(seances: Seance[]): Seance[] {

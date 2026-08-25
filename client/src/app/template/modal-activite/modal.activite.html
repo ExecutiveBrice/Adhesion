@@ -49,64 +49,8 @@
         <input type="text" class="form-control" name="lien" [(ngModel)]="activite.lien" />
       </div>
 
-      <div class="form-group">
-        <label for="prof">Prof</label>
-        @if (activite.profs.length > 0) {
-          <div>
-            @for (prof of activite.profs | orderBy:'id':true ; track prof) {
-              <div>
-                {{prof.prenom}} {{prof.nom}} <fa-icon class="pointer" (click)="retirerProf(activite,prof)"
-              [icon]="faSquareMinus"></fa-icon>
-            </div>
-          }
-        </div>
-      }
-
-      <div ngbDropdown class="d-inline-block col-md-12 ">
-        <button type="button" class="btn btn-block btn-primary" id="dropdownBasic1" ngbDropdownToggle>
-          Ajouter un prof
-        </button>
-
-
-        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-
-          @for (prof of profs  | orderBy:'ordre':false; track prof) {
-            <div ngbDropdownItem
-            (click)="ajouterProf(activite,prof)">{{prof.prenom}} {{prof.nom}}</div>
-          }
-
-        </div>
-      </div>
     </div>
 
-    <div class="form-group">
-      <label for="referent">Référent</label>
-      @if (activite.referents.length > 0) {
-        <div>
-          @for (referent of activite.referents | orderBy:'id':true; track referent) {
-            <div>
-              {{referent.prenom}} {{referent.nom}}
-              <fa-icon class="pointer" (click)="retirerReferent(activite, referent)"
-              [icon]="faSquareMinus"></fa-icon>
-            </div>
-          }
-        </div>
-      }
-
-      <div ngbDropdown class="d-inline-block col-md-12">
-        <button type="button" class="btn btn-block btn-primary" id="dropdownReferent" ngbDropdownToggle>
-          Ajouter un référent
-        </button>
-        <div ngbDropdownMenu aria-labelledby="dropdownReferent">
-          @for (referent of referents | orderBy:'ordre':false; track referent) {
-            <div ngbDropdownItem
-            (click)="ajouterReferent(activite, referent)">{{referent.prenom}} {{referent.nom}}</div>
-          }
-        </div>
-      </div>
-    </div>
-
-  </div>
   <div class="col-12 col-sm-6">
 
     <div class="form-group">
@@ -281,72 +225,67 @@
         <h5 class="mb-1">Catégorie de séance</h5>
       </div>
 
-      <button type="button" class="btn btn-outline-primary btn-sm" (click)="ajouterPlanificationHebdomadaire()">
+      <button type="button" class="btn btn-outline-primary btn-sm" (click)="ouvrirModalEditionCategorie()">
         <fa-icon [icon]="faSquarePlus"></fa-icon> Ajouter une catégorie
       </button>
     </div>
     @if (activite.planificationsHebdomadaires.length === 0) {
       <div class="text-muted">Aucune catégorie de séance n'est renseignée.</div>
     }
-    @for (planification of activite.planificationsHebdomadaires; track planification; let index = $index) {
-      <div class="row g-2 align-items-end planification-ligne" [class.mb-3]="!$last">
-        <div class="col-12 col-md-2">
-          <label [for]="'jourSeance-' + index" class="form-label">Jour</label>
-          <select [id]="'jourSeance-' + index" [name]="'jourSeance-' + index" class="form-select"
-            [(ngModel)]="planification.jour">
-            <option value="" disabled>Sélectionner un jour</option>
-            @for (jour of joursSemaine; track jour.valeur) {
-              <option [value]="jour.valeur">{{jour.libelle}}</option>
+    <div class="categories-grid">
+      @for (planification of activite.planificationsHebdomadaires; track planification; let index = $index) {
+        <article class="categorie-card">
+          <header class="categorie-card-header">
+            <h6 class="mb-1">Catégorie {{index + 1}}</h6>
+            @if (planification.descriptif) {
+              <p class="mb-0 text-muted">{{planification.descriptif}}</p>
             }
-          </select>
-        </div>
-        <div class="col-12 col-md-2">
-          <label [for]="'horaireDebut-' + index" class="form-label">Horaire</label>
-          <input [id]="'horaireDebut-' + index" type="time" class="form-control"
-            [name]="'horaireDebut-' + index" [(ngModel)]="planification.horaireDebut" />
-        </div>
-        <div class="col-12 col-md-2">
-          <label [for]="'duree-' + index" class="form-label">Durée (min.)</label>
-          <input [id]="'duree-' + index" type="number" min="1" class="form-control"
-            [name]="'duree-' + index" [(ngModel)]="planification.duree" />
-        </div>
-        <div class="col-12 col-md-2">
-          <label [for]="'descriptif-' + index" class="form-label">Descriptif court</label>
-          <input [id]="'descriptif-' + index" type="text" class="form-control"
-            [name]="'descriptif-' + index" maxlength="100" placeholder="Ex. Adultes débutants"
-            [(ngModel)]="planification.descriptif" />
-        </div>
-        <div class="col-12 col-md-2">
-          <label [for]="'salle-' + index" class="form-label">Salle</label>
-          <div class="selecteur-salle">
-            @if (planification.salle) {
-              <span class="couleur-salle" [style.background-color]="planification.salle.couleur"
-                [title]="'Couleur : ' + planification.salle.couleur" aria-hidden="true"></span>
-            }
-            <select [id]="'salle-' + index" class="form-select" [name]="'salle-' + index"
-              [(ngModel)]="planification.salle" [compareWith]="comparerSalles">
-              <option [ngValue]="undefined">Aucune salle</option>
-              @for (salle of salles; track salle.id) {
-                <option [ngValue]="salle">{{salle.nom}} — {{salle.adresse}}</option>
-              }
-            </select>
+          </header>
+          <dl class="categorie-informations">
+            <div><dt>Jour</dt><dd>{{planification.jour ? libelleJour(planification.jour) : 'Non renseigné'}}</dd></div>
+            <div><dt>Horaire</dt><dd>{{planification.horaireDebut || 'Non renseigné'}}</dd></div>
+            <div><dt>Durée</dt><dd>{{planification.duree ? planification.duree + ' min.' : 'Non renseignée'}}</dd></div>
+            <div><dt>Salle</dt><dd class="salle-categorie">
+              @if (planification.salle) {
+                <span class="couleur-salle" [style.background-color]="planification.salle.couleur" aria-hidden="true"></span>
+                {{planification.salle.nom}}
+              } @else { Aucune salle }
+            </dd></div>
+          </dl>
+          <div class="categorie-intervenants">
+            <div>
+              <h6>Profs</h6>
+              @if ((planification.profs ?? []).length) {
+                <p>{{nomsUtilisateurs(planification.profs)}}</p>
+              } @else { <p class="text-muted">Aucun professeur</p> }
+            </div>
+            <div>
+              <h6>Référents</h6>
+              @if ((planification.referents ?? []).length) {
+                <p>{{nomsUtilisateurs(planification.referents)}}</p>
+              } @else { <p class="text-muted">Aucun référent</p> }
+            </div>
           </div>
-        </div>
-        <div class="col-12 col-md-2 d-flex gap-2">
-          <button type="button" class="btn btn-outline-primary flex-fill" title="Ajouter des séances à ce créneau"
-            [attr.aria-label]="'Ajouter des séances pour la planification ' + (index + 1)"
-            (click)="ouvrirModalAjoutSeances(planification)"
-            [disabled]="!activite.id || !planification.id">
-            <fa-icon [icon]="faSquarePlus"></fa-icon>
-          </button>
-          <button type="button" class="btn btn-outline-danger" title="Retirer cette séance"
-            [attr.aria-label]="'Retirer la séance ' + (index + 1)"
-            (click)="retirerPlanificationHebdomadaire(index)">
-            <fa-icon [icon]="faTrash"></fa-icon>
-          </button>
-        </div>
-      </div>
-    }
+          <footer class="categorie-card-actions">
+            <button type="button" class="btn btn-outline-primary btn-sm ajout-seances-categorie" title="Ajouter des séances"
+              [attr.aria-label]="'Ajouter des séances pour la catégorie ' + (index + 1)"
+              (click)="ouvrirModalAjoutSeances(planification)" [disabled]="!activite.id || !planification.id">
+              <fa-icon [icon]="faSquarePlus"></fa-icon> Ajouter des séances
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" title="Modifier la catégorie"
+              [attr.aria-label]="'Modifier la catégorie ' + (index + 1)"
+              (click)="ouvrirModalEditionCategorie(index)">
+              <fa-icon [icon]="faPencilSquare"></fa-icon> Modifier
+            </button>
+            <button type="button" class="btn btn-outline-danger btn-sm" title="Supprimer la catégorie"
+              [attr.aria-label]="'Supprimer la catégorie ' + (index + 1)"
+              (click)="retirerPlanificationHebdomadaire(index)">
+              <fa-icon [icon]="faTrash"></fa-icon>
+            </button>
+          </footer>
+        </article>
+      }
+    </div>
   </div>
 
   <div class="planification-seances mb-3">
@@ -457,6 +396,85 @@
   }
   </div>
 </section>
+
+@if (modalEditionCategorieOuverte && categorieEnEdition) {
+  <div class="modal-backdrop fade show edition-categorie-backdrop" (click)="fermerModalEditionCategorie()"></div>
+  <div class="modal d-block edition-categorie-modal" role="dialog" aria-modal="true"
+    aria-labelledby="titre-edition-categorie" (click)="fermerModalEditionCategorie()">
+    <div class="modal-dialog modal-dialog-centered modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 id="titre-edition-categorie" class="modal-title">
+            {{indexCategorieEnEdition === undefined ? 'Ajouter une catégorie' : 'Modifier la catégorie ' + (indexCategorieEnEdition + 1)}}
+          </h5>
+          <button type="button" class="btn-close" aria-label="Fermer" (click)="fermerModalEditionCategorie()"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-12 col-md-4">
+              <label for="jourCategorie" class="form-label">Jour</label>
+              <select id="jourCategorie" name="jourCategorie" class="form-select" [(ngModel)]="categorieEnEdition.jour">
+                <option value="" disabled>Sélectionner un jour</option>
+                @for (jour of joursSemaine; track jour.valeur) {
+                  <option [value]="jour.valeur">{{jour.libelle}}</option>
+                }
+              </select>
+            </div>
+            <div class="col-12 col-md-4">
+              <label for="horaireCategorie" class="form-label">Horaire</label>
+              <input id="horaireCategorie" name="horaireCategorie" type="time" class="form-control"
+                [(ngModel)]="categorieEnEdition.horaireDebut" />
+            </div>
+            <div class="col-12 col-md-4">
+              <label for="dureeCategorie" class="form-label">Durée (min.)</label>
+              <input id="dureeCategorie" name="dureeCategorie" type="number" min="1" class="form-control"
+                [(ngModel)]="categorieEnEdition.duree" />
+            </div>
+            <div class="col-12 col-md-6">
+              <label for="descriptifCategorie" class="form-label">Descriptif court</label>
+              <input id="descriptifCategorie" name="descriptifCategorie" type="text" class="form-control" maxlength="100"
+                placeholder="Ex. Adultes débutants" [(ngModel)]="categorieEnEdition.descriptif" />
+            </div>
+            <div class="col-12 col-md-6">
+              <label for="salleCategorie" class="form-label">Salle</label>
+              <div class="selecteur-salle">
+                @if (categorieEnEdition.salle) {
+                  <span class="couleur-salle" [style.background-color]="categorieEnEdition.salle.couleur" aria-hidden="true"></span>
+                }
+                <select id="salleCategorie" class="form-select" name="salleCategorie"
+                  [(ngModel)]="categorieEnEdition.salle" [compareWith]="comparerSalles">
+                  <option [ngValue]="undefined">Aucune salle</option>
+                  @for (salle of salles; track salle.id) {
+                    <option [ngValue]="salle">{{salle.nom}} — {{salle.adresse}}</option>
+                  }
+                </select>
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Profs</label>
+              <app-user-checkbox-dropdown [utilisateurs]="profs" [selection]="categorieEnEdition.profs ?? []"
+                (selectionChange)="categorieEnEdition.profs = $event" libelle="Sélectionner les profs"
+                menuContainer="body" />
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Référents</label>
+              <app-user-checkbox-dropdown [utilisateurs]="referents" [selection]="categorieEnEdition.referents ?? []"
+                (selectionChange)="categorieEnEdition.referents = $event" libelle="Sélectionner les référents"
+                [disabled]="!activite.id" menuContainer="body" />
+              @if (!activite.id) {
+                <small class="text-muted d-block mt-1">Disponible après l'enregistrement de l'activité.</small>
+              }
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" (click)="fermerModalEditionCategorie()">Annuler</button>
+          <button type="button" class="btn btn-primary" (click)="enregistrerCategorie()">Valider la catégorie</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
 
 @if (modalAjoutSeancesOuverte && planificationAjout) {
   <div class="modal-backdrop fade show ajout-seances-backdrop" (click)="fermerModalAjoutSeances()"></div>

@@ -1,185 +1,130 @@
-.agenda-admin {
-  --agenda-encre: #263338;
-  --agenda-vert: #5cbbaf;
-  border: 0;
-  border-radius: 16px;
-  margin-bottom: 1.5rem;
-  padding: clamp(1rem, 2.5vw, 1.75rem);
-  box-shadow: 0 10px 28px rgba(38, 51, 56, 0.1);
+:host { display: block; }
+
+.admin-page {
+  margin: 1.5rem auto;
+  max-width: 1440px;
+  padding: 0 clamp(0.25rem, 2vw, 1rem) 2rem;
 }
 
-.agenda-admin-entete,
-.agenda-admin-titre,
-.agenda-ajout,
-.agenda-ligne,
-.agenda-actions {
-  align-items: center;
+.admin-page-header {
+  align-items: end;
+  background: linear-gradient(135deg, #eaf7f4, #f7fbfa);
+  border: 1px solid #d5ebe6;
+  border-radius: 1rem;
+  color: #263338;
   display: flex;
+  min-height: 8rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
 }
 
-.agenda-admin-entete,
-.agenda-actions {
-  justify-content: space-between;
-}
+.admin-page-header h1 { font-size: clamp(1.5rem, 2vw, 2rem); margin-bottom: 0.25rem; }
+.admin-page-header p:not(.admin-page-kicker) { color: #5d6c70; }
 
-.agenda-admin-entete {
-  gap: 1rem;
-  margin-bottom: 1.25rem;
-}
-
-.agenda-admin-titre {
-  gap: 0.85rem;
-}
-
-.agenda-admin-titre h2 {
-  color: var(--agenda-encre);
-  margin: 0 0 0.15rem;
-}
-
-.agenda-admin-titre p {
-  color: #68767b;
-  margin: 0;
-}
-
-.agenda-admin-icone {
-  align-items: center;
-  background: #eaf7f4;
-  border-radius: 12px;
+.admin-page-kicker {
   color: #387e75;
-  display: flex;
-  font-size: 1.35rem;
-  height: 48px;
-  justify-content: center;
-  width: 48px;
-}
-
-.agenda-compteur {
-  background: #f0f3f3;
-  border-radius: 999px;
-  color: #4f5f64;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  padding: 0.35rem 0.65rem;
-  white-space: nowrap;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.35rem;
+  text-transform: uppercase;
 }
 
-.agenda-ajout {
-  background: #f7f9f9;
-  border: 1px solid #e0e7e8;
-  border-radius: 12px;
-  gap: 0.75rem;
-  padding: 1rem;
+.admin-accordion {
+  --bs-accordion-border-color: #dfe8e6;
+  --bs-accordion-border-radius: 1rem;
+  --bs-accordion-btn-focus-box-shadow: 0 0 0 0.25rem rgba(92, 187, 174, 0.2);
+  --bs-accordion-active-bg: #f2faf8;
+  --bs-accordion-active-color: #263338;
+  margin-top: 1.25rem;
 }
 
-.agenda-source,
-.agenda-nom {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.agenda-nom {
-  flex-basis: 220px;
-}
-
-.agenda-source {
-  flex-basis: 360px;
-}
-
-.agenda-couleur {
-  flex: 0 0 84px;
-}
-
-.agenda-source label,
-.agenda-nom label,
-.agenda-couleur label {
-  color: var(--agenda-encre);
-  display: block;
-  font-size: 0.78rem;
-  font-weight: 700;
-  margin-bottom: 0.25rem;
-}
-
-.agenda-couleur input {
-  max-width: none;
-  min-height: 38px;
-  width: 100%;
-}
-
-.agenda-ajouter {
-  align-self: flex-end;
-  white-space: nowrap;
-}
-
-.agenda-liste {
-  border: 1px solid #e0e7e8;
-  border-radius: 12px;
-  margin-top: 1rem;
+.admin-accordion .accordion-item {
+  box-shadow: 0 0.35rem 1rem rgba(38, 51, 56, 0.06);
+  margin-bottom: 0.9rem;
   overflow: hidden;
 }
 
-.agenda-ligne {
-  gap: 0.75rem;
-  padding: 0.8rem 1rem;
+.admin-accordion .accordion-button { gap: 0.85rem; padding: 1rem clamp(1rem, 2vw, 1.5rem); }
+.admin-accordion .accordion-button::after { flex: 0 0 auto; }
+
+.admin-section-icon {
+  align-items: center;
+  background: #e1f3ef;
+  border-radius: 0.65rem;
+  color: #387e75;
+  display: inline-flex;
+  flex: 0 0 2.5rem;
+  height: 2.5rem;
+  justify-content: center;
 }
 
-.agenda-ligne + .agenda-ligne {
-  border-top: 1px solid #e0e7e8;
+.admin-section-heading {
+  display: flex;
+  flex-direction: column;
+  font-size: 1rem;
+  font-weight: 700;
+  min-width: 0;
+  text-align: left;
 }
 
-.agenda-apercu {
-  border: 3px solid rgba(255, 255, 255, 0.85);
+.admin-section-heading small {
+  color: #68767b;
+  font-size: 0.8rem;
+  font-weight: 400;
+  margin-top: 0.1rem;
+  white-space: normal;
+}
+
+.admin-section-content { display: grid; gap: 1rem; }
+
+.admin-form-panel,
+.parameter-card {
+  background: #f8faf9;
+  border: 1px solid #e0e9e7;
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.admin-configuration-list { border-radius: 0.75rem; overflow: hidden; }
+.admin-configuration-list .list-group-item { border-color: #e0e9e7; padding: 1rem; }
+
+.configuration-colour {
+  border: 3px solid #fff;
   border-radius: 50%;
   box-shadow: 0 0 0 1px #cbd5d7;
-  flex: 0 0 24px;
-  height: 24px;
+  display: block;
+  height: 1.5rem;
+  width: 1.5rem;
 }
 
-.agenda-supprimer {
-  align-self: flex-end;
-  flex: 0 0 42px;
-}
-
-.agenda-actions {
-  background: #f7f9f9;
-  border-top: 1px solid #e0e7e8;
+.admin-section-actions {
+  align-items: center;
+  background: #f8faf9;
+  border: 1px solid #e0e9e7;
+  border-radius: 0.75rem;
+  display: flex;
   gap: 1rem;
+  justify-content: space-between;
   padding: 0.8rem 1rem;
 }
 
-.agenda-actions small {
+.admin-empty-state {
+  background: #f8faf9;
+  border: 1px dashed #cbd9d6;
+  border-radius: 0.75rem;
   color: #68767b;
-}
-
-.agenda-vide {
-  color: #68767b;
-  padding: 1.25rem 0 0.25rem;
+  padding: 1.25rem;
   text-align: center;
 }
 
-.agenda-retour {
-  margin: 1rem 0 0;
-}
+.parameter-card label { color: #263338; font-weight: 600; }
+.roles-utilisateurs-liste { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 
-@media (max-width: 767px) {
-  .agenda-admin-entete,
-  .agenda-ajout,
-  .agenda-ligne,
-  .agenda-actions {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .agenda-couleur {
-    flex-basis: auto;
-  }
-
-  .agenda-apercu {
-    position: absolute;
-  }
-
-  .agenda-ajouter,
-  .agenda-supprimer,
-  .agenda-actions .btn {
-    width: 100%;
-  }
+@media (max-width: 575.98px) {
+  .admin-page { margin-top: 0.75rem; }
+  .admin-page-header { min-height: auto; }
+  .admin-accordion .accordion-button { align-items: flex-start; }
+  .admin-section-heading small { display: none; }
+  .admin-section-actions { align-items: stretch; flex-direction: column; }
+  .admin-section-actions .btn { width: 100%; }
 }

@@ -101,6 +101,7 @@ public class SeanceServices {
     private Seance addFirstSeance(Activite activite, LocalDate date, PlanificationHebdomadaire planification) {
         Seance nouvelleSeance = new Seance();
         nouvelleSeance.setActivite(activite);
+        nouvelleSeance.setPlanification(planification.getId() == null ? null : planification);
         nouvelleSeance.setSalle(planification.getSalle());
         nouvelleSeance.setDescriptif(planification.getDescriptif());
         nouvelleSeance.setDebut(LocalDateTime.of(date, planification.getHoraireDebut()));

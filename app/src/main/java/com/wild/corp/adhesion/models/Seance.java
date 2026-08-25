@@ -30,6 +30,12 @@ public class Seance {
     @JsonIgnoreProperties({"adhesions", "profs"})
     private Activite activite;
 
+    /** Category from which this session was generated. Null for legacy sessions. */
+    @ManyToOne
+    @JoinColumn(name = "planification_id")
+    @JsonIgnoreProperties({"activite", "profs", "referents"})
+    private PlanificationHebdomadaire planification;
+
     /**
      * Salle effectivement prévue pour cette séance. Elle est initialisée avec
      * la salle de l'activité lors de la planification, puis peut évoluer sans
