@@ -362,6 +362,13 @@ public class SeanceServices {
         return seance;
     }
 
+    public Seance updateCommentaireForSecretary(Long seanceId, String commentaire) {
+        Seance seance = seanceRepository.findById(seanceId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Séance introuvable"));
+        seance.setCommentaire(commentaire == null || commentaire.isBlank() ? null : commentaire.trim());
+        return seance;
+    }
+
     private Seance getSeance(Long activiteId, Long seanceId) {
         return seanceRepository.findByIdAndActivite_Id(seanceId, activiteId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Séance introuvable"));

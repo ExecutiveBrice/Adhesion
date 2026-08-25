@@ -22,6 +22,25 @@ export class UserService {
     return this.http.get<SeanceDuJour[]>(API_URL + 'seancesDuJour', { responseType: 'json' });
   }
 
+  getSeancesDuJourPourLeSecretariat(date: string): Observable<SeanceDuJour[]> {
+    const params = new HttpParams().set('date', date);
+    return this.http.get<SeanceDuJour[]>(API_URL + 'secretariat/seances', { params, responseType: 'json' });
+  }
+
+  getPresencesPourLeSecretariat(seanceId: number): Observable<PresenceSeance[]> {
+    return this.http.get<PresenceSeance[]>(API_URL + 'secretariat/seances/' + seanceId + '/presences', { responseType: 'json' });
+  }
+
+  updatePresencePourLeSecretariat(seanceId: number, presenceId: number, presence: boolean): Observable<PresenceSeance> {
+    return this.http.patch<PresenceSeance>(API_URL + 'secretariat/seances/' + seanceId + '/presences/' + presenceId,
+      { presence }, { responseType: 'json' });
+  }
+
+  updateCommentaireSeancePourLeSecretariat(seanceId: number, commentaire: string | null): Observable<SeanceDuJour> {
+    return this.http.patch<SeanceDuJour>(API_URL + 'secretariat/seances/' + seanceId + '/commentaire',
+      { commentaire }, { responseType: 'json' });
+  }
+
   getPresences(seanceId: number): Observable<PresenceSeance[]> {
     return this.http.get<PresenceSeance[]>(API_URL + 'seances/' + seanceId + '/presences', { responseType: 'json' });
   }

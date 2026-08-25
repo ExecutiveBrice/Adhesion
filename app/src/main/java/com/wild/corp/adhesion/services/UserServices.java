@@ -47,6 +47,14 @@ public class UserServices {
                 .toList();
     }
 
+    /** Returns every session planned on a given day for the secretariat view. */
+    public List<SeanceDuJourResponse> getSeancesDuJourForSecretary(LocalDate date) {
+        return seanceRepository.findAllByDebutGreaterThanEqualAndDebutLessThanOrderByDebut(
+                        date.atStartOfDay(), date.plusDays(1).atStartOfDay()).stream()
+                .map(SeanceDuJourResponse::from)
+                .toList();
+    }
+
 
 
     public boolean existsByEmail(String email) {

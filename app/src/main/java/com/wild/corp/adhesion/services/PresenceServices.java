@@ -59,6 +59,15 @@ public class PresenceServices {
 
     public List<PresenceSeanceResponse> getPresences(Long seanceId, String username) {
         getSeanceForManager(seanceId, username);
+        return getPresences(seanceId);
+    }
+
+    public List<PresenceSeanceResponse> getPresencesForSecretary(Long seanceId) {
+        getSeance(seanceId);
+        return getPresences(seanceId);
+    }
+
+    private List<PresenceSeanceResponse> getPresences(Long seanceId) {
         return presenceRepository.findBySeance_IdOrderByAdhesion_Adherent_NomAscAdhesion_Adherent_PrenomAsc(seanceId)
                 .stream().map(PresenceSeanceResponse::from).toList();
     }
@@ -73,8 +82,23 @@ public class PresenceServices {
         return PresenceSeanceResponse.from(presence);
     }
 
+    public PresenceSeanceResponse updatePresenceForSecretary(Long seanceId, Long presenceId, boolean present) {
+        getSeance(seanceId);
+        Presence presence = presenceRepository.findById(presenceId)
+                .filter(value -> value.getSeance() != null && seanceId.equals(value.getSeance().getId()))
+                .orElseThrow(() -> new IllegalArgumentException("Présence introuvable"));
+        presence.setPresence(present);
+        presence.setDateModification(LocalDate.now());
+        return PresenceSeanceResponse.from(presence);
+    }
+
     private Seance getSeanceForManager(Long seanceId, String username) {
         return seanceRepository.findByIdAndManagerUsername(seanceId, username)
+                .orElseThrow(() -> new IllegalArgumentException("Séance introuvable"));
+    }
+
+    private Seance getSeance(Long seanceId) {
+        return seanceRepository.findById(seanceId)
                 .orElseThrow(() -> new IllegalArgumentException("Séance introuvable"));
     }
 

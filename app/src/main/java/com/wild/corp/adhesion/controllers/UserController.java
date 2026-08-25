@@ -17,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -40,6 +41,34 @@ SeanceServices seanceServices;
 	public ResponseEntity<?> getSeancesDuJour(Authentication principal) {
 		log.info("getAllCours by " + principal.getName() );
 		return ResponseEntity.ok(userServices.getSeancesDuJourForUser(principal.getName()));
+	}
+
+	@GetMapping("/secretariat/seances")
+	@PreAuthorize("hasRole('SECRETAIRE')")
+	public ResponseEntity<?> getSeancesDuJourPourLeSecretariat(
+			@RequestParam @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) LocalDate date) {
+		return ResponseEntity.ok(userServices.getSeancesDuJourForSecretary(date));
+	}
+
+	@GetMapping("/secretariat/seances/{seanceId}/presences")
+	@PreAuthorize("hasRole('SECRETAIRE')")
+	public ResponseEntity<?> getPresencesPourLeSecretariat(@PathVariable Long seanceId) {
+		return ResponseEntity.ok(presenceServices.getPresencesForSecretary(seanceId));
+	}
+
+	@PatchMapping("/secretariat/seances/{seanceId}/presences/{presenceId}")
+	@PreAuthorize("hasRole('SECRETAIRE')")
+	public ResponseEntity<?> updatePresencePourLeSecretariat(@PathVariable Long seanceId, @PathVariable Long presenceId,
+			@RequestBody PresenceUpdateRequest request) {
+		return ResponseEntity.ok(presenceServices.updatePresenceForSecretary(seanceId, presenceId, request.presence()));
+	}
+
+	@PatchMapping("/secretariat/seances/{seanceId}/commentaire")
+	@PreAuthorize("hasRole('SECRETAIRE')")
+	public ResponseEntity<?> updateCommentairePourLeSecretariat(@PathVariable Long seanceId,
+			@RequestBody CommentaireSeanceRequest request) {
+		return ResponseEntity.ok(SeanceDuJourResponse.from(
+				seanceServices.updateCommentaireForSecretary(seanceId, request.commentaire())));
 	}
 
 	@GetMapping("/seances/{seanceId}/presences")

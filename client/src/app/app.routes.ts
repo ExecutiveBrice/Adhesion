@@ -14,6 +14,7 @@ export const routes: Routes = [
   { path: 'compta', loadComponent: () => import('./page/compta/compta.component').then((m) => m.ComptaComponent) },
   { path: 'profs', loadComponent: () => import('./page/profs/profs.component').then((m) => m.ProfsComponent) },
   { path: 'seances', loadComponent: () => import('./page/seances/seances.component').then((m) => m.SeancesComponent) },
+  { path: 'seances-secretariat', loadComponent: () => import('./page/seances-secretariat/seances-secretariat.component').then((m) => m.SeancesSecretariatComponent) },
   { path: 'mail/:adherentId', loadComponent: () => import('./page/mailling/mailling.component').then((m) => m.MaillingComponent) },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 ];

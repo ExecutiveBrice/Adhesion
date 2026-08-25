@@ -50,6 +50,33 @@ class UserServicesTest {
                 "prof@alod.fr", LocalDate.now().atStartOfDay(), LocalDate.now().plusDays(1).atStartOfDay());
     }
 
+    @Test
+    void returnsEverySessionForTheDaySelectedByTheSecretary() {
+        SeanceRepository seanceRepository = mock(SeanceRepository.class);
+        UserServices userServices = new UserServices();
+        userServices.seanceRepository = seanceRepository;
+
+        LocalDate selectedDay = LocalDate.of(2026, 9, 2);
+        Activite activite = new Activite();
+        activite.setNom("Yoga");
+        Seance morning = seance(activite, LocalTime.of(9, 0));
+        morning.setDebut(LocalDateTime.of(selectedDay, LocalTime.of(9, 0)));
+        morning.setFin(morning.getDebut().plusHours(1));
+
+        when(seanceRepository.findAllByDebutGreaterThanEqualAndDebutLessThanOrderByDebut(
+                selectedDay.atStartOfDay(), selectedDay.plusDays(1).atStartOfDay()))
+                .thenReturn(java.util.List.of(morning));
+
+        var sessions = userServices.getSeancesDuJourForSecretary(selectedDay);
+
+        assertThat(sessions).singleElement().satisfies(session -> {
+            assertThat(session.activite()).isEqualTo("Yoga");
+            assertThat(session.debut()).isEqualTo(morning.getDebut());
+        });
+        verify(seanceRepository).findAllByDebutGreaterThanEqualAndDebutLessThanOrderByDebut(
+                selectedDay.atStartOfDay(), selectedDay.plusDays(1).atStartOfDay());
+    }
+
     private Seance seance(Activite activite, LocalTime heure) {
         Seance seance = new Seance();
         seance.setActivite(activite);

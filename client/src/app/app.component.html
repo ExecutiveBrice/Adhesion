@@ -56,6 +56,11 @@
             <a href="/seances" class="nav-link blanc" routerLink="seances">Séances</a>
           </li>
         }
+        @if (showSecretaire) {
+          <li class="nav-item" (click)="isCollapsed = true">
+            <a href="/seances-secretariat" class="nav-link blanc" routerLink="seances-secretariat">Séances (secrétariat)</a>
+          </li>
+        }
         @if (showAdmin || showComptable) {
           <li class="nav-item"  (click)="isCollapsed = true">
             <a href="/compta" class="nav-link blanc" routerLink="compta">Compta</a>
