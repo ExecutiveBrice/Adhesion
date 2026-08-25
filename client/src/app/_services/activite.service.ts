@@ -32,6 +32,16 @@ export interface ActivitePageQuery {
 export class ActiviteService {
   private http = inject(HttpClient);
 
+  private readonly libellesJours: Record<string, string> = {
+    MONDAY: 'Lundi',
+    TUESDAY: 'Mardi',
+    WEDNESDAY: 'Mercredi',
+    THURSDAY: 'Jeudi',
+    FRIDAY: 'Vendredi',
+    SATURDAY: 'Samedi',
+    SUNDAY: 'Dimanche'
+  };
+
 
   getSeancesDuJour(): Observable<Seance[]> {
     return this.http.get<Seance[]>(API_URL + 'seancesDuJour', { responseType: 'json' });
@@ -197,7 +207,7 @@ export class ActiviteService {
 
               let horaireDropDown = new HoraireDropDown
               horaireDropDown.id = act.id
-              horaireDropDown.nom = act.horaire
+              horaireDropDown.nom = this.libelleCategories(act)
 
               //Gerer la possiblité de reinscrire
               if(!act.reinscription){
@@ -218,5 +228,21 @@ export class ActiviteService {
         console.log(error)
       }
     );
+  }
+
+  private libelleCategories(activite: Activite): string {
+    const categories = activite.planificationsHebdomadaires ?? [];
+
+    if (categories.length === 0) {
+      return activite.horaire;
+    }
+
+    return categories
+      .map(categorie => [
+        this.libellesJours[categorie.jour] ?? categorie.jour,
+        categorie.horaireDebut,
+        categorie.descriptif
+      ].filter(Boolean).join(' · '))
+      .join(' / ');
   }
 }
