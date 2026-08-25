@@ -10,4 +10,6 @@ export interface PlanificationHebdomadaire {
   salle?: SalleConfiguration;
   profs?: UtilisateurSelectionnable[];
   referents?: UtilisateurSelectionnable[];
+  nbSeancesTotal?: number;
+  nbSeancesRealisees?: number;
 }

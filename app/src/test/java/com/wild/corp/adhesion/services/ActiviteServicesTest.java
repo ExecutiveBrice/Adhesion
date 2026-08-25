@@ -3,6 +3,7 @@ package com.wild.corp.adhesion.services;
 import com.wild.corp.adhesion.models.Activite;
 import com.wild.corp.adhesion.models.Adhesion;
 import com.wild.corp.adhesion.models.ESeance;
+import com.wild.corp.adhesion.models.PlanificationHebdomadaire;
 import com.wild.corp.adhesion.models.Seance;
 import com.wild.corp.adhesion.repository.ActiviteRepository;
 import com.wild.corp.adhesion.utils.Status;
@@ -75,7 +76,7 @@ class ActiviteServicesTest {
         assertThat(pageableUtilise.getPageNumber()).isEqualTo(1);
         assertThat(pageableUtilise.getPageSize()).isEqualTo(10);
         assertThat(pageableUtilise.getSort().stream().map(Sort.Order::getProperty))
-                .containsExactly("groupeFiltre", "nom", "horaire");
+                .containsExactly("nom", "horaire");
         assertThat(pageableUtilise.getSort().stream().map(Sort.Order::getDirection))
                 .containsOnly(Sort.Direction.ASC);
     }
@@ -90,7 +91,29 @@ class ActiviteServicesTest {
 
         verify(activiteRepository)
                 .findAll(any(Specification.class), eq(PageRequest.of(0, 20,
-                        Sort.by(Sort.Direction.ASC, "groupeFiltre", "nom", "horaire"))));
+                        Sort.by(Sort.Direction.ASC, "nom", "horaire"))));
+    }
+
+    @Test
+    void associatesSessionCountersWithTheirWeeklyCategory() {
+        Activite activite = new Activite();
+        PlanificationHebdomadaire lundi = planification(1L);
+        PlanificationHebdomadaire mercredi = planification(2L);
+        activite.getPlanificationsHebdomadaires().addAll(List.of(lundi, mercredi));
+        activite.getSeances().add(seanceAvecEtatEtPlanification(ESeance.PROGRAMMEE, lundi));
+        activite.getSeances().add(seanceAvecEtatEtPlanification(ESeance.REALISEE, lundi));
+        activite.getSeances().add(seanceAvecEtatEtPlanification(ESeance.ANNULEE, lundi));
+        activite.getSeances().add(seanceAvecEtatEtPlanification(ESeance.REALISEE, mercredi));
+
+        when(activiteRepository.findAll(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(activite)));
+
+        activiteServices.getPage("", null, null, null, null, "", PageRequest.of(0, 20));
+
+        assertThat(lundi.getNbSeancesTotal()).isEqualTo(2);
+        assertThat(lundi.getNbSeancesRealisees()).isEqualTo(1);
+        assertThat(mercredi.getNbSeancesTotal()).isEqualTo(1);
+        assertThat(mercredi.getNbSeancesRealisees()).isEqualTo(1);
     }
 
     @Test
@@ -136,5 +159,17 @@ class ActiviteServicesTest {
         seance.setId((long) etat.ordinal() + 1);
         seance.setEtatSeance(etat);
         return seance;
+    }
+
+    private Seance seanceAvecEtatEtPlanification(ESeance etat, PlanificationHebdomadaire planification) {
+        Seance seance = seanceAvecEtat(etat);
+        seance.setPlanification(planification);
+        return seance;
+    }
+
+    private PlanificationHebdomadaire planification(Long id) {
+        PlanificationHebdomadaire planification = new PlanificationHebdomadaire();
+        planification.setId(id);
+        return planification;
     }
 }

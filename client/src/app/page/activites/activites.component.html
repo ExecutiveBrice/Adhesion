@@ -118,13 +118,12 @@
 
   @if (activites.length > 0) {
     <div class="activities-grid">
-      @for (activite of activites; track trackByActivite($index, activite)) {
+      @for (activite of activites; track $index) {
         <article class="activity-card">
           <header class="activity-card-header">
             <div>
               <span class="activity-category">{{activite.groupeFiltre}}</span>
               <h3>{{activite.nom}}</h3>
-              <p>{{activite.horaire}}</p>
               @if (activite.salle) {
                 <div>@if (lienAdresseSalle(activite)) {
                   <a [href]="lienAdresseSalle(activite)" target="_blank" rel="noopener noreferrer">{{activite.salle.nom}} - {{activite.salle.adresse}}</a>
@@ -145,16 +144,27 @@
             <div><dt>En cours</dt><dd>{{activite.nbAdhesionsEnCours}} </dd></div>
             <div><dt>En attente</dt><dd><span class="waiting">{{activite.nbAdhesionsAttente}}</span> </dd></div>
           </dl>
-          <h4 class="activity-details-title">Séances</h4>
-          <dl class="activity-details">
-            <div><dt>Totales</dt><dd>{{activite.nbSeancesTotal}}</dd></div>
-            <div><dt>Réalisées</dt><dd>{{activite.nbSeancesRealisees}} </dd></div>
-          </dl>
-          <h4 class="activity-details-title">Informations</h4>
-          <dl class="activity-details">
-            <div><dt>Profs</dt><dd>{{activite.profs.length}}</dd></div>
-            <div><dt>Référents</dt><dd>{{activite.referents.length}}</dd></div>
-          </dl>
+          <h4 class="activity-details-title">Catégories</h4>
+          @if (activite.planificationsHebdomadaires.length) {
+            <div class="activity-categories">
+              @for (planification of activite.planificationsHebdomadaires; track planification.id; let index = $index) {
+                <section class="activity-category-details">
+                  <h5 class="category-heading">
+                    <strong>{{jourLibelle(planification.jour)}} · {{heureLibelle(planification.horaireDebut)}}</strong>
+                    <span>— {{planification.descriptif || 'Catégorie ' + (index + 1)}}</span>
+                  </h5>
+                  <dl>
+                    <div><dt>Profs</dt><dd>{{nomsUtilisateurs(planification.profs)}}</dd></div>
+                    <div><dt>Référents</dt><dd>{{nomsUtilisateurs(planification.referents)}}</dd></div>
+                    <div><dt>Séances</dt><dd>{{planification.nbSeancesTotal ?? 0}}</dd></div>
+                    <div><dt>Réalisées</dt><dd>{{planification.nbSeancesRealisees ?? 0}}</dd></div>
+                  </dl>
+                </section>
+              }
+            </div>
+          } @else {
+            <p class="category-empty">Aucune catégorie renseignée.</p>
+          }
           <footer class="activity-statuses">
             <span><fa-icon [ngClass]="activite.complete ? 'green' : 'orange'" [icon]="activite.complete ? faCircleCheck : faCircleXmark"></fa-icon> Complète</span>
             <span><fa-icon [ngClass]="activite.reinscription ? 'green' : 'orange'" [icon]="activite.reinscription ? faCircleCheck : faCircleXmark"></fa-icon> Réinscription</span>

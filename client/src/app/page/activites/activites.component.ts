@@ -7,6 +7,7 @@ import { ActivitePageQuery, ActiviteService } from 'src/app/_services/activite.s
 import { ParamService } from 'src/app/_services/param.service';
 import { TokenStorageService } from 'src/app/_services/token-storage.service';
 import { Activite } from 'src/app/models';
+import { UtilisateurSelectionnable } from 'src/app/models/utilisateurSelectionnable';
 import { Router } from '@angular/router';
 import { faCircleCheck, faCircleXmark, faCartPlus, faPencilSquare } from '@fortawesome/free-solid-svg-icons';
 import { ModalActivite } from 'src/app/template/modal-activite/modal.activite';
@@ -195,5 +196,28 @@ export class ActivitesComponent implements OnInit {
   lienAdresseSalle(activite: Activite): string | null {
     const adresse = activite.salle?.adresse?.trim();
     return adresse ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(adresse)}` : null;
+  }
+
+  jourLibelle(jour?: string): string {
+    const jours: Record<string, string> = {
+      MONDAY: 'Lundi',
+      TUESDAY: 'Mardi',
+      WEDNESDAY: 'Mercredi',
+      THURSDAY: 'Jeudi',
+      FRIDAY: 'Vendredi',
+      SATURDAY: 'Samedi',
+      SUNDAY: 'Dimanche'
+    };
+    return jours[jour ?? ''] ?? jour ?? 'Jour non renseigné';
+  }
+
+  heureLibelle(heure?: string): string {
+    if (!heure) return 'Horaire non renseigné';
+    return heure.substring(0, 5).replace(':', 'h');
+  }
+
+  nomsUtilisateurs(utilisateurs?: UtilisateurSelectionnable[]): string {
+    if (!utilisateurs?.length) return 'Aucun';
+    return utilisateurs.map(({ prenom, nom }) => `${prenom} ${nom}`.trim()).join(', ');
   }
 }

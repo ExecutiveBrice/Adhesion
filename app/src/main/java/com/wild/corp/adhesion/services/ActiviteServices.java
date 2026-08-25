@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 @Transactional
 public class ActiviteServices {
 
-    private static final Sort ACTIVITE_SORT = Sort.by(Sort.Direction.ASC, "groupeFiltre", "nom", "horaire");
+    private static final Sort ACTIVITE_SORT = Sort.by(Sort.Direction.ASC, "nom", "horaire");
 
     @Autowired
     ActiviteRepository activiteRepository;
@@ -168,7 +168,25 @@ public class ActiviteServices {
         activite.setNbSeancesTotal(activite.getSeances().stream()
                 .filter(seance -> !ESeance.ANNULEE.equals(seance.getEtatSeance()))
                 .count());
+        activite.getPlanificationsHebdomadaires().forEach(planification -> {
+            long nbSeancesTotal = activite.getSeances().stream()
+                    .filter(seance -> appartientAPlanification(seance, planification))
+                    .filter(seance -> !ESeance.ANNULEE.equals(seance.getEtatSeance()))
+                    .count();
+            long nbSeancesRealisees = activite.getSeances().stream()
+                    .filter(seance -> appartientAPlanification(seance, planification))
+                    .filter(seance -> ESeance.REALISEE.equals(seance.getEtatSeance()))
+                    .count();
+            planification.setNbSeancesTotal(nbSeancesTotal);
+            planification.setNbSeancesRealisees(nbSeancesRealisees);
+        });
         return activite;
+    }
+
+    private boolean appartientAPlanification(Seance seance, PlanificationHebdomadaire planification) {
+        return seance.getPlanification() != null
+                && seance.getPlanification().getId() != null
+                && seance.getPlanification().getId().equals(planification.getId());
     }
 
     public Activite save(Activite activite) {

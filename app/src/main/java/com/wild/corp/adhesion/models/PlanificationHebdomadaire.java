@@ -12,6 +12,7 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -65,4 +66,11 @@ public class PlanificationHebdomadaire {
             inverseJoinColumns = @JoinColumn(name = "adherent_id"))
     @JsonIgnoreProperties({"cours", "activitesReferent", "accords", "adhesions", "activitesNm1", "user", "tribu", "derniereModifs", "derniereVisites"})
     private Set<Adherent> referents = new HashSet<>();
+
+    /** Session counters exposed on the activity cards. */
+    @Transient
+    private Long nbSeancesTotal;
+
+    @Transient
+    private Long nbSeancesRealisees;
 }
