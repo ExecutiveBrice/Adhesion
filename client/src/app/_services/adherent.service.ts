@@ -16,6 +16,37 @@ export interface AdherentPage {
   size: number;
 }
 
+export interface AdherentUpdate {
+  id: number | null;
+  prenom: string;
+  nom: string;
+  genre: string;
+  telephone: string;
+  naissance: Date;
+  lieuNaissance: string;
+  adresse: string;
+  codePostal: string;
+  ville: string;
+  mineur: boolean;
+  adresseRepresentant: boolean;
+  telephoneRepresentant: boolean;
+  emailRepresentant: boolean;
+  tribuId: string;
+  representant: { id: number } | null;
+  user: { username: string } | null;
+  accords: Array<{
+    id?: number;
+    nom?: string;
+    title?: string;
+    text?: string;
+    valide?: string;
+    refus?: string;
+    refusable?: boolean;
+    etat: boolean;
+    datePassage: Date | null;
+  }>;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -117,7 +148,7 @@ export class AdherentService {
     return this.http.post<Adherent>(API_URL+"addVisite", null,  {params, responseType: 'json' });
   }
 
-  update(adherent: Adherent): Observable<Adherent> {
+  update(adherent: AdherentUpdate): Observable<Adherent> {
     return this.http.post<Adherent>(API_URL+"update", adherent, { responseType: 'json' });
   }
 

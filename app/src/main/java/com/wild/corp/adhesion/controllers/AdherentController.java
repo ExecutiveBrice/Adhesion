@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -64,7 +63,6 @@ public class AdherentController {
 
     @PostMapping("/update")
     @PreAuthorize("hasRole('USER')")
-    @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<?> update(Authentication principal, @RequestBody AdherentLite adherent) {
 
         if(adherent.getId() == null){

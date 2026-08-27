@@ -4,10 +4,15 @@ import com.wild.corp.adhesion.models.Activite;
 import com.wild.corp.adhesion.models.Adhesion;
 import com.wild.corp.adhesion.models.ESeance;
 import com.wild.corp.adhesion.models.Seance;
+import com.wild.corp.adhesion.models.Presence;
+import com.wild.corp.adhesion.repository.PresenceRepository;
 import com.wild.corp.adhesion.utils.Status;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class PresenceServicesTest {
 
@@ -80,6 +85,22 @@ class PresenceServicesTest {
 
         assertThat(adhesion.getPresences()).singleElement();
         assertThat(seance.getPresences()).singleElement();
+    }
+
+    @Test
+    void addsANewParticipantAsPresentForTheCurrentSession() {
+        PresenceRepository presenceRepository = mock(PresenceRepository.class);
+        presenceServices.presenceRepository = presenceRepository;
+        Activite activite = new Activite();
+        Adhesion adhesion = adhesion(activite, Status.ATTENTE_ADHERENT.label);
+        Seance seance = session(activite, 1L);
+        when(presenceRepository.save(any(Presence.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Presence presence = presenceServices.addPresenceForSeance(adhesion, seance, true);
+
+        assertThat(presence.getAdhesion()).isSameAs(adhesion);
+        assertThat(presence.getSeance()).isSameAs(seance);
+        assertThat(presence.getPresence()).isTrue();
     }
 
     private Adhesion adhesion(Activite activite, String statut) {

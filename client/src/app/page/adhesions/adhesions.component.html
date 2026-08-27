@@ -206,9 +206,10 @@
                             <option [value]="status">{{status}}</option>
                           }
                         </select>
-                        @if (adhesion.dateChangementStatut) {
-                          <small>Depuis le {{adhesion.dateChangementStatut | date:'dd/MM/yyyy'}}</small>
+                        @if (adhesion.dateChangementStatut || adhesion.dateAjoutPanier) {
+                          <small>Depuis le {{ (adhesion.dateChangementStatut || adhesion.dateAjoutPanier) | date:'dd/MM/yyyy' }}</small>
                         }
+
                       </td>
                       <td class="note-cell">
                         <textarea class="form-control" [(ngModel)]="adhesion.remarqueSecretariat" rows="3"

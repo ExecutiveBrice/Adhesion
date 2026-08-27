@@ -23,6 +23,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -164,6 +166,7 @@ public class AdherentServices {
             dataAdherent.setTelephoneRepresentant(frontAdherent.getTelephoneRepresentant());
             dataAdherent.setEmailRepresentant(frontAdherent.getEmailRepresentant());
             dataAdherent.setAdresseRepresentant(frontAdherent.getAdresseRepresentant());
+            updateAccords(frontAdherent, dataAdherent);
 
 
             isComplet(dataAdherent);
@@ -171,6 +174,31 @@ public class AdherentServices {
         }
 
         return null;
+    }
+
+    /** Copies only the consent values supplied for the adherent's existing accords. */
+    void updateAccords(AdherentLite frontAdherent, Adherent dataAdherent) {
+        if (frontAdherent.getAccords() == null) {
+            return;
+        }
+
+        Map<Long, Accord> accordsEnBase = dataAdherent.getAccords().stream()
+                .filter(accord -> accord.getId() != null)
+                .collect(Collectors.toMap(Accord::getId, accord -> accord));
+
+        frontAdherent.getAccords().stream()
+                .filter(accord -> accord.getId() != null && accord.getEtat() != null)
+                .forEach(accordFront -> {
+                    Accord accordEnBase = accordsEnBase.get(accordFront.getId());
+                    if (accordEnBase == null) {
+                        return;
+                    }
+                    accordEnBase.setEtat(accordFront.getEtat());
+                    if (accordEnBase.getDatePassage() == null) {
+                        accordEnBase.setDatePassage(
+                                accordFront.getDatePassage() == null ? LocalDate.now() : accordFront.getDatePassage());
+                    }
+                });
     }
 
     public void deleteAdherent(Long adherentId) {
@@ -212,17 +240,33 @@ public class AdherentServices {
             newAdherent.setRepresentant(getById(newAdherentFront.getRepresentant().getId()));
         }
 
-        newAdherent.setTribu(tribuServices.getTribuByUuid(newAdherentFront.getTribuId()));
+        if (newAdherentFront.getTribuId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tribu obligatoire");
+        }
+        Tribu tribu = tribuServices.getTribuByUuid(newAdherentFront.getTribuId());
+        if (tribu == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tribu introuvable");
+        }
+        newAdherent.setTribu(tribu);
 
-        if (newAdherentFront.getUser() != null && newAdherentFront.getUser().getUsername() != null) {
+        if (newAdherentFront.getUser() != null
+                && StringUtils.isNotBlank(newAdherentFront.getUser().getUsername())) {
             Random random = new Random();
             String password = random.toString();
-            User newUser = userServices.addNewUser(newAdherentFront.getUser().getUsername().toLowerCase(), password);
+            User newUser = userServices.addNewUser(
+                    newAdherentFront.getUser().getUsername().trim().toLowerCase(), password);
             newAdherent.setUser(newUser);
 
         }
-        newAdherentFront.getAccords().forEach(accord -> {
-            newAdherent.getAccords().add(new Accord(accord.getNom(), accord.getTitle(), accord.getValide(), accord.getRefus(), accord.getRefusable(), accord.getText()));
+        newAdherentFront.getAccords().stream()
+                .filter(accord -> StringUtils.isNotBlank(accord.getNom()))
+                .forEach(accord -> {
+            Accord nouvelAccord = new Accord(accord.getNom(), accord.getTitle(), accord.getValide(), accord.getRefus(), accord.getRefusable(), accord.getText());
+            if (accord.getEtat() != null) {
+                nouvelAccord.setEtat(accord.getEtat());
+                nouvelAccord.setDatePassage(accord.getDatePassage() == null ? LocalDate.now() : accord.getDatePassage());
+            }
+            newAdherent.getAccords().add(nouvelAccord);
         });
         isComplet(newAdherent);
 
@@ -267,15 +311,15 @@ public class AdherentServices {
     }
 
 
-    private void isComplet(Adherent adherent) {
+    void isComplet(Adherent adherent) {
 
         if (StringUtils.isNotBlank(adherent.getNom()) &&
                 StringUtils.isNotBlank(adherent.getPrenom()) &&
                 adherent.getNaissance() != null &&
                 adherent.getLieuNaissance() != null &&
                 adherent.getGenre() != null &&
-                adherent.getAccords().stream().anyMatch(accord -> accord.getNom().equals("RGPD") && accord.getEtat() != null) &&
-                adherent.getAccords().stream().anyMatch(accord -> accord.getNom().equals("DroitImage") && accord.getEtat() != null) &&
+                adherent.getAccords().stream().anyMatch(accord -> "RGPD".equals(accord.getNom()) && accord.getEtat() != null) &&
+                adherent.getAccords().stream().anyMatch(accord -> "DroitImage".equals(accord.getNom()) && accord.getEtat() != null) &&
                 (adherent.getAdresse() != null || adherent.getRepresentant() != null) &&
                 (adherent.getTelephone() != null || adherent.getRepresentant() != null)
         ) {

@@ -1,6 +1,8 @@
 package com.wild.corp.adhesion.models.resources;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.wild.corp.adhesion.models.*;
 import lombok.*;
 
@@ -12,11 +14,19 @@ import java.util.UUID;
 
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(of = {"id"})
 @JsonIgnoreProperties(ignoreUnknown = true,  allowSetters = true)
 public class AdherentLite {
+
+    /**
+     * Créateur explicite pour Jackson. Ne pas dépendre de la génération Lombok
+     * ici : selon le compilateur utilisé pour lancer l'application, Jackson ne
+     * voyait que le constructeur toutes propriétés.
+     */
+    @JsonCreator
+    public AdherentLite() {
+    }
 
     private Long id;
 
@@ -70,6 +80,10 @@ public class AdherentLite {
 
     private String activites;
 
+    // Les adhésions sont renvoyées à l'interface, mais ne sont jamais mises à
+    // jour par cet endpoint. Les ignorer à l'entrée évite de désérialiser la
+    // structure complète d'une activité (notamment sa salle, qui est un objet).
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Set<AdhesionLite> adhesions;
 
     private List<Accord> accords = new ArrayList<>();
@@ -84,5 +98,9 @@ public class AdherentLite {
 
     private List<Notification> derniereVisites = new ArrayList<>();
 
+    // Le client transmet parfois l'objet User complet, qui contient en retour
+    // l'adhérent. Cette référence circulaire n'est pas utile à la mise à jour :
+    // seul le nom d'utilisateur est lu par le service.
+    @JsonIgnoreProperties({"adherent"})
     private UserLite user;
 }

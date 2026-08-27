@@ -29,6 +29,7 @@ export interface PresenceSeance {
   adherentId: number;
   nom: string;
   prenom: string;
+  email: string;
   presence: boolean;
 }
 

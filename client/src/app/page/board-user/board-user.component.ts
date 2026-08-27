@@ -47,7 +47,7 @@ import { OrderByPipe } from '../../_helpers/sort.pipe';
     selector: 'app-board-user',
     templateUrl: './board-user.component.html',
     styleUrls: ['./board-user.component.css'],
-    imports: [NgClass, FaIconComponent, CalendrierComponent, OrderByPipe]
+    imports: [NgClass, DatePipe, FaIconComponent, CalendrierComponent, OrderByPipe]
 })
 export class BoardUserComponent implements OnInit {
   private readonly apiViewRefresh = registerApiViewRefresh();

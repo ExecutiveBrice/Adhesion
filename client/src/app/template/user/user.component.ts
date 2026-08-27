@@ -3,7 +3,7 @@ import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { Accord, Activite, ActiviteDropDown, Adherent, Adhesion, Document, Tribu } from '../../models';
 
 import { ActiviteService } from '../../_services/activite.service';
-import { AdherentService } from 'src/app/_services/adherent.service';
+import { AdherentService, AdherentUpdate } from 'src/app/_services/adherent.service';
 import { faRefresh, faCirclePause, faClock, faPiggyBank, faSkull, faFileSignature, faSquareCaretLeft, faSquareCaretDown, faEye, faCircleQuestion, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { AdhesionService } from 'src/app/_services/adhesion.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -223,7 +223,39 @@ export class UserComponent implements OnInit {
         adherent.user.username = this.cleaning(adherent.user.username)
       }
 
-      this.adherentService.update(adherent).subscribe(
+      const miseAJour: AdherentUpdate = {
+        id: adherent.id || null,
+        prenom: adherent.prenom,
+        nom: adherent.nom,
+        genre: adherent.genre,
+        telephone: adherent.telephone,
+        naissance: adherent.naissance,
+        lieuNaissance: adherent.lieuNaissance,
+        adresse: adherent.adresse,
+        codePostal: adherent.codePostal,
+        ville: adherent.ville,
+        mineur: adherent.mineur,
+        adresseRepresentant: adherent.adresseRepresentant,
+        telephoneRepresentant: adherent.telephoneRepresentant,
+        emailRepresentant: adherent.emailRepresentant,
+        tribuId: adherent.tribuId || this.tribu.uuid,
+        representant: adherent.representant ? { id: adherent.representant.id } : null,
+        user: adherent.user?.username?.trim()
+          ? { username: adherent.user.username.trim() }
+          : null,
+        accords: adherent.accords.map(accord => ({
+          id: accord.id,
+          nom: accord.nom,
+          title: accord.title,
+          text: accord.text,
+          valide: accord.valide,
+          refus: accord.refus,
+          refusable: accord.refusable,
+          etat: accord.etat,
+          datePassage: accord.datePassage || null
+        }))
+      };
+      this.adherentService.update(miseAJour).subscribe(
         data => {
           this.showSuccess("L'adhérent à bien été mis à jour")
           this.adherent = data;

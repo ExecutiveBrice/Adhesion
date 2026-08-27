@@ -14,6 +14,7 @@ export class AdhesionLite {
   paiements!: Paiement[];
   typeReglement!: string;
   dateReglement!: string;
+  dateAjoutPanier?: string;
   dateChangementStatut!: string;
   statutActuel!: string;
   remarqueSecretariat!: string;

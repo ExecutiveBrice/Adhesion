@@ -54,6 +54,19 @@
         {{ enregistrementCommentaire ? 'Enregistrement…' : 'Enregistrer' }}
       </button>
     </div>
+    <form class="mb-3" (ngSubmit)="ajouterNouvelAdherent()">
+      <label for="emailNouvelAdherent" class="form-label">Ajouter un nouvel adhérent</label>
+      <div class="input-group">
+        <input id="emailNouvelAdherent" name="emailNouvelAdherent" type="email" class="form-control"
+          [(ngModel)]="emailNouvelAdherent" required email placeholder="adresse@mail.fr"
+          [disabled]="ajoutNouvelAdherent">
+        <button type="submit" class="btn btn-outline-primary"
+          [disabled]="ajoutNouvelAdherent || !emailNouvelAdherent.trim()">
+          {{ ajoutNouvelAdherent ? 'Ajout…' : 'Ajouter' }}
+        </button>
+      </div>
+      <div class="form-text">Seule l’adresse e-mail est demandée ; les autres informations pourront être complétées plus tard.</div>
+    </form>
     @if (chargementPresences) {
       <div class="text-center text-muted py-3">Chargement des présences…</div>
     }
@@ -67,7 +80,7 @@
     }
     @for (presence of presences; track presence) {
       <div class="presence-ligne">
-        <span>{{ presence.prenom }} {{ presence.nom }}</span>
+        <span>{{ presence.prenom || presence.nom ? presence.prenom + ' ' + presence.nom : presence.email }}</span>
         <button type="button" class="btn btn-sm" [class.btn-success]="presence.presence"
           [class.btn-outline-secondary]="!presence.presence" (click)="changerPresence(presence)"
           [disabled]="miseAJourPresences.has(presence.id)">

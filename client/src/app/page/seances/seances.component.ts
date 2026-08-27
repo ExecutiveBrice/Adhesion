@@ -34,6 +34,8 @@ export class SeancesComponent implements OnInit {
   erreurPresences = '';
   miseAJourPresences = new Set<number>();
   enregistrementCommentaire = false;
+  emailNouvelAdherent = '';
+  ajoutNouvelAdherent = false;
   faCheck = faCheck;
   faXmark = faXmark;
   faTriangleExclamation = faTriangleExclamation;
@@ -62,6 +64,8 @@ export class SeancesComponent implements OnInit {
     this.seanceSelectionnee = seance;
     this.presences = [];
     this.erreurPresences = '';
+    this.emailNouvelAdherent = '';
+    this.ajoutNouvelAdherent = false;
     this.chargementPresences = true;
     this.modalService.open(contenu, { centered: true, size: 'lg' });
     this.userService.getPresences(seance.id).subscribe({
@@ -72,6 +76,24 @@ export class SeancesComponent implements OnInit {
       error: (error: HttpErrorResponse) => {
         this.erreurPresences = error.error?.message || 'Impossible de charger les présences.';
         this.chargementPresences = false;
+      }
+    });
+  }
+
+  ajouterNouvelAdherent(): void {
+    if (!this.seanceSelectionnee || !this.emailNouvelAdherent.trim()) return;
+    this.erreurPresences = '';
+    this.ajoutNouvelAdherent = true;
+    this.userService.ajouterNouvelAdherentSeance(this.seanceSelectionnee.id, this.emailNouvelAdherent.trim()).subscribe({
+      next: presence => {
+        this.presences = [...this.presences, presence].sort((a, b) =>
+          `${a.nom} ${a.prenom}`.localeCompare(`${b.nom} ${b.prenom}`, 'fr'));
+        this.emailNouvelAdherent = '';
+        this.ajoutNouvelAdherent = false;
+      },
+      error: (error: HttpErrorResponse) => {
+        this.erreurPresences = error.error?.detail || error.error?.message || 'Impossible d’ajouter le nouvel adhérent.';
+        this.ajoutNouvelAdherent = false;
       }
     });
   }

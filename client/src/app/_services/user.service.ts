@@ -54,6 +54,11 @@ export class UserService {
     return this.http.patch<SeanceDuJour>(API_URL + 'seances/' + seanceId + '/commentaire',
       { commentaire }, { responseType: 'json' });
   }
+
+  ajouterNouvelAdherentSeance(seanceId: number, email: string): Observable<PresenceSeance> {
+    return this.http.post<PresenceSeance>(API_URL + 'seances/' + seanceId + '/adherents',
+      { email }, { responseType: 'json' });
+  }
   getUserByMail(userEmail: String): Observable<User> {
     let params = new HttpParams().set('userEmail', '' + userEmail + '');
     return this.http.get<User>(API_URL + 'getUserByMail', {params, responseType: 'json' });

@@ -58,6 +58,9 @@
                   @if (adhesion.statutActuel == 'Annulée') {
                     <fa-icon class="orange fa-xl" [icon]="faCircleXmark"></fa-icon>
                   }
+                  @if (adhesion.dateChangementStatut || adhesion.dateAjoutPanier) {
+                    <small class="d-block">Depuis le {{ (adhesion.dateChangementStatut || adhesion.dateAjoutPanier) | date:'dd/MM/yyyy' }}</small>
+                  }
                 </div>
               }
             </div>
@@ -78,12 +81,6 @@
     </div>
   }
 </div>
-
-<app-calendrier [tribuUuid]="tribu.uuid"></app-calendrier>
-
-
-
-
 
 <div class="row">
   <div class="col-12 col-sm-6">
@@ -168,3 +165,9 @@
 </div>
 
 </div>
+
+
+<app-calendrier [tribuUuid]="tribu.uuid"></app-calendrier>
+
+
+

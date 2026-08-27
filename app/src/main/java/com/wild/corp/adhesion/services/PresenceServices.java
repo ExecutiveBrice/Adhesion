@@ -57,6 +57,20 @@ public class PresenceServices {
         seance.getPresences().add(presence);
     }
 
+    /**
+     * Adds a participant directly to one session. This is used for a person
+     * registered by a professor during the session, before their full file is
+     * completed.
+     */
+    public Presence addPresenceForSeance(Adhesion adhesion, Seance seance, boolean present) {
+        Presence presence = new Presence();
+        presence.setAdhesion(adhesion);
+        presence.setSeance(seance);
+        presence.setPresence(present);
+        presence.setDateModification(LocalDate.now());
+        return presenceRepository.save(presence);
+    }
+
     public List<PresenceSeanceResponse> getPresences(Long seanceId, String username) {
         getSeanceForManager(seanceId, username);
         return getPresences(seanceId);

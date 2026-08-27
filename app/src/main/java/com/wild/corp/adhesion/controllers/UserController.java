@@ -1,21 +1,34 @@
 package com.wild.corp.adhesion.controllers;
 
 import com.wild.corp.adhesion.models.ERole;
+import com.wild.corp.adhesion.models.Adherent;
+import com.wild.corp.adhesion.models.Adhesion;
+import com.wild.corp.adhesion.models.Presence;
+import com.wild.corp.adhesion.models.Seance;
 import com.wild.corp.adhesion.models.User;
 import com.wild.corp.adhesion.repository.AdherentRepository;
+import com.wild.corp.adhesion.repository.SeanceRepository;
+import com.wild.corp.adhesion.services.AdhesionServices;
 import com.wild.corp.adhesion.services.UserServices;
 import com.wild.corp.adhesion.services.PresenceServices;
 import com.wild.corp.adhesion.services.SeanceServices;
+import com.wild.corp.adhesion.models.resources.AjoutAdherentSeanceRequest;
 import com.wild.corp.adhesion.models.resources.CommentaireSeanceRequest;
+import com.wild.corp.adhesion.models.resources.PresenceSeanceResponse;
 import com.wild.corp.adhesion.models.resources.SeanceDuJourResponse;
 import com.wild.corp.adhesion.models.resources.PresenceUpdateRequest;
+import com.wild.corp.adhesion.utils.Status;
+import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import jakarta.websocket.server.PathParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 
@@ -31,6 +44,12 @@ UserServices userServices;
 PresenceServices presenceServices;
 @Autowired
 SeanceServices seanceServices;
+
+@Autowired
+AdhesionServices adhesionServices;
+
+@Autowired
+SeanceRepository seanceRepository;
 
 	@Autowired
 	AdherentRepository adherentRepository;
@@ -90,6 +109,30 @@ SeanceServices seanceServices;
 			@RequestBody CommentaireSeanceRequest request, Authentication principal) {
 		return ResponseEntity.ok(SeanceDuJourResponse.from(
 				seanceServices.updateCommentaireForManager(seanceId, request.commentaire(), principal.getName())));
+	}
+
+	@PostMapping("/seances/{seanceId}/adherents")
+	@PreAuthorize("hasAnyRole('PROF', 'REFERENT')")
+	@Transactional
+	public ResponseEntity<PresenceSeanceResponse> ajouterNouvelAdherent(
+			@PathVariable Long seanceId,
+			@Valid @RequestBody AjoutAdherentSeanceRequest request,
+			Authentication principal) {
+		String email = request.email().trim().toLowerCase();
+		Seance seance = seanceRepository.findByIdAndManagerUsername(seanceId, principal.getName())
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Séance introuvable"));
+		if (userServices.existsByEmail(email)) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "Cette adresse e-mail est déjà utilisée");
+		}
+
+		Adherent adherent = userServices.createUserAnonymous(email);
+		Adhesion adhesion = adhesionServices.save(principal::getName, adherent.getId(), seance.getActivite().getId());
+		// Un ajout depuis une séance doit toujours rester à compléter par l'adhérent,
+		// y compris lorsque l'activité est complète.
+		adhesion = adhesionServices.choisirStatut(adhesion.getId(), Status.ATTENTE_ADHERENT.label);
+		Presence presence = presenceServices.addPresenceForSeance(adhesion, seance, true);
+		adhesionServices.addModification(principal.getName(), adhesion.getId(), "Ajout à la séance " + seanceId);
+		return ResponseEntity.status(HttpStatus.CREATED).body(PresenceSeanceResponse.from(presence));
 	}
 
 
