@@ -54,6 +54,19 @@
   border-top: 1px solid #e7ecea;
 }
 
+.activity-group + .activity-group {
+  border-top: 2px solid #cfded8;
+}
+
+.activity-group-name {
+  padding: .55rem 1rem .35rem;
+  color: #42685c;
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
 .section-name {
   font-weight: 700;
 }

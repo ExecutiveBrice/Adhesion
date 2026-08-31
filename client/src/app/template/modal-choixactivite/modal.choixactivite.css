@@ -19,3 +19,11 @@
 .indentation{
     margin-left: 5px;
   }
+
+.groupe-activites + .groupe-activites {
+  margin-top: 1rem;
+}
+
+.nom-groupe {
+  margin-bottom: .4rem;
+}

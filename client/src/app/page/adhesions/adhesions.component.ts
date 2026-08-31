@@ -32,6 +32,10 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass, DatePipe } from '@angular/common';
 import { OrderByPipe } from '../../_helpers/sort.pipe';
 
+interface GroupeActivites {
+  nom: string;
+  activites: ActiviteDropDown[];
+}
 
 @Component({
     selector: 'app-adherents',
@@ -130,7 +134,7 @@ export class AdhesionsComponent implements OnInit {
       this.showSecretaire = this.tokenStorageService.getUser().roles.includes('ROLE_SECRETAIRE');
       if (this.tokenStorageService.getUser().username == "alodbasket@free.fr" || this.tokenStorageService.getUser().username == "laurence.basket@yahoo.com" || this.tokenStorageService.getUser().username == "xlcharonnat@yahoo.fr" || this.tokenStorageService.getUser().username == "c.rullie@free.fr") {
         this.choixSection = "activite#Basket"
-        this.visuelselection = "Basket-Tous horaires"
+        this.visuelselection = "Basket · Toutes les catégories"
       } else {
         this.choixSection = "Toutes"
         this.visuelselection = "Toutes les adhésions"
@@ -273,22 +277,43 @@ export class AdhesionsComponent implements OnInit {
 
   activites: ActiviteDropDown[] = []
 
-  getActivites() {
+  /** Regroupe la liste du menu sans modifier les activités chargées. */
+  get groupesActivites(): GroupeActivites[] {
+    const groupes = new Map<string, ActiviteDropDown[]>();
 
+    for (const activite of this.activites) {
+      const nomGroupe = activite.groupeFiltre?.trim() || 'Sans groupe';
+      const activitesDuGroupe = groupes.get(nomGroupe) ?? [];
+      activitesDuGroupe.push(activite);
+      groupes.set(nomGroupe, activitesDuGroupe);
+    }
+
+    const collator = new Intl.Collator('fr', { sensitivity: 'base' });
+    return [...groupes.entries()]
+      .map(([nom, activites]) => ({
+        nom,
+        activites: [...activites].sort((a, b) => collator.compare(a.nom, b.nom))
+      }))
+      .sort((a, b) => collator.compare(a.nom, b.nom));
+  }
+
+  getActivites() {
     this.activiteService.getAll().subscribe({
       next: (data) => {
+        this.activites = [];
         data.forEach(act => {
           if (this.activites.filter(activiteDropDown => activiteDropDown.nom == act.nom).length > 0) {
             let horaireDropDown = new HoraireDropDown
             horaireDropDown.id = act.id
-            horaireDropDown.nom = act.horaire
+            horaireDropDown.nom = this.libelleCategories(act)
             this.activites.filter(activiteDropDown => activiteDropDown.nom == act.nom)[0].horaires.push(horaireDropDown)
           } else {
             let activiteDropDown = new ActiviteDropDown()
             activiteDropDown.nom = act.nom
+            activiteDropDown.groupeFiltre = act.groupeFiltre
             let horaireDropDown = new HoraireDropDown
             horaireDropDown.id = act.id
-            horaireDropDown.nom = act.horaire
+            horaireDropDown.nom = this.libelleCategories(act)
             activiteDropDown.horaires.push(horaireDropDown)
             this.activites.push(activiteDropDown)
           }
@@ -299,6 +324,33 @@ export class AdhesionsComponent implements OnInit {
         this.showError(error.error.message)
       }
     });
+  }
+
+  private libelleCategories(activite: { planificationsHebdomadaires?: Array<{
+    jour?: string;
+    horaireDebut?: string;
+    descriptif?: string;
+  }> }): string {
+    const libellesJours: Record<string, string> = {
+      MONDAY: 'Lundi',
+      TUESDAY: 'Mardi',
+      WEDNESDAY: 'Mercredi',
+      THURSDAY: 'Jeudi',
+      FRIDAY: 'Vendredi',
+      SATURDAY: 'Samedi',
+      SUNDAY: 'Dimanche'
+    };
+
+    const libelle = (activite.planificationsHebdomadaires ?? [])
+      .map(categorie => [
+        categorie.jour ? (libellesJours[categorie.jour] ?? categorie.jour) : '',
+        categorie.horaireDebut,
+        categorie.descriptif
+      ].filter(Boolean).join(' · '))
+      .filter(Boolean)
+      .join(' / ');
+
+    return libelle || 'Catégorie non renseignée';
   }
 
   getStatuses() {

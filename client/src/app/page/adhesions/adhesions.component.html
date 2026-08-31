@@ -101,17 +101,22 @@
               @if (activites.length > 0) {
                 <div ngbDropdownMenu aria-labelledby="section-filter-button" class="section-menu">
                   <button ngbDropdownItem (click)="selectSection('Toutes', 'Toutes les adhésions')">Toutes les adhésions</button>
-                  @for (activite of activites | orderBy:'nom':false; track activite) {
-                    <div class="section-group">
-                      <button ngbDropdownItem class="section-name"
-                        (click)="selectSection('activite#' + activite.nom, activite.nom + ' · Tous horaires')">
-                        {{activite.nom}}
-                      </button>
-                      @for (horaire of activite.horaires; track horaire) {
-                        <button ngbDropdownItem class="schedule-name"
-                          (click)="selectSection('horaire#' + horaire.id, activite.nom + ' · ' + horaire.nom)">
-                          {{horaire.nom}}
-                        </button>
+                  @for (groupe of groupesActivites; track groupe.nom) {
+                    <div class="activity-group">
+                      <div class="activity-group-name">{{groupe.nom}}</div>
+                      @for (activite of groupe.activites; track activite.nom) {
+                        <div class="section-group">
+                          <button ngbDropdownItem class="section-name"
+                            (click)="selectSection('activite#' + activite.nom, activite.nom + ' · Toutes les catégories')">
+                            {{activite.nom}}
+                          </button>
+                          @for (categorie of activite.horaires; track categorie.id) {
+                            <button ngbDropdownItem class="schedule-name"
+                              (click)="selectSection('horaire#' + categorie.id, activite.nom + ' · ' + categorie.nom)">
+                              {{categorie.nom}}
+                            </button>
+                          }
+                        </div>
                       }
                     </div>
                   }
