@@ -124,14 +124,6 @@
             <div>
               <span class="activity-category">{{activite.groupeFiltre}}</span>
               <h3>{{activite.nom}}</h3>
-              @if (activite.salle) {
-                <div>@if (lienAdresseSalle(activite)) {
-                  <a [href]="lienAdresseSalle(activite)" target="_blank" rel="noopener noreferrer">{{activite.salle.nom}} - {{activite.salle.adresse}}</a>
-                }</div>
-              }
-              @if (lienActivite(activite)) {
-                <div><a class="activity-link" [href]="lienActivite(activite)" target="_blank" rel="noopener noreferrer">Lien de l'activité</a></div>
-              }
             </div>
             <button type="button" class="icon-action" title="Modifier l'activité" (click)="openActivite(activite)">
               <fa-icon [icon]="faPencilSquare"></fa-icon>

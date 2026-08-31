@@ -51,7 +51,6 @@ export class CalendrierComponent implements OnInit, OnChanges {
   calendrier: JourCalendrier[] = [];
   jourSelectionne: JourCalendrier | null = null;
   popupJourOuverte = false;
-  moisAffiche = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   chargementCalendrier = false;
   erreurCalendrier = '';
   agendasGoogle: AgendaGoogleConfiguration[] = [];
@@ -84,25 +83,25 @@ export class CalendrierComponent implements OnInit, OnChanges {
     });
   }
 
-  get libelleMois(): string { return new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(this.moisAffiche); }
+  get libelleSemaine(): string {
+    const debut = this.premierJourSemaineCourante();
+    const fin = new Date(debut);
+    fin.setDate(fin.getDate() + 6);
+    const format = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+    return `Semaine du ${format.format(debut)} au ${format.format(fin)}`;
+  }
+  get libelleAujourdhui(): string {
+    return new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
+  }
   get libelleJourSelectionne(): string {
     return this.jourSelectionne ? new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(this.jourSelectionne.date) : '';
-  }
-  changerMois(decalage: number): void {
-    this.moisAffiche = new Date(this.moisAffiche.getFullYear(), this.moisAffiche.getMonth() + decalage, 1);
-    this.chargerCalendrier();
-  }
-  revenirAujourdhui(): void {
-    const maintenant = new Date();
-    this.moisAffiche = new Date(maintenant.getFullYear(), maintenant.getMonth(), 1);
-    this.chargerCalendrier();
   }
   selectionnerJour(jour: JourCalendrier): void { this.jourSelectionne = jour; this.popupJourOuverte = true; }
   fermerPopupJour(): void { this.popupJourOuverte = false; }
 
   chargerCalendrier(): void {
-    const debut = this.premierJourVisible();
-    const fin = new Date(debut); fin.setDate(fin.getDate() + 41);
+    const debut = this.premierJourSemaineCourante();
+    const fin = new Date(debut); fin.setDate(fin.getDate() + 6);
     this.chargementCalendrier = true; this.erreurCalendrier = ''; this.googleAgendaErreur = '';
     const dateDebut = this.dateIso(debut); const dateFin = this.dateIso(fin);
     const seances$ = this.activiteService.getCalendrier(dateDebut, dateFin, this.tribuUuid).pipe(catchError(() => {
@@ -132,10 +131,11 @@ export class CalendrierComponent implements OnInit, OnChanges {
   lienActivite(evenement: EvenementCalendrier): string | null { if (evenement.source !== 'SEANCE' || !evenement.lien?.trim()) return null; const lien = evenement.lien.trim(); return /^https?:\/\//i.test(lien) ? lien : `https://${lien}`; }
   lienAdresseSalle(evenement: EvenementCalendrier): string | null { return evenement.adresseSalle?.trim() ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(evenement.adresseSalle.trim())}` : null; }
 
-  private premierJourVisible(): Date {
-    const premier = new Date(this.moisAffiche.getFullYear(), this.moisAffiche.getMonth(), 1);
-    premier.setDate(premier.getDate() - (premier.getDay() + 6) % 7);
-    return premier;
+  private premierJourSemaineCourante(): Date {
+    const debut = new Date();
+    debut.setHours(0, 0, 0, 0);
+    debut.setDate(debut.getDate() - (debut.getDay() + 6) % 7);
+    return debut;
   }
   private construireCalendrier(debut: Date, seances: SeanceCalendrier[], google: EvenementGoogleAgenda[]): void {
     const parJour = new Map<string, EvenementCalendrier[]>();
@@ -146,12 +146,12 @@ export class CalendrierComponent implements OnInit, OnChanges {
       do { const iso = this.dateIso(date); parJour.set(iso, [...(parJour.get(iso) || []), e]); date.setDate(date.getDate() + 1); } while (date <= dernier);
     });
     const aujourdHui = this.dateIso(new Date());
-    this.calendrier = Array.from({ length: 42 }, (_, index) => {
+    this.calendrier = Array.from({ length: 7 }, (_, index) => {
       const date = new Date(debut); date.setDate(debut.getDate() + index); const iso = this.dateIso(date);
-      return { date, iso, numero: date.getDate(), dansLeMois: date.getMonth() === this.moisAffiche.getMonth(), aujourdhui: iso === aujourdHui, evenements: (parJour.get(iso) || []).sort((a, b) => a.debut.localeCompare(b.debut)) };
+      return { date, iso, numero: date.getDate(), dansLeMois: true, aujourdhui: iso === aujourdHui, evenements: (parJour.get(iso) || []).sort((a, b) => a.debut.localeCompare(b.debut)) };
     });
     const ancienne = this.jourSelectionne?.iso;
-    this.jourSelectionne = this.calendrier.find(j => j.iso === ancienne) || this.calendrier.find(j => j.iso === aujourdHui) || this.calendrier.find(j => j.dansLeMois && j.evenements.length > 0) || this.calendrier.find(j => j.dansLeMois) || null;
+    this.jourSelectionne = this.calendrier.find(j => j.iso === ancienne) || this.calendrier.find(j => j.iso === aujourdHui) || this.calendrier.find(j => j.evenements.length > 0) || this.calendrier[0] || null;
   }
   private dateIso(date: Date): string { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
 }

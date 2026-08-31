@@ -58,6 +58,10 @@
   text-transform: capitalize;
 }
 
+.calendrier-libelle-jour {
+  display: none;
+}
+
 .calendrier-navigation-bouton:hover,
 .calendrier-navigation-bouton:focus-visible {
   background: #d6f0eb;
@@ -382,6 +386,40 @@
 }
 
 @media (max-width: 767px) {
+  .calendrier-card {
+    padding: 1rem;
+  }
+
+  .calendrier-libelle-semaine,
+  .calendrier-semaine {
+    display: none;
+  }
+
+  .calendrier-libelle-jour {
+    display: block;
+    font-size: 1rem;
+    min-width: 0;
+    text-align: center;
+  }
+
+  .calendrier-tableau {
+    overflow: visible;
+  }
+
+  .calendrier-grille {
+    display: block;
+    min-width: 0;
+  }
+
+  .calendrier-jour {
+    display: none;
+  }
+
+  .calendrier-jour.jour-actuel {
+    display: block;
+    min-height: 180px;
+  }
+
   .detail-seance {
     grid-template-columns: 1fr auto;
   }

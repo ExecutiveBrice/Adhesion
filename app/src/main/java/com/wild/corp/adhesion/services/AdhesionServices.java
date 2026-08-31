@@ -383,6 +383,7 @@ public class AdhesionServices {
         }
 
         newAdhesion = adhesionRepository.save(newAdhesion);
+        presenceServices.fillPresences(newAdhesion);
         newAdhesion.getAccords().add(accordServices.createAccord(REGLEMENT_INTERIEUR, null, newAdhesion));
 
         if (activite.isCertificatMedical() && activite.getDureeVieCertif() > 1) {

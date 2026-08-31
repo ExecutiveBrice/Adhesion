@@ -1,11 +1,10 @@
 <section class="calendriers-accueil" aria-labelledby="titre-calendrier-seances">
   <div class="card calendrier-card">
     <div class="calendrier-entete">
-      <nav class="calendrier-navigation" aria-label="Navigation par mois">
-        <button type="button" class="btn calendrier-navigation-bouton" (click)="changerMois(-1)" aria-label="Mois précédent">‹</button>
-        <button type="button" class="btn calendrier-mois" (click)="revenirAujourdhui()" [attr.aria-label]="'Revenir au mois en cours. Mois affiché : ' + libelleMois" aria-live="polite">{{libelleMois}}</button>
-        <button type="button" class="btn calendrier-navigation-bouton" (click)="changerMois(1)" aria-label="Mois suivant">›</button>
-      </nav>
+      <div class="calendrier-navigation" aria-live="polite">
+        <span class="calendrier-mois calendrier-libelle-semaine">{{libelleSemaine}}</span>
+        <span class="calendrier-mois calendrier-libelle-jour">Aujourd’hui : {{libelleAujourdhui}}</span>
+      </div>
     </div>
 
     @if (erreurCalendrier) {
@@ -18,7 +17,7 @@
       <div class="calendrier-semaine" aria-hidden="true">@for (jourSemaine of joursSemaine; track jourSemaine) {
         <div>{{jourSemaine}}</div>
       }</div>
-      <div class="calendrier-grille" role="grid" [attr.aria-label]="'Calendrier ' + libelleMois">
+      <div class="calendrier-grille" role="grid" [attr.aria-label]="libelleSemaine">
         @for (jour of calendrier; track jour) {
           <div class="calendrier-jour" [class.hors-mois]="!jour.dansLeMois" [class.jour-actuel]="jour.aujourdhui" [class.jour-selectionne]="jourSelectionne?.iso === jour.iso" role="gridcell" tabindex="0" [attr.aria-label]="jour.date | date:'fullDate':'':'fr-FR'" [attr.aria-selected]="jourSelectionne?.iso === jour.iso" (click)="selectionnerJour(jour)" (keydown.enter)="selectionnerJour(jour)" (keydown.space)="$event.preventDefault(); selectionnerJour(jour)">
             <div class="numero-jour">{{jour.numero}}</div>

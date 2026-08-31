@@ -37,6 +37,22 @@ class PresenceServicesTest {
     }
 
     @Test
+    void doesNotCreatePresencesForAWaitingListOrCancelledAdhesion() {
+        Activite activite = new Activite();
+        Seance seance = session(activite, 1L);
+        activite.getSeances().add(seance);
+        Adhesion waitingListAdhesion = adhesion(activite, Status.LISTE_ATTENTE.label);
+        Adhesion cancelledAdhesion = adhesion(activite, Status.ANNULEE.label);
+
+        presenceServices.fillPresences(waitingListAdhesion);
+        presenceServices.fillPresences(cancelledAdhesion);
+
+        assertThat(seance.getPresences()).isEmpty();
+        assertThat(waitingListAdhesion.getPresences()).isEmpty();
+        assertThat(cancelledAdhesion.getPresences()).isEmpty();
+    }
+
+    @Test
     void createsPresencesOnlyForScheduledSessionsWhenAnAdhesionIsValidated() {
         Activite activite = new Activite();
         Seance scheduledSeance = session(activite, 1L);
@@ -55,22 +71,33 @@ class PresenceServicesTest {
     }
 
     @Test
-    void createsAPresenceForEachValidatedAdhesionWhenASessionIsAdded() {
+    void createsAPresenceForEachAdhesionExceptWaitingListAndCancelledWhenASessionIsAdded() {
         Activite activite = new Activite();
         Adhesion validatedAdhesion = adhesion(activite, Status.VALIDEE.label);
         Adhesion pendingAdhesion = adhesion(activite, Status.ATTENTE_ADHERENT.label);
-        activite.getAdhesions().add(validatedAdhesion);
-        activite.getAdhesions().add(pendingAdhesion);
+        Adhesion returnedAdhesion = adhesion(activite, Status.RETOUR_COMITE.label);
+        Adhesion waitingListAdhesion = adhesion(activite, Status.LISTE_ATTENTE.label);
+        Adhesion cancelledAdhesion = adhesion(activite, Status.ANNULEE.label);
+        validatedAdhesion.setId(1L);
+        pendingAdhesion.setId(2L);
+        returnedAdhesion.setId(3L);
+        waitingListAdhesion.setId(4L);
+        cancelledAdhesion.setId(5L);
+        activite.getAdhesions().addAll(java.util.List.of(
+                validatedAdhesion, pendingAdhesion, returnedAdhesion, waitingListAdhesion, cancelledAdhesion));
         Seance seance = session(activite, 1L);
 
         presenceServices.fillPresences(seance);
 
-        assertThat(seance.getPresences()).singleElement().satisfies(presence -> {
-            assertThat(presence.getAdhesion()).isSameAs(validatedAdhesion);
-            assertThat(presence.getSeance()).isSameAs(seance);
-        });
+        assertThat(seance.getPresences()).hasSize(3);
+        assertThat(seance.getPresences()).anyMatch(presence -> presence.getAdhesion() == validatedAdhesion);
+        assertThat(seance.getPresences()).anyMatch(presence -> presence.getAdhesion() == pendingAdhesion);
+        assertThat(seance.getPresences()).anyMatch(presence -> presence.getAdhesion() == returnedAdhesion);
         assertThat(validatedAdhesion.getPresences()).hasSize(1);
-        assertThat(pendingAdhesion.getPresences()).isEmpty();
+        assertThat(pendingAdhesion.getPresences()).hasSize(1);
+        assertThat(returnedAdhesion.getPresences()).hasSize(1);
+        assertThat(waitingListAdhesion.getPresences()).isEmpty();
+        assertThat(cancelledAdhesion.getPresences()).isEmpty();
     }
 
     @Test

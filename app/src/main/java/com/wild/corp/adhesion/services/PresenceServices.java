@@ -4,6 +4,7 @@ import com.wild.corp.adhesion.models.*;
 import com.wild.corp.adhesion.models.resources.PresenceSeanceResponse;
 import com.wild.corp.adhesion.repository.PresenceRepository;
 import com.wild.corp.adhesion.repository.SeanceRepository;
+import com.wild.corp.adhesion.utils.Status;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,10 @@ public class PresenceServices {
 
 
     public void fillPresences(Adhesion adhesion) {
+        if (!doitAvoirDesPresences(adhesion)) {
+            return;
+        }
+
         adhesion.getActivite().getSeances().stream()
                 .filter(seance -> seance.getEtatSeance() == ESeance.PROGRAMMEE)
                 .forEach(seance -> addPresence(adhesion, seance));
@@ -29,8 +34,13 @@ public class PresenceServices {
 
     public void fillPresences(Seance seance) {
         seance.getActivite().getAdhesions().stream()
-                .filter(Adhesion::isValide)
+                .filter(this::doitAvoirDesPresences)
                 .forEach(adhesion -> addPresence(adhesion, seance));
+    }
+
+    private boolean doitAvoirDesPresences(Adhesion adhesion) {
+        return !Status.LISTE_ATTENTE.label.equals(adhesion.getStatutActuel())
+                && !Status.ANNULEE.label.equals(adhesion.getStatutActuel());
     }
 
     private void addPresence(Adhesion adhesion, Seance seance) {
