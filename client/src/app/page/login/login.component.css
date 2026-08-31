@@ -34,7 +34,7 @@
   align-items: center;
   background: var(--vert-pale);
   border: 1px solid #b8e4dd;
-  border-radius: 50%;
+  border-radius: 10%;
   color: var(--encre);
   display: inline-flex;
   font-size: clamp(1.7rem, 4vw, 2.2rem);
@@ -46,10 +46,8 @@
 }
 
 .calendrier-mois {
-  background: var(--encre);
-  border: 1px solid var(--encre);
-  border-radius: 999px;
-  color: #fff;
+
+  color: #000000;
   font-size: clamp(1rem, 2.8vw, 1.55rem);
   font-weight: 750;
   line-height: 1.2;
@@ -62,15 +60,17 @@
   display: none;
 }
 
-.calendrier-navigation-bouton:hover,
-.calendrier-navigation-bouton:focus-visible {
-  background: #d6f0eb;
-  border-color: var(--vert-alod);
+.navigation-jour {
+  display: none;
 }
+
+
+
 
 .calendrier-mois:hover,
 .calendrier-mois:focus-visible {
-  background: #387e75;
+
+}  background: #387e75;
   border-color: #387e75;
   color: #fff;
 }
@@ -78,7 +78,6 @@
 .calendrier-tableau {
   overflow-x: auto;
   padding-bottom: 0.25rem;
-}
 
 .calendrier-semaine,
 .calendrier-grille {
@@ -391,8 +390,13 @@
   }
 
   .calendrier-libelle-semaine,
-  .calendrier-semaine {
+  .calendrier-semaine,
+  .navigation-semaine {
     display: none;
+  }
+
+  .navigation-jour {
+    display: inline-flex;
   }
 
   .calendrier-libelle-jour {
@@ -415,7 +419,7 @@
     display: none;
   }
 
-  .calendrier-jour.jour-actuel {
+  .calendrier-jour.jour-affiche {
     display: block;
     min-height: 180px;
   }

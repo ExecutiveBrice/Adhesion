@@ -50,7 +50,7 @@ export class ModalActivite implements OnInit, OnDestroy {
   referents: AdherentLite[] = []
   salles: SalleConfiguration[] = [];
   seances: Seance[] = [];
-  nombreSeances = 1;
+  nombreSeances = 14;
   dateDebutSeances = '';
   planificationAjout?: PlanificationHebdomadaire;
   modalAjoutSeancesOuverte = false;
@@ -192,7 +192,7 @@ export class ModalActivite implements OnInit, OnDestroy {
       return;
     }
     this.planificationAjout = planification;
-    this.nombreSeances = 1;
+    this.nombreSeances = 14;
     this.dateDebutSeances = this.aujourdHui();
     this.modalAjoutSeancesOuverte = true;
   }
@@ -396,7 +396,7 @@ export class ModalActivite implements OnInit, OnDestroy {
   }
 
   private aujourdHui(): string {
-    const maintenant = new Date();
+    const maintenant = new Date('2026-09-14T00:00:00.000Z');
     const dateLocale = new Date(maintenant.getTime() - maintenant.getTimezoneOffset() * 60_000);
     return dateLocale.toISOString().slice(0, 10);
   }

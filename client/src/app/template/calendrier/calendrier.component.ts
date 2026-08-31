@@ -4,8 +4,8 @@ import { ActiviteService } from 'src/app/_services/activite.service';
 import { ParamService } from 'src/app/_services/param.service';
 import { AgendaGoogleConfiguration } from 'src/app/models';
 import { EvenementGoogleAgenda, SeanceCalendrier } from 'src/app/models/seance';
-import { faCheck, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { NgClass, SlicePipe, DatePipe } from '@angular/common';
+import { faCheck, faChevronLeft, faChevronRight, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { NgClass, DatePipe } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 
@@ -39,7 +39,7 @@ interface JourCalendrier {
     selector: 'app-calendrier',
     templateUrl: './calendrier.component.html',
     styleUrls: ['../../page/login/login.component.css'],
-    imports: [NgClass, FaIconComponent, SlicePipe, DatePipe]
+    imports: [NgClass, FaIconComponent, DatePipe]
 })
 export class CalendrierComponent implements OnInit, OnChanges {
   private readonly apiViewRefresh = registerApiViewRefresh();
@@ -56,10 +56,13 @@ export class CalendrierComponent implements OnInit, OnChanges {
   agendasGoogle: AgendaGoogleConfiguration[] = [];
   googleAgendaIds: string[] = [];
   googleAgendaErreur = '';
+  dateAffichee = this.aujourdhui();
   readonly joursSemaine = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
   faXmark = faXmark;
   faCheck = faCheck;
   faTriangleExclamation = faTriangleExclamation;
+  faChevronLeft = faChevronLeft;
+  faChevronRight = faChevronRight;
 
   ngOnInit(): void { this.chargerConfigurationAgendas(); }
 
@@ -91,13 +94,21 @@ export class CalendrierComponent implements OnInit, OnChanges {
     return `Semaine du ${format.format(debut)} au ${format.format(fin)}`;
   }
   get libelleAujourdhui(): string {
-    return new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
+    return new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(this.dateAffichee);
   }
   get libelleJourSelectionne(): string {
     return this.jourSelectionne ? new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(this.jourSelectionne.date) : '';
   }
   selectionnerJour(jour: JourCalendrier): void { this.jourSelectionne = jour; this.popupJourOuverte = true; }
   fermerPopupJour(): void { this.popupJourOuverte = false; }
+
+  changerPeriode(nombreDeJours: number): void {
+    const nouvelleDate = new Date(this.dateAffichee);
+    nouvelleDate.setDate(nouvelleDate.getDate() + nombreDeJours);
+    this.dateAffichee = nouvelleDate;
+    this.popupJourOuverte = false;
+    this.chargerCalendrier();
+  }
 
   chargerCalendrier(): void {
     const debut = this.premierJourSemaineCourante();
@@ -132,7 +143,7 @@ export class CalendrierComponent implements OnInit, OnChanges {
   lienAdresseSalle(evenement: EvenementCalendrier): string | null { return evenement.adresseSalle?.trim() ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(evenement.adresseSalle.trim())}` : null; }
 
   private premierJourSemaineCourante(): Date {
-    const debut = new Date();
+    const debut = new Date(this.dateAffichee);
     debut.setHours(0, 0, 0, 0);
     debut.setDate(debut.getDate() - (debut.getDay() + 6) % 7);
     return debut;
@@ -151,7 +162,9 @@ export class CalendrierComponent implements OnInit, OnChanges {
       return { date, iso, numero: date.getDate(), dansLeMois: true, aujourdhui: iso === aujourdHui, evenements: (parJour.get(iso) || []).sort((a, b) => a.debut.localeCompare(b.debut)) };
     });
     const ancienne = this.jourSelectionne?.iso;
-    this.jourSelectionne = this.calendrier.find(j => j.iso === ancienne) || this.calendrier.find(j => j.iso === aujourdHui) || this.calendrier.find(j => j.evenements.length > 0) || this.calendrier[0] || null;
+    const dateAffichee = this.dateIso(this.dateAffichee);
+    this.jourSelectionne = this.calendrier.find(j => j.iso === dateAffichee) || this.calendrier.find(j => j.iso === ancienne) || this.calendrier.find(j => j.iso === aujourdHui) || this.calendrier.find(j => j.evenements.length > 0) || this.calendrier[0] || null;
   }
+  private aujourdhui(): Date { const date = new Date(); return new Date(date.getFullYear(), date.getMonth(), date.getDate()); }
   private dateIso(date: Date): string { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
 }

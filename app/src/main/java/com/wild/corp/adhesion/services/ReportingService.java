@@ -8,9 +8,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-
-import static java.util.stream.Collectors.groupingBy;
 
 @Service
 public class ReportingService {
@@ -25,26 +22,7 @@ public class ReportingService {
 
 
     public List<ReportingActivite> getAllActiviteBasket(){
-        Map<String, List<Activite>> activieFiltre = activiteServices.getAll().stream().filter(activite -> activite.getGroupe().equals("ALOD_B"))
-                .collect(groupingBy(Activite::getGroupeFiltre));
-
-        List<ReportingActivite> listRA = new ArrayList<>();
-              activieFiltre.forEach((integers, activites) -> {
-                  ReportingActivite ra = new ReportingActivite();
-                  ra.setNomActivite(integers);
-
-                  activites.forEach(activite -> {
-                      ra.setNbF(ra.getNbF() + getByValidByGenre(activite, "Féminin"));
-                      ra.setNbM(ra.getNbM() + getByValidByGenre(activite, "Masculin"));
-                      ra.setNbInitee(ra.getNbInitee() + getByInitieeNonPayee(activite));
-                      ra.setNbPayee(ra.getNbPayee() + getByInitieePayee(activite));
-                      ra.setNbValidee(ra.getNbValidee() + getByValid(activite));
-                      ra.setCotisations(ra.getCotisations() + getCotisationByStatut(activite));
-                  });
-                  listRA.add(ra);
-              });
-
-        return listRA;
+        return getReportingActivites("ALOD_B");
     }
 
     public List<ReportingAdhesion> getAllAdhesions(LocalDate debut, LocalDate fin) {
@@ -78,22 +56,23 @@ public class ReportingService {
     }
 
     public List<ReportingActivite> getAllActiviteGeneral(){
-        Map<String, List<Activite>> activieFiltre = activiteServices.getAll().stream().filter(activite -> activite.getGroupe().equals("ALOD_G"))
-                .collect(groupingBy(Activite::getGroupeFiltre));
+        return getReportingActivites("ALOD_G");
+    }
 
+    private List<ReportingActivite> getReportingActivites(String groupe) {
         List<ReportingActivite> listRA = new ArrayList<>();
-        activieFiltre.forEach((integers, activites) -> {
+        activiteServices.getAll().stream()
+                .filter(activite -> groupe.equals(activite.getGroupe()))
+                .forEach(activite -> {
             ReportingActivite ra = new ReportingActivite();
-            ra.setNomActivite(integers);
-
-            activites.forEach(activite -> {
-                ra.setNbF(ra.getNbF() + getByValidByGenre(activite, "Féminin"));
-                ra.setNbM(ra.getNbM() + getByValidByGenre(activite, "Masculin"));
-                ra.setNbInitee(ra.getNbInitee() + getByInitieeNonPayee(activite));
-                ra.setNbPayee(ra.getNbPayee() + getByInitieePayee(activite));
-                ra.setNbValidee(ra.getNbValidee() + getByValid(activite));
-                ra.setCotisations(ra.getCotisations() + getCotisationByStatut(activite));
-            });
+            ra.setNomActivite(activite.getNom());
+            ra.setGroupe(activite.getGroupeFiltre());
+            ra.setNbF(getByValidByGenre(activite, "Féminin"));
+            ra.setNbM(getByValidByGenre(activite, "Masculin"));
+            ra.setNbInitee(getByInitieeNonPayee(activite));
+            ra.setNbPayee(getByInitieePayee(activite));
+            ra.setNbValidee(getByValid(activite));
+            ra.setCotisations(getCotisationByStatut(activite));
             listRA.add(ra);
         });
         return listRA;

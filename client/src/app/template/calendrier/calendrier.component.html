@@ -2,8 +2,20 @@
   <div class="card calendrier-card">
     <div class="calendrier-entete">
       <div class="calendrier-navigation" aria-live="polite">
+        <button type="button" class="calendrier-navigation-bouton navigation-semaine" (click)="changerPeriode(-7)" aria-label="Semaine précédente">
+          <fa-icon [icon]="faChevronLeft"></fa-icon>
+        </button>
+        <button type="button" class="calendrier-navigation-bouton navigation-jour" (click)="changerPeriode(-1)" aria-label="Jour précédent">
+          <fa-icon [icon]="faChevronLeft"></fa-icon>
+        </button>
         <span class="calendrier-mois calendrier-libelle-semaine">{{libelleSemaine}}</span>
-        <span class="calendrier-mois calendrier-libelle-jour">Aujourd’hui : {{libelleAujourdhui}}</span>
+        <span class="calendrier-mois calendrier-libelle-jour">{{libelleAujourdhui}}</span>
+        <button type="button" class="calendrier-navigation-bouton navigation-semaine" (click)="changerPeriode(7)" aria-label="Semaine suivante">
+          <fa-icon [icon]="faChevronRight"></fa-icon>
+        </button>
+        <button type="button" class="calendrier-navigation-bouton navigation-jour" (click)="changerPeriode(1)" aria-label="Jour suivant">
+          <fa-icon [icon]="faChevronRight"></fa-icon>
+        </button>
       </div>
     </div>
 
@@ -19,16 +31,13 @@
       }</div>
       <div class="calendrier-grille" role="grid" [attr.aria-label]="libelleSemaine">
         @for (jour of calendrier; track jour) {
-          <div class="calendrier-jour" [class.hors-mois]="!jour.dansLeMois" [class.jour-actuel]="jour.aujourdhui" [class.jour-selectionne]="jourSelectionne?.iso === jour.iso" role="gridcell" tabindex="0" [attr.aria-label]="jour.date | date:'fullDate':'':'fr-FR'" [attr.aria-selected]="jourSelectionne?.iso === jour.iso" (click)="selectionnerJour(jour)" (keydown.enter)="selectionnerJour(jour)" (keydown.space)="$event.preventDefault(); selectionnerJour(jour)">
+          <div class="calendrier-jour" [class.hors-mois]="!jour.dansLeMois" [class.jour-actuel]="jour.aujourdhui" [class.jour-affiche]="jourSelectionne?.iso === jour.iso" [class.jour-selectionne]="jourSelectionne?.iso === jour.iso" role="gridcell" tabindex="0" [attr.aria-label]="jour.date | date:'fullDate':'':'fr-FR'" [attr.aria-selected]="jourSelectionne?.iso === jour.iso" (click)="selectionnerJour(jour)" (keydown.enter)="selectionnerJour(jour)" (keydown.space)="$event.preventDefault(); selectionnerJour(jour)">
             <div class="numero-jour">{{jour.numero}}</div>
             <div class="seances-du-jour">
-              @for (evenement of jour.evenements | slice:0:3; track evenement) {
+              @for (evenement of jour.evenements; track evenement) {
                 <div class="seance-resume" [ngClass]="classeEvenement(evenement)" [style.--agenda-color]="couleurEvenement(evenement)" [title]="heureEvenement(evenement) + ' · ' + evenement.titre"><span>{{heureEvenement(evenement)}}</span><strong>{{evenement.titre}}</strong>@if (evenement.source === 'SEANCE' && evenement.etatSeance !== 'PROGRAMMEE') {
                 <fa-icon class="icone-etat-calendrier" [ngClass]="classeEtat(evenement.etatSeance)" [icon]="iconeEtat(evenement.etatSeance)" [title]="etatLibelle(evenement.etatSeance)" [attr.aria-label]="etatLibelle(evenement.etatSeance)"></fa-icon>
               }</div>
-            }
-            @if (jour.evenements.length > 3) {
-              <span class="seances-supplementaires">+ {{jour.evenements.length - 3}} autre(s)</span>
             }
           </div>
         </div>

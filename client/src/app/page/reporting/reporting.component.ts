@@ -1,158 +1,118 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
-import { TokenStorageService } from '../../_services/token-storage.service';
-import Chart from 'chart.js/auto';
-import { ReportingService } from 'src/app/_services/reporting.service';
-import { ReportingActivite } from 'src/app/models';
-import {ExcelService} from "../../_services/excel.service";
-import {AuthService} from "../../_services/auth.service";
-import {AdherentService} from "../../_services/adherent.service";
-import {HttpErrorResponse} from "@angular/common/http";
-import { ToastService } from '../../_services/toast.service';
 import { DecimalPipe } from '@angular/common';
-import { OrderByPipe } from '../../_helpers/sort.pipe';
+import Chart from 'chart.js/auto';
+import { HttpErrorResponse } from '@angular/common/http';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
+import { ReportingService } from 'src/app/_services/reporting.service';
+import { AdherentService } from 'src/app/_services/adherent.service';
+import { ExcelService } from 'src/app/_services/excel.service';
+import { ToastService } from 'src/app/_services/toast.service';
+import { ReportingActivite } from 'src/app/models';
 
+interface ReportingGroup {
+  nom: string;
+  activites: ReportingActivite[];
+  total: ReportingActivite;
+}
 
 @Component({
-    selector: 'app-reporting',
-    templateUrl: './reporting.component.html',
-    styleUrls: ['./reporting.component.css'],
-    imports: [DecimalPipe, OrderByPipe]
+  selector: 'app-reporting',
+  templateUrl: './reporting.component.html',
+  styleUrls: ['./reporting.component.css'],
+  imports: [DecimalPipe]
 })
 export class ReportingComponent implements OnInit {
   private readonly apiViewRefresh = registerApiViewRefresh();
-  private toastr = inject(ToastService);
-  private excelService = inject(ExcelService);
-  private adherentService = inject(AdherentService);
-  private reportingService = inject(ReportingService);
+  private readonly toastr = inject(ToastService);
+  private readonly excelService = inject(ExcelService);
+  private readonly adherentService = inject(AdherentService);
+  private readonly reportingService = inject(ReportingService);
 
-  currentUser: any;
-  chart: any = []
-  dataBasket: ReportingActivite[] = []
-  dataGeneral: ReportingActivite[] = []
-
-  totalIniteeB: number = 0
-  totalPayeeB: number = 0
-  totalValideeB: number = 0
-  totalFB: number = 0
-  totalMB: number = 0
-  totalCotisB: number = 0
-
-  totalIniteeG: number = 0
-  totalPayeeG: number = 0
-  totalValideeG: number = 0
-  totalFG: number = 0
-  totalMG: number = 0
-  totalCotisG: number = 0
+  chart: Chart | undefined;
+  dataBasket: ReportingActivite[] = [];
+  dataGeneral: ReportingActivite[] = [];
+  reportingGroups: ReportingGroup[] = [];
+  totalGeneral = this.emptyTotal();
+  label: string[] = [];
+  initiee: number[] = [];
+  payee: number[] = [];
+  validee: number[] = [];
+  loader = false;
 
   ngOnInit(): void {
-
-    this.reportingService.getAllBasket()
-      .subscribe({
-        next: (data) => {
-
-          this.dataBasket = data
-          data.forEach(report => {
-            this.totalCotisB += report.cotisations
-            this.totalIniteeB += report.nbInitee
-            this.totalPayeeB += report.nbPayee
-            this.totalValideeB += report.nbValidee
-            this.totalFB += report.nbF
-            this.totalMB += report.nbM
-          })
-        },
-        error: (error) => {
-
-        }
-      });
-
-    this.reportingService.getAllGeneral()
-      .subscribe({
-        next: (data) => {
-
-          this.dataGeneral = data
-          data.forEach(report => {
-            this.totalCotisG += report.cotisations
-            this.totalIniteeG += report.nbInitee
-            this.totalPayeeG += report.nbPayee
-            this.totalValideeG += report.nbValidee
-            this.totalFG += report.nbF
-            this.totalMG += report.nbM
-          })
-
-
-
-        },
-        error: (error) => {
-
-        }
-      });
-
-
-
-    this.reportingService.getAllAdhesions()
-      .subscribe({
-        next: (data) => {
-
-          data.forEach(adh => {
-            this.initiee.push(adh.nbInitiee)
-
-            this.payee.push(adh.nbPayee)
-            this.validee.push(adh.nbValidee)
-            this.label.push(adh.x)
-          })
-
-          this.chart = new Chart('canvas', {
-            type: 'line',
-            data: {
-              labels: this.label,
-              datasets: [
-                {
-                  label: "Initiées",
-                  data: this.initiee
-                },
-                {
-                  label: "Payées",
-                  data: this.payee
-                },
-                {
-                  label: "Validées",
-                  data: this.validee
-                }
-              ],
-            },
-
-          });
-
-        },
-        error: (error) => {
-
-        }
-      });
-
-
-
-
+    this.reportingService.getAllBasket().subscribe({
+      next: data => { this.dataBasket = data; this.buildReportingGroups(); },
+      error: () => undefined
+    });
+    this.reportingService.getAllGeneral().subscribe({
+      next: data => { this.dataGeneral = data; this.buildReportingGroups(); },
+      error: () => undefined
+    });
+    this.reportingService.getAllAdhesions().subscribe({
+      next: data => {
+        data.forEach(adh => {
+          this.initiee.push(adh.nbInitiee);
+          this.payee.push(adh.nbPayee);
+          this.validee.push(adh.nbValidee);
+          this.label.push(adh.x);
+        });
+        this.chart = new Chart('canvas', {
+          type: 'line',
+          data: { labels: this.label, datasets: [
+            { label: 'Initiées', data: this.initiee },
+            { label: 'Payées', data: this.payee },
+            { label: 'Validées', data: this.validee }
+          ] }
+        });
+      },
+      error: () => undefined
+    });
   }
-  label: string[] = []
-  initiee: number[] = []
-  payee: number[] = []
-  validee: number[] = []
 
-  loader:boolean = false;
+  percentage(value: number, total: number): number {
+    return total ? (value / total) * 100 : 0;
+  }
+
   exportAsXLSX(): void {
     this.loader = true;
     this.adherentService.getAllExportLite().subscribe({
-      next: (data) => {
+      next: data => {
         this.loader = false;
         this.excelService.exportAsExcelFile(data, 'adherents');
       },
-      error: (error:HttpErrorResponse) => {
-        console.log(error)
+      error: (error: HttpErrorResponse) => {
+        this.loader = false;
         this.toastr.error("Une erreur est survenue, recharger la page et recommencez. si le problème persiste contactez l'administrateur<br />" + error.message, 'Erreur');
       }
-    })
-
+    });
   }
 
+  private buildReportingGroups(): void {
+    const groups = new Map<string, ReportingGroup>();
+    [...this.dataGeneral, ...this.dataBasket]
+      .sort((a, b) => (a.groupe || 'Sans groupe').localeCompare(b.groupe || 'Sans groupe') || a.nomActivite.localeCompare(b.nomActivite))
+      .forEach(activite => {
+        const nom = activite.groupe || 'Sans groupe';
+        const group = groups.get(nom) ?? { nom, activites: [], total: this.emptyTotal() };
+        group.activites.push(activite);
+        this.addToTotal(group.total, activite);
+        groups.set(nom, group);
+      });
+    this.reportingGroups = [...groups.values()];
+    this.totalGeneral = this.emptyTotal();
+    this.reportingGroups.forEach(group => this.addToTotal(this.totalGeneral, group.total));
+  }
+
+  private emptyTotal(): ReportingActivite {
+    return { nomActivite: '', groupe: '', nbInitee: 0, nbPayee: 0, nbValidee: 0, nbF: 0, nbM: 0, cotisations: 0 };
+  }
+
+  private addToTotal(total: ReportingActivite, activite: ReportingActivite): void {
+    total.nbInitee += activite.nbInitee;
+    total.nbPayee += activite.nbPayee;
+    total.nbValidee += activite.nbValidee;
+    total.nbF += activite.nbF;
+    total.nbM += activite.nbM;
+    total.cotisations += activite.cotisations;
+  }
 }

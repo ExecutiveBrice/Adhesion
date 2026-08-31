@@ -1,104 +1,58 @@
 <div class="container">
-  @if (loader){
+  @if (loader) {
     <div class="spinner-border text-info"></div>
   } @else {
     <button class="btn btn-sm btn-primary" (click)="exportAsXLSX()">Extraction des adherents</button>
-
   }
-  <div class="row">
 
-
-
-    <div class="col-6">
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th class="center" scope="col">Nom</th>
-            <th class="center" scope="col">Initiées</th>
-            <th class="center" scope="col">Payées</th>
-            <th class="center" scope="col">Validées</th>
-            <th class="center" scope="col">Féminin</th>
-            <th class="center" scope="col">Masculin</th>
-            <th class="center" scope="col">Répartition</th>
-            <th class="center" scope="col">cotisations</th>
-
-          </tr>
-        </thead>
+  <div class="table-responsive reporting-table">
+    <table class="table table-striped table-hover">
+      <thead>
+        <tr>
+          <th scope="col">Groupe / activité</th>
+          <th scope="col">Initiées</th>
+          <th scope="col">Payées</th>
+          <th scope="col">Validées</th>
+          <th scope="col">Féminin</th>
+          <th scope="col">Masculin</th>
+          <th scope="col">Répartition</th>
+          <th scope="col">Cotisations</th>
+        </tr>
+      </thead>
+      @for (group of reportingGroups; track group.nom) {
         <tbody>
-          @for (activite of dataGeneral  | orderBy:'nomActivite':false ; track activite) {
-            <tr>
-              <td>{{activite.nomActivite}}</td>
-              <td>{{activite.nbInitee}}</td>
-              <td>{{activite.nbPayee}}</td>
-              <td>{{activite.nbValidee}}</td>
-              <td>{{activite.nbF}} / {{(activite.nbF/activite.nbValidee)*100 | number : '1.0-0'}}%</td>
-              <td>{{activite.nbM}} / {{(activite.nbM/activite.nbValidee)*100 | number : '1.0-0'}}%</td>
-              <td>{{(activite.nbValidee / totalValideeG)*100 | number : '1.0-0'}}%</td>
-              <td>{{activite.cotisations}}€</td>
+          <tr class="group-heading"><th colspan="8" scope="rowgroup">{{ group.nom }}</th></tr>
+          @for (activite of group.activites; track activite.nomActivite) {
+            <tr class="activity-row">
+              <th scope="row">{{ activite.nomActivite }}</th>
+              <td>{{ activite.nbInitee }}</td><td>{{ activite.nbPayee }}</td><td>{{ activite.nbValidee }}</td>
+              <td>{{ activite.nbF }} / {{ percentage(activite.nbF, activite.nbValidee) | number : '1.0-0' }}%</td>
+              <td>{{ activite.nbM }} / {{ percentage(activite.nbM, activite.nbValidee) | number : '1.0-0' }}%</td>
+              <td>{{ percentage(activite.nbValidee, totalGeneral.nbValidee) | number : '1.0-0' }}%</td>
+              <td>{{ activite.cotisations }}€</td>
             </tr>
           }
-          <tr>
-            <td><b>Totaux</b></td>
-            <td><b>{{totalIniteeG}}</b></td>
-            <td><b>{{totalPayeeG}}</b></td>
-            <td><b>{{totalValideeG}}</b></td>
-            <td><b>{{totalFG}} / {{(totalFG/totalValideeG)*100 | number : '1.0-0'}}%</b></td>
-            <td><b>{{totalMG}} / {{(totalMG/totalValideeG)*100 | number : '1.0-0'}}%</b></td>
-
-            <td></td>
-            <td><b>{{totalCotisG}}€</b></td>
-
+          <tr class="subtotal-row">
+            <th scope="row">Sous-total {{ group.nom }}</th>
+            <td>{{ group.total.nbInitee }}</td><td>{{ group.total.nbPayee }}</td><td>{{ group.total.nbValidee }}</td>
+            <td>{{ group.total.nbF }} / {{ percentage(group.total.nbF, group.total.nbValidee) | number : '1.0-0' }}%</td>
+            <td>{{ group.total.nbM }} / {{ percentage(group.total.nbM, group.total.nbValidee) | number : '1.0-0' }}%</td>
+            <td>{{ percentage(group.total.nbValidee, totalGeneral.nbValidee) | number : '1.0-0' }}%</td>
+            <td>{{ group.total.cotisations }}€</td>
           </tr>
         </tbody>
-      </table>
-    </div>
-    <div class="col-6">
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th class="center" scope="col">Nom</th>
-            <th class="center" scope="col">Initiées</th>
-            <th class="center" scope="col">Payées</th>
-            <th class="center" scope="col">Validées</th>
-            <th class="center" scope="col">Féminin</th>
-            <th class="center" scope="col">Masculin</th>
-            <th class="center" scope="col">Répartition</th>
-            <th class="center" scope="col">Cotisations</th>
-
-          </tr>
-        </thead>
-        <tbody>
-          @for (activite of dataBasket; track activite) {
-            <tr>
-              <td>{{activite.nomActivite}}</td>
-              <td>{{activite.nbInitee}}</td>
-              <td>{{activite.nbPayee}}</td>
-              <td>{{activite.nbValidee}}</td>
-              <td>{{activite.nbF}} / {{(activite.nbF/activite.nbValidee)*100 | number : '1.0-0'}}%</td>
-              <td>{{activite.nbM}} / {{(activite.nbM/activite.nbValidee)*100 | number : '1.0-0'}}%</td>
-              <td>{{(activite.nbValidee / totalValideeB)*100 | number : '1.0-0'}}%</td>
-              <td>{{activite.cotisations}}€</td>
-            </tr>
-          }
-          <tr>
-            <td><b>Totaux</b></td>
-            <td><b>{{totalIniteeB}}</b></td>
-            <td><b>{{totalPayeeB}}</b></td>
-            <td><b>{{totalValideeB}}</b></td>
-            <td><b>{{totalFB}} / {{(totalFB/totalValideeB)*100 | number : '1.0-0'}}%</b></td>
-            <td><b>{{totalMB}} / {{(totalMB/totalValideeB)*100 | number : '1.0-0'}}%</b></td>
-
-            <td></td>
-            <td><b>{{totalCotisB}}€</b></td>
-
-          </tr>
-        </tbody>
-      </table>
-    </div>
+      }
+      <tfoot>
+        <tr>
+          <th scope="row">Total général</th>
+          <td>{{ totalGeneral.nbInitee }}</td><td>{{ totalGeneral.nbPayee }}</td><td>{{ totalGeneral.nbValidee }}</td>
+          <td>{{ totalGeneral.nbF }} / {{ percentage(totalGeneral.nbF, totalGeneral.nbValidee) | number : '1.0-0' }}%</td>
+          <td>{{ totalGeneral.nbM }} / {{ percentage(totalGeneral.nbM, totalGeneral.nbValidee) | number : '1.0-0' }}%</td>
+          <td>100%</td><td>{{ totalGeneral.cotisations }}€</td>
+        </tr>
+      </tfoot>
+    </table>
   </div>
 
-  <div>
-    <canvas id="canvas">{{chart}}</canvas>
-  </div>
-
+  <div><canvas id="canvas">{{ chart }}</canvas></div>
 </div>
