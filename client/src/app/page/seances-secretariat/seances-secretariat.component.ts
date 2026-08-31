@@ -1,21 +1,21 @@
-import { Component, OnInit, TemplateRef, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DatePipe, NgClass } from '@angular/common';
 import { Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheck, faChevronLeft, faChevronRight, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { TokenStorageService } from 'src/app/_services/token-storage.service';
 import { UserService } from 'src/app/_services/user.service';
-import { PresenceSeance, SeanceDuJour } from 'src/app/models/seance';
+import { SeanceDuJour } from 'src/app/models/seance';
+import { PresencesSeanceModalComponent } from 'src/app/template/presences-seance-modal/presences-seance-modal.component';
 
 @Component({
   selector: 'app-seances-secretariat',
   templateUrl: './seances-secretariat.component.html',
   styleUrls: ['./seances-secretariat.component.css'],
-  imports: [DatePipe, FaIconComponent, FormsModule, NgClass]
+  imports: [DatePipe, FaIconComponent, NgClass]
 })
 export class SeancesSecretariatComponent implements OnInit {
   private readonly apiViewRefresh = registerApiViewRefresh();
@@ -29,12 +29,6 @@ export class SeancesSecretariatComponent implements OnInit {
   isFailed = false;
   errorMessage = '';
   chargement = false;
-  seanceSelectionnee?: SeanceDuJour;
-  presences: PresenceSeance[] = [];
-  chargementPresences = false;
-  erreurPresences = '';
-  miseAJourPresences = new Set<number>();
-  enregistrementCommentaire = false;
   faCheck = faCheck;
   faXmark = faXmark;
   faTriangleExclamation = faTriangleExclamation;
@@ -66,57 +60,22 @@ export class SeancesSecretariatComponent implements OnInit {
     this.chargerSeances();
   }
 
-  ouvrirPresences(seance: SeanceDuJour, contenu: TemplateRef<unknown>): void {
-    this.seanceSelectionnee = seance;
-    this.presences = [];
-    this.erreurPresences = '';
-    this.chargementPresences = true;
-    this.modalService.open(contenu, { centered: true, size: 'lg' });
-    this.userService.getPresencesPourLeSecretariat(seance.id).subscribe({
-      next: presences => {
-        this.presences = presences;
-        this.chargementPresences = false;
-      },
-      error: (error: HttpErrorResponse) => {
-        this.erreurPresences = error.error?.message || 'Impossible de charger les présences.';
-        this.chargementPresences = false;
-      }
-    });
+  ouvrirPresences(seance: SeanceDuJour): void {
+    const modalRef = this.modalService.open(PresencesSeanceModalComponent, { centered: true, size: 'lg' });
+    const modal = modalRef.componentInstance as PresencesSeanceModalComponent;
+    modal.seance = seance;
+    modal.chargerPresences = (seanceId: number) => this.userService.getPresencesPourLeSecretariat(seanceId);
+    modal.mettreAJourPresence = (seanceId: number, presenceId: number, presence: boolean) =>
+      this.userService.updatePresencePourLeSecretariat(seanceId, presenceId, presence);
+    modal.enregistrerCommentaire = (seanceId: number, commentaire: string | null) =>
+      this.userService.updateCommentaireSeancePourLeSecretariat(seanceId, commentaire);
+    modal.seanceMiseAJour.subscribe((seanceMiseAJour: SeanceDuJour) => this.remplacerSeance(seanceMiseAJour));
+    modal.initialiser();
   }
 
-  changerPresence(presence: PresenceSeance): void {
-    if (!this.seanceSelectionnee) return;
-    const valeurPrecedente = presence.presence;
-    presence.presence = !valeurPrecedente;
-    this.miseAJourPresences.add(presence.id);
-    this.userService.updatePresencePourLeSecretariat(this.seanceSelectionnee.id, presence.id, presence.presence).subscribe({
-      next: miseAJour => {
-        presence.presence = miseAJour.presence;
-        this.miseAJourPresences.delete(presence.id);
-      },
-      error: () => {
-        presence.presence = valeurPrecedente;
-        this.miseAJourPresences.delete(presence.id);
-        this.erreurPresences = 'Impossible d’enregistrer la présence.';
-      }
-    });
-  }
-
-  enregistrerCommentaire(): void {
-    if (!this.seanceSelectionnee) return;
-    this.enregistrementCommentaire = true;
-    this.userService.updateCommentaireSeancePourLeSecretariat(this.seanceSelectionnee.id, this.seanceSelectionnee.commentaire).subscribe({
-      next: seance => {
-        this.seanceSelectionnee = seance;
-        const index = this.seances.findIndex(element => element.id === seance.id);
-        if (index >= 0) this.seances[index] = seance;
-        this.enregistrementCommentaire = false;
-      },
-      error: () => {
-        this.erreurPresences = 'Impossible d’enregistrer le commentaire.';
-        this.enregistrementCommentaire = false;
-      }
-    });
+  private remplacerSeance(seance: SeanceDuJour): void {
+    const index = this.seances.findIndex(element => element.id === seance.id);
+    if (index >= 0) this.seances[index] = seance;
   }
 
   libelleEtat(etat: SeanceDuJour['etatSeance']): string {

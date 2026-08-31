@@ -1,0 +1,65 @@
+<div class="modal-header">
+  <h2 class="modal-title fs-5">Présences — {{ seance.activite }}</h2>
+  <button type="button" class="btn-close" aria-label="Fermer" (click)="activeModal.dismiss()"></button>
+</div>
+<div class="modal-body">
+  <div class="mb-3">
+    <label for="commentaireSeance" class="form-label">Commentaire de la séance</label>
+    <textarea id="commentaireSeance" class="form-control" maxlength="255" rows="3"
+      [(ngModel)]="seance.commentaire" placeholder="Ajouter un commentaire"></textarea>
+    <button type="button" class="btn btn-primary mt-2" (click)="sauvegarderCommentaire()"
+      [disabled]="enregistrementCommentaire">
+      {{ enregistrementCommentaire ? 'Enregistrement…' : 'Enregistrer' }}
+    </button>
+  </div>
+
+  @if (ajouterAdherent) {
+    <form class="mb-3" (ngSubmit)="ajouterNouvelAdherent()">
+      <label for="emailNouvelAdherent" class="form-label">Ajouter un nouvel adhérent</label>
+      <div class="input-group">
+        <input id="emailNouvelAdherent" name="emailNouvelAdherent" type="email" class="form-control"
+          [(ngModel)]="emailNouvelAdherent" required email placeholder="adresse@mail.fr"
+          [disabled]="ajoutNouvelAdherent">
+        <button type="submit" class="btn btn-outline-primary"
+          [disabled]="ajoutNouvelAdherent || !emailNouvelAdherent.trim()">
+          {{ ajoutNouvelAdherent ? 'Ajout…' : 'Ajouter' }}
+        </button>
+      </div>
+      <div class="form-text">Seule l’adresse e-mail est demandée ; les autres informations pourront être complétées plus tard.</div>
+    </form>
+  }
+
+  @if (chargementPresences) {
+    <div class="text-center text-muted py-3">Chargement des présences…</div>
+  }
+  @if (erreurPresences) {
+    <div class="alert alert-danger" role="alert">{{ erreurPresences }}</div>
+  }
+  @if (!chargementPresences && !erreurPresences && presences.length === 0) {
+    <div class="alert alert-info">Aucun adhérent inscrit à cette séance.</div>
+  }
+  @for (presence of presences; track presence.id) {
+    <div class="presence-ligne">
+      <span>{{ presence.prenom || presence.nom ? presence.prenom + ' ' + presence.nom : presence.email }}</span>
+      <span class="adhesion-indicateurs" aria-label="État de l’adhésion">
+        <fa-icon [icon]="faPiggyBank" [class.indicateur-valide]="presence.paiementValide"
+          [class.indicateur-attente]="!presence.paiementValide"
+          [attr.aria-label]="presence.paiementValide ? 'Paiement validé' : 'Paiement en attente'"
+          [title]="presence.paiementValide ? 'Paiement validé' : 'Paiement en attente'"></fa-icon>
+        <fa-icon [icon]="faFileSignature" [class.indicateur-valide]="presence.documentsValides"
+          [class.indicateur-attente]="!presence.documentsValides"
+          [attr.aria-label]="presence.documentsValides ? 'Documents validés' : 'Documents en attente'"
+          [title]="presence.documentsValides ? 'Documents validés' : 'Documents en attente'"></fa-icon>
+        <fa-icon [icon]="faCircleCheck" [class.indicateur-valide]="adhesionValidee(presence)"
+          [class.indicateur-attente]="!adhesionValidee(presence)"
+          [attr.aria-label]="adhesionValidee(presence) ? 'Adhésion ' + presence.statutAdhesion : 'Adhésion en attente : ' + presence.statutAdhesion"
+          [title]="'Statut : ' + presence.statutAdhesion"></fa-icon>
+      </span>
+      <button type="button" class="btn btn-sm" [class.btn-success]="presence.presence"
+        [class.btn-outline-secondary]="!presence.presence" (click)="changerPresence(presence)"
+        [disabled]="miseAJourPresences.has(presence.id)">
+        {{ presence.presence ? 'Présent' : 'Absent' }}
+      </button>
+    </div>
+  }
+</div>

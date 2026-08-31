@@ -31,6 +31,9 @@ export interface PresenceSeance {
   prenom: string;
   email: string;
   presence: boolean;
+  paiementValide: boolean;
+  documentsValides: boolean;
+  statutAdhesion: string;
 }
 
 export interface SeanceCalendrier {

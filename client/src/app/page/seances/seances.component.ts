@@ -1,21 +1,21 @@
-import { Component, OnInit, TemplateRef, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { PresenceSeance, SeanceDuJour } from 'src/app/models/seance';
+import { SeanceDuJour } from 'src/app/models/seance';
 import { TokenStorageService } from 'src/app/_services/token-storage.service';
 import { UserService } from 'src/app/_services/user.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { faCheck, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { NgClass, DatePipe } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { FormsModule } from '@angular/forms';
+import { PresencesSeanceModalComponent } from 'src/app/template/presences-seance-modal/presences-seance-modal.component';
 
 @Component({
     selector: 'app-seances',
     templateUrl: './seances.component.html',
     styleUrls: ['./seances.component.css'],
-    imports: [NgClass, FaIconComponent, FormsModule, DatePipe]
+    imports: [NgClass, FaIconComponent, DatePipe]
 })
 export class SeancesComponent implements OnInit {
   private readonly apiViewRefresh = registerApiViewRefresh();
@@ -28,14 +28,6 @@ export class SeancesComponent implements OnInit {
   isFailed = false;
   errorMessage = '';
   today = new Date();
-  seanceSelectionnee?: SeanceDuJour;
-  presences: PresenceSeance[] = [];
-  chargementPresences = false;
-  erreurPresences = '';
-  miseAJourPresences = new Set<number>();
-  enregistrementCommentaire = false;
-  emailNouvelAdherent = '';
-  ajoutNouvelAdherent = false;
   faCheck = faCheck;
   faXmark = faXmark;
   faTriangleExclamation = faTriangleExclamation;
@@ -60,76 +52,24 @@ export class SeancesComponent implements OnInit {
     });
   }
 
-  ouvrirPresences(seance: SeanceDuJour, contenu: TemplateRef<unknown>): void {
-    this.seanceSelectionnee = seance;
-    this.presences = [];
-    this.erreurPresences = '';
-    this.emailNouvelAdherent = '';
-    this.ajoutNouvelAdherent = false;
-    this.chargementPresences = true;
-    this.modalService.open(contenu, { centered: true, size: 'lg' });
-    this.userService.getPresences(seance.id).subscribe({
-      next: presences => {
-        this.presences = presences;
-        this.chargementPresences = false;
-      },
-      error: (error: HttpErrorResponse) => {
-        this.erreurPresences = error.error?.message || 'Impossible de charger les présences.';
-        this.chargementPresences = false;
-      }
-    });
+  ouvrirPresences(seance: SeanceDuJour): void {
+    const modalRef = this.modalService.open(PresencesSeanceModalComponent, { centered: true, size: 'lg' });
+    const modal = modalRef.componentInstance as PresencesSeanceModalComponent;
+    modal.seance = seance;
+    modal.chargerPresences = (seanceId: number) => this.userService.getPresences(seanceId);
+    modal.mettreAJourPresence = (seanceId: number, presenceId: number, presence: boolean) =>
+      this.userService.updatePresence(seanceId, presenceId, presence);
+    modal.enregistrerCommentaire = (seanceId: number, commentaire: string | null) =>
+      this.userService.updateCommentaireSeance(seanceId, commentaire);
+    modal.ajouterAdherent = (seanceId: number, email: string) =>
+      this.userService.ajouterNouvelAdherentSeance(seanceId, email);
+    modal.seanceMiseAJour.subscribe((seanceMiseAJour: SeanceDuJour) => this.remplacerSeance(seanceMiseAJour));
+    modal.initialiser();
   }
 
-  ajouterNouvelAdherent(): void {
-    if (!this.seanceSelectionnee || !this.emailNouvelAdherent.trim()) return;
-    this.erreurPresences = '';
-    this.ajoutNouvelAdherent = true;
-    this.userService.ajouterNouvelAdherentSeance(this.seanceSelectionnee.id, this.emailNouvelAdherent.trim()).subscribe({
-      next: presence => {
-        this.presences = [...this.presences, presence].sort((a, b) =>
-          `${a.nom} ${a.prenom}`.localeCompare(`${b.nom} ${b.prenom}`, 'fr'));
-        this.emailNouvelAdherent = '';
-        this.ajoutNouvelAdherent = false;
-      },
-      error: (error: HttpErrorResponse) => {
-        this.erreurPresences = error.error?.detail || error.error?.message || 'Impossible d’ajouter le nouvel adhérent.';
-        this.ajoutNouvelAdherent = false;
-      }
-    });
-  }
-
-  changerPresence(presence: PresenceSeance): void {
-    const valeurPrecedente = presence.presence;
-    presence.presence = !valeurPrecedente;
-    this.miseAJourPresences.add(presence.id);
-    this.userService.updatePresence(this.seanceSelectionnee!.id, presence.id, presence.presence).subscribe({
-      next: miseAJour => {
-        presence.presence = miseAJour.presence;
-        this.miseAJourPresences.delete(presence.id);
-      },
-      error: () => {
-        presence.presence = valeurPrecedente;
-        this.miseAJourPresences.delete(presence.id);
-        this.erreurPresences = 'Impossible d’enregistrer la présence.';
-      }
-    });
-  }
-
-  enregistrerCommentaire(): void {
-    if (!this.seanceSelectionnee) return;
-    this.enregistrementCommentaire = true;
-    this.userService.updateCommentaireSeance(this.seanceSelectionnee.id, this.seanceSelectionnee.commentaire).subscribe({
-      next: seance => {
-        this.seanceSelectionnee = seance;
-        const index = this.seances.findIndex(element => element.id === seance.id);
-        if (index >= 0) this.seances[index] = seance;
-        this.enregistrementCommentaire = false;
-      },
-      error: () => {
-        this.erreurPresences = 'Impossible d’enregistrer le commentaire.';
-        this.enregistrementCommentaire = false;
-      }
-    });
+  private remplacerSeance(seance: SeanceDuJour): void {
+    const index = this.seances.findIndex(element => element.id === seance.id);
+    if (index >= 0) this.seances[index] = seance;
   }
 
   libelleEtat(etat: SeanceDuJour['etatSeance']): string {

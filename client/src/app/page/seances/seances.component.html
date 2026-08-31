@@ -14,8 +14,8 @@
 
   @for (seance of seances; track seance) {
     <article class="card seance-card" role="button" tabindex="0"
-      (click)="ouvrirPresences(seance, presencesModal)"
-      (keydown.enter)="ouvrirPresences(seance, presencesModal)">
+      (click)="ouvrirPresences(seance)"
+      (keydown.enter)="ouvrirPresences(seance)">
       <div class="card-body">
         <h3 class="card-title">{{ seance.activite }}</h3>
         <dl>
@@ -35,58 +35,3 @@
 </article>
 }
 </section>
-
-<ng-template #presencesModal let-modal>
-  <div class="modal-header">
-    <h2 class="modal-title fs-5">Présences — {{ seanceSelectionnee?.activite }}</h2>
-    <button type="button" class="btn-close" aria-label="Fermer" (click)="modal.dismiss()"></button>
-  </div>
-  <div class="modal-body">
-    <div class="mb-3">
-      <label for="commentaireSeance" class="form-label">Commentaire de la séance</label>
-      <div class="input-group">
-        <textarea id="commentaireSeance" class="form-control" maxlength="255" rows="3"
-        [(ngModel)]="seanceSelectionnee!.commentaire" placeholder="Ajouter un commentaire"></textarea>
-
-      </div>
-      <button type="button" class="btn btn-primary" (click)="enregistrerCommentaire()"
-        [disabled]="enregistrementCommentaire">
-        {{ enregistrementCommentaire ? 'Enregistrement…' : 'Enregistrer' }}
-      </button>
-    </div>
-    <form class="mb-3" (ngSubmit)="ajouterNouvelAdherent()">
-      <label for="emailNouvelAdherent" class="form-label">Ajouter un nouvel adhérent</label>
-      <div class="input-group">
-        <input id="emailNouvelAdherent" name="emailNouvelAdherent" type="email" class="form-control"
-          [(ngModel)]="emailNouvelAdherent" required email placeholder="adresse@mail.fr"
-          [disabled]="ajoutNouvelAdherent">
-        <button type="submit" class="btn btn-outline-primary"
-          [disabled]="ajoutNouvelAdherent || !emailNouvelAdherent.trim()">
-          {{ ajoutNouvelAdherent ? 'Ajout…' : 'Ajouter' }}
-        </button>
-      </div>
-      <div class="form-text">Seule l’adresse e-mail est demandée ; les autres informations pourront être complétées plus tard.</div>
-    </form>
-    @if (chargementPresences) {
-      <div class="text-center text-muted py-3">Chargement des présences…</div>
-    }
-    @if (erreurPresences) {
-      <div class="alert alert-danger" role="alert">{{ erreurPresences }}</div>
-    }
-    @if (!chargementPresences && !erreurPresences && presences.length === 0) {
-      <div class="alert alert-info">
-        Aucun adhérent inscrit à cette séance.
-      </div>
-    }
-    @for (presence of presences; track presence) {
-      <div class="presence-ligne">
-        <span>{{ presence.prenom || presence.nom ? presence.prenom + ' ' + presence.nom : presence.email }}</span>
-        <button type="button" class="btn btn-sm" [class.btn-success]="presence.presence"
-          [class.btn-outline-secondary]="!presence.presence" (click)="changerPresence(presence)"
-          [disabled]="miseAJourPresences.has(presence.id)">
-          {{ presence.presence ? 'Présent' : 'Absent' }}
-        </button>
-      </div>
-    }
-  </div>
-</ng-template>
