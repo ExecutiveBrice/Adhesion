@@ -228,7 +228,7 @@ public class UserServices {
 
 
     private UserLite reduceUser(User user){
-        log.info(user.getId().toString());
+        log.debug(user.getId().toString());
         UserLite userLite = new UserLite();
         userLite.setId(user.getId());
         if(user.getAdherent() == null){

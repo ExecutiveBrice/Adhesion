@@ -94,7 +94,20 @@ export class ReportingComponent implements OnInit {
       .forEach(activite => {
         const nom = activite.groupe || 'Sans groupe';
         const group = groups.get(nom) ?? { nom, activites: [], total: this.emptyTotal() };
-        group.activites.push(activite);
+        const nomActivite = activite.nomActivite.trim();
+        const activiteRegroupee = group.activites.find(({ nomActivite: nomExistant }) =>
+          nomExistant.localeCompare(nomActivite, undefined, { sensitivity: 'accent' }) === 0
+        );
+
+        if (activiteRegroupee) {
+          this.addToTotal(activiteRegroupee, activite);
+        } else {
+          const nouvelleActivite = this.emptyTotal();
+          nouvelleActivite.nomActivite = nomActivite;
+          nouvelleActivite.groupe = activite.groupe;
+          this.addToTotal(nouvelleActivite, activite);
+          group.activites.push(nouvelleActivite);
+        }
         this.addToTotal(group.total, activite);
         groups.set(nom, group);
       });
