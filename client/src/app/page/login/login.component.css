@@ -69,8 +69,7 @@
 
 .calendrier-mois:hover,
 .calendrier-mois:focus-visible {
-
-}  background: #387e75;
+  background: #387e75;
   border-color: #387e75;
   color: #fff;
 }
@@ -78,6 +77,7 @@
 .calendrier-tableau {
   overflow-x: auto;
   padding-bottom: 0.25rem;
+}
 
 .calendrier-semaine,
 .calendrier-grille {
