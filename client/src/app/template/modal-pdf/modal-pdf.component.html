@@ -27,11 +27,7 @@
   </div>
   <div class="modal-footer">
     <a class="left" href="https://www.adobe.com/fr/acrobat/mobile/scanner-app.html" target="_blank">ADOBE scanner PDF</a>
-    @if (isFailedPdf) {
-      <button type="submit" class="btn btn-outline-secondary" disabled>Ajouter ce document</button>
-    }
-    @if (!isFailedPdf && isLoaded) {
-      <button type="button" class="btn btn-primary"
-      (click)="activeModal.close(pdfFile)">Ajouter ce document</button>
-    }
+    <button type="button" class="btn btn-primary"
+      [disabled]="!isLoaded || isFailedPdf"
+      (click)="activeModal.close(pdfFile)">Uploader le document</button>
   </div>

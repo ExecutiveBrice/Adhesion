@@ -29,7 +29,7 @@ server:
     jwtSecret: ${JWT_SECRET}
     jwtExpirationMs: 86400000
 
-image-storage-dir: C:\Users\PC\Documents\ProjetsDev\Adhesion
+image-storage-dir: C:\Users\brice\Documents
 
 # Zone scolaire utilisée lors de la génération hebdomadaire des séances (A, B ou C).
 adhesion:

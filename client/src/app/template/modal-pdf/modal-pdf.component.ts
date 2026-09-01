@@ -1,4 +1,4 @@
-import { Component, inject, Input } from '@angular/core'
+import { ChangeDetectorRef, Component, inject, Input } from '@angular/core'
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap'
 import { FileService } from 'src/app/_services/file.service';
 import { Document } from 'src/app/models';
@@ -24,6 +24,8 @@ export class ModalPDFComponent {
 
   activeModal = inject(NgbActiveModal);
 
+  private readonly changeDetectorRef = inject(ChangeDetectorRef);
+
   @Input()
   documentName!: string;
 
@@ -41,24 +43,36 @@ export class ModalPDFComponent {
   messagePdf: string = ""
   isFailedPdf: boolean=false;
   isLoaded: boolean=false;
-  loadFile(event: any) {
-    if (event.target.files && event.target.files[0]) {
-      if (event.target.files[0].size > 1000000) {
+  loadFile(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    this.isLoaded = false;
+    this.isFailedPdf = false;
+    this.messagePdf = "";
+
+    if (file) {
+      if (file.size > 1000000) {
         this.isFailedPdf = true;
         this.messagePdf = "La taille maximale du fichier est de 1Mo"
-      } else if (event.target.files[0].type != "application/pdf") {
+      } else if (file.type != "application/pdf") {
         this.isFailedPdf = true;
         this.messagePdf = "Le fichier doit etre un PDF"
       } else {
-        this.isFailedPdf = false;
-        var reader = new FileReader();
+        const reader = new FileReader();
         reader.onload = (e: any) => {
+          this.pdfFile.nom = file.name
+          this.pdfFile.file = file;
+          this.pdfFile.content = e.target.result;
           this.isLoaded = true;
-          this.pdfFile.nom = event.target.files[0].name
-          console.log(e.target)
-          this.pdfFile.content = e.target.result.replace("data:application/pdf;base64,", "");
+          this.changeDetectorRef.markForCheck();
         }
-        reader.readAsDataURL(event.target.files[0]);
+        reader.onerror = () => {
+          this.isFailedPdf = true;
+          this.messagePdf = "Le fichier PDF n'a pas pu être lu";
+          this.changeDetectorRef.markForCheck();
+        }
+        reader.readAsDataURL(file);
 
       }
     }

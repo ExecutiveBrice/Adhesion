@@ -5,11 +5,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -27,25 +25,26 @@ public class FileUploadController {
     @Value("${image-storage-dir}")
     private Path imageStorageDir;
 
-    @RequestMapping(value = "/", method = RequestMethod.POST)
+    @PostMapping(value = "/", consumes = "multipart/form-data")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<String> uploadFile(@RequestParam("adherentId") String adherentId,@RequestParam("fileName") String fileName, @RequestBody String fileContent) throws IOException {
+    public ResponseEntity<String> uploadFile(@RequestParam("adherentId") String adherentId,
+                                             @RequestParam("file") MultipartFile file) throws IOException {
+        Path adherentDirectory = resolveAdherentDirectory(adherentId);
+        Files.createDirectories(adherentDirectory);
 
-        byte[] imageDecoded = Base64.getDecoder().decode(fileContent.getBytes());
-        Path prePath = this.imageStorageDir.resolve(adherentId);
-
-        if (!Files.exists(prePath)) {
-            Files.createDirectories(prePath);
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null || originalFilename.isBlank()) {
+            return new ResponseEntity<>("Le nom du fichier est obligatoire", HttpStatus.BAD_REQUEST);
         }
 
-        final Path targetPath = prePath.resolve(fileName);
-        try (InputStream in = new ByteArrayInputStream(imageDecoded)) {
-            try (OutputStream out = Files.newOutputStream(targetPath, StandardOpenOption.CREATE)) {
-                in.transferTo(out);
-            }
+        String fileName = Path.of(originalFilename).getFileName().toString();
+        Path targetPath = adherentDirectory.resolve(fileName).normalize();
+        try (var out = Files.newOutputStream(targetPath, StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
+            file.getInputStream().transferTo(out);
         }
 
-        return new ResponseEntity<>(fileContent, HttpStatus.OK);
+        return new ResponseEntity<>(fileName, HttpStatus.OK);
     }
 
 
@@ -53,7 +52,7 @@ public class FileUploadController {
     @RequestMapping(value = "/allFilesName", method = RequestMethod.GET)
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<String>> allFilesName(@RequestParam("adherentId") String adherentId) throws IOException {
-        Path path =this.imageStorageDir.resolve(adherentId);
+        Path path = resolveAdherentDirectory(adherentId);
         List<String> allFilesName = new ArrayList<>();
         try (Stream<Path> paths = Files.walk(path)) {
             paths.filter(Files::isRegularFile)
@@ -71,7 +70,7 @@ public class FileUploadController {
     @RequestMapping(value = "/", method = RequestMethod.GET)
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> uploadFile(@RequestParam("adherentId") String adherentId,@RequestParam("fileName") String fileName) throws IOException {
-        Path path =this.imageStorageDir.resolve(adherentId+"/"+fileName);
+        Path path = resolveFile(adherentId, fileName);
         String imageEncoded = Base64.getEncoder().encodeToString(Files.newInputStream(path).readAllBytes());
 
         return new ResponseEntity<>(imageEncoded, HttpStatus.OK);
@@ -80,7 +79,7 @@ public class FileUploadController {
     @RequestMapping(value = "/", method = RequestMethod.DELETE)
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> deleteFile(@RequestParam("adherentId") String adherentId,@RequestParam("fileName") String fileName) throws IOException {
-        Path path =this.imageStorageDir.resolve(adherentId+"/"+fileName);
+        Path path = resolveFile(adherentId, fileName);
 
         try {
             Files.deleteIfExists(path);
@@ -92,7 +91,19 @@ public class FileUploadController {
         return new ResponseEntity<>(fileName, HttpStatus.OK);
     }
 
+    private Path resolveAdherentDirectory(String adherentId) {
+        if (!adherentId.matches("\\d+")) {
+            throw new IllegalArgumentException("Identifiant adhérent invalide");
+        }
+        return imageStorageDir.toAbsolutePath().normalize().resolve(adherentId);
+    }
 
-
-
+    private Path resolveFile(String adherentId, String fileName) {
+        Path adherentDirectory = resolveAdherentDirectory(adherentId);
+        Path file = adherentDirectory.resolve(fileName).normalize();
+        if (!file.startsWith(adherentDirectory)) {
+            throw new IllegalArgumentException("Nom de fichier invalide");
+        }
+        return file;
+    }
 }

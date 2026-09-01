@@ -450,21 +450,24 @@ export class UserComponent implements OnInit {
     return blob;
   }
 
-  uploadPDF(file: Document) {
+  uploadPDF(document: Document) {
+    if (!document.file) {
+      this.showError("Le fichier PDF n'a pas pu être lu");
+      return;
+    }
 
-    this.fileService.update(this.adherent.id, file.nom, file.content.replace("data:application/pdf;base64,", "")).subscribe(data => {
-      console.log(data)
-      if (this.adherent.documents.length > 0) {
-        this.adherent.documents.push(file.nom)
-      } else {
-        let docs = []
-        docs.push(file.nom)
-        this.adherent.documents = docs;
+    this.fileService.update(this.adherent.id, document.file).subscribe({
+      next: () => {
+        if (!this.adherent.documents.includes(document.nom)) {
+          this.adherent.documents = [...this.adherent.documents, document.nom];
+        }
+        this.showSuccess("Le document a bien été ajouté");
+      },
+      error: (error) => {
+        this.isFailed = true;
+        this.showError(error.error?.message || error.message);
       }
-    },
-      error => {
-        console.log('😢 Oh no!', error);
-      });
+    });
   }
 
 
