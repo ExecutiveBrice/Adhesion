@@ -33,6 +33,14 @@ image-storage-dir: C:\Users\PC\Documents\ProjetsDev\Adhesion
 
 # Zone scolaire utilisée lors de la génération hebdomadaire des séances (A, B ou C).
 adhesion:
+  security:
+    password-reset:
+      token-lifetime-minutes: 30
+      rate-limit:
+        ip: 20
+        address: 5
+        window-seconds: 3600
+        max-tracked-keys: 100000
   calendrier:
     zone: ${ZONE_SCOLAIRE:C}
     jours-feries-dataset: ${JOURS_FERIES_DATASET:jours-ouvres-week-end-feries-france-2010-a-2030}

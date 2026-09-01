@@ -38,13 +38,14 @@ class JwtUtilsTest {
     @Test
     void generatesAndReadsAValidToken() {
         JwtUtils jwtUtils = jwtUtils(60_000);
-        UserDetails principal = new UserDetails(42L, "member@example.org", "secret", List.of());
+        UserDetails principal = new UserDetails(42L, "member@example.org", "secret", List.of(), 7);
 
         String token = jwtUtils.generateJwtToken(
                 new UsernamePasswordAuthenticationToken(principal, principal.getPassword(), principal.getAuthorities()));
 
         assertThat(jwtUtils.validateJwtToken(token)).isTrue();
         assertThat(jwtUtils.getUserNameFromJwtToken(token)).isEqualTo("member@example.org");
+        assertThat(jwtUtils.getSessionVersionFromJwtToken(token)).isEqualTo(7);
     }
 
     @Test

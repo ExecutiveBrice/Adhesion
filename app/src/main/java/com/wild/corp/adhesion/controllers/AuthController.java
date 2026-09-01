@@ -5,23 +5,26 @@ import com.wild.corp.adhesion.models.User;
 import com.wild.corp.adhesion.models.UserDetails;
 import com.wild.corp.adhesion.security.jwt.SurrogateAuthenticationToken;
 import com.wild.corp.adhesion.services.SurrogateService;
-import com.wild.corp.adhesion.services.UserDetailsService;
 import com.wild.corp.adhesion.services.UserServices;
+import com.wild.corp.adhesion.services.PasswordResetService;
 import com.wild.corp.adhesion.security.jwt.JwtUtils;
 import com.wild.corp.adhesion.security.payload.request.LoginRequest;
+import com.wild.corp.adhesion.security.payload.request.PasswordResetConfirmRequest;
+import com.wild.corp.adhesion.security.payload.request.PasswordResetRequest;
 import com.wild.corp.adhesion.security.payload.request.SignupRequest;
 import com.wild.corp.adhesion.security.payload.response.JwtResponse;
 import com.wild.corp.adhesion.security.payload.response.MessageResponse;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.websocket.server.PathParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,9 +41,9 @@ public class AuthController {
 	@Autowired
 	UserServices userServices;
 	@Autowired
-	JwtUtils jwtUtils;
+	PasswordResetService passwordResetService;
 	@Autowired
-	PasswordEncoder encoder;
+	JwtUtils jwtUtils;
 	@Autowired
 	SurrogateService surrogateService;
 
@@ -66,9 +69,15 @@ public class AuthController {
 	}
 
 	@PostMapping("/reinitPassword")
-	public ResponseEntity<?> reinitPassword(@RequestBody SignupRequest signUpRequest) {
-		signUpRequest.setUsername(signUpRequest.getUsername().toLowerCase());
-		return ResponseEntity.ok(userServices.reinitPassword(signUpRequest.getUsername()));
+	public ResponseEntity<MessageResponse> reinitPassword(@RequestBody PasswordResetRequest request,
+													 HttpServletRequest servletRequest) {
+		try {
+			passwordResetService.request(request.username(), servletRequest.getRemoteAddr());
+		} catch (RuntimeException exception) {
+			log.error("La demande de réinitialisation n'a pas pu être traitée", exception);
+		}
+		return ResponseEntity.status(HttpStatus.ACCEPTED)
+				.body(new MessageResponse("Si un compte correspond à cette adresse, un e-mail de réinitialisation sera envoyé."));
 	}
 
 	@PostMapping("/userExist")
@@ -116,9 +125,10 @@ public class AuthController {
 //	}
 
 	@PostMapping("/changePassword")
-	public ResponseEntity<?> changePassword(@PathParam("token") String token, @RequestBody SignupRequest signUpRequest) {
-		userServices.changePassword(token, signUpRequest.getPassword());
-		return ResponseEntity.ok("Réinitialisation du mot de passe réussie");
+	public ResponseEntity<MessageResponse> changePassword(
+			@Valid @RequestBody PasswordResetConfirmRequest request) {
+		passwordResetService.confirm(request.token(), request.password());
+		return ResponseEntity.ok(new MessageResponse("Réinitialisation du mot de passe réussie"));
 	}
 
 

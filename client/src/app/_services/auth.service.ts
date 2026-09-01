@@ -27,8 +27,7 @@ export class AuthService {
   }
 
   changePassword(token: string, password: string): Observable<any> {
-    let params = new HttpParams().set('token', '' + token + '');
-    return this.http.post(AUTH_API + 'changePassword', {password},{params,  responseType: 'text' });
+    return this.http.post(AUTH_API + 'changePassword', {token, password},{responseType: 'json'});
   }
 
 

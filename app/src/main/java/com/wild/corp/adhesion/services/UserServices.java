@@ -13,6 +13,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -132,31 +134,29 @@ public class UserServices {
     }
 
     public void confirmEmailAnswer(String token) throws Exception {
-        ConfirmationToken confirmationToken = confirmationTokenService.findByToken(token);
+        Instant now = Instant.now();
+        ConfirmationToken confirmationToken = confirmationTokenService.consume(
+                token, ConfirmationTokenType.EMAIL_CONFIRMATION, now);
         final User user = confirmationToken.getUser();
         user.setEmailValid(true);
-        userRepository.save(user);
-        confirmationTokenService.deleteConfirmationToken(confirmationToken.getId());
+        userRepository.saveAndFlush(user);
+        confirmationTokenService.invalidateAll(user, ConfirmationTokenType.EMAIL_CONFIRMATION, now);
     }
 
     public void confirmEmailAsking(User user) {
-        ConfirmationToken cft = new ConfirmationToken();
-        cft.setUser(user);
-        cft.setCreatedDate(LocalDate.now());
-        UUID uuid = UUID.randomUUID();
-        cft.setConfirmationToken(uuid);
-        cft.setType("ConfirmationEmail");
+        Instant now = Instant.now();
+        confirmationTokenService.invalidateAll(user, ConfirmationTokenType.EMAIL_CONFIRMATION, now);
+        String rawToken = confirmationTokenService.create(
+                user, ConfirmationTokenType.EMAIL_CONFIRMATION, Duration.ofHours(24), now);
         EmailContent mess = new EmailContent();
         mess.getDestinataires().add(user.getUsername());
         mess.setSubject("Confirmation Email");
         mess.setText("Bonjour,<br>" +
-                "Ceci est le <a href=https://" + serverName + "/api_adhesion/auth/confirmEmail/" + uuid + ">lien de confirmation de votre adresse mail</a><br><br>" +
+                "Ceci est le <a href=https://" + serverName + "/api_adhesion/auth/confirmEmail/" + rawToken + ">lien de confirmation de votre adresse mail</a><br><br>" +
                 "Vous pouvez dors et déjà vous inscrire aux activités de votre choix<br><br>" +
                 "Cordialement,<br>" +
                 "l'équipe de l'ALOD");
         emailService.sendMessage(mess);
-
-        confirmationTokenService.saveConfirmationToken(cft);
     }
 
 
@@ -164,30 +164,6 @@ public class UserServices {
         findByEmail(email);
     }
 
-
-    public ConfirmationToken reinitPassword(String email) {
-        User user = findByEmail(email);
-
-        ConfirmationToken cft = new ConfirmationToken();
-        cft.setUser(user);
-        cft.setCreatedDate(LocalDate.now());
-        UUID uuid = UUID.randomUUID();
-        cft.setConfirmationToken(uuid);
-        cft.setType("ReinitPassword");
-
-        confirmationTokenService.saveConfirmationToken(cft);
-
-        EmailContent mess = new EmailContent();
-        mess.getDestinataires().add(user.getUsername());
-        mess.setSubject("Réinitialisation du mot de passe");
-        mess.setText("Bonjour,<br>" +
-                "Ceci est le <a href=https://" + serverName + "/adhesion/#/resetPassword/" + uuid + ">lien de renouvellement de votre mot de passe</a><br>" +
-                "Cordialement,<br>" +
-                "l'équipe de l'ALOD");
-
-        emailService.sendMessage(mess);
-        return cft;
-    }
 
 //pour les tests en local
     public void changeTestPassword() {
@@ -206,14 +182,6 @@ public class UserServices {
     }
 
 
-
-    public void changePassword(String token, String password) {
-        ConfirmationToken confirmationToken = confirmationTokenService.findByToken(token);
-        final User user = confirmationToken.getUser();
-        user.setPassword(encoder.encode(password));
-        userRepository.save(user);
-        confirmationTokenService.deleteConfirmationToken(confirmationToken.getId());
-    }
 
     public List<UserLite> getAllLite() {
         return userRepository.findAll().stream().map(this::reduceUser).collect(Collectors.toList());

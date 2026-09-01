@@ -39,6 +39,9 @@ public class User {
 
 	private Boolean emailValid;
 
+	@Column(nullable = false, columnDefinition = "bigint default 0")
+	private long sessionVersion = 0;
+
 	@OneToOne(mappedBy="user")
 	@ToString.Exclude
 	private Adherent adherent;

@@ -41,13 +41,19 @@ public class JwtUtils {
     UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();
 
     Date issuedAt = Date.from(clock.instant());
-    return Jwts.builder().subject(userPrincipal.getUsername()).issuedAt(issuedAt)
+    return Jwts.builder().subject(userPrincipal.getUsername())
+        .claim("sessionVersion", userPrincipal.getSessionVersion()).issuedAt(issuedAt)
         .expiration(new Date(issuedAt.getTime() + jwtExpirationMs)).signWith(signingKey)
         .compact();
   }
 
   public String getUserNameFromJwtToken(String token) {
     return parser().parseSignedClaims(token).getPayload().getSubject();
+  }
+
+  public long getSessionVersionFromJwtToken(String token) {
+    Object version = parser().parseSignedClaims(token).getPayload().get("sessionVersion");
+    return version instanceof Number number ? number.longValue() : 0L;
   }
 
   public boolean validateJwtToken(String authToken) {
