@@ -27,8 +27,10 @@ public class AdherentController {
     @Autowired
     UserServices userServices;
 
-    @GetMapping("/nouvelleAnnee")
-    public ResponseEntity<?> nouvelleAnnee() {
+    @PostMapping("/nouvelleAnnee")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> nouvelleAnnee(Authentication principal) {
+        log.warn("AUDIT action=nouvelleAnnee actor={}", principal.getName());
         adherentServices.nouvelleAnnee();
         return ResponseEntity.ok("nouvelleAnnee");
     }
@@ -39,14 +41,18 @@ public class AdherentController {
 //        return ResponseEntity.ok("refreshAccords");
 //    }
 
-    @GetMapping("/cleanNotification")
-    public ResponseEntity<?> cleanNotification() {
+    @PostMapping("/cleanNotification")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> cleanNotification(Authentication principal) {
+        log.warn("AUDIT action=cleanNotification actor={}", principal.getName());
         adherentServices.cleanNotification();
         return ResponseEntity.ok("cleanNotification");
     }
 
-    @GetMapping("/cleanUserAlone")
-    public ResponseEntity<?> getAllAlone() {
+    @DeleteMapping("/cleanUserAlone")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getAllAlone(Authentication principal) {
+        log.warn("AUDIT action=cleanUserAlone actor={}", principal.getName());
         userServices.getAllAlone();
         return ResponseEntity.ok("cleanUserAlone");
     }
@@ -107,9 +113,10 @@ public class AdherentController {
         return ResponseEntity.ok(adherentServices.getAll());
     }
 
-    @GetMapping("/regenerate")
-    public ResponseEntity<?> regenerate(@PathParam("adherentId") Long adherentId) {
-        log.info("regenerate by ");
+    @PostMapping("/regenerate")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> regenerate(Authentication principal, @PathParam("adherentId") Long adherentId) {
+        log.warn("AUDIT action=regenerate actor={} adherentId={}", principal.getName(), adherentId);
         adherentServices.regenerate(adherentId);
         return ResponseEntity.ok("regenerate");
     }

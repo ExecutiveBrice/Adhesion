@@ -55,7 +55,15 @@ export class AdherentService {
 
 
   nouvelleAnnee(): Observable<any> {
-    return this.http.get(API_URL+"nouvelleAnnee", {responseType: 'text'});
+    return this.http.post(API_URL + "nouvelleAnnee", null, {responseType: 'text'});
+  }
+
+  cleanNotification(): Observable<string> {
+    return this.http.post(API_URL + 'cleanNotification', null, {responseType: 'text'});
+  }
+
+  cleanUserAlone(): Observable<string> {
+    return this.http.delete(API_URL + 'cleanUserAlone', {responseType: 'text'});
   }
 
   deleteAdherent(adherentId : number): Observable<string> {
@@ -75,7 +83,7 @@ export class AdherentService {
 
   regenerate(adherentId: number): Observable<string> {
     let params = new HttpParams().set('adherentId', '' + adherentId + '');
-    return this.http.get(API_URL+"regenerate", {params, responseType: 'text' });
+    return this.http.post(API_URL + "regenerate", null, {params, responseType: 'text' });
   }
 
 

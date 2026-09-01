@@ -120,5 +120,19 @@
         <div class="col-12 col-lg-7"><div class="parameter-card h-100"><h3 class="h5">Rôles des utilisateurs</h3><p class="text-body-secondary">Cochez les utilisateurs auxquels attribuer le rôle, ou décochez-les pour le retirer.</p><div class="roles-utilisateurs-liste">@for (role of rolesUtilisateurs; track role.code) {<app-user-checkbox-dropdown [utilisateurs]="utilisateursSelectionnables" [selection]="selectionsRoles[role.code]" [libelle]="role.libelle" [disabled]="rolesEnCoursDeMiseAJour[role.code] === true" menuContainer="body" (selectionChange)="modifierUtilisateursRole(role.code, $event)"></app-user-checkbox-dropdown>}</div></div></div>
       </div></div></ng-template></div></div>
     </section>
+
+    <section ngbAccordionItem="maintenance">
+      <h2 ngbAccordionHeader><button ngbAccordionButton><span class="admin-section-icon" aria-hidden="true"><fa-icon [icon]="faWrench"></fa-icon></span><span class="admin-section-heading"><span>Maintenance sensible</span><small>Ces opérations sont réservées aux administrateurs et consignées dans le journal d’audit.</small></span></button></h2>
+      <div ngbAccordionCollapse><div ngbAccordionBody><ng-template><div class="admin-section-content">
+        <div class="alert alert-warning" role="note">Vérifiez l’action avant confirmation : certaines opérations modifient ou suppriment des données.</div>
+        <div class="d-flex flex-column flex-md-row flex-wrap gap-2">
+          <button type="button" class="btn btn-outline-primary" [disabled]="maintenanceEnCours" (click)="executerMaintenance('nouvelleAnnee')">Préparer la nouvelle année</button>
+          <button type="button" class="btn btn-outline-warning" [disabled]="maintenanceEnCours" (click)="executerMaintenance('cleanNotification')">Nettoyer les notifications</button>
+          <button type="button" class="btn btn-outline-danger" [disabled]="maintenanceEnCours" (click)="executerMaintenance('cleanUserAlone')">Supprimer les comptes orphelins</button>
+        </div>
+        @if (maintenanceMessage) { <div class="alert alert-success mt-3 mb-0" role="status">{{maintenanceMessage}}</div> }
+        @if (maintenanceErreur) { <div class="alert alert-danger mt-3 mb-0" role="alert">{{maintenanceErreur}}</div> }
+      </div></ng-template></div></div>
+    </section>
   </div>
 </main>

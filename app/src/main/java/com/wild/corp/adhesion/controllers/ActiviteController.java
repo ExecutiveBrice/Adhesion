@@ -36,6 +36,7 @@ ActiviteServices activiteServices;
 	@Autowired
 	GoogleAgendaServices googleAgendaServices;
 	@GetMapping("/all")
+	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<?> getAll() {
 		return ResponseEntity.ok(activiteServices.getAll());
 	}
@@ -53,11 +54,13 @@ ActiviteServices activiteServices;
 	}
 
 	@GetMapping("/allNm1")
+	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<?> getAllNm1() {
 		return ResponseEntity.ok(activiteServices.getAllNm1());
 	}
 
 	@GetMapping("/seancesDuJour")
+	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<?> getSeancesDuJourForAcivite( @RequestParam(value="activiteId") Long activiteId) {
 		log.info("getAllCours for activite " + activiteId );
 		return ResponseEntity.ok(activiteServices.getSeancesDuJour(activiteId));
@@ -133,6 +136,7 @@ ActiviteServices activiteServices;
 	}
 
 	@GetMapping("/refillSeance")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<?> refillSeance(@RequestParam(value="activiteId") Long activiteId) {
 		Activite activiteInDB = activiteServices.getById(activiteId);
 		seanceServices.fillSeances(activiteInDB, 29);

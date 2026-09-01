@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,6 +33,7 @@ public class MailController {
 
 
     @GetMapping("/historique")
+    @PreAuthorize("hasAnyRole('SECRETAIRE', 'BUREAU', 'ADMINISTRATEUR', 'ADMIN')")
     public ResponseEntity<?> historique() {
 
         return ResponseEntity.ok(historiqueRepository.findAll());
@@ -39,6 +41,7 @@ public class MailController {
     }
 
     @PostMapping(value = "/sendTemplate")
+    @PreAuthorize("hasAnyRole('SECRETAIRE', 'BUREAU', 'ADMINISTRATEUR', 'ADMIN')")
     public ResponseEntity<Historique> sendTemplate(@RequestBody List<Groupe> maillingListe, @RequestParam(value = "templateId") Long templateId) {
         log.debug("send sendTemplate " + templateId);
         if (!emailService.isMailSendingEnabled()) {
@@ -51,6 +54,7 @@ public class MailController {
     }
 
     @RequestMapping(value = "/", method = RequestMethod.POST)
+    @PreAuthorize("hasAnyRole('SECRETAIRE', 'BUREAU', 'ADMINISTRATEUR', 'ADMIN')")
     public ResponseEntity<Historique> send(@RequestBody EmailContent mail) {
         log.debug("send mail ");
         if (!emailService.isMailSendingEnabled()) {

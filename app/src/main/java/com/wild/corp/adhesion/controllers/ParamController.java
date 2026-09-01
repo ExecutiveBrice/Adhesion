@@ -114,6 +114,7 @@ public class ParamController {
 	}
 
 	@GetMapping("/notification")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<?> notification(@RequestBody Object param) {
 		log.error(param.toString());
 		return ResponseEntity.ok(param.toString());
@@ -121,6 +122,7 @@ public class ParamController {
 
 
 	@GetMapping("/allNumber")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<?> getAllNumber() {
 		return ResponseEntity.ok(paramNumberServices.getAll());
 	}

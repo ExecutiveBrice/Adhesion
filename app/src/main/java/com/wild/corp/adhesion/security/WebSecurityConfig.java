@@ -5,7 +5,6 @@ import com.wild.corp.adhesion.security.jwt.AuthEntryPointJwt;
 import com.wild.corp.adhesion.security.jwt.AuthTokenFilter;
 import jakarta.servlet.DispatcherType;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -23,9 +22,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableMethodSecurity
 public class WebSecurityConfig{
-
-    @Value("${spring.h2.console.path}")
-    private String h2ConsolePath;
 
     @Autowired
     UserDetailsService userDetailsService;
@@ -64,12 +60,11 @@ public class WebSecurityConfig{
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth ->
                         auth.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
-                                .requestMatchers("/auth/**").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/param/**").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/adherent/**").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/auth/signin", "/auth/reinitPassword", "/auth/changePassword").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/auth/confirmEmail/*").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/param/agendas", "/param/salles", "/param/allText", "/param/allBoolean", "/param/isClose").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/activite/calendrier", "/activite/calendrier/google").permitAll()
                                 .requestMatchers(HttpMethod.OPTIONS,"/**").permitAll()
-                                .requestMatchers("/swagger-ui**").permitAll()
                                 .anyRequest().authenticated()
                 );
 

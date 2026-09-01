@@ -25,6 +25,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -80,14 +81,8 @@ public class AuthController {
 				.body(new MessageResponse("Si un compte correspond à cette adresse, un e-mail de réinitialisation sera envoyé."));
 	}
 
-	@PostMapping("/userExist")
-	public ResponseEntity<?> userExist(@RequestBody SignupRequest signUpRequest) {
-		signUpRequest.setUsername(signUpRequest.getUsername().toLowerCase());
-		userServices.isUserExist(signUpRequest.getUsername());
-		return ResponseEntity.ok("ok");
-	}
-
 	@PostMapping("/signup")
+	@PreAuthorize("hasAnyRole('SECRETAIRE', 'ADMIN')")
 	public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
 		signUpRequest.setUsername(signUpRequest.getUsername().toLowerCase());
 		if (userServices.existsByEmail(signUpRequest.getUsername())) {
@@ -101,6 +96,7 @@ public class AuthController {
 	}
 
 	@PostMapping("/signupAnonymous")
+	@PreAuthorize("hasAnyRole('SECRETAIRE', 'ADMIN')")
 	public ResponseEntity<?> signupAnonymous(@PathParam("email") String email) {
 		if (userServices.existsByEmail(email.toLowerCase())) {
 			return ResponseEntity
@@ -136,8 +132,9 @@ public class AuthController {
 
 
 	@PostMapping("/impersonate/{username}")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<?> impersonate(@PathVariable String username, Authentication currentAuth) {
-		log.info("impersonate "+username);
+		log.warn("AUDIT action=impersonate actor={} target={}", currentAuth.getName(), username);
 		Authentication surrogateAuth = surrogateService.impersonate(currentAuth, username);
 		SecurityContextHolder.getContext().setAuthentication(surrogateAuth);
 		String jwt = jwtUtils.generateJwtToken(surrogateAuth);
@@ -155,6 +152,7 @@ public class AuthController {
 	}
 
 	@PostMapping("/impersonate/stop")
+	@PreAuthorize("hasRole('ADMIN')")
 	public String stopImpersonation(Authentication currentAuth) {
 		if (currentAuth instanceof SurrogateAuthenticationToken sat) {
 			Authentication real = (Authentication) sat.getRealPrincipal();

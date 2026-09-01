@@ -5,6 +5,7 @@ import jakarta.websocket.server.PathParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +22,7 @@ public class ComptaController {
 	ComptaService comptaService;
 
 	@GetMapping("/getAll")
+	@PreAuthorize("hasAnyRole('COMPTABLE', 'BUREAU', 'ADMINISTRATEUR', 'ADMIN')")
 	public ResponseEntity<?> getAll(@PathParam("dateDebutPeriode") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate dateDebutPeriode, @PathParam("dateFinPeriode") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate dateFinPeriode) {
 
 

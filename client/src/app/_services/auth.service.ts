@@ -31,13 +31,6 @@ export class AuthService {
   }
 
 
-  userExist(username: string): Observable<any> {
-    return this.http.post(AUTH_API + 'userExist', {
-      username
-    },{ responseType: 'text' });
-
-  }
-
   reinitPassword(username: string): Observable<any> {
     return this.http.post(AUTH_API + 'reinitPassword', {
       username

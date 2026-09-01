@@ -5,7 +5,7 @@ import { ParamService } from '../../_services/param.service';
 
 import { AgendaGoogleConfiguration, ParamBoolean, ParamNumber, ParamText, SalleConfiguration, UserLite } from 'src/app/models';
 import { forkJoin } from 'rxjs';
-import { faCalendarDays, faCircleCheck, faCircleXmark, faFont, faHashtag, faLocationDot, faPlus, faSliders, faTrash, faUserShield } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarDays, faCircleCheck, faCircleXmark, faFont, faHashtag, faLocationDot, faPlus, faSliders, faTrash, faUserShield, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { AdherentService } from 'src/app/_services/adherent.service';
 import {AuthService} from "../../_services/auth.service";
 import {TokenStorageService} from "../../_services/token-storage.service";
@@ -46,6 +46,7 @@ export class BoardAdminComponent implements OnInit {
   faHashtag = faHashtag;
   faFont = faFont;
   faUserShield = faUserShield;
+  faWrench = faWrench;
   paramBooleans: ParamBoolean[] = [];
   paramTexts: ParamText[] = [];
   agendasGoogle: AgendaGoogleConfiguration[] = [];
@@ -73,6 +74,9 @@ export class BoardAdminComponent implements OnInit {
     ROLE_PROF: []
   };
   rolesEnCoursDeMiseAJour: Partial<Record<RoleUtilisateur, boolean>> = {};
+  maintenanceEnCours = false;
+  maintenanceMessage = '';
+  maintenanceErreur = '';
   readonly rolesUtilisateurs: { code: RoleUtilisateur; libelle: string }[] = [
     { code: 'ROLE_ADMIN', libelle: 'Administrateurs du site' },
     { code: 'ROLE_ADMINISTRATEUR', libelle: "Administrateurs de l’ALOD" },
@@ -407,15 +411,32 @@ export class BoardAdminComponent implements OnInit {
   }
 
 
-  nouvelleAnnee(){
-    this.adherentService.nouvelleAnnee().subscribe(
-      data => {
-      console.log(data)
-
+  executerMaintenance(action: 'nouvelleAnnee' | 'cleanNotification' | 'cleanUserAlone'): void {
+    const libelles = {
+      nouvelleAnnee: 'Lancer la préparation de la nouvelle année',
+      cleanNotification: 'Supprimer les notifications obsolètes',
+      cleanUserAlone: 'Supprimer les comptes sans adhérent associé'
+    };
+    if (this.maintenanceEnCours || !window.confirm(`${libelles[action]} ? Cette action sera journalisée.`)) {
+      return;
+    }
+    this.maintenanceEnCours = true;
+    this.maintenanceMessage = '';
+    this.maintenanceErreur = '';
+    const request = action === 'nouvelleAnnee'
+      ? this.adherentService.nouvelleAnnee()
+      : action === 'cleanNotification'
+        ? this.adherentService.cleanNotification()
+        : this.adherentService.cleanUserAlone();
+    request.subscribe({
+      next: () => {
+        this.maintenanceEnCours = false;
+        this.maintenanceMessage = `${libelles[action]} : terminé.`;
       },
-      err => {
-        ;
+      error: response => {
+        this.maintenanceEnCours = false;
+        this.maintenanceErreur = response?.error?.message || 'L’action de maintenance a échoué.';
       }
-    );
+    });
   }
 }

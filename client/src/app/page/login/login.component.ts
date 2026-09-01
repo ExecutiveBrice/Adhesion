@@ -97,6 +97,9 @@ export class LoginComponent implements OnInit {
   validRgpd = false;
   testRgpd = false;
   inscriptionOpen: boolean = false;
+  // L'interface ne sonde plus l'existence d'un compte : cette valeur évite
+  // d'exposer des panneaux fondés sur une information sensible.
+  userExist = true;
 
   ngOnInit(): void {
 
@@ -399,8 +402,7 @@ export class LoginComponent implements OnInit {
   onSubmit(): void {
     const { username, password } = this.form;
 
-    if (this.userExist) {
-      this.authService.login(username, password).subscribe(
+    this.authService.login(username, password).subscribe(
         data => {
           console.log(data)
           this.tokenStorage.saveToken(data.token);
@@ -417,11 +419,6 @@ export class LoginComponent implements OnInit {
           this.showWarning("La connexion a échouée, mauvais mot de passe")
         }
       );
-
-
-    }else{
-      this.showWarning("Cette adresse e-mail n'existe pas dans l'application<br />Veuillez corriger l'adresse e-mail ou vous inscrire")
-    }
   }
 
 
@@ -444,19 +441,10 @@ export class LoginComponent implements OnInit {
   }
 
 
-  userExist: boolean = true;
   verifMailExist() {
     this.form.username = this.form.username.toLowerCase()
     this.form.username = this.form.username.trimEnd()
     this.form.username = this.form.username.trimStart()
-    this.authService.userExist(this.form.username).subscribe(
-      data => {
-        this.userExist = true;
-      },
-      err => {
-        this.userExist = false;
-      }
-    );
   }
 
   showWarning(message: string) {
