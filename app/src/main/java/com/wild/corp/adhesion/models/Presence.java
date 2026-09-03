@@ -35,10 +35,13 @@ public class Presence {
 
     private Boolean presence;
 
+    private Boolean presencePrevue;
+
     private LocalDate dateModification;
 
     public Presence() {
-        this.presence = false;
+        this.presence = null;
+        this.presencePrevue = null;
         this.dateModification = LocalDate.now();
     }
 

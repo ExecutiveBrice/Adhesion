@@ -8,7 +8,7 @@ export class PresenceSeance {
 
   adherent!: Adherent;
 
-  presence!: boolean
+  presence!: boolean | null
 
   dateModification!: string
 }

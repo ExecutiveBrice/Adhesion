@@ -55,9 +55,11 @@ export class PresencesSeanceModalComponent {
     });
   }
 
-  changerPresence(presence: PresenceSeance): void {
+  definirPresence(presence: PresenceSeance, valeur: boolean): void {
+    if (presence.presence === valeur) return;
+
     const valeurPrecedente = presence.presence;
-    presence.presence = !valeurPrecedente;
+    presence.presence = valeur;
     this.miseAJourPresences.add(presence.id);
     this.mettreAJourPresence(this.seance.id, presence.id, presence.presence).subscribe({
       next: miseAJour => {

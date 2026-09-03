@@ -30,7 +30,7 @@ export interface PresenceSeance {
   nom: string;
   prenom: string;
   email: string;
-  presence: boolean;
+  presence: boolean | null;
   paiementValide: boolean;
   documentsValides: boolean;
   statutAdhesion: string;

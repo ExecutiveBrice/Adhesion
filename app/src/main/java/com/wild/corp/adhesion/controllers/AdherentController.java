@@ -4,6 +4,10 @@ import com.wild.corp.adhesion.models.Adherent;
 import com.wild.corp.adhesion.models.resources.AdherentLite;
 import com.wild.corp.adhesion.services.AdherentServices;
 import com.wild.corp.adhesion.services.UserServices;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.websocket.server.PathParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -165,9 +169,16 @@ public class AdherentController {
         return ResponseEntity.ok(adherentServices.getAllCours(principal.getName()));
     }
 
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "successful operation",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = Adherent.class))
+            ),
+    })
     @GetMapping("/getById")
     @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
-    public ResponseEntity<?> getById(Authentication principal, @PathParam("adherentId") Long adherentId) {
+    public ResponseEntity<Adherent> getById(Authentication principal, @PathParam("adherentId") Long adherentId) {
         log.info("getById by " + principal.getName() + " for adherent id " + adherentId);
         return ResponseEntity.ok(adherentServices.getById(adherentId));
     }

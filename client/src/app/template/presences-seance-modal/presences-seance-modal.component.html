@@ -55,11 +55,18 @@
           [attr.aria-label]="adhesionValidee(presence) ? 'Adhésion ' + presence.statutAdhesion : 'Adhésion en attente : ' + presence.statutAdhesion"
           [title]="'Statut : ' + presence.statutAdhesion"></fa-icon>
       </span>
-      <button type="button" class="btn btn-sm" [class.btn-success]="presence.presence"
-        [class.btn-outline-secondary]="!presence.presence" (click)="changerPresence(presence)"
-        [disabled]="miseAJourPresences.has(presence.id)">
-        {{ presence.presence ? 'Présent' : 'Absent' }}
-      </button>
+      <div class="btn-group btn-group-sm" role="group" aria-label="Présence de l’adhérent">
+        <button type="button" class="btn" [class.btn-primary]="presence.presence === false"
+          [class.btn-outline-secondary]="presence.presence !== false" (click)="definirPresence(presence, false)"
+          [attr.aria-pressed]="presence.presence === false" [disabled]="miseAJourPresences.has(presence.id)">
+          Absent
+        </button>
+        <button type="button" class="btn" [class.btn-success]="presence.presence === true"
+          [class.btn-outline-secondary]="presence.presence !== true" (click)="definirPresence(presence, true)"
+          [attr.aria-pressed]="presence.presence === true" [disabled]="miseAJourPresences.has(presence.id)">
+          Présent
+        </button>
+      </div>
     </div>
   }
 </div>

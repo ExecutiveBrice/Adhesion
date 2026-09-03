@@ -29,6 +29,11 @@ server:
     jwtSecret: ${JWT_SECRET}
     jwtExpirationMs: 86400000
 
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    persist-authorization: true
+
 image-storage-dir: C:\Users\brice\Documents
 
 # Zone scolaire utilisée lors de la génération hebdomadaire des séances (A, B ou C).

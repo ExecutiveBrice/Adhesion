@@ -90,6 +90,10 @@ class PresenceServicesTest {
         presenceServices.fillPresences(seance);
 
         assertThat(seance.getPresences()).hasSize(3);
+        assertThat(seance.getPresences()).allSatisfy(presence -> {
+            assertThat(presence.getPresence()).isNull();
+            assertThat(presence.getPresencePrevue()).isNull();
+        });
         assertThat(seance.getPresences()).anyMatch(presence -> presence.getAdhesion() == validatedAdhesion);
         assertThat(seance.getPresences()).anyMatch(presence -> presence.getAdhesion() == pendingAdhesion);
         assertThat(seance.getPresences()).anyMatch(presence -> presence.getAdhesion() == returnedAdhesion);
