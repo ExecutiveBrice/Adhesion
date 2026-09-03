@@ -167,7 +167,11 @@
 </div>
 
 
-<app-calendrier [tribuUuid]="tribu.uuid"></app-calendrier>
+@if (showSecretaire) {
+  <app-prochains-evenements-famille [tribuUuid]="tribu.uuid"></app-prochains-evenements-famille>
+} @else {
+  <app-calendrier [tribuUuid]="tribu.uuid"></app-calendrier>
+}
 
 
 

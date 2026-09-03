@@ -1,0 +1,57 @@
+<section class="prochains-evenements" aria-labelledby="titre-prochains-evenements">
+  <header class="prochains-evenements-entete">
+    <h2 id="titre-prochains-evenements">Prochains événements</h2>
+    <p>Les cinq prochaines séances de chaque activité de la famille.</p>
+  </header>
+
+  @if (chargement) {
+    <div class="alert alert-info" role="status">Chargement des prochains événements…</div>
+  } @else if (erreur) {
+    <div class="alert alert-warning" role="alert">{{ erreur }}</div>
+  } @else if (activites.length === 0) {
+    <div class="alert alert-info" role="status">Aucun prochain événement n’est programmé pour cette famille.</div>
+  } @else {
+    @for (activite of activites; track activite.id) {
+      <section class="activite-evenements" [attr.aria-labelledby]="'titre-activite-' + activite.id">
+        <h3 [id]="'titre-activite-' + activite.id">{{ activite.nom }}</h3>
+        <div class="evenements-grille">
+          @for (evenement of activite.evenements; track evenement.id) {
+            <article class="card evenement-card" [style.border-left-color]="evenement.couleurSalle || '#5cbbaf'">
+              <div class="card-body">
+                <div class="evenement-entete">
+                  <time class="evenement-date" [attr.datetime]="evenement.debut">
+                    {{ evenement.debut | date:'EEEE d MMMM':'':'fr-FR' }}
+                  </time>
+                  <span class="badge evenement-statut" [ngClass]="classeEtat(evenement.etatSeance)">
+                    {{ libelleEtat(evenement.etatSeance) }}
+                  </span>
+                </div>
+                <p class="evenement-horaire">
+                  {{ evenement.debut | date:'HH:mm' }} – {{ evenement.fin | date:'HH:mm' }}
+                </p>
+                @if (evenement.salle || evenement.adresseSalle) {
+                  <p class="evenement-lieu">
+                    <span class="evenement-libelle">Lieu</span>
+                    @if (lienAdresseSalle(evenement); as lienAdresse) {
+                      <a [href]="lienAdresse" target="_blank" rel="noopener noreferrer">
+                        {{ libelleLieu(evenement) }}
+                      </a>
+                    } @else {
+                      <span>{{ libelleLieu(evenement) }}</span>
+                    }
+                  </p>
+                }
+                @if (evenement.commentaire) {
+                  <p class="evenement-commentaire">{{ evenement.commentaire }}</p>
+                }
+                @if (lienActivite(evenement); as lienActivite) {
+                  <a class="evenement-lien-activite" [href]="lienActivite" target="_blank" rel="noopener noreferrer">Voir l’activité</a>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+    }
+  }
+</section>

@@ -1,0 +1,126 @@
+.prochains-evenements {
+  margin: 1.5rem 0;
+}
+
+.prochains-evenements-entete {
+  margin-bottom: 1.5rem;
+}
+
+.prochains-evenements-entete h2,
+.activite-evenements h3 {
+  color: #18322b;
+}
+
+.prochains-evenements-entete h2 {
+  font-size: 1.45rem;
+  margin-bottom: .25rem;
+}
+
+.prochains-evenements-entete p {
+  color: #52645e;
+  margin: 0;
+}
+
+.activite-evenements + .activite-evenements {
+  margin-top: 2rem;
+}
+
+.activite-evenements h3 {
+  border-bottom: 1px solid #dce6e2;
+  font-size: 1.15rem;
+  margin: 0 0 1rem;
+  padding-bottom: .5rem;
+}
+
+.evenements-grille {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.evenement-card {
+  border: 1px solid #dce6e2;
+  border-left: 5px solid #5cbbaf;
+  box-shadow: 0 2px 8px rgba(24, 50, 43, .12);
+  height: 100%;
+  margin-top: 0;
+}
+
+.evenement-card .card-body {
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+}
+
+.evenement-entete {
+  align-items: flex-start;
+  display: flex;
+  gap: .5rem;
+  justify-content: space-between;
+}
+
+.evenement-date {
+  color: #18322b;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.evenement-statut {
+  flex: 0 0 auto;
+  font-weight: 600;
+}
+
+.etat-programmee {
+  background-color: #0d6efd;
+}
+
+.etat-modifiee {
+  background-color: #b06b00;
+}
+
+.etat-realisee {
+  background-color: #198754;
+}
+
+.etat-annulee {
+  background-color: #dc3545;
+}
+
+.evenement-horaire,
+.evenement-lieu,
+.evenement-commentaire {
+  margin: 0;
+}
+
+.evenement-horaire {
+  color: #29483f;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.evenement-lieu {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem;
+}
+
+.evenement-libelle {
+  color: #52645e;
+  font-weight: 600;
+}
+
+.evenement-commentaire {
+  color: #3e4c47;
+  white-space: pre-line;
+}
+
+.evenement-lien-activite {
+  margin-top: auto;
+}
+
+@media (max-width: 575.98px) {
+  .evenements-grille {
+    grid-template-columns: 1fr;
+  }
+}

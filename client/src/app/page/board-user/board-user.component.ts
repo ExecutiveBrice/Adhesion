@@ -41,13 +41,14 @@ import {UserComponent} from 'src/app/template/user/user.component';
 import {UtilService} from 'src/app/_services/util.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CalendrierComponent } from '../../template/calendrier/calendrier.component';
+import { ProchainsEvenementsFamilleComponent } from '../../template/prochains-evenements-famille/prochains-evenements-famille.component';
 import { OrderByPipe } from '../../_helpers/sort.pipe';
 
 @Component({
     selector: 'app-board-user',
     templateUrl: './board-user.component.html',
     styleUrls: ['./board-user.component.css'],
-    imports: [NgClass, DatePipe, FaIconComponent, CalendrierComponent, OrderByPipe]
+    imports: [NgClass, DatePipe, FaIconComponent, CalendrierComponent, ProchainsEvenementsFamilleComponent, OrderByPipe]
 })
 export class BoardUserComponent implements OnInit {
   private readonly apiViewRefresh = registerApiViewRefresh();
