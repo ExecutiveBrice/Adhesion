@@ -169,13 +169,6 @@ public class AdherentController {
         return ResponseEntity.ok(adherentServices.getAllCours(principal.getName()));
     }
 
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "successful operation",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = Adherent.class))
-            ),
-    })
     @GetMapping("/getById")
     @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
     public ResponseEntity<Adherent> getById(Authentication principal, @PathParam("adherentId") Long adherentId) {

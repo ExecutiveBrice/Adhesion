@@ -35,8 +35,8 @@ public class OpenApiConfiguration {
         public GroupedOpenApi ficheAdherentApi() {
                 String paths[] = {
                         "/auth/signin",
-                        "/adherent/getById",
-                        "tribu/getTribuByUuid"
+                        "/tribu/getTribuByUuid",
+                        "/user/getUserByMail"
                 };
                 return GroupedOpenApi.builder().group("2-FicheAdhérent").pathsToMatch(paths)
                         .build();

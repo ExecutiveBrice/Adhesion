@@ -18,6 +18,10 @@ import com.wild.corp.adhesion.models.resources.PresenceSeanceResponse;
 import com.wild.corp.adhesion.models.resources.SeanceDuJourResponse;
 import com.wild.corp.adhesion.models.resources.PresenceUpdateRequest;
 import com.wild.corp.adhesion.utils.Status;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.websocket.server.PathParam;
@@ -143,9 +147,16 @@ SeanceRepository seanceRepository;
 		return ResponseEntity.ok(user);
 	}
 
+	@ApiResponses(value = {
+			@ApiResponse(
+					responseCode = "200",
+					description = "successful operation",
+					content = @Content(mediaType = "application/json", schema = @Schema(implementation = User.class))
+			),
+	})
 	@GetMapping("/getUserByMail")
 	@PreAuthorize("hasRole('SECRETAIRE')")
-	public ResponseEntity<?> getUserByMail(@PathParam("userId") String userEmail) {
+	public ResponseEntity<User> getUserByMail(@PathParam("userId") String userEmail) {
 		User user = userServices.findByEmail(userEmail);
 		return ResponseEntity.ok(user);
 	}

@@ -14,6 +14,10 @@ import com.wild.corp.adhesion.security.payload.request.PasswordResetRequest;
 import com.wild.corp.adhesion.security.payload.request.SignupRequest;
 import com.wild.corp.adhesion.security.payload.response.JwtResponse;
 import com.wild.corp.adhesion.security.payload.response.MessageResponse;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.websocket.server.PathParam;
@@ -48,8 +52,15 @@ public class AuthController {
 	@Autowired
 	SurrogateService surrogateService;
 
+	@ApiResponses(value = {
+			@ApiResponse(
+					responseCode = "200",
+					description = "successful operation",
+					content = @Content(mediaType = "application/json", schema = @Schema(implementation = JwtResponse.class))
+			),
+	})
 	@PostMapping("/signin")
-	public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+	public ResponseEntity<JwtResponse> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
 
 		Authentication authentication = authenticationManager.authenticate(
 				new UsernamePasswordAuthenticationToken(loginRequest.getUsername().toLowerCase(), loginRequest.getPassword()));
