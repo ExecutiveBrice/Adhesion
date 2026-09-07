@@ -4,7 +4,7 @@ import { ActiviteService } from 'src/app/_services/activite.service';
 import { ParamService } from 'src/app/_services/param.service';
 import { AgendaGoogleConfiguration } from 'src/app/models';
 import { EvenementGoogleAgenda, SeanceCalendrier } from 'src/app/models/seance';
-import { faCheck, faChevronLeft, faChevronRight, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarPlus, faCheck, faChevronLeft, faChevronRight, faFileArrowDown, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { NgClass, DatePipe } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
@@ -56,6 +56,8 @@ export class CalendrierComponent implements OnInit, OnChanges {
   agendasGoogle: AgendaGoogleConfiguration[] = [];
   googleAgendaIds: string[] = [];
   googleAgendaErreur = '';
+  exportCalendrierEnCours = false;
+  erreurExportCalendrier = '';
   dateAffichee = this.aujourdhui();
   readonly joursSemaine = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
   faXmark = faXmark;
@@ -63,6 +65,8 @@ export class CalendrierComponent implements OnInit, OnChanges {
   faTriangleExclamation = faTriangleExclamation;
   faChevronLeft = faChevronLeft;
   faChevronRight = faChevronRight;
+  faCalendarPlus = faCalendarPlus;
+  faFileArrowDown = faFileArrowDown;
 
   ngOnInit(): void { this.chargerConfigurationAgendas(); }
 
@@ -139,8 +143,121 @@ export class CalendrierComponent implements OnInit, OnChanges {
   couleurEvenement(evenement: EvenementCalendrier): string { return evenement.source === 'SEANCE' ? evenement.couleurSalle || '#5CBBaf' : this.agendasGoogle.find(a => a.source === evenement.agendaSource)?.couleur || '#D29438'; }
   nomAgenda(evenement: EvenementCalendrier): string { return this.agendasGoogle.find(a => a.source === evenement.agendaSource)?.nom || evenement.agenda || 'Agenda Google'; }
   sourceEvenement(evenement: EvenementCalendrier): string { return evenement.source === 'GOOGLE' ? `Google · ${this.nomAgenda(evenement)}` : this.etatLibelle(evenement.etatSeance); }
-  lienActivite(evenement: EvenementCalendrier): string | null { if (evenement.source !== 'SEANCE' || !evenement.lien?.trim()) return null; const lien = evenement.lien.trim(); return /^https?:\/\//i.test(lien) ? lien : `https://${lien}`; }
+  lienActivite(evenement: EvenementCalendrier): string | null { return evenement.source === 'SEANCE' ? this.lienUrl(evenement.lien) : null; }
   lienAdresseSalle(evenement: EvenementCalendrier): string | null { return evenement.adresseSalle?.trim() ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(evenement.adresseSalle.trim())}` : null; }
+
+  telechargerSeancesGoogle(): void {
+    const debut = this.aujourdhui();
+    const fin = new Date(debut);
+    fin.setFullYear(fin.getFullYear() + 1);
+    this.exportCalendrierEnCours = true;
+    this.erreurExportCalendrier = '';
+
+    this.activiteService.getCalendrier(this.dateIso(debut), this.dateIso(fin), this.tribuUuid).subscribe({
+      next: seances => {
+        const contenu = this.creerFichierIcs(seances.filter(seance => seance.etatSeance !== 'ANNULEE'));
+        const fichier = new Blob([contenu], { type: 'text/calendar;charset=utf-8' });
+        const lien = URL.createObjectURL(fichier);
+        const telechargement = document.createElement('a');
+        telechargement.href = lien;
+        telechargement.download = 'seances.ics';
+        telechargement.click();
+        URL.revokeObjectURL(lien);
+        this.exportCalendrierEnCours = false;
+      },
+      error: () => {
+        this.erreurExportCalendrier = "Impossible de préparer le fichier d'import Google Agenda pour le moment.";
+        this.exportCalendrierEnCours = false;
+      }
+    });
+  }
+
+  lienGoogleAgenda(evenement: EvenementCalendrier): string | null {
+    if (evenement.source !== 'SEANCE' || evenement.etatSeance === 'ANNULEE') {
+      return null;
+    }
+
+    const description = [
+      this.texteCalendrier(evenement.commentaire),
+      this.lienActivite(evenement)
+    ].filter(Boolean).join('\n\n');
+    const lieu = evenement.adresseSalle?.trim() || evenement.lieu?.trim() || '';
+    const params = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: evenement.titre,
+      dates: `${this.dateGoogleAgenda(evenement.debut)}/${this.dateGoogleAgenda(evenement.fin)}`,
+      ctz: 'Europe/Paris'
+    });
+    if (description) params.set('details', description);
+    if (lieu) params.set('location', lieu);
+
+    return `https://calendar.google.com/calendar/render?${params.toString()}`;
+  }
+
+  private dateGoogleAgenda(dateHeure: string): string {
+    return dateHeure.replace(/[-:]/g, '').replace(/\.\d+/, '');
+  }
+
+  private texteCalendrier(texte?: string | null): string {
+    return (texte || '')
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&amp;/gi, '&')
+      .replace(/&lt;/gi, '<')
+      .replace(/&gt;/gi, '>')
+      .replace(/&quot;/gi, '"')
+      .replace(/&#39;/gi, "'")
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  private lienUrl(lien?: string | null): string | null {
+    if (!lien?.trim()) return null;
+    const lienNettoye = lien.trim();
+    return /^https?:\/\//i.test(lienNettoye) ? lienNettoye : `https://${lienNettoye}`;
+  }
+
+  private creerFichierIcs(seances: SeanceCalendrier[]): string {
+    const maintenant = new Date().toISOString()
+      .replace(/\.\d{3}Z$/, 'Z')
+      .replace(/[-:]/g, '');
+    const evenements = seances.map(seance => {
+      const description = [
+        this.texteCalendrier(seance.commentaire),
+        this.lienUrl(seance.lien)
+      ].filter(Boolean).join('\\n\\n');
+      return [
+        'BEGIN:VEVENT',
+        `UID:seance-${seance.id}@adhesion`,
+        `DTSTAMP:${maintenant}`,
+        `DTSTART;TZID=Europe/Paris:${this.dateGoogleAgenda(seance.debut)}`,
+        `DTEND;TZID=Europe/Paris:${this.dateGoogleAgenda(seance.fin)}`,
+        `SUMMARY:${this.echapperIcs(seance.activiteNom)}`,
+        description ? `DESCRIPTION:${this.echapperIcs(description)}` : '',
+        seance.adresseSalle || seance.salle ? `LOCATION:${this.echapperIcs(seance.adresseSalle || seance.salle)}` : '',
+        'END:VEVENT'
+      ].filter(Boolean).join('\r\n');
+    });
+    return [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Adhesion//Séances//FR',
+      'CALSCALE:GREGORIAN',
+      'X-WR-CALNAME:Séances',
+      'X-WR-TIMEZONE:Europe/Paris',
+      ...evenements,
+      'END:VCALENDAR',
+      ''
+    ].join('\r\n');
+  }
+
+  private echapperIcs(valeur: string): string {
+    return valeur
+      .replace(/\\/g, '\\\\')
+      .replace(/\r?\n/g, '\\n')
+      .replace(/;/g, '\\;')
+      .replace(/,/g, '\\,');
+  }
 
   private premierJourSemaineCourante(): Date {
     const debut = new Date(this.dateAffichee);
