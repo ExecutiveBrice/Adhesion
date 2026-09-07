@@ -59,11 +59,14 @@
 }
 
 .activity-group-name {
+  display: block;
+  width: 100%;
   padding: .55rem 1rem .35rem;
   color: #42685c;
   font-size: .75rem;
   font-weight: 700;
   letter-spacing: .04em;
+  text-align: left;
   text-transform: uppercase;
 }
 

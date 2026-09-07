@@ -103,7 +103,10 @@
                   <button ngbDropdownItem (click)="selectSection('Toutes', 'Toutes les adhésions')">Toutes les adhésions</button>
                   @for (groupe of groupesActivites; track groupe.nom) {
                     <div class="activity-group">
-                      <div class="activity-group-name">{{groupe.nom}}</div>
+                      <button ngbDropdownItem class="activity-group-name"
+                        (click)="selectSection('groupe#' + groupe.filtre, groupe.nom + ' · Toutes les activités')">
+                        {{groupe.nom}}
+                      </button>
                       @for (activite of groupe.activites; track activite.nom) {
                         <div class="section-group">
                           <button ngbDropdownItem class="section-name"

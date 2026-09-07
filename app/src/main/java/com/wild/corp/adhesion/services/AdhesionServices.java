@@ -62,14 +62,22 @@ public class AdhesionServices {
     PdfService pdfService;
 
     public List<Adhesion> getLiteBySection(String section) {
-        String[] sections = section.split("#");
+        String[] sections = section.split("#", 2);
 
-        if (sections[0].equals("activite")) {
+        if (sections.length == 2 && sections[0].equals("activite")) {
             return adhesionRepository.findByActiviteNom(sections[1]).stream()
                     .sorted(Comparator.comparing((Adhesion a) -> a.getAdherent().getNom())
                             .thenComparing(a -> a.getAdherent().getPrenom()))
                     .collect(Collectors.toList());
-        } else if (sections[0].equals("horaire")) {
+        } else if (sections.length == 2 && sections[0].equals("groupe")) {
+            return adhesionRepository.findAll().stream()
+                    .filter(adhesion -> StringUtils.hasText(sections[1])
+                            ? Objects.equals(adhesion.getActivite().getGroupeFiltre(), sections[1])
+                            : adhesion.getActivite().getGroupeFiltre() == null)
+                    .sorted(Comparator.comparing((Adhesion a) -> a.getAdherent().getNom())
+                            .thenComparing(a -> a.getAdherent().getPrenom()))
+                    .collect(Collectors.toList());
+        } else if (sections.length == 2 && sections[0].equals("horaire")) {
             return adhesionRepository.findAll().stream()
                     .filter(adhesion -> adhesion.getActivite().getId().equals(Long.parseLong(sections[1])))
                     .sorted(Comparator.comparing((Adhesion a) -> a.getAdherent().getNom())
@@ -148,6 +156,10 @@ public class AdhesionServices {
         if (sections.length == 2 && sections[0].equals("activite")) {
             specification = specification.and((root, query, criteriaBuilder) ->
                     criteriaBuilder.equal(root.get("activite").get("nom"), sections[1]));
+        } else if (sections.length == 2 && sections[0].equals("groupe")) {
+            specification = specification.and((root, query, criteriaBuilder) -> StringUtils.hasText(sections[1])
+                    ? criteriaBuilder.equal(root.get("activite").get("groupeFiltre"), sections[1])
+                    : criteriaBuilder.isNull(root.get("activite").get("groupeFiltre")));
         } else if (sections.length == 2 && sections[0].equals("horaire")) {
             Long activiteId = Long.parseLong(sections[1]);
             specification = specification.and((root, query, criteriaBuilder) ->

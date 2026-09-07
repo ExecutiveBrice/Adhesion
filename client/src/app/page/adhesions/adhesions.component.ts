@@ -34,6 +34,7 @@ import { OrderByPipe } from '../../_helpers/sort.pipe';
 
 interface GroupeActivites {
   nom: string;
+  filtre: string;
   activites: ActiviteDropDown[];
 }
 
@@ -133,7 +134,7 @@ export class AdhesionsComponent implements OnInit {
       this.showAdmin = this.tokenStorageService.getUser().roles.includes('ROLE_ADMIN');
       this.showSecretaire = this.tokenStorageService.getUser().roles.includes('ROLE_SECRETAIRE');
       if (this.tokenStorageService.getUser().username == "alodbasket@free.fr" || this.tokenStorageService.getUser().username == "laurence.basket@yahoo.com" || this.tokenStorageService.getUser().username == "xlcharonnat@yahoo.fr" || this.tokenStorageService.getUser().username == "c.rullie@free.fr") {
-        this.choixSection = "activite#Basket"
+        this.choixSection = "groupe#Basket"
         this.visuelselection = "Basket · Toutes les catégories"
       } else {
         this.choixSection = "Toutes"
@@ -292,6 +293,7 @@ export class AdhesionsComponent implements OnInit {
     return [...groupes.entries()]
       .map(([nom, activites]) => ({
         nom,
+        filtre: nom === 'Sans groupe' ? '' : nom,
         activites: [...activites].sort((a, b) => collator.compare(a.nom, b.nom))
       }))
       .sort((a, b) => collator.compare(a.nom, b.nom));
