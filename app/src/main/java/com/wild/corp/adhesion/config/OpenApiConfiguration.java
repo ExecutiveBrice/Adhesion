@@ -38,9 +38,10 @@ public class OpenApiConfiguration {
                         "/tribu/getTribuByUuid",
                         "/user/getUserByMail",
                         "/activite/*/seances",
-                        "/activite/calendrier",
                         "/activite/calendrier/**",
-                        "/param/agendas"
+                        "/param/agendas",
+                        "/tribu/getTribuByUuid",
+                        "/seance"
                 };
                 return GroupedOpenApi.builder().group("2-FicheAdhérent").pathsToMatch(paths)
                         .build();

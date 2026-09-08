@@ -2,6 +2,7 @@ package com.wild.corp.adhesion.services;
 
 import com.wild.corp.adhesion.models.*;
 import com.wild.corp.adhesion.models.resources.SeanceCalendrierResponse;
+import com.wild.corp.adhesion.models.resources.SeanceResponse;
 import com.wild.corp.adhesion.repository.SeanceRepository;
 import com.wild.corp.adhesion.repository.SalleRepository;
 import jakarta.transaction.Transactional;
@@ -66,23 +67,65 @@ public class SeanceServices {
     }
 
     public List<SeanceCalendrierResponse> getCalendrier(LocalDate dateDebut, LocalDate dateFin, UUID tribuUuid) {
+        return getCalendrier(dateDebut, dateFin, tribuUuid, null);
+    }
+
+    public List<SeanceCalendrierResponse> getCalendrierForAdherent(LocalDate dateDebut, LocalDate dateFin,
+                                                                     Long adherentId) {
+        if (adherentId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "L'adhérent est obligatoire");
+        }
+        return getCalendrier(dateDebut, dateFin, null, adherentId);
+    }
+
+    /**
+     * Returns session objects for one member and period. The session id is kept in the
+     * response so that a presence can later be updated for a selected session.
+     */
+    public List<SeanceResponse> getSeancesForAdherent(LocalDate dateDebut, LocalDate dateFin, Long adherentId) {
+        if (adherentId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "L'adhérent est obligatoire");
+        }
+        validatePeriod(dateDebut, dateFin);
+
+        LocalDateTime debut = dateDebut.atStartOfDay();
+        LocalDateTime fin = dateFin.plusDays(1).atStartOfDay();
+        List<String> statutsExclus = List.of(Status.LISTE_ATTENTE.label, Status.ANNULEE.label);
+        return seanceRepository.findAllByAdherentAndStatutNonExcluAndDebutBetweenOrderByDebut(
+                        adherentId, statutsExclus, debut, fin)
+                .stream()
+                .map(seance -> SeanceResponse.from(seance, adherentId))
+                .toList();
+    }
+
+    private List<SeanceCalendrierResponse> getCalendrier(LocalDate dateDebut, LocalDate dateFin, UUID tribuUuid,
+                                                          Long adherentId) {
+        validatePeriod(dateDebut, dateFin);
+
+        LocalDateTime debut = dateDebut.atStartOfDay();
+        LocalDateTime fin = dateFin.plusDays(1).atStartOfDay();
+        List<String> statutsExclus = List.of(Status.LISTE_ATTENTE.label, Status.ANNULEE.label);
+        List<Seance> seances = adherentId != null
+                ? seanceRepository.findAllByAdherentAndStatutNonExcluAndDebutBetweenOrderByDebut(
+                    adherentId, statutsExclus, debut, fin)
+                : tribuUuid == null
+                    ? seanceRepository.findAllByDebutGreaterThanEqualAndDebutLessThanOrderByDebut(debut, fin)
+                    : seanceRepository.findAllByTribuAndStatutNonExcluAndDebutBetweenOrderByDebut(
+                    tribuUuid,
+                    statutsExclus, debut, fin);
+        return seances
+                .stream()
+                .map(SeanceCalendrierResponse::from)
+                .toList();
+    }
+
+    private void validatePeriod(LocalDate dateDebut, LocalDate dateFin) {
         if (dateDebut == null || dateFin == null || dateFin.isBefore(dateDebut)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La période du calendrier est invalide");
         }
         if (ChronoUnit.DAYS.between(dateDebut, dateFin) > 370) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La période du calendrier est limitée à un an");
         }
-
-        List<Seance> seances = tribuUuid == null
-                ? seanceRepository.findAllByDebutGreaterThanEqualAndDebutLessThanOrderByDebut(dateDebut.atStartOfDay(), dateFin.plusDays(1).atStartOfDay())
-                : seanceRepository.findAllByTribuAndStatutNonExcluAndDebutBetweenOrderByDebut(
-                    tribuUuid,
-                    List.of(Status.LISTE_ATTENTE.label, Status.ANNULEE.label),
-                    dateDebut.atStartOfDay(), dateFin.plusDays(1).atStartOfDay());
-        return seances
-                .stream()
-                .map(SeanceCalendrierResponse::from)
-                .toList();
     }
 
     public int realiserSeancesDu(LocalDate date) {

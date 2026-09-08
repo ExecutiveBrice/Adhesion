@@ -1,16 +1,28 @@
 package com.wild.corp.adhesion.services;
 
 import com.wild.corp.adhesion.models.Accord;
+import com.wild.corp.adhesion.models.Activite;
+import com.wild.corp.adhesion.models.ActiviteNm1;
 import com.wild.corp.adhesion.models.Adherent;
+import com.wild.corp.adhesion.models.Adhesion;
+import com.wild.corp.adhesion.models.User;
+import com.wild.corp.adhesion.models.resources.AdherentExport;
 import com.wild.corp.adhesion.models.resources.AdherentLite;
+import com.wild.corp.adhesion.repository.AdherentRepository;
 import org.springframework.web.server.ResponseStatusException;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
+import static com.wild.corp.adhesion.utils.Status.VALIDEE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class AdherentServicesTest {
 
@@ -68,5 +80,45 @@ class AdherentServicesTest {
         assertThatThrownBy(() -> adherentServices.saveNewAdherent(new AdherentLite()))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Tribu obligatoire");
+    }
+
+    @Test
+    void includesPreviousSeasonActivitiesInTheExport() {
+        Activite activite = new Activite();
+        activite.setNom("Danse");
+        activite.setHoraire("Majeur");
+
+        Adhesion adhesion = new Adhesion();
+        adhesion.setActivite(activite);
+        adhesion.setStatutActuel(VALIDEE.label);
+
+        ActiviteNm1 yoga = new ActiviteNm1();
+        yoga.setNom("Yoga");
+        yoga.setHoraire("Majeur");
+        ActiviteNm1 natation = new ActiviteNm1();
+        natation.setNom("Natation");
+        natation.setHoraire("Mineur");
+
+        User user = new User();
+        user.setUsername("alice@example.test");
+        Adherent adherent = new Adherent();
+        adherent.setId(1L);
+        adherent.setPrenom("Alice");
+        adherent.setNom("Martin");
+        adherent.setMineur(false);
+        adherent.setUser(user);
+        adherent.setAdhesions(new HashSet<>(List.of(adhesion)));
+        adherent.setActivitesNm1(new ArrayList<>(List.of(yoga, natation)));
+
+        AdherentRepository repository = mock(AdherentRepository.class);
+        when(repository.findAll()).thenReturn(List.of(adherent));
+        ReflectionTestUtils.setField(adherentServices, "adherentRepository", repository);
+
+        List<AdherentExport> exports = adherentServices.getAllExportFlat();
+
+        assertThat(exports).singleElement().satisfies(export -> {
+            assertThat(export.getActivite1()).isEqualTo("Danse Majeur");
+            assertThat(export.getActivitesNm1()).isEqualTo("Yoga Majeur, Natation Mineur");
+        });
     }
 }

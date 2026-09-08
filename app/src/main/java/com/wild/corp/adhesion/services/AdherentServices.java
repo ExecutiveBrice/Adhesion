@@ -499,6 +499,9 @@ public class AdherentServices {
                 if (tmpAdhesions.size() > 4) {
                     adherentExport.setActivite5(tmpAdhesions.get(4).getActivite().getNom() + " " + tmpAdhesions.get(4).getActivite().getHoraire());
                 }
+                adherentExport.setActivitesNm1(adherent.getActivitesNm1().stream()
+                        .map(activite -> activite.getNom() + " " + activite.getHoraire())
+                        .collect(Collectors.joining(", ")));
 
 
                 adherentExports.add(adherentExport);

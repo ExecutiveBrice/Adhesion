@@ -20,5 +20,6 @@ export class AdherentExport {
   activite3!: string
   activite4!: string;
   activite5!: string;
+  activitesNm1!: string;
 
 }

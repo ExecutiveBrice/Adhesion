@@ -30,5 +30,6 @@ public class AdherentExport {
     private String activite3;
     private String activite4;
     private String activite5;
+    private String activitesNm1;
 
 }

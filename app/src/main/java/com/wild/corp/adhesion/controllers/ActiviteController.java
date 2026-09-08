@@ -81,8 +81,11 @@ ActiviteServices activiteServices;
 	public ResponseEntity<List<SeanceCalendrierResponse>> getCalendrier(
 			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
 			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin,
+			@RequestParam(required = false) Long adherentId,
 			@RequestParam(required = false) java.util.UUID tribuUuid) {
-		return ResponseEntity.ok(seanceServices.getCalendrier(dateDebut, dateFin, tribuUuid));
+		return ResponseEntity.ok(adherentId == null
+				? seanceServices.getCalendrier(dateDebut, dateFin, tribuUuid)
+				: seanceServices.getCalendrierForAdherent(dateDebut, dateFin, adherentId));
 	}
 
 	@ApiResponses(value = {

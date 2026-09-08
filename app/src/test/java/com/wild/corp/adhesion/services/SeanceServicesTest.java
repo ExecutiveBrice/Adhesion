@@ -1,10 +1,15 @@
 package com.wild.corp.adhesion.services;
 
 import com.wild.corp.adhesion.models.Activite;
+import com.wild.corp.adhesion.models.Adherent;
+import com.wild.corp.adhesion.models.Adhesion;
 import com.wild.corp.adhesion.models.ESeance;
+import com.wild.corp.adhesion.models.Presence;
 import com.wild.corp.adhesion.models.Salle;
 import com.wild.corp.adhesion.models.Seance;
+import com.wild.corp.adhesion.models.resources.SeanceResponse;
 import com.wild.corp.adhesion.repository.SeanceRepository;
+import com.wild.corp.adhesion.utils.Status;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
 import org.wild.corp.adhesion.client.vacances.api.DatasetApi;
@@ -23,6 +28,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -110,6 +116,85 @@ class SeanceServicesTest {
         Seance seance = service.addFirstSeance(activite, LocalDate.of(2026, 9, 7));
 
         assertThat(seance.getSalle()).isSameAs(salle);
+    }
+
+    @Test
+    void returnsOnlySessionsForTheRequestedAdherent() {
+        SeanceRepository repository = mock(SeanceRepository.class);
+        Activite activite = new Activite();
+        activite.setNom("Yoga");
+        Seance seance = new Seance();
+        seance.setId(15L);
+        seance.setActivite(activite);
+        seance.setDebut(LocalDateTime.of(2026, 9, 8, 18, 0));
+        seance.setFin(LocalDateTime.of(2026, 9, 8, 19, 0));
+
+        LocalDateTime debut = LocalDateTime.of(2026, 9, 1, 0, 0);
+        LocalDateTime fin = LocalDateTime.of(2026, 10, 1, 0, 0);
+        List<String> statutsExclus = List.of(Status.LISTE_ATTENTE.label, Status.ANNULEE.label);
+        when(repository.findAllByAdherentAndStatutNonExcluAndDebutBetweenOrderByDebut(
+                9L, statutsExclus, debut, fin)).thenReturn(List.of(seance));
+        SeanceServices service = serviceWithRepository(repository);
+
+        var calendrier = service.getCalendrierForAdherent(
+                LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30), 9L);
+
+        assertThat(calendrier).extracting(evenement -> evenement.id()).containsExactly(15L);
+        verify(repository).findAllByAdherentAndStatutNonExcluAndDebutBetweenOrderByDebut(
+                9L, statutsExclus, debut, fin);
+        verify(repository, never()).findAllByTribuAndStatutNonExcluAndDebutBetweenOrderByDebut(
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void returnsSessionObjectsForTheRequestedAdherentAndPeriod() {
+        SeanceRepository repository = mock(SeanceRepository.class);
+        Seance seance = new Seance();
+        seance.setId(15L);
+        seance.setEtatSeance(ESeance.PROGRAMMEE);
+        seance.setDebut(LocalDateTime.of(2026, 9, 8, 18, 0));
+        seance.setFin(LocalDateTime.of(2026, 9, 8, 19, 0));
+        Adherent adherent = new Adherent();
+        adherent.setId(9L);
+        Adhesion adhesion = new Adhesion();
+        adhesion.setAdherent(adherent);
+        Presence presence = new Presence();
+        presence.setId(22L);
+        presence.setAdhesion(adhesion);
+        presence.setSeance(seance);
+        presence.setPresence(false);
+        Adherent autreAdherent = new Adherent();
+        autreAdherent.setId(10L);
+        Adhesion autreAdhesion = new Adhesion();
+        autreAdhesion.setAdherent(autreAdherent);
+        Presence autrePresence = new Presence();
+        autrePresence.setId(23L);
+        autrePresence.setAdhesion(autreAdhesion);
+        autrePresence.setSeance(seance);
+        autrePresence.setPresence(true);
+        seance.getPresences().add(autrePresence);
+        seance.getPresences().add(presence);
+
+        LocalDateTime debut = LocalDateTime.of(2026, 9, 1, 0, 0);
+        LocalDateTime fin = LocalDateTime.of(2026, 10, 1, 0, 0);
+        List<String> statutsExclus = List.of(Status.LISTE_ATTENTE.label, Status.ANNULEE.label);
+        when(repository.findAllByAdherentAndStatutNonExcluAndDebutBetweenOrderByDebut(
+                9L, statutsExclus, debut, fin)).thenReturn(List.of(seance));
+        SeanceServices service = serviceWithRepository(repository);
+
+        List<SeanceResponse> seances = service.getSeancesForAdherent(
+                LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30), 9L);
+
+        assertThat(seances).singleElement().satisfies(response -> {
+            assertThat(response.id()).isEqualTo(15L);
+            assertThat(response.debut()).isEqualTo(LocalDateTime.of(2026, 9, 8, 18, 0));
+            assertThat(response.fin()).isEqualTo(LocalDateTime.of(2026, 9, 8, 19, 0));
+            assertThat(response.presence()).isSameAs(presence);
+            assertThat(response.presence().getPresence()).isFalse();
+        });
+        verify(repository).findAllByAdherentAndStatutNonExcluAndDebutBetweenOrderByDebut(
+                9L, statutsExclus, debut, fin);
     }
 
     @Test
