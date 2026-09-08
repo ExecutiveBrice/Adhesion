@@ -22,6 +22,7 @@
             <div class="col-12 col-lg-3"><label class="form-label" for="nouvelAgendaNom">Nom de l’agenda</label><input id="nouvelAgendaNom" type="text" class="form-control" maxlength="100" [(ngModel)]="nouvelAgendaNom" placeholder="Ex. Événements de l’ALOD"></div>
             <div class="col-12 col-lg"><label class="form-label" for="nouvelAgendaSource">Identifiant ou URL publique</label><input id="nouvelAgendaSource" type="text" class="form-control" [(ngModel)]="nouvelAgendaSource" (keydown.enter)="ajouterAgenda()" placeholder="exemple@group.calendar.google.com"></div>
             <div class="col-6 col-sm-3 col-lg-2"><label class="form-label" for="nouvelAgendaCouleur">Couleur</label><input id="nouvelAgendaCouleur" type="color" class="form-control form-control-color w-100" [(ngModel)]="nouvelAgendaCouleur" title="Choisir la couleur du nouvel agenda"></div>
+            <div class="col-6 col-sm-auto"><div class="form-check mb-2"><input id="nouvelAgendaVisibleApp" type="checkbox" class="form-check-input" [(ngModel)]="nouvelAgendaVisibleApp"><label class="form-check-label" for="nouvelAgendaVisibleApp">Visible dans l’application</label></div></div>
             <div class="col-12 col-sm-auto"><button type="button" class="btn btn-primary w-100" [disabled]="agendaEnregistrement || agendasGoogle.length >= 10" (click)="ajouterAgenda()"><fa-icon [icon]="faPlus" class="me-1"></fa-icon>Ajouter</button></div>
           </div></div>
 
@@ -33,6 +34,7 @@
                   <div class="col-12 col-md-4 col-xl-3"><label class="form-label" [for]="'agendaNom' + index">Nom</label><input [id]="'agendaNom' + index" type="text" class="form-control" maxlength="100" [(ngModel)]="agenda.nom"></div>
                   <div class="col-12 col-md col-xl"><label class="form-label" [for]="'agendaSource' + index">Identifiant public</label><input [id]="'agendaSource' + index" type="text" class="form-control" [(ngModel)]="agenda.source"></div>
                   <div class="col-6 col-sm-3 col-md-2"><label class="form-label" [for]="'agendaCouleur' + index">Couleur</label><input [id]="'agendaCouleur' + index" type="color" class="form-control form-control-color w-100" [(ngModel)]="agenda.couleur" [title]="'Couleur de l’agenda ' + (index + 1)"></div>
+                  <div class="col-6 col-sm-auto"><div class="form-check mb-2"><input [id]="'agendaVisibleApp' + index" type="checkbox" class="form-check-input" [(ngModel)]="agenda.isVisisbleApp"><label class="form-check-label" [for]="'agendaVisibleApp' + index">Visible dans l’application</label></div></div>
                   <div class="col-6 col-sm-auto"><button type="button" class="btn btn-outline-danger w-100" [disabled]="agendaEnregistrement" (click)="supprimerAgenda(index)" [attr.aria-label]="'Supprimer l’agenda ' + (index + 1)" ngbTooltip="Supprimer cet agenda"><fa-icon [icon]="faTrash"></fa-icon><span class="d-sm-none ms-1">Supprimer</span></button></div>
                 </div></div>
               }

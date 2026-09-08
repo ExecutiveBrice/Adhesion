@@ -5,16 +5,24 @@ import com.wild.corp.adhesion.models.ParamNumber;
 import com.wild.corp.adhesion.models.ParamText;
 import com.wild.corp.adhesion.models.resources.AgendaGoogleConfiguration;
 import com.wild.corp.adhesion.models.resources.SalleConfiguration;
+import com.wild.corp.adhesion.models.resources.SeanceResponse;
 import com.wild.corp.adhesion.services.GoogleAgendaConfigurationServices;
 import com.wild.corp.adhesion.services.ParamBooleanServices;
 import com.wild.corp.adhesion.services.ParamNumberServices;
 import com.wild.corp.adhesion.services.ParamTextServices;
 import com.wild.corp.adhesion.services.SalleConfigurationServices;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Slf4j
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -37,8 +45,15 @@ public class ParamController {
 	@Autowired
 	SalleConfigurationServices salleConfigurationServices;
 
+	@ApiResponses(value = {
+			@ApiResponse(
+					responseCode = "200",
+					description = "successful operation",
+					content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = AgendaGoogleConfiguration.class)))
+			),
+	})
 	@GetMapping("/agendas")
-	public ResponseEntity<?> getAgendas() {
+	public ResponseEntity<List<AgendaGoogleConfiguration>> getAgendas() {
 		return ResponseEntity.ok(googleAgendaConfigurationServices.getAll());
 	}
 

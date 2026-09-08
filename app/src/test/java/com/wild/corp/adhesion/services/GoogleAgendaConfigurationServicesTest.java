@@ -48,10 +48,11 @@ class GoogleAgendaConfigurationServicesTest {
                 null,
                 "Événements ALOD",
                 "https://calendar.google.com/calendar/embed?src=demo%40group.calendar.google.com",
-                "#a1b2c3"));
+                "#a1b2c3",
+                true));
 
         assertThat(agenda).isEqualTo(new AgendaGoogleConfiguration(
-                12L, "Événements ALOD", "demo@group.calendar.google.com", "#A1B2C3"));
+                12L, "Événements ALOD", "demo@group.calendar.google.com", "#A1B2C3", true));
     }
 
     @Test
@@ -61,16 +62,18 @@ class GoogleAgendaConfigurationServicesTest {
                 .nom("Ancien nom")
                 .source("ancien@group.calendar.google.com")
                 .couleur("#4285F4")
+                .isVisisbleApp(true)
                 .build();
         when(googleAgendaRepository.findById(8L)).thenReturn(Optional.of(agenda));
         when(googleAgendaRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         AgendaGoogleConfiguration resultat = service.update(8L, new AgendaGoogleConfiguration(
-                8L, "Nouvel agenda", "nouveau@group.calendar.google.com", "#DB4437"));
+                8L, "Nouvel agenda", "nouveau@group.calendar.google.com", "#DB4437", false));
 
         assertThat(resultat.nom()).isEqualTo("Nouvel agenda");
         assertThat(resultat.source()).isEqualTo("nouveau@group.calendar.google.com");
         assertThat(resultat.couleur()).isEqualTo("#DB4437");
+        assertThat(resultat.isVisisbleApp()).isFalse();
     }
 
     @Test
@@ -87,7 +90,7 @@ class GoogleAgendaConfigurationServicesTest {
     @Test
     void rejectsMissingNamesAndInvalidColors() {
         assertThatThrownBy(() -> service.create(new AgendaGoogleConfiguration(
-                null, "", "demo@group.calendar.google.com", "blue")))
+                null, "", "demo@group.calendar.google.com", "blue", true)))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("nom");
     }

@@ -63,6 +63,7 @@ public class GoogleAgendaConfigurationServices {
                 .nom(normalisee.nom())
                 .source(normalisee.source())
                 .couleur(normalisee.couleur())
+                .isVisisbleApp(normalisee.isVisisbleApp())
                 .build();
         return toConfiguration(googleAgendaRepository.save(agenda));
     }
@@ -78,6 +79,7 @@ public class GoogleAgendaConfigurationServices {
         agenda.setNom(normalisee.nom());
         agenda.setSource(normalisee.source());
         agenda.setCouleur(normalisee.couleur());
+        agenda.setVisisbleApp(normalisee.isVisisbleApp());
         return toConfiguration(googleAgendaRepository.save(agenda));
     }
 
@@ -101,7 +103,7 @@ public class GoogleAgendaConfigurationServices {
         if (couleur == null || !couleur.matches("#[0-9a-fA-F]{6}")) {
             throw configurationInvalide("La couleur de l'agenda doit être au format hexadécimal");
         }
-        return new AgendaGoogleConfiguration(null, nom, source, couleur.toUpperCase(Locale.ROOT));
+        return new AgendaGoogleConfiguration(null, nom, source, couleur.toUpperCase(Locale.ROOT), configuration.isVisisbleApp());
     }
 
     private void migrerAncienneConfiguration() {
@@ -128,6 +130,7 @@ public class GoogleAgendaConfigurationServices {
                         .nom(nom.substring(0, Math.min(nom.length(), 100)))
                         .source(source)
                         .couleur(couleur)
+                        .isVisisbleApp(true)
                         .build());
             } catch (ResponseStatusException ignored) {
                 // Une ancienne ligne invalide ne doit pas bloquer les autres agendas.
@@ -153,7 +156,8 @@ public class GoogleAgendaConfigurationServices {
                                 null,
                                 noeud.path("nom").asText(""),
                                 noeud.path("source").asText(""),
-                                noeud.path("couleur").asText("")));
+                                noeud.path("couleur").asText(""),
+                                noeud.path("isVisisbleApp").asBoolean(true)));
                     }
                 }
             } catch (Exception ignored) {
@@ -165,7 +169,7 @@ public class GoogleAgendaConfigurationServices {
                 if (!sources[index].isBlank()) {
                     configurations.add(new AgendaGoogleConfiguration(
                             null, "", sources[index].trim(),
-                            COULEURS_PAR_DEFAUT[index % COULEURS_PAR_DEFAUT.length]));
+                            COULEURS_PAR_DEFAUT[index % COULEURS_PAR_DEFAUT.length], true));
                 }
             }
         }
@@ -179,7 +183,7 @@ public class GoogleAgendaConfigurationServices {
 
     private AgendaGoogleConfiguration toConfiguration(GoogleAgenda agenda) {
         return new AgendaGoogleConfiguration(
-                agenda.getId(), agenda.getNom(), agenda.getSource(), agenda.getCouleur());
+                agenda.getId(), agenda.getNom(), agenda.getSource(), agenda.getCouleur(), agenda.isVisisbleApp());
     }
 
     private ResponseStatusException configurationInvalide(String message) {

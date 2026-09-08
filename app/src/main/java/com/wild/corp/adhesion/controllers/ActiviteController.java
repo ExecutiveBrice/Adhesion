@@ -1,12 +1,16 @@
 package com.wild.corp.adhesion.controllers;
 
 import com.wild.corp.adhesion.models.Activite;
-import com.wild.corp.adhesion.models.resources.AjoutSeancesRequest;
-import com.wild.corp.adhesion.models.resources.MiseAJourSeanceRequest;
-import com.wild.corp.adhesion.models.resources.SeanceResponse;
+import com.wild.corp.adhesion.models.User;
+import com.wild.corp.adhesion.models.resources.*;
 import com.wild.corp.adhesion.services.ActiviteServices;
 import com.wild.corp.adhesion.services.GoogleAgendaServices;
 import com.wild.corp.adhesion.services.SeanceServices;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.websocket.server.PathParam;
 import lombok.extern.slf4j.Slf4j;
@@ -61,30 +65,52 @@ ActiviteServices activiteServices;
 
 	@GetMapping("/seancesDuJour")
 	@PreAuthorize("hasRole('USER')")
-	public ResponseEntity<?> getSeancesDuJourForAcivite( @RequestParam(value="activiteId") Long activiteId) {
+	public ResponseEntity<?> getSeancesDuJour( @RequestParam(value="activiteId") Long activiteId) {
 		log.info("getAllCours for activite " + activiteId );
 		return ResponseEntity.ok(activiteServices.getSeancesDuJour(activiteId));
 	}
 
+	@ApiResponses(value = {
+			@ApiResponse(
+					responseCode = "200",
+					description = "successful operation",
+					content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = SeanceCalendrierResponse.class)))
+			),
+	})
 	@GetMapping("/calendrier")
-	public ResponseEntity<?> getCalendrier(
+	public ResponseEntity<List<SeanceCalendrierResponse>> getCalendrier(
 			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
 			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin,
 			@RequestParam(required = false) java.util.UUID tribuUuid) {
 		return ResponseEntity.ok(seanceServices.getCalendrier(dateDebut, dateFin, tribuUuid));
 	}
 
+	@ApiResponses(value = {
+			@ApiResponse(
+					responseCode = "200",
+					description = "successful operation",
+					content = @Content(mediaType = "application/json", schema = @Schema(implementation = CalendrierGoogleResponse.class))
+			),
+	})
 	@GetMapping("/calendrier/google")
-	public ResponseEntity<?> getCalendrierGoogle(
+	public ResponseEntity<CalendrierGoogleResponse> getCalendrierGoogle(
 			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
 			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin,
 			@RequestParam("source") List<String> sources) {
 		return ResponseEntity.ok(googleAgendaServices.getCalendrier(dateDebut, dateFin, sources));
 	}
 
+
+	@ApiResponses(value = {
+			@ApiResponse(
+					responseCode = "200",
+					description = "successful operation",
+					content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = SeanceResponse.class)))
+			),
+	})
 	@GetMapping("/{activiteId}/seances")
 	@PreAuthorize("hasRole('USER')")
-	public ResponseEntity<?> getSeances(@PathVariable Long activiteId) {
+	public ResponseEntity<List<SeanceResponse>> getSeances(@PathVariable Long activiteId) {
 		return ResponseEntity.ok(activiteServices.getSeances(activiteId));
 	}
 

@@ -53,6 +53,7 @@ export class BoardAdminComponent implements OnInit {
   nouvelAgendaNom = '';
   nouvelAgendaSource = '';
   nouvelAgendaCouleur = '#4285F4';
+  nouvelAgendaVisibleApp = true;
   agendaEnregistrement = false;
   agendaMessage = '';
   agendaErreur = '';
@@ -197,13 +198,15 @@ export class BoardAdminComponent implements OnInit {
     this.paramService.createAgendaGoogle({
       nom,
       source,
-      couleur: this.nouvelAgendaCouleur
+      couleur: this.nouvelAgendaCouleur,
+      isVisisbleApp: this.nouvelAgendaVisibleApp
     }).subscribe({
       next: agenda => {
         this.agendasGoogle = [...this.agendasGoogle, agenda].sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
         this.nouvelAgendaNom = '';
         this.nouvelAgendaSource = '';
         this.nouvelAgendaCouleur = this.prochaineCouleur();
+        this.nouvelAgendaVisibleApp = true;
         this.agendaEnregistrement = false;
         this.agendaMessage = 'Agenda ajouté.';
       },

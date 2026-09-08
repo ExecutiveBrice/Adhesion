@@ -77,8 +77,8 @@ export class CalendrierComponent implements OnInit, OnChanges {
   chargerConfigurationAgendas(): void {
     this.paramService.getAgendasGoogle().subscribe({
       next: agendas => {
-        this.agendasGoogle = agendas;
-        this.googleAgendaIds = agendas.map(agenda => agenda.source);
+        this.agendasGoogle = agendas.filter(agenda => agenda.isVisisbleApp);
+        this.googleAgendaIds = this.agendasGoogle.map(agenda => agenda.source);
         this.chargerCalendrier();
       },
       error: () => {

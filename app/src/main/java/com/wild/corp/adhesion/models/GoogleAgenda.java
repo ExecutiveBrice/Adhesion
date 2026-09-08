@@ -34,4 +34,7 @@ public class GoogleAgenda {
 
     @Column(nullable = false, length = 7)
     private String couleur;
+
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean isVisisbleApp = true;
 }

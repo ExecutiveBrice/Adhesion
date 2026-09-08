@@ -4,6 +4,7 @@ public record AgendaGoogleConfiguration(
         Long id,
         String nom,
         String source,
-        String couleur
+        String couleur,
+        boolean isVisisbleApp
 ) {
 }

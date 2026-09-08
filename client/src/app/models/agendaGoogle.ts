@@ -3,4 +3,5 @@ export interface AgendaGoogleConfiguration {
   nom: string;
   source: string;
   couleur: string;
+  isVisisbleApp: boolean;
 }
