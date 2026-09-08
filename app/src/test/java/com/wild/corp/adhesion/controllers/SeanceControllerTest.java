@@ -52,7 +52,7 @@ class SeanceControllerTest {
                 .thenReturn(List.of(new SeanceResponse(
                         15L, ESeance.PROGRAMMEE, null,
                         LocalDateTime.of(2026, 9, 8, 18, 0),
-                        LocalDateTime.of(2026, 9, 8, 19, 0), null, null, presence)));
+                        LocalDateTime.of(2026, 9, 8, 19, 0), null, null, presence, null)));
 
         mockMvc.perform(get("/seance")
                         .param("dateDebut", "2026-09-01")
