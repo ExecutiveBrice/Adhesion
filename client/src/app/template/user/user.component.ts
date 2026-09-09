@@ -368,6 +368,9 @@ export class UserComponent implements OnInit {
 
 
   deleteDoc(file: Document) {
+    if (!this.hasPersistedAdherent()) {
+      return;
+    }
     this.fileService.delete(this.adherent.id, file.nom).subscribe(
       data => {
         this.adherent.documents = this.adherent.documents.filter(document => document != file.nom)
@@ -379,6 +382,9 @@ export class UserComponent implements OnInit {
     );
   }
   fillFiles() {
+    if (!this.hasPersistedAdherent()) {
+      return;
+    }
     this.fileService.getAllFilesName(this.adherent.id).subscribe(data => {
       this.adherent.documents = data
     },
@@ -389,6 +395,9 @@ export class UserComponent implements OnInit {
     );
   }
   openEditModal(doc: string) {
+    if (!this.hasPersistedAdherent()) {
+      return;
+    }
     this.utilService.openModalPDF(doc, this.adherent.id).then((data) => {
       console.log(data)
       // on close
@@ -399,6 +408,10 @@ export class UserComponent implements OnInit {
   }
 
   openAddPDFModal(adherent: Adherent) {
+    if (!this.hasPersistedAdherent()) {
+      this.showWarning("Enregistrez d'abord l'adhérent avant d'ajouter un document");
+      return;
+    }
     this.utilService.openModalPDF(undefined, this.adherent.id).then((data: Document) => {
       console.log(data)
       this.uploadPDF(data)
@@ -410,6 +423,9 @@ export class UserComponent implements OnInit {
   }
 
   downloadPDF(file: string) {
+    if (!this.hasPersistedAdherent()) {
+      return;
+    }
     this.fileService.get(this.adherent.id, file).subscribe(res => {
 
       //window.open("data:application/pdf;base64," + data, '_self');
@@ -455,6 +471,10 @@ export class UserComponent implements OnInit {
       this.showError("Le fichier PDF n'a pas pu être lu");
       return;
     }
+    if (!this.hasPersistedAdherent()) {
+      this.showWarning("Enregistrez d'abord l'adhérent avant d'ajouter un document");
+      return;
+    }
 
     this.fileService.update(this.adherent.id, document.file).subscribe({
       next: () => {
@@ -468,6 +488,10 @@ export class UserComponent implements OnInit {
         this.showError(error.error?.message || error.message);
       }
     });
+  }
+
+  private hasPersistedAdherent(): boolean {
+    return Number.isInteger(this.adherent?.id) && this.adherent.id > 0;
   }
 
 

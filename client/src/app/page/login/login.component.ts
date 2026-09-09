@@ -72,6 +72,7 @@ export class LoginComponent implements OnInit {
   isresetFailed = false;
   oublieMDP = false;
   newInscription = false;
+  afficherInformations = true;
   errorMessage = '';
   reinitMDPDone = false;
   roles: string[] = [];

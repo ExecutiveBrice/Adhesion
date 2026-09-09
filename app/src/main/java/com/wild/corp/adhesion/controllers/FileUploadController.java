@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -93,7 +94,7 @@ public class FileUploadController {
 
     private Path resolveAdherentDirectory(String adherentId) {
         if (!adherentId.matches("\\d+")) {
-            throw new IllegalArgumentException("Identifiant adhérent invalide");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Identifiant adhérent invalide");
         }
         return imageStorageDir.toAbsolutePath().normalize().resolve(adherentId);
     }

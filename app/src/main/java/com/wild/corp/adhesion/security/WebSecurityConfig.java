@@ -13,6 +13,7 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,6 +21,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
+@EnableWebSecurity
 @EnableMethodSecurity
 public class WebSecurityConfig{
 
@@ -60,7 +62,7 @@ public class WebSecurityConfig{
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth ->
                         auth.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
-                                .requestMatchers(HttpMethod.POST, "/auth/signin", "/auth/reinitPassword", "/auth/changePassword").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/auth/signin", "/auth/signup", "/auth/reinitPassword", "/auth/changePassword").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/auth/confirmEmail/*").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/param/agendas", "/param/salles", "/param/allText", "/param/allBoolean", "/param/isClose").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/activite/calendrier", "/activite/calendrier/google").permitAll()

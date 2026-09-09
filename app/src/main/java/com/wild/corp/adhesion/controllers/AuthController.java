@@ -93,7 +93,6 @@ public class AuthController {
 	}
 
 	@PostMapping("/signup")
-	@PreAuthorize("hasAnyRole('SECRETAIRE', 'ADMIN')")
 	public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
 		signUpRequest.setUsername(signUpRequest.getUsername().toLowerCase());
 		if (userServices.existsByEmail(signUpRequest.getUsername())) {
