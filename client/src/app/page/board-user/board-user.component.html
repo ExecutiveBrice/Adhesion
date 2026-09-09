@@ -121,18 +121,18 @@
         </tbody>
       </table>
       @if (helloassoAlod3X) {
-<iframe  allowtransparency="true" scrolling="auto" src="https://www.helloasso.com/associations/amicale-laique-ouche-dinier-reze/adhesions/alod-2026-2027-paiement-en-3-fois/widget" style="width: 100%; height: 750px; border: none;" onload="window.addEventListener('message', function(e) { const dataHeight = e.data.height; const haWidgetElement = document.getElementById('haWidget');
-  if (dataHeight > parseFloat(haWidgetElement.height || 0)) { haWidgetElement.height = dataHeight + 'px';}})"></iframe>
-}
+      <iframe  allowtransparency="true" scrolling="auto" src="https://www.helloasso.com/associations/amicale-laique-ouche-dinier-reze/adhesions/alod-2026-2027-paiement-en-3-fois/widget" style="width: 100%; height: 750px; border: none;" onload="window.addEventListener('message', function(e) { const dataHeight = e.data.height; const haWidgetElement = document.getElementById('haWidget');
+        if (dataHeight > parseFloat(haWidgetElement.height || 0)) { haWidgetElement.height = dataHeight + 'px';}})"></iframe>
+      }
 
-      @if (helloassoAlod) {
-<iframe  allowtransparency="true" scrolling="auto" src="https://www.helloasso.com/associations/amicale-laique-ouche-dinier-reze/adhesions/alod-2026-2027/widget" style="width: 100%; height: 750px; border: none;" onload="window.addEventListener('message', function(e) { const dataHeight = e.data.height; const haWidgetElement = document.getElementById('haWidget');
-  if (dataHeight > parseFloat(haWidgetElement.height || 0)) { haWidgetElement.height = dataHeight + 'px';}})"></iframe>
-}
+            @if (helloassoAlod) {
+      <iframe  allowtransparency="true" scrolling="auto" src="https://www.helloasso.com/associations/amicale-laique-ouche-dinier-reze/adhesions/alod-2026-2027/widget" style="width: 100%; height: 750px; border: none;" onload="window.addEventListener('message', function(e) { const dataHeight = e.data.height; const haWidgetElement = document.getElementById('haWidget');
+        if (dataHeight > parseFloat(haWidgetElement.height || 0)) { haWidgetElement.height = dataHeight + 'px';}})"></iframe>
+      }
 
       @if (totalRestantDu != 0 && showHelloAsso && !majoration) {
-<div type='button'
-        class="btn btn-primary alod btn-independent" (click)="helloassoAlod = !helloassoAlod">Paiement via HelloAsso
+        <div type='button'
+          class="btn btn-primary alod btn-independent" (click)="helloassoAlod = !helloassoAlod">Paiement via HelloAsso
         </div>
       }
       @if (totalRestantDu != 0 && showHelloAsso3X && !majoration) {

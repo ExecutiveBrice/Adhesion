@@ -367,13 +367,13 @@ export class UserComponent implements OnInit {
 
 
 
-  deleteDoc(file: Document) {
+  deleteDoc(fileName: string) {
     if (!this.hasPersistedAdherent()) {
       return;
     }
-    this.fileService.delete(this.adherent.id, file.nom).subscribe(
+    this.fileService.delete(this.adherent.id, fileName).subscribe(
       data => {
-        this.adherent.documents = this.adherent.documents.filter(document => document != file.nom)
+        this.adherent.documents = this.adherent.documents.filter(document => document !== fileName)
       },
       error => {
         this.isFailed = true;
@@ -660,7 +660,7 @@ export class UserComponent implements OnInit {
     this.adherentService.regenerate(adherent.id).subscribe({
       next: (response) => {
         console.log(response)
-
+        this.fillFiles();
         this.showSuccess("La régénération de l'attestation de l'adhérent est terminée")
       },
       error: (error) => {
