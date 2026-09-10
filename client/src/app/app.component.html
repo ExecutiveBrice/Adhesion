@@ -101,4 +101,15 @@
       </ngb-toast>
     }
   </div>
+
+  @if (pwaService.canInstall()) {
+    <aside class="pwa-install-prompt" role="status" aria-live="polite">
+      <span>Installez ALOD pour y accéder rapidement, même avec une connexion limitée.</span>
+      <button type="button" class="btn btn-primary btn-sm" (click)="pwaService.install()">Installer</button>
+    </aside>
+  } @else if (pwaService.showIosInstallHint()) {
+    <aside class="pwa-install-prompt" role="status">
+      <span>Pour installer ALOD, ouvrez Partager puis « Sur l’écran d’accueil ».</span>
+    </aside>
+  }
 </div>

@@ -7,6 +7,7 @@ import { registerApiViewRefresh } from './_services/api-render.service';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap/collapse';
 import { RouterLinkActive, RouterLink, RouterOutlet } from '@angular/router';
 import { NgbToast, NgbToastHeader } from '@ng-bootstrap/ng-bootstrap/toast';
+import { PwaService } from './_services/pwa.service';
 
 
 @Component({
@@ -18,6 +19,7 @@ import { NgbToast, NgbToastHeader } from '@ng-bootstrap/ng-bootstrap/toast';
 export class AppComponent {
   private readonly apiViewRefresh = registerApiViewRefresh();
   readonly toastService = inject(ToastService);
+  readonly pwaService = inject(PwaService);
   transmissionService = inject(ParamTransmissionService);
   private paramService = inject(ParamService);
   private tokenStorageService = inject(TokenStorageService);

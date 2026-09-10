@@ -17,3 +17,25 @@ img {
   z-index: 1100;
   width: min(420px, calc(100vw - 2rem));
 }
+
+.pwa-install-prompt {
+  align-items: center;
+  background: #212529;
+  border-radius: .5rem;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .25);
+  color: #fff;
+  display: flex;
+  font-size: .875rem;
+  gap: .75rem;
+  left: 1rem;
+  padding: .75rem;
+  position: fixed;
+  right: 1rem;
+  z-index: 1090;
+}
+
+.pwa-install-prompt .btn {
+  flex: none;
+  white-space: nowrap;
+}
