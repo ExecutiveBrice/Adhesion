@@ -66,6 +66,7 @@ public class WebSecurityConfig{
                                 .requestMatchers(HttpMethod.GET, "/auth/confirmEmail/*").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/param/agendas", "/param/salles", "/param/allText", "/param/allBoolean", "/param/isClose").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/activite/calendrier", "/activite/calendrier/google").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
                                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                                 .requestMatchers(HttpMethod.OPTIONS,"/**").permitAll()
                                 .anyRequest().authenticated()

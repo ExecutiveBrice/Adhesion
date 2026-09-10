@@ -1,0 +1,145 @@
+name: Backend - Deploy production
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "app/**"
+      - "deploy/**"
+      - ".github/workflows/backend-deploy.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: backend-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  test:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - name: Recuperer le depot
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Installer Java 21
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: app/pom.xml
+
+      - name: Compiler et tester le backend
+        run: mvn -B -ntp verify
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      image_ref: ${{ steps.image.outputs.ref }}
+    steps:
+      - name: Recuperer le depot
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Calculer le nom de l'image
+        id: image
+        shell: bash
+        run: |
+          repository_name="${GITHUB_REPOSITORY#*/}"
+          image_name="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${repository_name,,}-backend"
+          echo "name=$image_name" >> "$GITHUB_OUTPUT"
+          echo "ref=$image_name:sha-$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Installer Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Se connecter a GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Construire et publier l'image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: ./app
+          file: ./app/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.image.outputs.ref }}
+            ${{ steps.image.outputs.name }}:latest
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+    env:
+      SSH_HOST: ${{ secrets.OVH_HOST }}
+      SSH_USER: ${{ secrets.OVH_USER }}
+      SSH_PORT: ${{ vars.OVH_SSH_PORT || '22' }}
+      SSH_KEY: ${{ runner.temp }}/ovh_deploy_key
+      SSH_PRIVATE_KEY: ${{ secrets.OVH_SSH_PRIVATE_KEY }}
+      SSH_KNOWN_HOSTS: ${{ secrets.OVH_SSH_KNOWN_HOSTS }}
+      IMAGE_REF: ${{ needs.publish.outputs.image_ref }}
+      GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+      GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+    steps:
+      - name: Recuperer les fichiers de deploiement
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Configurer SSH
+        shell: bash
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$SSH_KEY"
+          chmod 600 "$SSH_KEY"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+          known_host="$SSH_HOST"
+          if [[ "$SSH_PORT" != "22" ]]; then
+            known_host="[$SSH_HOST]:$SSH_PORT"
+          fi
+          ssh-keygen -F "$known_host" -f ~/.ssh/known_hosts >/dev/null
+
+      - name: Copier la configuration sur le VPS
+        shell: bash
+        run: |
+          ssh -o BatchMode=yes -o ConnectTimeout=15 -i "$SSH_KEY" -p "$SSH_PORT" \
+            "$SSH_USER@$SSH_HOST" 'mkdir -p ~/adhesion'
+          scp -o BatchMode=yes -o ConnectTimeout=15 -i "$SSH_KEY" -P "$SSH_PORT" \
+            deploy/docker-compose.backend.yml \
+            deploy/deploy-backend.sh \
+            deploy/.env.backend.example \
+            "$SSH_USER@$SSH_HOST:adhesion/"
+
+      - name: Se connecter a GHCR depuis le VPS
+        shell: bash
+        run: |
+          printf '%s' "$GHCR_TOKEN" | ssh -o BatchMode=yes -o ConnectTimeout=15 \
+            -i "$SSH_KEY" -p "$SSH_PORT" \
+            "$SSH_USER@$SSH_HOST" \
+            "docker login ghcr.io --username '$GHCR_USERNAME' --password-stdin"
+
+      - name: Deployer le backend
+        shell: bash
+        run: |
+          ssh -o BatchMode=yes -o ConnectTimeout=15 -i "$SSH_KEY" -p "$SSH_PORT" \
+            "$SSH_USER@$SSH_HOST" \
+            "cd ~/adhesion && chmod +x deploy-backend.sh && BACKEND_IMAGE_WITH_TAG='$IMAGE_REF' ./deploy-backend.sh"

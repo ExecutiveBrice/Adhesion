@@ -5,5 +5,6 @@ client/dist/
 client/node_modules/
 
 .env*
+!deploy/.env.backend.example
 
 [0-9]*/
