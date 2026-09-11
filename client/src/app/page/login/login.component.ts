@@ -71,8 +71,8 @@ export class LoginComponent implements OnInit {
   isLoginFailed = false;
   isresetFailed = false;
   oublieMDP = false;
+  connexion = true;
   newInscription = false;
-  afficherInformations = true;
   errorMessage = '';
   reinitMDPDone = false;
   roles: string[] = [];
@@ -138,6 +138,8 @@ export class LoginComponent implements OnInit {
               this.router.navigate(['admin']);
             } else if (this.roles.includes('ROLE_SECRETAIRE')) {
               this.router.navigate(['adhesions']);
+            } else if (this.roles.includes('ROLE_PROF')) {
+              this.router.navigate(['seances']);
             } else if (this.roles.includes('ROLE_USER')) {
               if (!this.maintenance) {
                 this.router.navigate(['inscription', '']);

@@ -21,6 +21,95 @@
   padding-top: 0;
 }
 
+.login-layout-row {
+  overflow: hidden;
+}
+
+.login-carousel-leave-left {
+  animation: login-carousel-sortie-gauche 1s ease-in forwards;
+}
+
+.login-carousel-enter-right {
+  animation: login-carousel-entree-droite 1s ease-out;
+}
+
+.login-carousel-leave-right {
+  animation: login-carousel-sortie-droite 1s ease-in forwards;
+}
+
+@keyframes login-carousel-sortie-gauche {
+  to {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes login-carousel-entree-droite {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+@keyframes login-carousel-sortie-droite {
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-carousel-leave-left,
+  .login-carousel-enter-right,
+  .login-carousel-leave-right {
+    animation: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .login-layout-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    position: relative;
+  }
+
+  .login-layout-row > .login-layout-column {
+    grid-row: 1;
+    width: auto;
+  }
+
+  .login-layout-info {
+    grid-column: 2;
+    transition: transform 1s ease-in-out;
+  }
+
+  .login-layout-row.login-layout-inscription .login-layout-info {
+    transform: translateX(-100%);
+  }
+
+  .login-layout-form {
+    display: contents;
+  }
+
+  .login-carousel-panel {
+    grid-row: 1;
+  }
+
+  .login-carousel-connexion {
+    grid-column: 1;
+  }
+
+  .login-carousel-inscription {
+    grid-column: 2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-layout-info {
+    transition: none;
+  }
+}
+
 .calendriers-accueil {
   --vert-alod: #5cbbaf;
   --vert-pale: #eaf7f4;

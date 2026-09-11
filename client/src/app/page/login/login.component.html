@@ -18,30 +18,31 @@
     <div class="col-12">
       <div class="card login-card">
         <div class="card-body">
-          @if (afficherInformations) {
-            @if (messageConnexion) {
-              <div [innerHTML]="messageConnexion"></div>
-            }
-            @if (messageInscription && inscriptionOpen) {
-              <div class="mt-3" [innerHTML]="messageInscription"></div>
-            }
-          }
-        </div>
-        <div class="card-footer bg-transparent d-flex gap-2">
-          <button type="button" class="btn btn-primary flex-fill"
-            (click)="newInscription = false; afficherInformations = false; oublieMDP = false">
-            Page de connexion
-          </button>
-          <button type="button" class="btn btn-orange flex-fill"
-            (click)="newInscription = true; afficherInformations = false; oublieMDP = false">
-            Page d'inscription
-          </button>
-        </div>
 
-        @if (!afficherInformations) {
-          <div class="card-body login-form-content">
 
-          @if (!newInscription) {
+          <div class="row login-layout-row" [class.login-layout-inscription]="newInscription">
+
+            <div class="col-md-6 login-layout-column login-layout-info">
+
+              @if (messageConnexion) {
+                <div [innerHTML]="messageConnexion"></div>
+              }
+              @if (newInscription && messageInscription && inscriptionOpen) {
+                <div class="mt-3" [innerHTML]="messageInscription"></div>
+              }
+
+
+            </div>
+
+            <div class="col-md-6 login-layout-column login-layout-form">
+
+
+
+
+
+          @if (connexion) {
+            <div class="login-carousel-panel login-carousel-connexion"
+                 animate.leave="login-carousel-leave-left">
             @if (!oublieMDP) {
               <h1 class="center">Page de connexion</h1>
               @if (sessionExpiree) {
@@ -112,9 +113,13 @@
                 </div>
               }
             }
+            </div>
           }
 
           @if (newInscription) {
+            <div class="login-carousel-panel login-carousel-inscription"
+                 animate.enter="login-carousel-enter-right"
+                 animate.leave="login-carousel-leave-right">
             <h1 class="center">Page d'inscription</h1>
             @if (!isSuccessful) {
               <form name="form" (ngSubmit)="f.form.valid && onSubmitInscritpion()" #f="ngForm" novalidate>
@@ -173,9 +178,39 @@
                 Inscription réussie ! Vous allez être redirigé sur la page de vos adhésions.
               </div>
             }
+            </div>
           }
+
+            </div>
+
+
+
+
+
+
           </div>
-        }
+        </div>
+
+        <div class="card-footer bg-transparent d-flex gap-2">
+
+
+          <button type="button" class="btn flex-fill"
+                  [class.btn-primary]="connexion"
+                  [class.btn-light]="!connexion"
+                  [attr.aria-pressed]="connexion"
+                  (click)="newInscription = false; connexion = true; oublieMDP = false">
+            Page de connexion
+          </button>
+          <button type="button" class="btn flex-fill"
+                  [class.btn-primary]="newInscription"
+                  [class.btn-light]="!newInscription"
+                  [attr.aria-pressed]="newInscription"
+                  (click)="newInscription = true;  connexion = false; oublieMDP = false">
+            Page d'inscription
+          </button>
+        </div>
+
+
       </div>
     </div>
   </div>

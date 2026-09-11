@@ -463,53 +463,58 @@ public class AdherentServices {
         List<Adherent> adherents = adherentRepository.findAll();
 
         adherents.forEach(adherent -> {
-            List<Adhesion> tmpAdhesions = adherent.getAdhesions().stream().filter(Adhesion::isValide).toList();
+            List<Adhesion> tmpAdhesions = adherent.getAdhesions().stream().toList();
+            AdherentExport adherentExport = new AdherentExport();
+
+            adherentExport.setId(adherent.getId());
+            adherentExport.setPrenom(adherent.getPrenom());
+            adherentExport.setNom(adherent.getNom());
+            adherentExport.setGenre(adherent.getGenre());
+            adherentExport.setLieuNaissance(adherent.getLieuNaissance());
+            adherentExport.setNaissance(adherent.getNaissance());
+
+            adherentExport.setAdresse(Boolean.TRUE.equals(adherent.getAdresseRepresentant()) && adherent.getRepresentant() != null ?
+                    adherent.getRepresentant().getAdresse() : adherent.getAdresse());
+            adherentExport.setCp(Boolean.TRUE.equals(adherent.getAdresseRepresentant()) && adherent.getRepresentant() != null ?
+                    adherent.getRepresentant().getCodePostal() : adherent.getCodePostal());
+            adherentExport.setVille(Boolean.TRUE.equals(adherent.getAdresseRepresentant()) && adherent.getRepresentant() != null ?
+                    adherent.getRepresentant().getVille() : adherent.getVille());
+            adherentExport.setEmail(Boolean.TRUE.equals(adherent.getEmailRepresentant()) && adherent.getRepresentant() != null ? adherent.getRepresentant().getUser().getUsername() : adherent.getUser().getUsername());
+            adherentExport.setTelephone(Boolean.TRUE.equals(adherent.getTelephoneRepresentant()) && adherent.getRepresentant() != null ?
+                    adherent.getRepresentant().getTelephone() : adherent.getTelephone());
+
+            adherentExport.setMajorite(adherent.getMineur() ? "Mineur" : "Majeur");
+
             if (!tmpAdhesions.isEmpty()) {
-                AdherentExport adherentExport = new AdherentExport();
-
-                adherentExport.setId(adherent.getId());
-                adherentExport.setPrenom(adherent.getPrenom());
-                adherentExport.setNom(adherent.getNom());
-                adherentExport.setGenre(adherent.getGenre());
-                adherentExport.setLieuNaissance(adherent.getLieuNaissance());
-                adherentExport.setNaissance(adherent.getNaissance());
-
-                adherentExport.setAdresse(Boolean.TRUE.equals(adherent.getAdresseRepresentant()) && adherent.getRepresentant() != null ?
-                        adherent.getRepresentant().getAdresse() : adherent.getAdresse());
-                adherentExport.setCp(Boolean.TRUE.equals(adherent.getAdresseRepresentant()) && adherent.getRepresentant() != null ?
-                        adherent.getRepresentant().getCodePostal() : adherent.getCodePostal());
-                adherentExport.setVille(Boolean.TRUE.equals(adherent.getAdresseRepresentant()) && adherent.getRepresentant() != null ?
-                        adherent.getRepresentant().getVille() : adherent.getVille());
-                adherentExport.setEmail(Boolean.TRUE.equals(adherent.getEmailRepresentant()) && adherent.getRepresentant() != null ? adherent.getRepresentant().getUser().getUsername() : adherent.getUser().getUsername());
-
-                adherentExport.setMajorite(adherent.getMineur() ? "Mineur" : "Majeur");
-
-
                 adherentExport.setActivite1(tmpAdhesions.get(0).getActivite().getNom() + " " + tmpAdhesions.get(0).getActivite().getHoraire());
+                adherentExport.setStatutAdhesion1(tmpAdhesions.get(0).getStatutActuel());
 
                 if (tmpAdhesions.size() > 1) {
                     adherentExport.setActivite2(tmpAdhesions.get(1).getActivite().getNom() + " " + tmpAdhesions.get(1).getActivite().getHoraire());
+                    adherentExport.setStatutAdhesion2(tmpAdhesions.get(1).getStatutActuel());
                 }
                 if (tmpAdhesions.size() > 2) {
                     adherentExport.setActivite3(tmpAdhesions.get(2).getActivite().getNom() + " " + tmpAdhesions.get(2).getActivite().getHoraire());
+                    adherentExport.setStatutAdhesion3(tmpAdhesions.get(2).getStatutActuel());
                 }
                 if (tmpAdhesions.size() > 3) {
                     adherentExport.setActivite4(tmpAdhesions.get(3).getActivite().getNom() + " " + tmpAdhesions.get(3).getActivite().getHoraire());
+                    adherentExport.setStatutAdhesion4(tmpAdhesions.get(3).getStatutActuel());
                 }
                 if (tmpAdhesions.size() > 4) {
                     adherentExport.setActivite5(tmpAdhesions.get(4).getActivite().getNom() + " " + tmpAdhesions.get(4).getActivite().getHoraire());
+                    adherentExport.setStatutAdhesion5(tmpAdhesions.get(4).getStatutActuel());
                 }
-                adherentExport.setActivitesNm1(adherent.getActivitesNm1().stream()
-                        .map(activite -> activite.getNom() + " " + activite.getHoraire())
-                        .collect(Collectors.joining(", ")));
-
-
-                adherentExports.add(adherentExport);
             }
+            adherentExport.setActivitesNm1(adherent.getActivitesNm1().stream()
+                    .map(activite -> activite.getNom() + " " + activite.getHoraire())
+                    .collect(Collectors.joining(", ")));
+            adherentExports.add(adherentExport);
         });
 
         return adherentExports.stream()
-                .sorted(Comparator.comparing(AdherentExport::getActivite1))
+                .sorted(Comparator.comparing(AdherentExport::getNom, Comparator.nullsLast(String::compareTo))
+                        .thenComparing(AdherentExport::getPrenom, Comparator.nullsLast(String::compareTo)))
                 .collect(Collectors.toList());
 
     }

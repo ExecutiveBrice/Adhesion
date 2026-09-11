@@ -78,7 +78,30 @@ export class ReportingComponent implements OnInit {
     this.adherentService.getAllExportLite().subscribe({
       next: data => {
         this.loader = false;
-        this.excelService.exportAsExcelFile(data, 'adherents');
+        this.excelService.exportAsExcelFile(data.map(adherent => ({
+          activite1: adherent.activite1,
+          statutAdhesion1: adherent.statutAdhesion1,
+          activite2: adherent.activite2,
+          statutAdhesion2: adherent.statutAdhesion2,
+          activite3: adherent.activite3,
+          statutAdhesion3: adherent.statutAdhesion3,
+          activite4: adherent.activite4,
+          statutAdhesion4: adherent.statutAdhesion4,
+          activite5: adherent.activite5,
+          statutAdhesion5: adherent.statutAdhesion5,
+          activitesNm1: adherent.activitesNm1,
+          nom: adherent.nom,
+          prenom: adherent.prenom,
+          genre: adherent.genre,
+          email: adherent.email,
+          telephone: adherent.telephone,
+          lieuNaissance: adherent.lieuNaissance,
+          majorite: adherent.majorite,
+          adresse: adherent.adresse,
+          cp: adherent.cp,
+          ville: adherent.ville,
+          id: adherent.id
+        })), 'adherents');
       },
       error: (error: HttpErrorResponse) => {
         this.loader = false;

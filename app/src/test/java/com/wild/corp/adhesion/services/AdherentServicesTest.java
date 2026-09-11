@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import static com.wild.corp.adhesion.utils.Status.VALIDEE;
+import static com.wild.corp.adhesion.utils.Status.ANNULEE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
@@ -106,6 +107,7 @@ class AdherentServicesTest {
         adherent.setPrenom("Alice");
         adherent.setNom("Martin");
         adherent.setMineur(false);
+        adherent.setTelephone("0600000000");
         adherent.setUser(user);
         adherent.setAdhesions(new HashSet<>(List.of(adhesion)));
         adherent.setActivitesNm1(new ArrayList<>(List.of(yoga, natation)));
@@ -118,7 +120,53 @@ class AdherentServicesTest {
 
         assertThat(exports).singleElement().satisfies(export -> {
             assertThat(export.getActivite1()).isEqualTo("Danse Majeur");
+            assertThat(export.getStatutAdhesion1()).isEqualTo("Validée");
+            assertThat(export.getTelephone()).isEqualTo("0600000000");
             assertThat(export.getActivitesNm1()).isEqualTo("Yoga Majeur, Natation Mineur");
+        });
+    }
+
+    @Test
+    void includesAdherentsWithCancelledOrNoAdhesionInTheExport() {
+        Activite activite = new Activite();
+        activite.setNom("Basket");
+        activite.setHoraire("Loisir");
+
+        Adhesion adhesionAnnulee = new Adhesion();
+        adhesionAnnulee.setActivite(activite);
+        adhesionAnnulee.setStatutActuel(ANNULEE.label);
+
+        User user = new User();
+        user.setUsername("bob@example.test");
+        Adherent adherentAvecAdhesionAnnulee = new Adherent();
+        adherentAvecAdhesionAnnulee.setId(1L);
+        adherentAvecAdhesionAnnulee.setPrenom("Bob");
+        adherentAvecAdhesionAnnulee.setNom("Dupont");
+        adherentAvecAdhesionAnnulee.setMineur(false);
+        adherentAvecAdhesionAnnulee.setUser(user);
+        adherentAvecAdhesionAnnulee.setAdhesions(new HashSet<>(List.of(adhesionAnnulee)));
+
+        Adherent adherentSansAdhesion = new Adherent();
+        adherentSansAdhesion.setId(2L);
+        adherentSansAdhesion.setPrenom("Chloé");
+        adherentSansAdhesion.setNom("Martin");
+        adherentSansAdhesion.setMineur(false);
+        adherentSansAdhesion.setUser(user);
+
+        AdherentRepository repository = mock(AdherentRepository.class);
+        when(repository.findAll()).thenReturn(List.of(adherentAvecAdhesionAnnulee, adherentSansAdhesion));
+        ReflectionTestUtils.setField(adherentServices, "adherentRepository", repository);
+
+        List<AdherentExport> exports = adherentServices.getAllExportFlat();
+
+        assertThat(exports).hasSize(2);
+        assertThat(exports).filteredOn(export -> export.getId().equals(1L)).singleElement().satisfies(export -> {
+            assertThat(export.getActivite1()).isEqualTo("Basket Loisir");
+            assertThat(export.getStatutAdhesion1()).isEqualTo("Annulée");
+        });
+        assertThat(exports).filteredOn(export -> export.getId().equals(2L)).singleElement().satisfies(export -> {
+            assertThat(export.getActivite1()).isNull();
+            assertThat(export.getStatutAdhesion1()).isNull();
         });
     }
 }
