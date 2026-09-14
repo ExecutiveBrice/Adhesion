@@ -1,18 +1,165 @@
-img {
-    background-color: rgb(255, 255, 255);
-    border-radius: 4px;
-    padding: 5px;
-    margin-left: 10px;
-    width: 100px;
+.app-header {
+  --header-height: 5rem;
+  padding-top: env(safe-area-inset-top, 0px);
+  background: #212529;
+  box-shadow: 0 .125rem .5rem rgba(0, 0, 0, .15);
+}
+
+.app-header .container-fluid {
+  padding-left: max(.75rem, env(safe-area-inset-left, 0px));
+  padding-right: max(.75rem, env(safe-area-inset-right, 0px));
+}
+
+.navbar-brand {
+  margin: 0;
+  min-height: 3.5rem;
+  flex-shrink: 0;
+}
+
+.navbar-page-title {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-align: center;
+}
+
+.navbar-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1010;
+  border: 0;
+  padding: 0;
+  background: rgba(0, 0, 0, .35);
+  touch-action: none;
+}
+
+.app-logo {
+  display: block;
+  width: 80px;
+  height: auto;
+  padding: .25rem;
+  border-radius: .25rem;
+  background: #fff;
+}
+
+.navbar-toggler,
+.nav-link,
+.navbar-account .btn,
+.navbar-login-actions .btn {
+  min-height: 44px;
+}
+
+.navbar-login-actions .btn {
+  padding-inline: .5rem;
+  white-space: nowrap;
+}
+
+.navbar-toggler {
+  padding: .375rem .625rem;
+  flex-shrink: 0;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  padding: .625rem .75rem;
+  border-radius: .375rem;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.nav-link:hover,
+.nav-link:focus-visible,
+.nav-link.active {
+  color: #fff;
+  background: rgba(255, 255, 255, .12);
+}
+
+.nav-link.active {
+  font-weight: 700;
+  box-shadow: inset 3px 0 #5cbbaf;
+}
+
+.navbar-collapse,
+.navbar-nav {
+  min-width: 0;
+}
+
+.navbar-account {
+  flex-shrink: 0;
+}
+
+.navbar-account .btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.account-name {
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 575.98px) {
+  .app-logo {
+    width: 64px;
+  }
+}
+
+@media (max-width: 1399.98px) {
+  .app-header .navbar-with-title {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
+    align-items: center;
   }
 
-.navbar-light{
-  background-color: rgba(188,219,205,255);
-}  
+  .navbar-with-title .navbar-brand {
+    justify-self: start;
+  }
 
-.navbar-toggler{
-  margin-right: 10px;
+  .navbar-with-title .navbar-toggler {
+    justify-self: end;
+  }
+
+  .navbar-collapse {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #212529;
+    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .25);
+    padding-left: max(.75rem, env(safe-area-inset-left, 0px));
+    padding-right: max(.75rem, env(safe-area-inset-right, 0px));
+    max-height: calc(100vh - var(--header-height) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    max-height: calc(100dvh - var(--header-height) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .navbar-nav {
+    padding-top: .75rem;
+  }
+
+  .navbar-account {
+    border-top: 1px solid rgba(255, 255, 255, .2);
+    margin-top: .75rem;
+    padding: .75rem 0;
+  }
+
+  .account-name {
+    max-width: 100%;
+  }
 }
+
 .toast-container {
   z-index: 1100;
   width: min(420px, calc(100vw - 2rem));
