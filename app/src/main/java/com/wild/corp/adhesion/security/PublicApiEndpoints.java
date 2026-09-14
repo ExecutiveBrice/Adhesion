@@ -17,6 +17,8 @@ public final class PublicApiEndpoints {
 
     public static final List<Endpoint> ENDPOINTS = List.of(
             new Endpoint(HttpMethod.POST, "/auth/signin", "Connexion"),
+            new Endpoint(HttpMethod.POST, "/auth/refresh", "Renouvellement PWA avec un jeton secret à usage unique"),
+            new Endpoint(HttpMethod.POST, "/auth/signout", "Révocation du jeton PWA présenté, même après expiration du JWT"),
             new Endpoint(HttpMethod.POST, "/auth/signup", "Création autonome d'un compte, suivie d'une confirmation e-mail"),
             new Endpoint(HttpMethod.POST, "/auth/reinitPassword", "Demande de réinitialisation de mot de passe"),
             new Endpoint(HttpMethod.POST, "/auth/changePassword", "Confirmation de réinitialisation avec un jeton à usage unique"),
