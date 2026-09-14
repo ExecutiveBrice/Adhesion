@@ -81,6 +81,7 @@ export class UserComponent implements OnInit {
   isInscriptionOpen: boolean = false;
   showAdmin: boolean = false;
   showSecretaire: boolean = false;
+  canChangeEmail: boolean = false;
 
   activites: Activite[] = []
 
@@ -113,6 +114,8 @@ export class UserComponent implements OnInit {
 
     this.showAdmin = this.tokenStorageService.getUser().roles.includes('ROLE_ADMIN');
     this.showSecretaire = this.tokenStorageService.getUser().roles.includes('ROLE_SECRETAIRE');
+    this.canChangeEmail = this.showSecretaire
+      || this.tokenStorageService.getUser().roles.includes('ROLE_ADMINISTRATEUR');
 
 
     this.adultes = this.tribu.adherents.filter(adh => adh.mineur == false && adh.representant == null && adh.id != this.adherent.id);
@@ -271,6 +274,8 @@ export class UserComponent implements OnInit {
           this.isFailed = true;
           if (error.status == 409) {
             this.toastr.error("Cette adresse e-mail est déjà utilisée. Veuillez en choisir une autre", 'Erreur')
+          } else if (error.status == 403) {
+            this.toastr.error("Seul le secrétariat ou un administrateur peut modifier l'adresse e-mail", 'Accès refusé')
           } else {
             this.showError(error.error)
           }

@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -72,7 +73,7 @@ public class AdherentController {
 
 
     @PostMapping("/update")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'SECRETAIRE', 'ADMINISTRATEUR')")
     public ResponseEntity<?> update(Authentication principal, @RequestBody AdherentLite adherent) {
 
         if(adherent.getId() == null){
@@ -89,6 +90,8 @@ public class AdherentController {
             AdherentLite adh = null;
             try {
                 adh = adherentServices.update(adherent);
+            } catch (AccessDeniedException exception) {
+                throw exception;
             } catch (Exception p) {
                 if (p.getMessage().contains("duplicate key value violates unique constraint")) {
 

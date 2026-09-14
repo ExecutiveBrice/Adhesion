@@ -23,6 +23,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -138,6 +141,7 @@ public class AdherentServices {
         Optional<Adherent> indbAdherent = adherentRepository.findById(frontAdherent.getId());
         if (indbAdherent.isPresent()) {
             Adherent dataAdherent = indbAdherent.get();
+            updateEmail(frontAdherent, dataAdherent);
             dataAdherent.setNom(frontAdherent.getNom().toUpperCase());
             dataAdherent.setPrenom(frontAdherent.getPrenom().substring(0, 1).toUpperCase() + frontAdherent.getPrenom()
                     .substring(1));
@@ -148,9 +152,6 @@ public class AdherentServices {
 
             if (!Boolean.TRUE.equals(frontAdherent.getTelephoneRepresentant())) {
                 dataAdherent.setTelephone(frontAdherent.getTelephone());
-            }
-            if (!Boolean.TRUE.equals(frontAdherent.getEmailRepresentant())) {
-                dataAdherent.getUser().setUsername(frontAdherent.getUser().getUsername() != null ? frontAdherent.getUser().getUsername().toLowerCase() : dataAdherent.getUser().getUsername().toLowerCase());
             }
             if (!Boolean.TRUE.equals(frontAdherent.getAdresseRepresentant())) {
                 dataAdherent.setAdresse(frontAdherent.getAdresse());
@@ -174,6 +175,27 @@ public class AdherentServices {
         }
 
         return null;
+    }
+
+    private void updateEmail(AdherentLite frontAdherent, Adherent dataAdherent) {
+        if (Boolean.TRUE.equals(frontAdherent.getEmailRepresentant())
+                || frontAdherent.getUser() == null || frontAdherent.getUser().getUsername() == null
+                || dataAdherent.getUser() == null) {
+            return;
+        }
+        String email = frontAdherent.getUser().getUsername().trim().toLowerCase(Locale.ROOT);
+        if (email.equalsIgnoreCase(dataAdherent.getUser().getUsername())) {
+            return;
+        }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean canChangeEmail = authentication != null && authentication.isAuthenticated()
+                && authentication.getAuthorities().stream().anyMatch(authority ->
+                    "ROLE_SECRETAIRE".equals(authority.getAuthority())
+                            || "ROLE_ADMINISTRATEUR".equals(authority.getAuthority()));
+        if (!canChangeEmail) {
+            throw new AccessDeniedException("Seul un secrétaire ou un administrateur peut modifier l'adresse e-mail");
+        }
+        dataAdherent.getUser().setUsername(email);
     }
 
     /** Copies only the consent values supplied for the adherent's existing accords. */

@@ -306,7 +306,10 @@
                 (ngModelChange)="adherent.user.username = cleaning(adherent.user.username)"
                 (ngModelBlur)="adherent.user.username = cleaning(adherent.user.username)" required minlength="10"
                 #email="ngModel" ngModel email
-                [disabled]="adherent.completAdhesion && !showAdmin && !showSecretaire" />
+                [readonly]="!!adherent.id && !canChangeEmail" />
+              @if (adherent.id && !canChangeEmail) {
+                <small class="text-body-secondary">Contactez le secrétariat pour modifier votre adresse e-mail.</small>
+              }
               @if (email.errors && f.submitted) {
                 <div class="alert-danger">
                   @if (email.errors.required) {
