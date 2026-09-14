@@ -62,7 +62,7 @@ public class WebSecurityConfig{
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth ->
                         auth.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
-                                .requestMatchers(HttpMethod.POST, "/auth/signin", "/auth/signup", "/auth/reinitPassword", "/auth/changePassword").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/auth/signin", "/auth/refresh", "/auth/signout", "/auth/signup", "/auth/reinitPassword", "/auth/changePassword").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/auth/confirmEmail/*").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/param/agendas", "/param/salles", "/param/allText", "/param/allBoolean", "/param/isClose").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/activite/calendrier", "/activite/calendrier/google").permitAll()

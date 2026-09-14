@@ -7,6 +7,8 @@ import com.wild.corp.adhesion.security.jwt.SurrogateAuthenticationToken;
 import com.wild.corp.adhesion.services.SurrogateService;
 import com.wild.corp.adhesion.services.UserServices;
 import com.wild.corp.adhesion.services.PasswordResetService;
+import com.wild.corp.adhesion.services.PwaSessionService;
+import com.wild.corp.adhesion.security.payload.request.RefreshSessionRequest;
 import com.wild.corp.adhesion.security.jwt.JwtUtils;
 import com.wild.corp.adhesion.security.payload.request.LoginRequest;
 import com.wild.corp.adhesion.security.payload.request.PasswordResetConfirmRequest;
@@ -51,6 +53,8 @@ public class AuthController {
 	JwtUtils jwtUtils;
 	@Autowired
 	SurrogateService surrogateService;
+	@Autowired
+	PwaSessionService pwaSessionService;
 
 	@ApiResponses(value = {
 			@ApiResponse(
@@ -73,11 +77,27 @@ public class AuthController {
 				.map(item -> item.getAuthority())
 				.collect(Collectors.toList());
 
-		return ResponseEntity.ok(new JwtResponse(jwt,
+		JwtResponse response = new JwtResponse(jwt,
 				userDetails.getId(),
 				userDetails.getUsername().toLowerCase(),
 				userDetails.isEnabled(),
-				roles));
+				roles);
+		if (loginRequest.isRememberSession()) {
+			response.setRefreshToken(pwaSessionService.issue(userDetails));
+		}
+		return ResponseEntity.ok().cacheControl(org.springframework.http.CacheControl.noStore()).body(response);
+	}
+
+	@PostMapping("/refresh")
+	public ResponseEntity<JwtResponse> refreshSession(@Valid @RequestBody RefreshSessionRequest request) {
+		return ResponseEntity.ok().cacheControl(org.springframework.http.CacheControl.noStore())
+				.body(pwaSessionService.refresh(request.refreshToken()));
+	}
+
+	@PostMapping("/signout")
+	public ResponseEntity<Void> signOut(@Valid @RequestBody RefreshSessionRequest request) {
+		pwaSessionService.revoke(request.refreshToken());
+		return ResponseEntity.noContent().build();
 	}
 
 	@PostMapping("/reinitPassword")

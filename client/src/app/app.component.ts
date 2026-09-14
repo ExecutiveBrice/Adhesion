@@ -1,4 +1,5 @@
 import { Component, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TokenStorageService } from './_services/token-storage.service';
 import { ParamService } from './_services/param.service';
 import { ParamTransmissionService } from './_services/transmission.service';
@@ -8,6 +9,7 @@ import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap/collapse';
 import { RouterLinkActive, RouterLink, RouterOutlet } from '@angular/router';
 import { NgbToast, NgbToastHeader } from '@ng-bootstrap/ng-bootstrap/toast';
 import { PwaService } from './_services/pwa.service';
+import { AuthService } from './_services/auth.service';
 
 
 @Component({
@@ -23,6 +25,7 @@ export class AppComponent {
   transmissionService = inject(ParamTransmissionService);
   private paramService = inject(ParamService);
   private tokenStorageService = inject(TokenStorageService);
+  private authService = inject(AuthService);
 
   isCollapsed = true
   private roles: string[] = [];
@@ -37,6 +40,13 @@ export class AppComponent {
   showComptable=false;
   username?: string;
   maintenance: Boolean = false
+
+  constructor() {
+    this.tokenStorageService.sessionChanges$
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => window.location.reload());
+  }
+
   ngOnInit(): void {
     this.isLoggedIn = !!this.tokenStorageService.getToken();
 
@@ -72,7 +82,6 @@ export class AppComponent {
 
 
   logout(): void {
-    this.tokenStorageService.signOut();
-    window.location.reload();
+    this.authService.logout().subscribe(() => window.location.reload());
   }
 }
