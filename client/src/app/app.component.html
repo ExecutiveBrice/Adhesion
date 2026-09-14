@@ -1,91 +1,110 @@
 <div id="app">
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <a href="https://alod.fr" class="navbar-left"> <img class="container" src="assets/logo.png" alt="logo"></a>
+  <header class="app-header sticky-top">
+    <nav class="navbar navbar-expand-xxl bg-dark" data-bs-theme="dark" aria-label="Navigation principale" (keydown.escape)="closeMenu()">
+      <div class="container-fluid gap-2" [class.navbar-with-title]="!isLoginPage()">
+        <a href="https://alod.fr" class="navbar-brand d-flex align-items-center" aria-label="ALOD, site de l’association">
+          <img class="app-logo" src="assets/logo.png" alt="ALOD">
+        </a>
+        @if (isLoginPage()) {
+          <div class="navbar-login-actions d-flex gap-2 ms-auto" role="group" aria-label="Connexion ou inscription">
+            <button type="button" class="btn"
+              [class.btn-primary]="loginPage.view() !== 'inscription'"
+              [class.btn-outline-light]="loginPage.view() === 'inscription'"
+              [attr.aria-pressed]="loginPage.view() !== 'inscription'"
+              (click)="loginPage.view.set('connexion')">Connexion</button>
+            <button type="button" class="btn"
+              [class.btn-primary]="loginPage.view() === 'inscription'"
+              [class.btn-outline-light]="loginPage.view() !== 'inscription'"
+              [attr.aria-pressed]="loginPage.view() === 'inscription'"
+              (click)="loginPage.view.set('inscription')">Inscription</button>
+          </div>
+        } @else {
+          <span class="navbar-page-title d-xxl-none fs-6 fw-semibold text-white" [title]="pageTitle()">{{ pageTitle() }}</span>
 
-    <button (click)="isCollapsed = !isCollapsed" class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggler"
-      aria-controls="navbarToggler" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+          <button #menuToggle (click)="isCollapsed = !isCollapsed" class="navbar-toggler d-flex d-xxl-none align-items-center gap-2" type="button"
+            aria-controls="navbarToggler" [attr.aria-expanded]="!isCollapsed"
+            [attr.aria-label]="isCollapsed ? 'Ouvrir le menu de navigation' : 'Fermer le menu de navigation'">
+            <span class="navbar-toggler-icon" aria-hidden="true"></span>
+            <span class="fs-6 d-none d-sm-inline">Menu</span>
+          </button>
 
-    <div class="collapse navbar-collapse" [ngbCollapse]="isCollapsed" id="navbarToggler">
-      <ul class="navbar-nav mr-auto" routerLinkActive="active">
-        @if (showAdmin) {
-          <li class="nav-item" (click)="isCollapsed = true">
-            <a href="/admin" class="nav-link blanc" routerLink="admin">Administration</a>
-          </li>
-        }
-        @if (showAdmin || showSecretaire) {
-          <li class="nav-item"  (click)="isCollapsed = true">
-            <a href="/activites" class="nav-link blanc" routerLink="activites">Activites</a>
-          </li>
-        }
-        @if (showAdmin || showSecretaire) {
-          <li class="nav-item"  (click)="isCollapsed = true">
-            <a href="/adherents" class="nav-link blanc" routerLink="adherents">Adhérents</a>
-          </li>
-        }
-        @if (showAdmin || showSecretaire) {
-          <li class="nav-item"  (click)="isCollapsed = true">
-            <a href="/adhesions" class="nav-link blanc" routerLink="adhesions">Adhésions</a>
-          </li>
-        }
-        @if (showAdmin || showSecretaire ) {
-          <li class="nav-item"  (click)="isCollapsed = true">
-            @if (isLoggedIn) {
-              <a href="/mail" class="nav-link blanc" [routerLink]="['/mail', 'listing']">Mailling</a>
-            }
-          </li>
-        }
-        <li class="nav-item"  (click)="isCollapsed = true">
-          @if (isLoggedIn) {
-            <a href="/inscription" class="nav-link blanc" [routerLink]="['/inscription', '']">{{showSecretaire?"Inscriptions Manuelles":"Mes adhésions"}}</a>
-          }
-        </li>
-        @if (showAdmin || showSecretaire || showAdminstrateur || showBureau) {
-          <li class="nav-item"  (click)="isCollapsed = true">
-            <a href="/reporting" class="nav-link blanc" routerLink="reporting">Reporting</a>
-          </li>
-        }
-        @if (showProf) {
-          <li class="nav-item"  (click)="isCollapsed = true">
-            <a href="/profs" class="nav-link blanc" routerLink="profs">Mes équipes</a>
-          </li>
-        }
-        @if (showSeances) {
-          <li class="nav-item" (click)="isCollapsed = true">
-            <a href="/seances" class="nav-link blanc" routerLink="seances">Séances</a>
-          </li>
-        }
-        @if (showSecretaire) {
-          <li class="nav-item" (click)="isCollapsed = true">
-            <a href="/seances-secretariat" class="nav-link blanc" routerLink="seances-secretariat">Séances (secrétariat)</a>
-          </li>
-        }
-        @if (showAdmin || showComptable) {
-          <li class="nav-item"  (click)="isCollapsed = true">
-            <a href="/compta" class="nav-link blanc" routerLink="compta">Compta</a>
-          </li>
-        }
+          <div class="navbar-collapse" [ngbCollapse]="isCollapsed" [animation]="false" id="navbarToggler">
+            <ul class="navbar-nav flex-xxl-wrap me-xxl-auto gap-1">
+              @if (showAdmin) {
+                <li class="nav-item" (click)="isCollapsed = true">
+                  <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="admin">Administration</a>
+                </li>
+              }
+              @if (showAdmin || showSecretaire) {
+                <li class="nav-item" (click)="isCollapsed = true">
+                  <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="activites">Activités</a>
+                </li>
+              }
+              @if (showAdmin || showSecretaire) {
+                <li class="nav-item" (click)="isCollapsed = true">
+                  <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="adherents">Adhérents</a>
+                </li>
+              }
+              @if (showAdmin || showSecretaire) {
+                <li class="nav-item" (click)="isCollapsed = true">
+                  <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="adhesions">Adhésions</a>
+                </li>
+              }
+              @if ((showAdmin || showSecretaire) && isLoggedIn) {
+                <li class="nav-item" (click)="isCollapsed = true">
+                  <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" [routerLink]="['/mail', 'listing']">Mailing</a>
+                </li>
+              }
+              @if (isLoggedIn) {
+                <li class="nav-item" (click)="isCollapsed = true">
+                  <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" [routerLink]="['/inscription', '']">{{showSecretaire ? "Inscriptions manuelles" : "Mes adhésions"}}</a>
+                </li>
+              }
+              @if (showAdmin || showSecretaire || showAdminstrateur || showBureau) {
+                <li class="nav-item" (click)="isCollapsed = true">
+                  <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="reporting">Reporting</a>
+                </li>
+              }
+              @if (showProf) {
+                <li class="nav-item" (click)="isCollapsed = true">
+                  <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="profs">Mes équipes</a>
+                </li>
+              }
+              @if (showSeances) {
+                <li class="nav-item" (click)="isCollapsed = true">
+                  <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="seances">Séances</a>
+                </li>
+              }
+              @if (showSecretaire) {
+                <li class="nav-item" (click)="isCollapsed = true">
+                  <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="seances-secretariat">Séances (secrétariat)</a>
+                </li>
+              }
+              @if (showAdmin || showComptable) {
+                <li class="nav-item" (click)="isCollapsed = true">
+                  <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="compta">Compta</a>
+                </li>
+              }
 
-      </ul>
+            </ul>
 
-      @if (!isLoggedIn) {
-        <ul class="navbar-nav ml-auto">
-          <li class="nav-item"  (click)="isCollapsed = true">
-            <a href="/login" class="nav-link blanc" routerLink="login">Connexion</a>
-          </li>
-        </ul>
-      }
+            <div class="navbar-account d-flex flex-column flex-xxl-row align-items-xxl-center gap-2 ms-xxl-3">
+              @if (isLoggedIn) {
+                <span class="navbar-text account-name" [title]="username">{{ username }}</span>
+                <button type="button" class="btn btn-outline-light" (click)="isCollapsed = true; logout()">Déconnexion</button>
+              } @else {
+                <a class="btn btn-outline-light" routerLink="login" routerLinkActive="active" ariaCurrentWhenActive="page" (click)="isCollapsed = true">Connexion</a>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </nav>
+  </header>
 
-      @if (isLoggedIn) {
-        <ul class="navbar-nav ml-auto">
-          <li class="nav-item" (click)="isCollapsed = true">
-            <a href class="nav-link blanc" (click)="logout()">Deconnexion</a>
-          </li>
-        </ul>
-      }
-    </div>
-  </nav>
+  @if (!isLoginPage() && !isCollapsed) {
+    <button type="button" class="navbar-backdrop d-xxl-none" aria-label="Fermer le menu" tabindex="-1" (click)="closeMenu()"></button>
+  }
 
   <div class="container-fluid">
     <router-outlet></router-outlet>
@@ -102,12 +121,12 @@
     }
   </div>
 
-  @if (pwaService.canInstall()) {
+  @if (isCollapsed && pwaService.canInstall()) {
     <aside class="pwa-install-prompt" role="status" aria-live="polite">
       <span>Installez ALOD pour y accéder rapidement, même avec une connexion limitée.</span>
       <button type="button" class="btn btn-primary btn-sm" (click)="pwaService.install()">Installer</button>
     </aside>
-  } @else if (pwaService.showIosInstallHint()) {
+  } @else if (isCollapsed && pwaService.showIosInstallHint()) {
     <aside class="pwa-install-prompt" role="status">
       <span>Pour installer ALOD, ouvrez Partager puis « Sur l’écran d’accueil ».</span>
     </aside>
