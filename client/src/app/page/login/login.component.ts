@@ -389,9 +389,6 @@ export class LoginComponent implements OnInit {
 
           this.authService.login(username, password).subscribe(
             data => {
-              this.tokenStorage.saveToken(data.token);
-              this.tokenStorage.saveUser(data);
-
               this.isLoginFailed = false;
               this.isLoggedIn = true;
               this.roles = this.tokenStorage.getUser().roles;
@@ -422,10 +419,6 @@ export class LoginComponent implements OnInit {
 
     this.authService.login(username, password).subscribe(
         data => {
-          console.log(data)
-          this.tokenStorage.saveToken(data.token);
-          this.tokenStorage.saveUser(data);
-
           this.isLoginFailed = false;
           this.isLoggedIn = true;
           this.roles = this.tokenStorage.getUser().roles;

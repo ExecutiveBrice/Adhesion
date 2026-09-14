@@ -11,6 +11,8 @@ import java.util.List;
 @EqualsAndHashCode
 public class JwtResponse {
 	private String token;
+	@ToString.Exclude
+	private String refreshToken;
 	private String type = "Bearer";
 	private Long id;
 	private String username;
