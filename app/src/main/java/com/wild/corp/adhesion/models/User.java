@@ -53,6 +53,10 @@ public class User {
 	@JsonIgnore
 	private Set<ConfirmationToken> tokens = new HashSet<>();
 
+	@OneToMany(mappedBy="user", cascade = CascadeType.ALL, orphanRemoval = true)
+	@JsonIgnore
+	private Set<PwaSessionToken> pwaSessions = new HashSet<>();
+
 	public User(String username, String password) {
 		this.username = username;
 		this.password = password;

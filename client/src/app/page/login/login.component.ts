@@ -13,6 +13,7 @@ import { AgendaGoogleConfiguration } from 'src/app/models';
 import { FormsModule } from '@angular/forms';
 import { CalendrierComponent } from '../../template/calendrier/calendrier.component';
 import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
+import { LoginPageService } from '../../_services/login-page.service';
 
 interface EvenementCalendrier {
   id: string;
@@ -56,6 +57,7 @@ export class LoginComponent implements OnInit {
   private route = inject(ActivatedRoute);
   paramService = inject(ParamService);
   private activiteService = inject(ActiviteService);
+  private readonly loginPage = inject(LoginPageService);
 
 
   form: any = {
@@ -70,9 +72,21 @@ export class LoginComponent implements OnInit {
   isLoggedIn = false;
   isLoginFailed = false;
   isresetFailed = false;
-  oublieMDP = false;
-  connexion = true;
-  newInscription = false;
+  get oublieMDP(): boolean {
+    return this.loginPage.view() === 'recuperation';
+  }
+
+  set oublieMDP(value: boolean) {
+    this.loginPage.view.set(value ? 'recuperation' : 'connexion');
+  }
+
+  get connexion(): boolean {
+    return this.loginPage.view() !== 'inscription';
+  }
+
+  get newInscription(): boolean {
+    return this.loginPage.view() === 'inscription';
+  }
   errorMessage = '';
   reinitMDPDone = false;
   roles: string[] = [];
@@ -103,6 +117,7 @@ export class LoginComponent implements OnInit {
   userExist = true;
 
   ngOnInit(): void {
+    this.loginPage.view.set('connexion');
 
     this.sessionExpiree = this.route.snapshot.queryParamMap.get('sessionExpiree') === '1';
 
@@ -374,9 +389,6 @@ export class LoginComponent implements OnInit {
 
           this.authService.login(username, password).subscribe(
             data => {
-              this.tokenStorage.saveToken(data.token);
-              this.tokenStorage.saveUser(data);
-
               this.isLoginFailed = false;
               this.isLoggedIn = true;
               this.roles = this.tokenStorage.getUser().roles;
@@ -407,10 +419,6 @@ export class LoginComponent implements OnInit {
 
     this.authService.login(username, password).subscribe(
         data => {
-          console.log(data)
-          this.tokenStorage.saveToken(data.token);
-          this.tokenStorage.saveUser(data);
-
           this.isLoginFailed = false;
           this.isLoggedIn = true;
           this.roles = this.tokenStorage.getUser().roles;

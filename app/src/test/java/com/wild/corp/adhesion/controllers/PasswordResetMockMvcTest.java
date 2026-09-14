@@ -14,6 +14,7 @@ import com.wild.corp.adhesion.services.EmailService;
 import com.wild.corp.adhesion.services.PasswordResetRateLimiter;
 import com.wild.corp.adhesion.services.PasswordResetService;
 import com.wild.corp.adhesion.services.PasswordResetWorker;
+import com.wild.corp.adhesion.services.PwaSessionService;
 import com.wild.corp.adhesion.services.SurrogateService;
 import com.wild.corp.adhesion.services.UserServices;
 import jakarta.persistence.EntityManagerFactory;
@@ -269,7 +270,8 @@ class PasswordResetMockMvcTest {
     @EnableTransactionManagement
     @EnableJpaRepositories(basePackageClasses = {UserRepository.class, ConfirmationTokenRepository.class})
     @Import({AuthController.class, PasswordResetService.class,
-            PasswordResetWorker.class, ConfirmationTokenService.class, PasswordResetRateLimiter.class})
+            PasswordResetWorker.class, ConfirmationTokenService.class, PasswordResetRateLimiter.class,
+            PwaSessionService.class})
     static class TestConfiguration {
         @Bean
         DataSource dataSource() {
