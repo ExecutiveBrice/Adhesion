@@ -1,12 +1,11 @@
-import { Role } from "./role";
+import { ERole } from "./eRole";
 
 export class UserLite {
 
   id!: number;
-  prenom!: string;
-  nom!: string;
-  email!: string;
-  roles!: Role[];
+  adherent!: string;
+  username!: string;
+  roles!: ERole[];
 
 
   constructor() {

@@ -9,207 +9,509 @@
 
     <div class="col-12 col-sm-6">
 
-      <div class="form-group">
-        <label for="nom">Nom</label>
-        <input type="text" class="form-control" name="nom" [(ngModel)]="activite.nom" />
-      </div>
-
       <div ngbDropdown class="d-inline-block">
         <button type="button" class="btn btn-primary" id="dropdownBasic1" ngbDropdownToggle>
           {{activite.groupe?activite.groupe:'Groupe'}}
         </button>
-
-
         <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
           <div ngbDropdownItem (click)="activite.groupe = 'ALOD_B'">ALOD_B</div>
           <div ngbDropdownItem (click)="activite.groupe = 'ALOD_G'">ALOD_G</div>
         </div>
       </div>
 
-
       <div class="form-group">
         <label for="groupeFiltre">Goupe Filtre</label>
         <input type="text" class="form-control" name="groupeFiltre" [(ngModel)]="activite.groupeFiltre" />
       </div>
 
+      <div class="form-group">
+        <label for="groupeCompta">Goupe Compta</label>
+        <input type="text" class="form-control" name="groupeCompta" [(ngModel)]="activite.groupeCompta" />
+      </div>
+
+      <div class="form-group">
+        <label for="nom">Nom</label>
+        <input type="text" class="form-control" name="nom" [(ngModel)]="activite.nom" />
+      </div>
 
       <div class="form-group">
         <label for="tarif">Tarif</label>
         <input type="number" class="form-control" name="tarif" [(ngModel)]="activite.tarif" />
       </div>
 
-
-      <div ngbDropdown class="d-inline-block">
-        <button type="button" class="btn btn-primary" id="Jour" ngbDropdownToggle>
-          {{activite.jour?activite.jour:'Jour'}}
-        </button>
-        <div ngbDropdownMenu aria-labelledby="Jour">
-          <div ngbDropdownItem *ngFor="let day of  getEnumKeys()"
-               (click)="activite.jour = day">{{day}} </div>
-        </div>
-
-      </div>
-
-
       <div class="form-group">
         <label for="horaire">Horaire</label>
         <input type="text" class="form-control" name="horaire" [(ngModel)]="activite.horaire" />
       </div>
-
-
 
       <div class="form-group">
         <label for="lien">Lien</label>
         <input type="text" class="form-control" name="lien" [(ngModel)]="activite.lien" />
       </div>
 
-      <div class="form-group">
-        <label for="salle">Salle</label>
-        <input type="text" class="form-control" name="salle" [(ngModel)]="activite.salle" />
+    </div>
+
+  <div class="col-12 col-sm-6">
+
+    <div class="form-group">
+      <label for="nbPlaces">Nombre de Place Maximale</label>
+      <input type="number" class="form-control" name="nbPlaces" [(ngModel)]="activite.nbPlaces" />
+    </div>
+
+
+    <div class="form-group">
+      <div class="form-check form-switch">
+        <input class="form-check-input big-checkbox" [(ngModel)]="activite.reinscription"
+          type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+        Reinscription @if (activite.reinscription) {
+        <fa-icon class="green"
+        [icon]="faCircleCheck"></fa-icon>
+        }@if (!activite.reinscription) {
+        <fa-icon class="orange"
+        [icon]="faCircleXmark"></fa-icon>
+      }
+    </div>
+
+  </div>
+  <div class="form-group">
+    <div class="form-check form-switch">
+      <input class="form-check-input big-checkbox" [(ngModel)]="activite.globaleSpecifique"
+        type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+      Globale/Spécifique @if (activite.globaleSpecifique) {
+      <fa-icon class="green"
+      [icon]="faCircleCheck"></fa-icon>
+      }@if (!activite.globaleSpecifique) {
+      <fa-icon class="orange"
+      [icon]="faCircleXmark"></fa-icon>
+    }
+  </div>
+
+</div>
+<div class="form-group">
+  <div class="form-check form-switch">
+    <input class="form-check-input big-checkbox" [(ngModel)]="activite.complete"
+      type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+    Complete @if (activite.complete) {
+    <fa-icon class="green"
+    [icon]="faCircleCheck"></fa-icon>
+    }@if (!activite.complete) {
+    <fa-icon class="orange"
+    [icon]="faCircleXmark"></fa-icon>
+  }
+</div>
+</div>
+<div class="form-group">
+  <div class="form-check form-switch">
+    <input class="form-check-input big-checkbox" [(ngModel)]="activite.majoration"
+      type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+    Majoration @if (activite.majoration) {
+    <fa-icon class="green"
+    [icon]="faCircleCheck"></fa-icon>
+    }@if (!activite.majoration) {
+    <fa-icon class="orange"
+    [icon]="faCircleXmark"></fa-icon>
+  }
+</div>
+</div>
+
+
+<div class="form-group">
+  <label for="ageMax">Age Maximal</label>
+  <input type="number" class="form-control" name="ageMax" [(ngModel)]="activite.ageMax" />
+  <label for="ageMin">Age Minimal</label>
+  <input type="number" class="form-control" name="ageMin" [(ngModel)]="activite.ageMin" />
+</div>
+
+
+<div ngbDropdown class="d-inline-block">
+  <button type="button" class="btn btn-primary" id="dropdownBasic1" ngbDropdownToggle>
+    Activité {{activite.genre}}
+  </button>
+
+
+  <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+    <div ngbDropdownItem (click)="activite.genre = 'Non genrée'">Non genrée</div>
+    <div ngbDropdownItem (click)="activite.genre = 'Masculine'">Masculine</div>
+    <div ngbDropdownItem (click)="activite.genre = 'Féminine'">Féminine</div>
+  </div>
+</div>
+
+<div class="form-group">
+  <div class="form-check form-switch">
+    <input class="form-check-input big-checkbox" [(ngModel)]="activite.certificatMedical"
+      type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+    Document Certificat Médical ? @if (activite.certificatMedical) {
+    <fa-icon class="green"
+    [icon]="faCircleCheck"></fa-icon>
+    }@if (!activite.certificatMedical) {
+    <fa-icon class="orange"
+    [icon]="faCircleXmark"></fa-icon>
+  }
+</div>
+</div>
+@if (activite.certificatMedical) {
+  <div class="form-group">
+    <label for="dureeVieCertif">Nb année validité max</label>
+    <input type="number" class="form-control" name="dureeVieCertif" [(ngModel)]="activite.dureeVieCertif" />
+  </div>
+}
+
+<div class="form-group">
+  <div class="form-check form-switch">
+    <input class="form-check-input big-checkbox" [(ngModel)]="activite.priseEnCharge"
+      type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+    Accord de Prise en Charge ? @if (activite.priseEnCharge) {
+    <fa-icon class="green"
+    [icon]="faCircleCheck"></fa-icon>
+    }@if (!activite.priseEnCharge) {
+    <fa-icon class="orange"
+    [icon]="faCircleXmark"></fa-icon>
+  }
+</div>
+</div>
+
+<div class="form-group">
+  <div class="form-check form-switch">
+    <input class="form-check-input big-checkbox" [(ngModel)]="activite.autorisationParentale"
+      type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+    Accord Autorisation Parentale ? @if (activite.autorisationParentale) {
+    <fa-icon class="green"
+    [icon]="faCircleCheck"></fa-icon>
+    }@if (!activite.autorisationParentale) {
+    <fa-icon class="orange"
+    [icon]="faCircleXmark"></fa-icon>
+  }
+</div>
+</div>
+
+<div class="form-group">
+  <div class="form-check form-switch">
+    <input class="form-check-input big-checkbox" [(ngModel)]="activite.charteAmicale"
+      type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+    Accord Charte Amicale ? @if (activite.charteAmicale) {
+    <fa-icon class="green"
+    [icon]="faCircleCheck"></fa-icon>
+    }@if (!activite.charteAmicale) {
+    <fa-icon class="orange"
+    [icon]="faCircleXmark"></fa-icon>
+  }
+</div>
+
+
+
+</div>
+<div class="form-group">
+  <div class="form-check form-switch">
+    <input class="form-check-input big-checkbox" [(ngModel)]="activite.vieClub"
+      type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
+    Accord Vie du Club ? @if (activite.vieClub) {
+    <fa-icon class="green"
+    [icon]="faCircleCheck"></fa-icon>
+    }@if (!activite.vieClub) {
+    <fa-icon class="orange"
+    [icon]="faCircleXmark"></fa-icon>
+  }
+</div>
+</div>
+</div>
+</div>
+
+<section class="seances-section">
+
+  <div class="planification-seances mb-3">
+    <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+
+      <div>
+        <h5 class="mb-1">Catégorie de séance</h5>
       </div>
 
-      <div class="form-group">
-        <label for="prof">Prof</label>
-        <div *ngIf="activite.profs.length > 0">
-          <div *ngFor="let prof of activite.profs | orderBy:'id':true ">
-            {{prof.prenom}} {{prof.nom}} <fa-icon class="pointer" (click)="retirerProf(activite,prof)"
-              [icon]="faSquareMinus"></fa-icon>
+      <button type="button" class="btn btn-outline-primary btn-sm" (click)="ouvrirModalEditionCategorie()">
+        <fa-icon [icon]="faSquarePlus"></fa-icon> Ajouter une catégorie
+      </button>
+    </div>
+    @if (activite.planificationsHebdomadaires.length === 0) {
+      <div class="text-muted">Aucune catégorie de séance n'est renseignée.</div>
+    }
+    <div class="categories-grid">
+      @for (planification of activite.planificationsHebdomadaires; track planification; let index = $index) {
+        <article class="categorie-card">
+          <header class="categorie-card-header">
+            <h6 class="mb-1">Catégorie {{index + 1}}</h6>
+            @if (planification.descriptif) {
+              <p class="mb-0 text-muted">{{planification.descriptif}}</p>
+            }
+          </header>
+          <dl class="categorie-informations">
+            <div><dt>Jour</dt><dd>{{planification.jour ? libelleJour(planification.jour) : 'Non renseigné'}}</dd></div>
+            <div><dt>Horaire</dt><dd>{{planification.horaireDebut || 'Non renseigné'}}</dd></div>
+            <div><dt>Durée</dt><dd>{{planification.duree ? planification.duree + ' min.' : 'Non renseignée'}}</dd></div>
+            <div><dt>Salle</dt><dd class="salle-categorie">
+              @if (planification.salle) {
+                <span class="couleur-salle" [style.background-color]="planification.salle.couleur" aria-hidden="true"></span>
+                {{planification.salle.nom}}
+              } @else { Aucune salle }
+            </dd></div>
+          </dl>
+          <div class="categorie-intervenants">
+            <div>
+              <h6>Profs</h6>
+              @if ((planification.profs ?? []).length) {
+                <p>{{nomsUtilisateurs(planification.profs)}}</p>
+              } @else { <p class="text-muted">Aucun professeur</p> }
+            </div>
+            <div>
+              <h6>Référents</h6>
+              @if ((planification.referents ?? []).length) {
+                <p>{{nomsUtilisateurs(planification.referents)}}</p>
+              } @else { <p class="text-muted">Aucun référent</p> }
+            </div>
           </div>
-        </div>
+          <footer class="categorie-card-actions">
+            <button type="button" class="btn btn-outline-primary btn-sm ajout-seances-categorie" title="Ajouter des séances"
+              [attr.aria-label]="'Ajouter des séances pour la catégorie ' + (index + 1)"
+              (click)="ouvrirModalAjoutSeances(planification)" [disabled]="!activite.id || !planification.id">
+              <fa-icon [icon]="faSquarePlus"></fa-icon> Ajouter des séances
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" title="Modifier la catégorie"
+              [attr.aria-label]="'Modifier la catégorie ' + (index + 1)"
+              (click)="ouvrirModalEditionCategorie(index)">
+              <fa-icon [icon]="faPencilSquare"></fa-icon> Modifier
+            </button>
+            <button type="button" class="btn btn-outline-danger btn-sm" title="Supprimer la catégorie"
+              [attr.aria-label]="'Supprimer la catégorie ' + (index + 1)"
+              (click)="retirerPlanificationHebdomadaire(index)">
+              <fa-icon [icon]="faTrash"></fa-icon>
+            </button>
+          </footer>
+        </article>
+      }
+    </div>
+  </div>
 
-        <div ngbDropdown class="d-inline-block col-md-12 ">
-          <button type="button" class="btn btn-block btn-primary" id="dropdownBasic1" ngbDropdownToggle>
-            Ajouter un prof
-          </button>
+  <div class="planification-seances mb-3">
+    <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
 
-
-          <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-
-            <div ngbDropdownItem *ngFor="let prof of profs  | orderBy:'ordre':false"
-              (click)="ajouterProf(activite,prof)">{{prof.prenom}} {{prof.nom}}</div>
-
-          </div>
-        </div>
+      <div>
+        <h5 class="mb-1">Calendrier des séances</h5>
       </div>
+      @if (activite.id) {
+        <span class="badge bg-primary">{{seances.length}} séance(s)</span>
+      }
 
     </div>
-    <div class="col-12 col-sm-6">
-
-      <div class="form-group">
-        <label for="nbPlaces">Nombre de Place Maximale</label>
-        <input type="number" class="form-control" name="nbPlaces" [(ngModel)]="activite.nbPlaces" />
-      </div>
-
-
-      <div class="form-group">
-        <div class="form-check form-switch">
-          <input class="form-check-input big-checkbox" [(ngModel)]="activite.reinscription"
-            type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
-            Reinscription <fa-icon *ngIf="activite.reinscription" class="green"
-            [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!activite.reinscription" class="orange"
-            [icon]="faCircleXmark"></fa-icon>
+  @if (activite.id) {
+    <div>
+      @if (chargementSeances) {
+        <div class="text-center text-muted py-4">Chargement des séances…</div>
+      }
+      @if (!chargementSeances && seances.length === 0) {
+        <div class="alert alert-light border mt-3 mb-0">
+          Aucune séance planifiée pour cette activité.
         </div>
+      }
+      @if (!chargementSeances && seances.length > 0) {
+        <div class="table-responsive seances-liste">
+          <table class="table table-sm table-striped align-middle mb-0">
+            <thead>
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Heure</th>
+                <th scope="col">Salle</th>
+                <th scope="col">État</th>
+                <th scope="col">Commentaire</th>
+                <th scope="col" class="text-center"><span class="visually-hidden">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (seance of seances; track seance) {
+                <tr>
+                  <td class="date-seance">
+                    <small class="text-muted text-capitalize">{{seance.debut | date:'EEEE'}}</small>
+                    <input type="date" class="form-control form-control-sm"
+                      [name]="'dateSeance-' + seance.id" [(ngModel)]="seance.dateEdition"
+                      (ngModelChange)="planifierEnregistrementHoraire(seance)"
+                      (blur)="enregistrerHoraireAuBlur(seance)"
+                      [disabled]="suppressionSeances.has(seance.id)" />
 
-      </div>
-      <div class="form-group">
-        <div class="form-check form-switch">
-          <input class="form-check-input big-checkbox" [(ngModel)]="activite.globaleSpecifique"
-                 type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
-          Globale/Spécifique <fa-icon *ngIf="activite.globaleSpecifique" class="green"
-                                 [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!activite.globaleSpecifique" class="orange"
-                                                                           [icon]="faCircleXmark"></fa-icon>
+                  </td>
+                  <td class="horaire-seance">
+                    <input type="time" class="form-control form-control-sm"
+                      [name]="'heureSeance-' + seance.id" [(ngModel)]="seance.heureEdition"
+                      (ngModelChange)="planifierEnregistrementHoraire(seance)"
+                      (blur)="enregistrerHoraireAuBlur(seance)"
+                      [disabled]="suppressionSeances.has(seance.id)" />
+                    <small class="text-muted">Fin : {{seance.fin | date:'HH:mm'}}</small>
+                  </td>
+                  <td class="salle-seance">
+                    <select class="form-select form-select-sm" [(ngModel)]="seance.salle"
+                      [name]="'salleSeance-' + seance.id" [compareWith]="comparerSalles"
+                      (ngModelChange)="enregistrerSalleSeance(seance)"
+                      [disabled]="suppressionSeances.has(seance.id)">
+                      <option [ngValue]="undefined">Aucune salle</option>
+                      @for (salle of salles; track salle) {
+                        <option [ngValue]="salle">{{salle.nom}}</option>
+                      }
+                    </select>
+                  </td>
+                  <td class="etat-seance">
+                    <select class="form-select form-select-sm" [(ngModel)]="seance.etatSeance"
+                      [name]="'etatSeance-' + seance.id" (ngModelChange)="enregistrerEtatSeance(seance)"
+                      [disabled]="suppressionSeances.has(seance.id)"
+                      [ngClass]="seance.etatSeance === 'ANNULEE' ? 'etat-annulee' : (seance.etatSeance === 'REALISEE' ? 'etat-realisee' : (seance.etatSeance === 'MODIFIEE' ? 'etat-modifiee' : 'etat-programmee'))">
+                      <option value="PROGRAMMEE">Programmée</option>
+                      <option value="REALISEE">Réalisée</option>
+                      <option value="ANNULEE">Annulée</option>
+                      <option value="MODIFIEE">Modifiée</option>
+                    </select>
+                  </td>
+                  <td class="commentaire-seance">
+                    <textarea class="form-control form-control-sm" maxlength="255" rows="3"
+                      [name]="'commentaireSeance-' + seance.id" [(ngModel)]="seance.commentaire"
+                      (ngModelChange)="planifierEnregistrementCommentaire(seance)"
+                      (blur)="enregistrerCommentaireAuBlur(seance)"
+                    [disabled]="suppressionSeances.has(seance.id)" placeholder="Ajouter un commentaire"></textarea>
+                    @if (enregistrementSeances.has(seance.id)) {
+                      <small class="text-muted">Enregistrement…</small>
+                    }
+                  </td>
+                  <td class="text-center action-seance">
+                    <button type="button" class="btn btn-sm btn-outline-danger" title="Supprimer la séance"
+                      [attr.aria-label]="'Supprimer la séance du ' + (seance.debut | date:'d MMMM y')"
+                      (click)="supprimerSeance(seance)"
+                      [disabled]="suppressionSeances.has(seance.id) || enregistrementSeances.has(seance.id)">
+                      <fa-icon [icon]="faTrash"></fa-icon>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
         </div>
+      }
+    </div>
+  } @else {
+    <div class="alert alert-info mb-0">
+      Enregistrez d'abord l'activité, puis rouvrez-la pour ajouter et consulter ses séances.
+    </div>
+  }
+  </div>
+</section>
 
-      </div>
-      <div class="form-group">
-        <div class="form-check form-switch">
-          <input class="form-check-input big-checkbox" [(ngModel)]="activite.complete"
-            type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
-            Complete <fa-icon *ngIf="activite.complete" class="green"
-            [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!activite.complete" class="orange"
-            [icon]="faCircleXmark"></fa-icon>
+@if (modalEditionCategorieOuverte && categorieEnEdition) {
+  <div class="modal-backdrop fade show edition-categorie-backdrop" (click)="fermerModalEditionCategorie()"></div>
+  <div class="modal d-block edition-categorie-modal" role="dialog" aria-modal="true"
+    aria-labelledby="titre-edition-categorie" (click)="fermerModalEditionCategorie()">
+    <div class="modal-dialog modal-dialog-centered modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 id="titre-edition-categorie" class="modal-title">
+            {{indexCategorieEnEdition === undefined ? 'Ajouter une catégorie' : 'Modifier la catégorie ' + (indexCategorieEnEdition + 1)}}
+          </h5>
+          <button type="button" class="btn-close" aria-label="Fermer" (click)="fermerModalEditionCategorie()"></button>
         </div>
-      </div>
-
-
-      <div class="form-group">
-        <label for="ageMax">Age Maximal</label>
-        <input type="number" class="form-control" name="ageMax" [(ngModel)]="activite.ageMax" />
-        <label for="ageMin">Age Minimal</label>
-        <input type="number" class="form-control" name="ageMin" [(ngModel)]="activite.ageMin" />
-      </div>
-
-
-      <div ngbDropdown class="d-inline-block">
-        <button type="button" class="btn btn-primary" id="dropdownBasic1" ngbDropdownToggle>
-          Activité {{activite.genre}}
-        </button>
-
-
-        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-          <div ngbDropdownItem (click)="activite.genre = 'Non genrée'">Non genrée</div>
-          <div ngbDropdownItem (click)="activite.genre = 'Masculine'">Masculine</div>
-          <div ngbDropdownItem (click)="activite.genre = 'Féminine'">Féminine</div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-12 col-md-4">
+              <label for="jourCategorie" class="form-label">Jour</label>
+              <select id="jourCategorie" name="jourCategorie" class="form-select" [(ngModel)]="categorieEnEdition.jour">
+                <option value="" disabled>Sélectionner un jour</option>
+                @for (jour of joursSemaine; track jour.valeur) {
+                  <option [value]="jour.valeur">{{jour.libelle}}</option>
+                }
+              </select>
+            </div>
+            <div class="col-12 col-md-4">
+              <label for="horaireCategorie" class="form-label">Horaire</label>
+              <input id="horaireCategorie" name="horaireCategorie" type="time" class="form-control"
+                [(ngModel)]="categorieEnEdition.horaireDebut" />
+            </div>
+            <div class="col-12 col-md-4">
+              <label for="dureeCategorie" class="form-label">Durée (min.)</label>
+              <input id="dureeCategorie" name="dureeCategorie" type="number" min="1" class="form-control"
+                [(ngModel)]="categorieEnEdition.duree" />
+            </div>
+            <div class="col-12 col-md-6">
+              <label for="descriptifCategorie" class="form-label">Descriptif court</label>
+              <input id="descriptifCategorie" name="descriptifCategorie" type="text" class="form-control" maxlength="100"
+                placeholder="Ex. Adultes débutants" [(ngModel)]="categorieEnEdition.descriptif" />
+            </div>
+            <div class="col-12 col-md-6">
+              <label for="salleCategorie" class="form-label">Salle</label>
+              <div class="selecteur-salle">
+                @if (categorieEnEdition.salle) {
+                  <span class="couleur-salle" [style.background-color]="categorieEnEdition.salle.couleur" aria-hidden="true"></span>
+                }
+                <select id="salleCategorie" class="form-select" name="salleCategorie"
+                  [(ngModel)]="categorieEnEdition.salle" [compareWith]="comparerSalles">
+                  <option [ngValue]="undefined">Aucune salle</option>
+                  @for (salle of salles; track salle.id) {
+                    <option [ngValue]="salle">{{salle.nom}} — {{salle.adresse}}</option>
+                  }
+                </select>
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Profs</label>
+              <app-user-checkbox-dropdown [utilisateurs]="profs" [selection]="categorieEnEdition.profs ?? []"
+                (selectionChange)="categorieEnEdition.profs = $event" libelle="Sélectionner les profs"
+                menuContainer="body" />
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Référents</label>
+              <app-user-checkbox-dropdown [utilisateurs]="referents" [selection]="categorieEnEdition.referents ?? []"
+                (selectionChange)="categorieEnEdition.referents = $event" libelle="Sélectionner les référents"
+                [disabled]="!activite.id" menuContainer="body" />
+              @if (!activite.id) {
+                <small class="text-muted d-block mt-1">Disponible après l'enregistrement de l'activité.</small>
+              }
+            </div>
+          </div>
         </div>
-      </div>
-
-      <div class="form-group">
-        <div class="form-check form-switch">
-          <input class="form-check-input big-checkbox" [(ngModel)]="activite.certificatMedical"
-            type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
-            Document Certificat Médical ? <fa-icon *ngIf="activite.certificatMedical" class="green"
-            [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!activite.certificatMedical" class="orange"
-            [icon]="faCircleXmark"></fa-icon>
-        </div>
-      </div>
-      <div *ngIf="activite.certificatMedical" class="form-group">
-        <label for="dureeVieCertif">Nb année validité max</label>
-        <input type="number" class="form-control" name="dureeVieCertif" [(ngModel)]="activite.dureeVieCertif" />
-      </div>
-
-      <div class="form-group">
-        <div class="form-check form-switch">
-          <input class="form-check-input big-checkbox" [(ngModel)]="activite.priseEnCharge"
-            type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
-            Accord de Prise en Charge ? <fa-icon *ngIf="activite.priseEnCharge" class="green"
-            [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!activite.priseEnCharge" class="orange"
-            [icon]="faCircleXmark"></fa-icon>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <div class="form-check form-switch">
-          <input class="form-check-input big-checkbox" [(ngModel)]="activite.autorisationParentale"
-            type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
-            Accord Autorisation Parentale ? <fa-icon *ngIf="activite.autorisationParentale" class="green"
-            [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!activite.autorisationParentale" class="orange"
-            [icon]="faCircleXmark"></fa-icon>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <div class="form-check form-switch">
-          <input class="form-check-input big-checkbox" [(ngModel)]="activite.charteAmicale"
-            type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
-            Accord Charte Amicale ? <fa-icon *ngIf="activite.charteAmicale" class="green"
-            [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!activite.charteAmicale" class="orange"
-            [icon]="faCircleXmark"></fa-icon>
-        </div>
-
-
-
-      </div>
-      <div class="form-group">
-        <div class="form-check form-switch">
-          <input class="form-check-input big-checkbox" [(ngModel)]="activite.vieClub"
-            type="checkbox" role="switch" [ngModelOptions]="{standalone: true}">
-            Accord Vie du Club ? <fa-icon *ngIf="activite.vieClub" class="green"
-            [icon]="faCircleCheck"></fa-icon><fa-icon *ngIf="!activite.vieClub" class="orange"
-            [icon]="faCircleXmark"></fa-icon>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" (click)="fermerModalEditionCategorie()">Annuler</button>
+          <button type="button" class="btn btn-primary" (click)="enregistrerCategorie()">Valider la catégorie</button>
         </div>
       </div>
     </div>
   </div>
+}
+
+@if (modalAjoutSeancesOuverte && planificationAjout) {
+  <div class="modal-backdrop fade show ajout-seances-backdrop" (click)="fermerModalAjoutSeances()"></div>
+  <div class="modal d-block ajout-seances-modal" role="dialog" aria-modal="true"
+    aria-labelledby="titre-ajout-seances" (click)="fermerModalAjoutSeances()">
+    <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 id="titre-ajout-seances" class="modal-title">Ajouter des séances</h5>
+          <button type="button" class="btn-close" aria-label="Fermer" (click)="fermerModalAjoutSeances()"
+            [disabled]="ajoutSeancesEnCours"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted">Créneau : {{libelleJour(planificationAjout.jour)}} à {{planificationAjout.horaireDebut}}</p>
+          <div class="mb-3">
+            <label for="nombreSemainesPlanification" class="form-label">Nombre de semaines</label>
+            <input id="nombreSemainesPlanification" name="nombreSemainesPlanification" type="number" min="1" max="200"
+              class="form-control" [(ngModel)]="nombreSeances" />
+          </div>
+          <div>
+            <label for="dateDebutPlanification" class="form-label">À partir du</label>
+            <input id="dateDebutPlanification" name="dateDebutPlanification" type="date"
+              class="form-control" [(ngModel)]="dateDebutSeances" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" (click)="fermerModalAjoutSeances()"
+            [disabled]="ajoutSeancesEnCours">Annuler</button>
+          <button type="button" class="btn btn-primary" (click)="ajouterSeances()"
+            [disabled]="ajoutSeancesEnCours || !dateDebutSeances || nombreSeances < 1 || nombreSeances > 200">
+            {{ajoutSeancesEnCours ? 'Ajout en cours…' : 'Ajouter les séances'}}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
 
 
 </div>

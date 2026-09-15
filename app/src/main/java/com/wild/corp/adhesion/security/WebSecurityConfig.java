@@ -3,8 +3,8 @@ package com.wild.corp.adhesion.security;
 import com.wild.corp.adhesion.services.UserDetailsService;
 import com.wild.corp.adhesion.security.jwt.AuthEntryPointJwt;
 import com.wild.corp.adhesion.security.jwt.AuthTokenFilter;
+import jakarta.servlet.DispatcherType;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -13,6 +13,7 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,11 +21,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
+@EnableWebSecurity
 @EnableMethodSecurity
 public class WebSecurityConfig{
-
-    @Value("${spring.h2.console.path}")
-    private String h2ConsolePath;
 
     @Autowired
     UserDetailsService userDetailsService;
@@ -39,9 +38,8 @@ public class WebSecurityConfig{
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService);
 
-        authProvider.setUserDetailsService(userDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
 
         return authProvider;
@@ -63,11 +61,13 @@ public class WebSecurityConfig{
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth ->
-                        auth.requestMatchers("/auth/**").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/param/**").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/adherent/**").permitAll()
+                        auth.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
+                                .requestMatchers(HttpMethod.POST, "/auth/signin", "/auth/refresh", "/auth/signout", "/auth/signup", "/auth/reinitPassword", "/auth/changePassword").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/auth/confirmEmail/*").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/param/agendas", "/param/salles", "/param/allText", "/param/allBoolean", "/param/isClose").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/activite/calendrier", "/activite/calendrier/google").permitAll()
+                                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                                 .requestMatchers(HttpMethod.OPTIONS,"/**").permitAll()
-                                .requestMatchers("/swagger-ui**").permitAll()
                                 .anyRequest().authenticated()
                 );
 

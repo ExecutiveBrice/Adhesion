@@ -1,0 +1,12 @@
+services:
+  app_adhesion:
+    volumes: !reset []
+    ports:
+      - "8000:8000"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:8105/${DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+  db_adhesion:
+    ports: !override
+      - "8106:5432"

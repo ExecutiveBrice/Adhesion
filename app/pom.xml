@@ -5,24 +5,42 @@
 
     <groupId>com.gestion</groupId>
     <artifactId>app_adhesion</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>26.8.1</version>
     <name>Adhesion</name>
 
     <parent>
-        <groupId>org.springframework.cloud</groupId>
-        <artifactId>spring-cloud-starter-parent</artifactId>
-        <version>2025.0.1</version>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>4.0.7</version>
         <relativePath/>
     </parent>
     <properties>
         <java.version>21</java.version>
+        <maven.compiler.proc>full</maven.compiler.proc>
+        <brevo.version>1.1.9</brevo.version>
+        <jackson-databind-nullable.version>0.2.11</jackson-databind-nullable.version>
+        <jjwt.version>0.13.0</jjwt.version>
+        <openapi-generator.version>7.24.0</openapi-generator.version>
+        <ical4j.version>4.3.0</ical4j.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>2025.1.2</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
             <groupId>com.brevo</groupId>
             <artifactId>brevo</artifactId>
-            <version>1.1.0</version>
+            <version>${brevo.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -40,8 +58,12 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <artifactId>spring-boot-starter-webmvc</artifactId>
 
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -51,37 +73,28 @@
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
-            <version>0.11.5</version>
+            <version>${jjwt.version}</version>
         </dependency>
 
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
-            <version>0.11.5</version>
+            <version>${jjwt.version}</version>
             <scope>runtime</scope>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.14.0</version>
         </dependency>
-
         <dependency>
-            <groupId>com.mailersend</groupId>
-            <artifactId>java-sdk</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/com.mailjet/mailjet-client -->
-        <dependency>
-            <groupId>com.mailjet</groupId>
-            <artifactId>mailjet-client</artifactId>
-            <version>5.2.5</version>
+            <groupId>org.mnode.ical4j</groupId>
+            <artifactId>ical4j</artifactId>
+            <version>${ical4j.version}</version>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
-            <version>0.11.5</version>
+            <version>${jjwt.version}</version>
             <scope>runtime</scope>
         </dependency>
 
@@ -124,12 +137,37 @@
         <dependency>
             <groupId>org.openapitools</groupId>
             <artifactId>jackson-databind-nullable</artifactId>
-            <version>0.2.1</version>
+            <version>${jackson-databind-nullable.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-api</artifactId>
-            <version>2.8.13</version>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>3.0.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -148,7 +186,7 @@
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
-                <version>7.12.0</version>
+                <version>${openapi-generator.version}</version>
                 <executions>
                     <execution>
                         <id>ApiHelloasso</id>
@@ -177,7 +215,7 @@
                                 <interfaceOnly>true</interfaceOnly>
                                 <!-- Ne génère pas d'impl par défaut -->
                                 <skipDefaultInterface>true</skipDefaultInterface>
-                                <!-- On utilise Jakarta EE (pour Spring Boot 3 / Java 21) -->
+                                <!-- On utilise Jakarta EE (pour Spring Boot 4 / Java 21) -->
                                 <useJakartaEe>true</useJakartaEe>
                             </configOptions>
                             <typeMappings>
@@ -192,7 +230,46 @@
                     </execution>
 
 
+                    <execution>
+                        <id>VacancesScolaire</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <!-- Chemin vers api-farmeo.json -->
+                            <inputSpec>${project.basedir}/src/main/resources/vacances.json</inputSpec>
+                            <!-- Générateur 'spring' + Feign Spring Cloud -->
+                            <generatorName>spring</generatorName>
+                            <output>${project.build.directory}/generated-sources/vacances</output>
 
+                            <!-- Si on veut que ça écrase le code si l'API change -->
+                            <skipOverwrite>false</skipOverwrite>
+
+                            <!-- Les packages où seront générées les APIs et les models -->
+                            <apiPackage>org.wild.corp.adhesion.client.vacances.api</apiPackage>
+                            <modelPackage>org.wild.corp.adhesion.client.vacances.model</modelPackage>
+                            <configOptions>
+                                <useTags>true</useTags>
+                                <!-- Librairie Feign Spring Cloud -->
+                                <library>spring-cloud</library>
+                                <!-- Générer uniquement des interfaces, pas de controllers -->
+                                <interfaceOnly>true</interfaceOnly>
+                                <!-- Ne génère pas d'impl par défaut -->
+                                <skipDefaultInterface>true</skipDefaultInterface>
+                                <!-- On utilise Jakarta EE (pour Spring Boot 4 / Java 21) -->
+                                <useJakartaEe>true</useJakartaEe>
+                            </configOptions>
+                            <typeMappings>
+                                <typeMapping>DateTime=LocalDateTime</typeMapping>
+                                <typeMapping>Date=LocalDate</typeMapping>
+                            </typeMappings>
+                            <importMappings>
+                                <importMapping>LocalDateTime=java.time.LocalDateTime</importMapping>
+                                <importMapping>LocalDate=java.time.LocalDate</importMapping>
+                            </importMappings>
+                        </configuration>
+                    </execution>
 
                 </executions>
             </plugin>

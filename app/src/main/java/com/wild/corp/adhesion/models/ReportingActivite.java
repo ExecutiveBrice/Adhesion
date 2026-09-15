@@ -12,6 +12,9 @@ public class ReportingActivite {
 
     private String nomActivite;
 
+    /** Groupe métier affiché comme en-tête et utilisé pour les sous-totaux. */
+    private String groupe;
+
     private Long nbInitee =0L;
 
     private Long nbPayee =0L;

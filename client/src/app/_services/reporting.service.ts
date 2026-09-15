@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
@@ -10,7 +10,8 @@ const API_URL = environment.server+'/reporting/';
   providedIn: 'root'
 })
 export class ReportingService {
-  constructor(private http: HttpClient) { }
+  private http = inject(HttpClient);
+
 
   getAllBasket(): Observable<ReportingActivite[]> {
     return this.http.get<ReportingActivite[]>(API_URL + 'getAllBasket', { responseType: 'json' });

@@ -2,7 +2,12 @@ package com.wild.corp.adhesion.controllers;
 
 import com.wild.corp.adhesion.models.ActiviteNm1;
 import com.wild.corp.adhesion.models.Tribu;
+import com.wild.corp.adhesion.models.resources.CalendrierGoogleResponse;
 import com.wild.corp.adhesion.services.TribuServices;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.websocket.server.PathParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -29,14 +34,22 @@ public class TribuController {
     }
 
     @PostMapping("/addActivitesNm1")
-    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('MEMBRECA') or hasRole('ADMIN')")
     public ResponseEntity<?> addActivitesNm1(@PathParam("tribuUuid") String tribuUuid, @RequestBody List<ActiviteNm1> activitesNm1) {
         return ResponseEntity.ok(tribuServices.addActivitesNm1(UUID.fromString(tribuUuid), activitesNm1));
     }
 
+
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "successful operation",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = Tribu.class))
+            ),
+    })
     @GetMapping("/getTribuByUuid")
-    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('ADMINISTRATEUR')")
-    public ResponseEntity<?> getTribuByUuid(@PathParam("tribuUuid") String tribuUuid) {
+    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MEMBRECA')")
+    public ResponseEntity<Tribu> getTribuByUuid(@PathParam("tribuUuid") String tribuUuid) {
 
         Tribu tribu = tribuServices.getTribuByUuid(UUID.fromString(tribuUuid));
         return ResponseEntity.ok(tribu);

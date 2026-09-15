@@ -1,21 +1,18 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { environment } from 'src/environments/environment';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class FileService {
+  private http = inject(HttpClient);
+
   apiUrl = environment.server + '/files';
 
-  constructor(
-    private http: HttpClient
-  ) { }
-
-  update(adherentId: number, fileName: string, fileContent: any) {
-    let params = new HttpParams().set('adherentId', '' + adherentId + '').set('fileName', '' + fileName + '');
-    const fd = new FormData();
-    const file = new File([fileContent], fileName);
-    fd.append('image', file)
-    return this.http.post(this.apiUrl + '/', fileContent, { params, responseType: 'text' });
+  update(adherentId: number, file: File) {
+    const params = new HttpParams().set('adherentId', adherentId);
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    return this.http.post(this.apiUrl + '/', formData, { params, responseType: 'text' });
   }
 
   get(adherentId: number, fileName: string) {

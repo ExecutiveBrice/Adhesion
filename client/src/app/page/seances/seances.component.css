@@ -1,26 +1,56 @@
-
-
-.petite_taille{
-  font-size: x-small;
+.seances-page {
+  margin: 1.5rem auto;
+  max-width: 760px;
 }
-  .cadrer{
 
-    margin :5px;
-    padding: 5px;
-    border-style: solid !important;
-    border: 1px;
-    border-radius: 5px;
-    border-color: black;
-  }
+.seance-card {
+  margin-bottom: 1rem;
+  cursor: pointer;
+}
 
-  .cadrePermanent{
-    margin-bottom: 10px;
-    --bs-gutter-x:0px;
-    border: 1px;
-    border-radius: 5px;
-    background-color: white;
-    border-color: black;
-    -moz-box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
-    -webkit-box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
-    box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
-  }
+.seance-card:focus-visible {
+  outline: 3px solid #0d6efd;
+  outline-offset: 2px;
+}
+
+dl {
+  margin: 0;
+}
+
+dl div {
+  display: flex;
+  gap: 1rem;
+  margin-top: .5rem;
+}
+
+dt {
+  min-width: 6.5rem;
+}
+
+dd {
+  margin: 0;
+}
+
+.etat-seance {
+  font-weight: 600;
+}
+
+.etat-realisee {
+  color: #198754;
+}
+
+.etat-annulee {
+  color: #dc3545;
+}
+
+.etat-modifiee {
+  color: #b06b00;
+}
+
+.presence-ligne {
+  align-items: center;
+  border-bottom: 1px solid #dee2e6;
+  display: flex;
+  justify-content: space-between;
+  padding: .65rem 0;
+}

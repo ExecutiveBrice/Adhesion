@@ -1,9 +1,7 @@
 import { Pipe, PipeTransform } from '@angular/core'
 import { Activite } from '../models'
 
-@Pipe({
-  name: 'filterBy'
-})
+@Pipe({ name: 'filterBy' })
 export class FilterByPipe implements PipeTransform {
 
 

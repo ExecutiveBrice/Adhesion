@@ -1,3 +1,4 @@
+import { ERole } from './eRole';
 
 export class AdherentFlat {
   id!: number;
@@ -15,5 +16,6 @@ export class AdherentFlat {
   lieuNaissance!: string;
   naissance!: string;
   tribuId!: number;
+  roles!: ERole[];
 
 }

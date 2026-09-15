@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   client_adhesion:
     image: nginx:latest
@@ -39,6 +37,7 @@ services:
       - MJ_APIKEY_PUBLIC=${MJ_APIKEY_PUBLIC}
       - MJ_APIKEY_PRIVATE=${MJ_APIKEY_PRIVATE}
       - BREVO_APIKEY_PRIVATE=${BREVO_APIKEY_PRIVATE}
+      - IMAGE_STORAGE_DIR=/home/ubuntu/adhesion
     expose:
       - "8000"
     networks:
@@ -80,4 +79,3 @@ volumes:
 
 networks:
   traefik_web:
-    external: true

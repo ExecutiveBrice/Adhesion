@@ -627,6 +627,7 @@
       },
       "record": {
         "type": "object",
+        "additionalProperties": true,
         "properties": {
           "_id": {
             "type": "string"

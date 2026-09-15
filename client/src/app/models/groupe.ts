@@ -8,6 +8,7 @@ export class Groupe {
   id!:number;
   indent!:boolean;
   nom!: string;
+  nm1!:boolean;
   ordre!: number;
   text!:string;
 

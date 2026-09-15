@@ -1,0 +1,22 @@
+<div ngbDropdown class="d-inline-block user-checkbox-dropdown" [autoClose]="'outside'" [container]="menuContainer">
+  <button type="button" class="btn btn-outline-primary btn-sm" [id]="dropdownId" ngbDropdownToggle
+    [disabled]="disabled">
+    {{libelle}} @if (selection.length > 0) { ({{selection.length}}) }
+  </button>
+  <div ngbDropdownMenu [attr.aria-labelledby]="dropdownId" class="user-checkbox-dropdown-menu">
+    <div class="p-2 user-checkbox-search">
+      <input type="search" class="form-control form-control-sm" placeholder="Rechercher par nom ou prénom"
+        [value]="recherche" (input)="recherche = $any($event.target).value" aria-label="Rechercher un utilisateur" />
+    </div>
+    @if (utilisateursTries.length === 0) {
+      <span class="dropdown-item-text text-muted">Aucun utilisateur trouvé</span>
+    }
+    @for (utilisateur of utilisateursTries; track utilisateur.id) {
+      <label ngbDropdownItem class="user-checkbox-option">
+        <input type="checkbox" class="form-check-input" [checked]="estSelectionne(utilisateur)"
+          (change)="modifierSelection(utilisateur, $any($event.target).checked)" />
+        <span>{{utilisateur.prenom}} {{utilisateur.nom}}</span>
+      </label>
+    }
+  </div>
+</div>

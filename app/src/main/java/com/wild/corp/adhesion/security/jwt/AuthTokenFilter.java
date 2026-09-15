@@ -37,6 +37,11 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         String username = jwtUtils.getUserNameFromJwtToken(jwt);
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        if (!(userDetails instanceof com.wild.corp.adhesion.models.UserDetails applicationUser)
+            || applicationUser.getSessionVersion() != jwtUtils.getSessionVersionFromJwtToken(jwt)) {
+          filterChain.doFilter(request, response);
+          return;
+        }
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null,
             userDetails.getAuthorities());
         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

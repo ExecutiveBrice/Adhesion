@@ -24,6 +24,7 @@ export class Adhesion {
   validDocumentSecretariat!: boolean;
   blocage!: boolean;
   accords!: Accord[];
+  dateAjoutPanier?: string;
   dateChangementStatut!: String;
   derniereModifs!: Notification[];
   derniereVisites!: Notification[];

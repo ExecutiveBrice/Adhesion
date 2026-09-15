@@ -3,14 +3,26 @@ package com.wild.corp.adhesion.controllers;
 import com.wild.corp.adhesion.models.ParamBoolean;
 import com.wild.corp.adhesion.models.ParamNumber;
 import com.wild.corp.adhesion.models.ParamText;
+import com.wild.corp.adhesion.models.resources.AgendaGoogleConfiguration;
+import com.wild.corp.adhesion.models.resources.SalleConfiguration;
+import com.wild.corp.adhesion.models.resources.SeanceResponse;
+import com.wild.corp.adhesion.services.GoogleAgendaConfigurationServices;
 import com.wild.corp.adhesion.services.ParamBooleanServices;
 import com.wild.corp.adhesion.services.ParamNumberServices;
 import com.wild.corp.adhesion.services.ParamTextServices;
+import com.wild.corp.adhesion.services.SalleConfigurationServices;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Slf4j
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -26,6 +38,68 @@ public class ParamController {
 
 	@Autowired
 	ParamNumberServices paramNumberServices;
+
+	@Autowired
+	GoogleAgendaConfigurationServices googleAgendaConfigurationServices;
+
+	@Autowired
+	SalleConfigurationServices salleConfigurationServices;
+
+	@ApiResponses(value = {
+			@ApiResponse(
+					responseCode = "200",
+					description = "successful operation",
+					content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = AgendaGoogleConfiguration.class)))
+			),
+	})
+	@GetMapping("/agendas")
+	public ResponseEntity<List<AgendaGoogleConfiguration>> getAgendas() {
+		return ResponseEntity.ok(googleAgendaConfigurationServices.getAll());
+	}
+
+	@PostMapping("/agendas")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<?> createAgenda(@RequestBody AgendaGoogleConfiguration agenda) {
+		return ResponseEntity.ok(googleAgendaConfigurationServices.create(agenda));
+	}
+
+	@PutMapping("/agendas/{agendaId}")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<?> updateAgenda(@PathVariable Long agendaId,
+			@RequestBody AgendaGoogleConfiguration agenda) {
+		return ResponseEntity.ok(googleAgendaConfigurationServices.update(agendaId, agenda));
+	}
+
+	@DeleteMapping("/agendas/{agendaId}")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<Void> deleteAgenda(@PathVariable Long agendaId) {
+		googleAgendaConfigurationServices.delete(agendaId);
+		return ResponseEntity.noContent().build();
+	}
+
+	@GetMapping("/salles")
+	public ResponseEntity<?> getSalles() {
+		return ResponseEntity.ok(salleConfigurationServices.getAll());
+	}
+
+	@PostMapping("/salles")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<?> createSalle(@RequestBody SalleConfiguration salle) {
+		return ResponseEntity.ok(salleConfigurationServices.create(salle));
+	}
+
+	@PutMapping("/salles/{salleId}")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<?> updateSalle(@PathVariable Long salleId, @RequestBody SalleConfiguration salle) {
+		return ResponseEntity.ok(salleConfigurationServices.update(salleId, salle));
+	}
+
+	@DeleteMapping("/salles/{salleId}")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<Void> deleteSalle(@PathVariable Long salleId) {
+		salleConfigurationServices.delete(salleId);
+		return ResponseEntity.noContent().build();
+	}
 
 	@GetMapping("/allText")
 	public ResponseEntity<?> getAllText() {
@@ -55,6 +129,7 @@ public class ParamController {
 	}
 
 	@GetMapping("/notification")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<?> notification(@RequestBody Object param) {
 		log.error(param.toString());
 		return ResponseEntity.ok(param.toString());
@@ -62,6 +137,7 @@ public class ParamController {
 
 
 	@GetMapping("/allNumber")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<?> getAllNumber() {
 		return ResponseEntity.ok(paramNumberServices.getAll());
 	}

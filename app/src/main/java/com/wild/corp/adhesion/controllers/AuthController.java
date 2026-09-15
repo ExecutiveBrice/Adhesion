@@ -5,23 +5,33 @@ import com.wild.corp.adhesion.models.User;
 import com.wild.corp.adhesion.models.UserDetails;
 import com.wild.corp.adhesion.security.jwt.SurrogateAuthenticationToken;
 import com.wild.corp.adhesion.services.SurrogateService;
-import com.wild.corp.adhesion.services.UserDetailsService;
 import com.wild.corp.adhesion.services.UserServices;
+import com.wild.corp.adhesion.services.PasswordResetService;
+import com.wild.corp.adhesion.services.PwaSessionService;
+import com.wild.corp.adhesion.security.payload.request.RefreshSessionRequest;
 import com.wild.corp.adhesion.security.jwt.JwtUtils;
 import com.wild.corp.adhesion.security.payload.request.LoginRequest;
+import com.wild.corp.adhesion.security.payload.request.PasswordResetConfirmRequest;
+import com.wild.corp.adhesion.security.payload.request.PasswordResetRequest;
 import com.wild.corp.adhesion.security.payload.request.SignupRequest;
 import com.wild.corp.adhesion.security.payload.response.JwtResponse;
 import com.wild.corp.adhesion.security.payload.response.MessageResponse;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.websocket.server.PathParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,14 +48,23 @@ public class AuthController {
 	@Autowired
 	UserServices userServices;
 	@Autowired
+	PasswordResetService passwordResetService;
+	@Autowired
 	JwtUtils jwtUtils;
 	@Autowired
-	PasswordEncoder encoder;
-	@Autowired
 	SurrogateService surrogateService;
+	@Autowired
+	PwaSessionService pwaSessionService;
 
+	@ApiResponses(value = {
+			@ApiResponse(
+					responseCode = "200",
+					description = "successful operation",
+					content = @Content(mediaType = "application/json", schema = @Schema(implementation = JwtResponse.class))
+			),
+	})
 	@PostMapping("/signin")
-	public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+	public ResponseEntity<JwtResponse> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
 
 		Authentication authentication = authenticationManager.authenticate(
 				new UsernamePasswordAuthenticationToken(loginRequest.getUsername().toLowerCase(), loginRequest.getPassword()));
@@ -58,24 +77,39 @@ public class AuthController {
 				.map(item -> item.getAuthority())
 				.collect(Collectors.toList());
 
-		return ResponseEntity.ok(new JwtResponse(jwt,
+		JwtResponse response = new JwtResponse(jwt,
 				userDetails.getId(),
 				userDetails.getUsername().toLowerCase(),
 				userDetails.isEnabled(),
-				roles));
+				roles);
+		if (loginRequest.isRememberSession()) {
+			response.setRefreshToken(pwaSessionService.issue(userDetails));
+		}
+		return ResponseEntity.ok().cacheControl(org.springframework.http.CacheControl.noStore()).body(response);
+	}
+
+	@PostMapping("/refresh")
+	public ResponseEntity<JwtResponse> refreshSession(@Valid @RequestBody RefreshSessionRequest request) {
+		return ResponseEntity.ok().cacheControl(org.springframework.http.CacheControl.noStore())
+				.body(pwaSessionService.refresh(request.refreshToken()));
+	}
+
+	@PostMapping("/signout")
+	public ResponseEntity<Void> signOut(@Valid @RequestBody RefreshSessionRequest request) {
+		pwaSessionService.revoke(request.refreshToken());
+		return ResponseEntity.noContent().build();
 	}
 
 	@PostMapping("/reinitPassword")
-	public ResponseEntity<?> reinitPassword(@RequestBody SignupRequest signUpRequest) {
-		signUpRequest.setUsername(signUpRequest.getUsername().toLowerCase());
-		return ResponseEntity.ok(userServices.reinitPassword(signUpRequest.getUsername()));
-	}
-
-	@PostMapping("/userExist")
-	public ResponseEntity<?> userExist(@RequestBody SignupRequest signUpRequest) {
-		signUpRequest.setUsername(signUpRequest.getUsername().toLowerCase());
-		userServices.isUserExist(signUpRequest.getUsername());
-		return ResponseEntity.ok("ok");
+	public ResponseEntity<MessageResponse> reinitPassword(@RequestBody PasswordResetRequest request,
+													 HttpServletRequest servletRequest) {
+		try {
+			passwordResetService.request(request.username(), servletRequest.getRemoteAddr());
+		} catch (RuntimeException exception) {
+			log.error("La demande de réinitialisation n'a pas pu être traitée", exception);
+		}
+		return ResponseEntity.status(HttpStatus.ACCEPTED)
+				.body(new MessageResponse("Si un compte correspond à cette adresse, un e-mail de réinitialisation sera envoyé."));
 	}
 
 	@PostMapping("/signup")
@@ -92,6 +126,7 @@ public class AuthController {
 	}
 
 	@PostMapping("/signupAnonymous")
+	@PreAuthorize("hasAnyRole('SECRETAIRE', 'ADMIN')")
 	public ResponseEntity<?> signupAnonymous(@PathParam("email") String email) {
 		if (userServices.existsByEmail(email.toLowerCase())) {
 			return ResponseEntity
@@ -116,9 +151,10 @@ public class AuthController {
 //	}
 
 	@PostMapping("/changePassword")
-	public ResponseEntity<?> changePassword(@PathParam("token") String token, @RequestBody SignupRequest signUpRequest) {
-		userServices.changePassword(token, signUpRequest.getPassword());
-		return ResponseEntity.ok("Réinitialisation du mot de passe réussie");
+	public ResponseEntity<MessageResponse> changePassword(
+			@Valid @RequestBody PasswordResetConfirmRequest request) {
+		passwordResetService.confirm(request.token(), request.password());
+		return ResponseEntity.ok(new MessageResponse("Réinitialisation du mot de passe réussie"));
 	}
 
 
@@ -126,8 +162,9 @@ public class AuthController {
 
 
 	@PostMapping("/impersonate/{username}")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<?> impersonate(@PathVariable String username, Authentication currentAuth) {
-		log.info("impersonate "+username);
+		log.warn("AUDIT action=impersonate actor={} target={}", currentAuth.getName(), username);
 		Authentication surrogateAuth = surrogateService.impersonate(currentAuth, username);
 		SecurityContextHolder.getContext().setAuthentication(surrogateAuth);
 		String jwt = jwtUtils.generateJwtToken(surrogateAuth);
@@ -145,6 +182,7 @@ public class AuthController {
 	}
 
 	@PostMapping("/impersonate/stop")
+	@PreAuthorize("hasRole('ADMIN')")
 	public String stopImpersonation(Authentication currentAuth) {
 		if (currentAuth instanceof SurrogateAuthenticationToken sat) {
 			Authentication real = (Authentication) sat.getRealPrincipal();

@@ -1,21 +1,69 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { Accord, ActiviteLite, Adherent, AdherentLite, Document, Notification } from '../models';
+import { Accord, ActiviteLite, Adherent, AdherentLite, Document, ERole, Notification } from '../models';
 import {AdherentFlat} from "../models/adherentFlat";
 import {AdherentExport} from "../models/adherentExport";
 
 const API_URL = environment.server+'/adherent/';
 
+export interface AdherentPage {
+  content: AdherentFlat[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+}
+
+export interface AdherentUpdate {
+  id: number | null;
+  prenom: string;
+  nom: string;
+  genre: string;
+  telephone: string;
+  naissance: Date;
+  lieuNaissance: string;
+  adresse: string;
+  codePostal: string;
+  ville: string;
+  mineur: boolean;
+  adresseRepresentant: boolean;
+  telephoneRepresentant: boolean;
+  emailRepresentant: boolean;
+  tribuId: string;
+  representant: { id: number } | null;
+  user: { username: string } | null;
+  accords: Array<{
+    id?: number;
+    nom?: string;
+    title?: string;
+    text?: string;
+    valide?: string;
+    refus?: string;
+    refusable?: boolean;
+    etat: boolean;
+    datePassage: Date | null;
+  }>;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class AdherentService {
-  constructor(private http: HttpClient) { }
+  private http = inject(HttpClient);
+
 
   nouvelleAnnee(): Observable<any> {
-    return this.http.get(API_URL+"nouvelleAnnee", {responseType: 'text'});
+    return this.http.post(API_URL + "nouvelleAnnee", null, {responseType: 'text'});
+  }
+
+  cleanNotification(): Observable<string> {
+    return this.http.post(API_URL + 'cleanNotification', null, {responseType: 'text'});
+  }
+
+  cleanUserAlone(): Observable<string> {
+    return this.http.delete(API_URL + 'cleanUserAlone', {responseType: 'text'});
   }
 
   deleteAdherent(adherentId : number): Observable<string> {
@@ -35,7 +83,7 @@ export class AdherentService {
 
   regenerate(adherentId: number): Observable<string> {
     let params = new HttpParams().set('adherentId', '' + adherentId + '');
-    return this.http.get(API_URL+"regenerate", {params, responseType: 'text' });
+    return this.http.post(API_URL + "regenerate", null, {params, responseType: 'text' });
   }
 
 
@@ -65,6 +113,18 @@ export class AdherentService {
     return this.http.get<AdherentFlat[]>(API_URL + 'allFlat', { responseType: 'json' });
   }
 
+  getPage(page: number, size: number, search = '', activite = '', activiteNm1 = ''): Observable<AdherentPage> {
+    const params = new HttpParams()
+      .set('page', page)
+      .set('size', size)
+      .set('search', search)
+      .set('activite', activite)
+      .set('activiteNm1', activiteNm1)
+      .set('sort', 'nom,asc')
+      .append('sort', 'prenom,asc');
+    return this.http.get<AdherentPage>(API_URL + 'page', {params, responseType: 'json'});
+  }
+
   getAllExportLite(): Observable<AdherentExport[]> {
     return this.http.get<AdherentExport[]>(API_URL + 'allExportLite', { responseType: 'json' });
   }
@@ -80,8 +140,8 @@ export class AdherentService {
   }
 
 
-  getByRole(roleId : number): Observable<AdherentLite[]> {
-    let params = new HttpParams().set('roleId', '' + roleId + '');
+  getByRole(role: ERole): Observable<AdherentLite[]> {
+    let params = new HttpParams().set('role', role);
     return this.http.get<AdherentLite[]>(API_URL + 'getByRole', {params, responseType: 'json' });
   }
 
@@ -96,7 +156,7 @@ export class AdherentService {
     return this.http.post<Adherent>(API_URL+"addVisite", null,  {params, responseType: 'json' });
   }
 
-  update(adherent: Adherent): Observable<Adherent> {
+  update(adherent: AdherentUpdate): Observable<Adherent> {
     return this.http.post<Adherent>(API_URL+"update", adherent, { responseType: 'json' });
   }
 
@@ -111,5 +171,3 @@ export class AdherentService {
   }
 
 }
-
-

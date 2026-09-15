@@ -1,28 +1,55 @@
 import { Component, OnInit, inject, Input } from '@angular/core';
-import { Accord, Activite, ActiviteDropDown, Adherent, Adhesion, Document, Tribu } from '../../models';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
+import { Accord, Activite, ActiviteDropDown, Adherent, Adhesion, Document, ERole, Tribu } from '../../models';
 
 import { ActiviteService } from '../../_services/activite.service';
-import { AdherentService } from 'src/app/_services/adherent.service';
+import { AdherentService, AdherentUpdate } from 'src/app/_services/adherent.service';
 import { faRefresh, faCirclePause, faClock, faPiggyBank, faSkull, faFileSignature, faSquareCaretLeft, faSquareCaretDown, faEye, faCircleQuestion, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { AdhesionService } from 'src/app/_services/adhesion.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
 import { ParamService } from 'src/app/_services/param.service';
-import { jsPDF } from "jspdf";
-import { DatePipe } from '@angular/common';
-import { ToastrService } from 'ngx-toastr';
+import { ToastService } from '../../_services/toast.service';
 import { UtilService } from 'src/app/_services/util.service';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FileService } from 'src/app/_services/file.service';
 import { TokenStorageService } from 'src/app/_services/token-storage.service';
+import { UserService } from 'src/app/_services/user.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgClass, DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap/dropdown';
+import { OrderByPipe } from '../../_helpers/sort.pipe';
+import { SimpleFilterPipe } from '../../_helpers/simpleFilter.pipe';
 
 
 @Component({
-  selector: 'app-user',
-  templateUrl: './user.component.html',
-  styleUrls: ['./user.component.css']
+    selector: 'app-user',
+    templateUrl: './user.component.html',
+    styleUrls: ['./user.component.css'],
+    imports: [FaIconComponent, NgClass, FormsModule, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, DatePipe, OrderByPipe, SimpleFilterPipe]
 })
 export class UserComponent implements OnInit {
+  readonly rolesDisponibles = [
+    { code: ERole.ROLE_ADMIN, libelle: 'Administrateur du site' },
+    { code: ERole.ROLE_SECRETAIRE, libelle: 'Secrétariat' },
+    { code: ERole.ROLE_BUREAU, libelle: 'Bureau' },
+    { code: ERole.ROLE_MEMBRECA, libelle: 'Membre du CA' },
+    { code: ERole.ROLE_COMPTABLE, libelle: 'Comptable' },
+    { code: ERole.ROLE_ENCADRANT, libelle: 'Encadrant' },
+    { code: ERole.ROLE_REFERENT, libelle: 'Référent' }
+  ];
+  private readonly apiViewRefresh = registerApiViewRefresh();
+  private toastr = inject(ToastService);
+  private adherentService = inject(AdherentService);
+  private userService = inject(UserService);
+  private adhesionService = inject(AdhesionService);
+  activiteService = inject(ActiviteService);
+  utilService = inject(UtilService);
+  private tokenStorageService = inject(TokenStorageService);
+  router = inject(Router);
+  paramService = inject(ParamService);
+  fileService = inject(FileService);
+
 
 
   @Input()
@@ -36,18 +63,10 @@ export class UserComponent implements OnInit {
   faRefresh = faRefresh;
   faClock = faClock;
   faCirclePause = faCirclePause;
-  faPiggyBank = faPiggyBank;
-  faFileSignature = faFileSignature;
-  faSkull = faSkull;
-  faSquareCaretLeft = faSquareCaretLeft
-  faSquareCaretDown = faSquareCaretDown
   faEye = faEye
   faCircleQuestion = faCircleQuestion;
   faCircleXmark = faCircleXmark;
   faCloudDownloadAlt = faCloudDownloadAlt;
-  faScaleBalanced = faScaleBalanced;
-  faBook = faBook;
-  faUserPlus = faUserPlus;
   faCircleCheck = faCircleCheck;
   faSquareMinus = faSquareMinus;
   faPencilSquare = faPencilSquare;
@@ -56,48 +75,18 @@ export class UserComponent implements OnInit {
   content?: string;
   edit?: boolean
   adultes: Adherent[] = []
-  editAdhRefActivite?: boolean
-  openActivites: boolean = false;
   activitesListe: ActiviteDropDown[] = [];
-  newAdhesions: Adhesion[] = [];
   adhesions: Adhesion[] = [];
-  helloassoAlod: boolean = false;
-  helloassoAlod3X: boolean = false;
-  testRgpd: boolean = false
   isFailed = false;
-  validSecretariat: boolean = false;
-  validDossier: boolean = false;
   mobile: boolean = false;
-  dossierIncomplet = false;
-  adherentsOpen = false
-  adhesionsOpen = false
-  PaiementsOpen = false
-  totalRestantDu = 0;
   isOpen: boolean = false;
   isInscriptionOpen: boolean = false;
-  subscription = new Subscription()
-
   showAdmin: boolean = false;
   showSecretaire: boolean = false;
-
-  showHelloAsso: boolean | null = false;
+  roleEnCours: string | null = null;
+  canChangeEmail: boolean = false;
 
   activites: Activite[] = []
-  // Default export is a4 paper, portrait, using millimeters for units
-  doc: jsPDF = new jsPDF('p', 'mm', 'a4', true);
-
-  constructor(
-    private toastr: ToastrService,
-    private adherentService: AdherentService,
-    private adhesionService: AdhesionService,
-    public activiteService: ActiviteService,
-    public utilService: UtilService,
-    private tokenStorageService: TokenStorageService,
-    public router: Router,
-    public route: ActivatedRoute,
-    public paramService: ParamService,
-    public fileService: FileService,
-    private datePipe: DatePipe) { }
 
   showSuccess(message: string) {
     this.toastr.success(message, 'Information');
@@ -128,7 +117,7 @@ export class UserComponent implements OnInit {
 
     this.showAdmin = this.tokenStorageService.getUser().roles.includes('ROLE_ADMIN');
     this.showSecretaire = this.tokenStorageService.getUser().roles.includes('ROLE_SECRETAIRE');
-
+    this.canChangeEmail = this.showSecretaire || this.showAdmin;
 
     this.adultes = this.tribu.adherents.filter(adh => adh.mineur == false && adh.representant == null && adh.id != this.adherent.id);
 
@@ -145,6 +134,45 @@ export class UserComponent implements OnInit {
     this.activiteService.fillObjects(this.activites, this.activitesListe, this.adherent);
     console.log(this.activites)
     this.fillFiles();
+  }
+
+  get canManageRoles(): boolean {
+    return this.showSecretaire || this.showAdmin;
+  }
+
+  hasRole(role: ERole): boolean {
+    return this.adherent.user?.roles?.includes(role) ?? false;
+  }
+
+  canChangeRole(role: ERole): boolean {
+    if (role === ERole.ROLE_ADMIN) return this.showAdmin;
+    return this.canManageRoles;
+  }
+
+  modifierRole(role: ERole, event: Event): void {
+    const checkbox = event.target as HTMLInputElement;
+    const previousValue = this.hasRole(role);
+    if (!this.canChangeRole(role) || this.roleEnCours || !this.adherent.user?.id) {
+      checkbox.checked = previousValue;
+      return;
+    }
+
+    this.roleEnCours = role;
+    const request = checkbox.checked
+      ? this.userService.grantUser(role, this.adherent.user.username)
+      : this.userService.unGrantUser(role, this.adherent.user.username);
+    request.subscribe({
+      next: user => {
+        this.adherent.user.roles = user.roles;
+        this.roleEnCours = null;
+        this.showSuccess('Les rôles de l’adhérent ont été mis à jour');
+      },
+      error: error => {
+        checkbox.checked = previousValue;
+        this.roleEnCours = null;
+        this.showError(error.error?.message || error.message);
+      }
+    });
   }
 
 
@@ -238,7 +266,39 @@ export class UserComponent implements OnInit {
         adherent.user.username = this.cleaning(adherent.user.username)
       }
 
-      this.adherentService.update(adherent).subscribe(
+      const miseAJour: AdherentUpdate = {
+        id: adherent.id || null,
+        prenom: adherent.prenom,
+        nom: adherent.nom,
+        genre: adherent.genre,
+        telephone: adherent.telephone,
+        naissance: adherent.naissance,
+        lieuNaissance: adherent.lieuNaissance,
+        adresse: adherent.adresse,
+        codePostal: adherent.codePostal,
+        ville: adherent.ville,
+        mineur: adherent.mineur,
+        adresseRepresentant: adherent.adresseRepresentant,
+        telephoneRepresentant: adherent.telephoneRepresentant,
+        emailRepresentant: adherent.emailRepresentant,
+        tribuId: adherent.tribuId || this.tribu.uuid,
+        representant: adherent.representant ? { id: adherent.representant.id } : null,
+        user: adherent.user?.username?.trim()
+          ? { username: adherent.user.username.trim() }
+          : null,
+        accords: adherent.accords.map(accord => ({
+          id: accord.id,
+          nom: accord.nom,
+          title: accord.title,
+          text: accord.text,
+          valide: accord.valide,
+          refus: accord.refus,
+          refusable: accord.refusable,
+          etat: accord.etat,
+          datePassage: accord.datePassage || null
+        }))
+      };
+      this.adherentService.update(miseAJour).subscribe(
         data => {
           this.showSuccess("L'adhérent à bien été mis à jour")
           this.adherent = data;
@@ -254,6 +314,8 @@ export class UserComponent implements OnInit {
           this.isFailed = true;
           if (error.status == 409) {
             this.toastr.error("Cette adresse e-mail est déjà utilisée. Veuillez en choisir une autre", 'Erreur')
+          } else if (error.status == 403) {
+            this.toastr.error("Seul le secrétariat ou un administrateur peut modifier l'adresse e-mail", 'Accès refusé')
           } else {
             this.showError(error.error)
           }
@@ -350,10 +412,13 @@ export class UserComponent implements OnInit {
 
 
 
-  deleteDoc(file: Document) {
-    this.fileService.delete(this.adherent.id, file.nom).subscribe(
+  deleteDoc(fileName: string) {
+    if (!this.hasPersistedAdherent()) {
+      return;
+    }
+    this.fileService.delete(this.adherent.id, fileName).subscribe(
       data => {
-        this.adherent.documents = this.adherent.documents.filter(document => document != file.nom)
+        this.adherent.documents = this.adherent.documents.filter(document => document !== fileName)
       },
       error => {
         this.isFailed = true;
@@ -362,6 +427,9 @@ export class UserComponent implements OnInit {
     );
   }
   fillFiles() {
+    if (!this.hasPersistedAdherent()) {
+      return;
+    }
     this.fileService.getAllFilesName(this.adherent.id).subscribe(data => {
       this.adherent.documents = data
     },
@@ -372,6 +440,9 @@ export class UserComponent implements OnInit {
     );
   }
   openEditModal(doc: string) {
+    if (!this.hasPersistedAdherent()) {
+      return;
+    }
     this.utilService.openModalPDF(doc, this.adherent.id).then((data) => {
       console.log(data)
       // on close
@@ -382,6 +453,10 @@ export class UserComponent implements OnInit {
   }
 
   openAddPDFModal(adherent: Adherent) {
+    if (!this.hasPersistedAdherent()) {
+      this.showWarning("Enregistrez d'abord l'adhérent avant d'ajouter un document");
+      return;
+    }
     this.utilService.openModalPDF(undefined, this.adherent.id).then((data: Document) => {
       console.log(data)
       this.uploadPDF(data)
@@ -393,6 +468,9 @@ export class UserComponent implements OnInit {
   }
 
   downloadPDF(file: string) {
+    if (!this.hasPersistedAdherent()) {
+      return;
+    }
     this.fileService.get(this.adherent.id, file).subscribe(res => {
 
       //window.open("data:application/pdf;base64," + data, '_self');
@@ -433,21 +511,32 @@ export class UserComponent implements OnInit {
     return blob;
   }
 
-  uploadPDF(file: Document) {
+  uploadPDF(document: Document) {
+    if (!document.file) {
+      this.showError("Le fichier PDF n'a pas pu être lu");
+      return;
+    }
+    if (!this.hasPersistedAdherent()) {
+      this.showWarning("Enregistrez d'abord l'adhérent avant d'ajouter un document");
+      return;
+    }
 
-    this.fileService.update(this.adherent.id, file.nom, file.content.replace("data:application/pdf;base64,", "")).subscribe(data => {
-      console.log(data)
-      if (this.adherent.documents.length > 0) {
-        this.adherent.documents.push(file.nom)
-      } else {
-        let docs = []
-        docs.push(file.nom)
-        this.adherent.documents = docs;
+    this.fileService.update(this.adherent.id, document.file).subscribe({
+      next: () => {
+        if (!this.adherent.documents.includes(document.nom)) {
+          this.adherent.documents = [...this.adherent.documents, document.nom];
+        }
+        this.showSuccess("Le document a bien été ajouté");
+      },
+      error: (error) => {
+        this.isFailed = true;
+        this.showError(error.error?.message || error.message);
       }
-    },
-      error => {
-        console.log('😢 Oh no!', error);
-      });
+    });
+  }
+
+  private hasPersistedAdherent(): boolean {
+    return Number.isInteger(this.adherent?.id) && this.adherent.id > 0;
   }
 
 
@@ -616,7 +705,7 @@ export class UserComponent implements OnInit {
     this.adherentService.regenerate(adherent.id).subscribe({
       next: (response) => {
         console.log(response)
-
+        this.fillFiles();
         this.showSuccess("La régénération de l'attestation de l'adhérent est terminée")
       },
       error: (error) => {

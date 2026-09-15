@@ -1,76 +1,109 @@
-import {Component, OnInit} from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   ActiviteDropDown,
-  Adhesion,
-  AdhesionExcel,
+  AdhesionLite,
   Document,
   HoraireDropDown,
-  Notification,
   Paiement
 } from 'src/app/models';
 import {AdhesionService} from 'src/app/_services/adhesion.service';
 import {
-  faEarth,
-  faBasketball,
-  faFilterCircleXmark,
-  faFilter,
   faPen,
-  faEye,
-  faEnvelope,
   faCircleUser,
   faFlag,
   faCircleXmark,
   faCircleExclamation,
-  faBook,
-  faScaleBalanced,
-  faPencilSquare,
-  faSquarePlus,
   faSquareMinus,
   faCircleCheck,
-  faUserPlus,
-  faL
 } from '@fortawesome/free-solid-svg-icons';
 import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
 import {TokenStorageService} from 'src/app/_services/token-storage.service';
 import {Router} from '@angular/router';
 import {ParamService} from 'src/app/_services/param.service';
 import {ActiviteService} from 'src/app/_services/activite.service';
-import {ExcelService} from 'src/app/_services/excel.service';
-import {FilterAdhesionByPipe} from 'src/app/_helpers/filterAdhesion.pipe';
-import {DatePipe} from '@angular/common';
-
 import {AdherentService} from 'src/app/_services/adherent.service';
-import {ToastrService} from 'ngx-toastr';
+import { ToastService } from '../../_services/toast.service';
+import {Subject, debounceTime, distinctUntilChanged} from 'rxjs';
+import { FormsModule } from '@angular/forms';
+import { NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownButtonItem, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap/dropdown';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgClass, DatePipe } from '@angular/common';
+import { OrderByPipe } from '../../_helpers/sort.pipe';
 
+interface GroupeActivites {
+  nom: string;
+  filtre: string;
+  activites: ActiviteDropDown[];
+}
 
 @Component({
-  selector: 'app-adherents',
-  templateUrl: './adhesions.component.html',
-  styleUrls: ['./adhesions.component.css']
+    selector: 'app-adherents',
+    templateUrl: './adhesions.component.html',
+    styleUrls: ['./adhesions.component.css'],
+    imports: [FormsModule, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownButtonItem, NgbDropdownItem, FaIconComponent, NgClass, DatePipe, OrderByPipe]
 })
 export class AdhesionsComponent implements OnInit {
-  faSeedling = faEarth
-  faBasketball = faBasketball
-  faFilterCircleXmark = faFilterCircleXmark
-  faFilter = faFilter
+  private readonly apiViewRefresh = registerApiViewRefresh();
+  private toastr = inject(ToastService);
+  private adherentService = inject(AdherentService);
+  private activiteService = inject(ActiviteService);
+  private adhesionService = inject(AdhesionService);
+  private tokenStorageService = inject(TokenStorageService);
+  private modalService = inject(NgbModal);
+  paramService = inject(ParamService);
+  router = inject(Router);
+
   faCircleUser = faCircleUser
   faCircleExclamation = faCircleExclamation
   faPen = faPen
-  faSquarePlus = faSquarePlus
-  faEye = faEye
-  faEnvelope = faEnvelope;
   faSquareMinus = faSquareMinus;
   faCircleXmark = faCircleXmark;
   faCircleCheck = faCircleCheck;
   faFlag = faFlag;
-  adhesions: Adhesion[] = [];
-  adhesionsCopy: Adhesion[] = [];
+  adhesions: AdhesionLite[] = [];
+  page = 1;
+  pageSize = 20;
+  readonly pageSizes = [10, 20, 50, 100];
+  totalElements = 0;
+  totalPages = 0;
+  searchTerm = '';
+  sortField = 'adherent.nom';
+  sortDirection: 'asc' | 'desc' = 'asc';
 
+  validPaiementSecretariat: boolean | null = null;
+  validDocumentSecretariat: boolean | null = null;
+  statutActuel = '';
+  flag: boolean | null = null;
+  statusOptions: string[] = [];
 
-  validPaiementSecretariat:boolean|null=null;
-  validDocumentSecretariat:boolean|null=null;
-  statutActuel: string = "";
-  flag:boolean|null=null;
+  readonly generalStatuses = [
+    'Attente validation adhérent',
+    'Attente validation secrétariat',
+    'Attente paiement',
+    'Validée, en attente du certificat médical',
+    'Validée groupement sportif',
+    'Sur liste d\'attente',
+    'Validée',
+    'Annulée'
+  ];
+
+  readonly basketStatuses = [
+    'Attente validation adhérent',
+    'Attente validation secrétariat',
+    'Attente création licence',
+    'Licence FFBB à compléter',
+    'Retour ALOD Basket',
+    'Licence générée',
+    'Retour Comité',
+    'Licence T',
+    'Sur liste d\'attente',
+    'Annulée'
+  ];
+
+  private readonly searchChanges = new Subject<string>();
+  private readonly destroyRef = inject(DestroyRef);
 
 
 
@@ -78,21 +111,6 @@ export class AdhesionsComponent implements OnInit {
   showSecretaire: boolean = false;
   choixSection: string = ""
   visuelselection: string = "";
-
-  constructor(
-    private toastr: ToastrService,
-    private datePipe: DatePipe,
-    private adherentService: AdherentService,
-    private filterAdhesionBy: FilterAdhesionByPipe,
-    private excelService: ExcelService,
-    private activiteService: ActiviteService,
-    private adhesionService: AdhesionService,
-    private tokenStorageService: TokenStorageService,
-    private modalService: NgbModal,
-    public paramService: ParamService,
-    public router: Router
-  ) {
-  }
 
   showSuccess(message: string) {
     this.toastr.info(message, 'Information');
@@ -112,63 +130,192 @@ export class AdhesionsComponent implements OnInit {
 
 
   ngOnInit(): void {
-
     if (this.tokenStorageService.getUser().roles) {
       this.showAdmin = this.tokenStorageService.getUser().roles.includes('ROLE_ADMIN');
       this.showSecretaire = this.tokenStorageService.getUser().roles.includes('ROLE_SECRETAIRE');
       if (this.tokenStorageService.getUser().username == "alodbasket@free.fr" || this.tokenStorageService.getUser().username == "laurence.basket@yahoo.com" || this.tokenStorageService.getUser().username == "xlcharonnat@yahoo.fr" || this.tokenStorageService.getUser().username == "c.rullie@free.fr") {
-        this.choixSection = "activite#Basket"
-        this.visuelselection = "Basket-Tous horaires"
+        this.choixSection = "groupe#Basket"
+        this.visuelselection = "Basket · Toutes les catégories"
       } else {
-        this.choixSection = "activite#Aquagym"
-        this.visuelselection = "Aquagym-Tous horaires"
+        this.choixSection = "Toutes"
+        this.visuelselection = "Toutes les adhésions"
       }
     } else {
       this.router.navigate(['login']);
+      return;
     }
-    this.getAdhesion()
-    this.getActivites()
+
+    this.searchChanges.pipe(
+      debounceTime(350),
+      distinctUntilChanged(),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => this.applyFilters());
+
+    this.getAdhesion();
+    this.getActivites();
+    this.getStatuses();
   }
 
   loadder: boolean = true
 
-  getAdhesion() {
-    this.loadder = true
-    this.adhesions = []
-    this.adhesionsCopy = []
-    this.adhesionService.getAllLiteBysection(this.choixSection).subscribe({
+  getAdhesion(resetPage: boolean = false) {
+    if (resetPage) {
+      this.page = 1;
+    }
+    this.loadder = true;
+    this.adhesionService.getPage({
+      sections: this.choixSection,
+      page: this.page - 1,
+      size: this.pageSize,
+      search: this.searchTerm.trim(),
+      status: this.statutActuel,
+      paymentValidated: this.validPaiementSecretariat,
+      documentsValidated: this.validDocumentSecretariat,
+      flagged: this.flag,
+      sort: `${this.sortField},${this.sortDirection}`
+    }).subscribe({
       next: (data) => {
-        console.log(data)
-        data.forEach(value => value.nomprenom = value.adherent.nom + value.adherent.prenom)
-        this.adhesions = data;
-        this.adhesionsCopy = data;
-        this.loadder = false
+        this.adhesions = data.content;
+        this.totalElements = data.totalElements;
+        this.totalPages = data.totalPages;
+        this.page = data.number + 1;
+        this.loadder = false;
       },
       error: (error) => {
-        console.log(error)
-        this.showError(error.error.message)
+        console.log(error);
+        this.loadder = false;
+        this.showError(error.error?.message || error.message);
       }
     });
   }
 
+  onSearchChange(value: string) {
+    this.searchChanges.next(value.trim());
+  }
+
+  applyFilters() {
+    this.getAdhesion(true);
+  }
+
+  resetFilters() {
+    this.searchTerm = '';
+    this.statutActuel = '';
+    this.validPaiementSecretariat = null;
+    this.validDocumentSecretariat = null;
+    this.flag = null;
+    this.getAdhesion(true);
+  }
+
+  selectSection(section: string, label: string) {
+    this.choixSection = section;
+    this.visuelselection = label;
+    this.getAdhesion(true);
+  }
+
+  changeSort(field: string) {
+    if (this.sortField === field) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDirection = 'asc';
+    }
+    this.getAdhesion(true);
+  }
+
+  sortIndicator(field: string): string {
+    if (this.sortField !== field) {
+      return '↕';
+    }
+    return this.sortDirection === 'asc' ? '↑' : '↓';
+  }
+
+  goToPage(targetPage: number) {
+    if (targetPage < 1 || targetPage > this.totalPages || targetPage === this.page) {
+      return;
+    }
+    this.page = targetPage;
+    this.getAdhesion();
+  }
+
+  onPageSizeChange() {
+    this.getAdhesion(true);
+  }
+
+  get firstResult(): number {
+    return this.totalElements === 0 ? 0 : (this.page - 1) * this.pageSize + 1;
+  }
+
+  get lastResult(): number {
+    return Math.min(this.page * this.pageSize, this.totalElements);
+  }
+
+  get visiblePages(): number[] {
+    const windowSize = Math.min(4, this.totalPages);
+    const start = Math.max(1, Math.min(this.page - 1, this.totalPages - windowSize + 1));
+    return Array.from({length: windowSize}, (_, index) => start + index);
+  }
+
+  get showLeadingEllipsis(): boolean {
+    return this.visiblePages[0] > 1;
+  }
+
+  get showTrailingEllipsis(): boolean {
+    return this.visiblePages[this.visiblePages.length - 1] < this.totalPages;
+  }
+
+  get hasActiveFilters(): boolean {
+    return !!this.searchTerm.trim() || !!this.statutActuel || this.validPaiementSecretariat !== null
+      || this.validDocumentSecretariat !== null || this.flag !== null;
+  }
+
+  statusesFor(adhesion: AdhesionLite): string[] {
+    return adhesion.activite.groupe === 'ALOD_B' ? this.basketStatuses : this.generalStatuses;
+  }
+
+  trackByAdhesion(index: number, adhesion: AdhesionLite): number {
+    return adhesion.id;
+  }
+
   activites: ActiviteDropDown[] = []
 
-  getActivites() {
+  /** Regroupe la liste du menu sans modifier les activités chargées. */
+  get groupesActivites(): GroupeActivites[] {
+    const groupes = new Map<string, ActiviteDropDown[]>();
 
+    for (const activite of this.activites) {
+      const nomGroupe = activite.groupeFiltre?.trim() || 'Sans groupe';
+      const activitesDuGroupe = groupes.get(nomGroupe) ?? [];
+      activitesDuGroupe.push(activite);
+      groupes.set(nomGroupe, activitesDuGroupe);
+    }
+
+    const collator = new Intl.Collator('fr', { sensitivity: 'base' });
+    return [...groupes.entries()]
+      .map(([nom, activites]) => ({
+        nom,
+        filtre: nom === 'Sans groupe' ? '' : nom,
+        activites: [...activites].sort((a, b) => collator.compare(a.nom, b.nom))
+      }))
+      .sort((a, b) => collator.compare(a.nom, b.nom));
+  }
+
+  getActivites() {
     this.activiteService.getAll().subscribe({
       next: (data) => {
+        this.activites = [];
         data.forEach(act => {
           if (this.activites.filter(activiteDropDown => activiteDropDown.nom == act.nom).length > 0) {
             let horaireDropDown = new HoraireDropDown
             horaireDropDown.id = act.id
-            horaireDropDown.nom = act.horaire
+            horaireDropDown.nom = this.libelleCategories(act)
             this.activites.filter(activiteDropDown => activiteDropDown.nom == act.nom)[0].horaires.push(horaireDropDown)
           } else {
             let activiteDropDown = new ActiviteDropDown()
             activiteDropDown.nom = act.nom
+            activiteDropDown.groupeFiltre = act.groupeFiltre
             let horaireDropDown = new HoraireDropDown
             horaireDropDown.id = act.id
-            horaireDropDown.nom = act.horaire
+            horaireDropDown.nom = this.libelleCategories(act)
             activiteDropDown.horaires.push(horaireDropDown)
             this.activites.push(activiteDropDown)
           }
@@ -181,13 +328,53 @@ export class AdhesionsComponent implements OnInit {
     });
   }
 
+  private libelleCategories(activite: { planificationsHebdomadaires?: Array<{
+    jour?: string;
+    horaireDebut?: string;
+    descriptif?: string;
+  }> }): string {
+    const libellesJours: Record<string, string> = {
+      MONDAY: 'Lundi',
+      TUESDAY: 'Mardi',
+      WEDNESDAY: 'Mercredi',
+      THURSDAY: 'Jeudi',
+      FRIDAY: 'Vendredi',
+      SATURDAY: 'Samedi',
+      SUNDAY: 'Dimanche'
+    };
 
-  updateFlag(adhesion: Adhesion, statut: boolean) {
+    const libelle = (activite.planificationsHebdomadaires ?? [])
+      .map(categorie => [
+        categorie.jour ? (libellesJours[categorie.jour] ?? categorie.jour) : '',
+        categorie.horaireDebut,
+        categorie.descriptif
+      ].filter(Boolean).join(' · '))
+      .filter(Boolean)
+      .join(' / ');
+
+    return libelle || 'Catégorie non renseignée';
+  }
+
+  getStatuses() {
+    this.adhesionService.getStatuses().subscribe({
+      next: statuses => this.statusOptions = statuses,
+      error: error => {
+        console.log(error);
+        this.statusOptions = Array.from(new Set([...this.generalStatuses, ...this.basketStatuses])).sort();
+      }
+    });
+  }
+
+
+  updateFlag(adhesion: AdhesionLite, statut: boolean) {
     this.adhesionService.updateFlag(adhesion.id, statut).subscribe({
       next: (data) => {
         adhesion.flag = data.flag;
-        adhesion.derniereModifs = data.derniereModifs
-        adhesion.derniereVisites = data.derniereVisites
+        adhesion.derniereModifs = data.derniereModifs || adhesion.derniereModifs;
+        adhesion.derniereVisites = data.derniereVisites || adhesion.derniereVisites;
+        if (this.flag !== null) {
+          this.reloadAfterFilteredMutation();
+        }
       },
       error: (error) => {
         console.log(error)
@@ -196,12 +383,15 @@ export class AdhesionsComponent implements OnInit {
     });
   }
 
-  updateDocumentsSecretariat(adhesion: Adhesion, statut: boolean) {
+  updateDocumentsSecretariat(adhesion: AdhesionLite, statut: boolean) {
     this.adhesionService.updateDocumentsSecretariat(adhesion.id, statut).subscribe({
       next: (data) => {
         adhesion.validDocumentSecretariat = data.validDocumentSecretariat;
-        adhesion.derniereModifs = data.derniereModifs
-        adhesion.derniereVisites = data.derniereVisites
+        adhesion.derniereModifs = data.derniereModifs || adhesion.derniereModifs;
+        adhesion.derniereVisites = data.derniereVisites || adhesion.derniereVisites;
+        if (this.validDocumentSecretariat !== null) {
+          this.reloadAfterFilteredMutation();
+        }
       },
       error: (error) => {
         console.log(error)
@@ -211,12 +401,15 @@ export class AdhesionsComponent implements OnInit {
   }
 
 
-  updatePaiementSecretariat(adhesion: Adhesion, statut: boolean) {
+  updatePaiementSecretariat(adhesion: AdhesionLite, statut: boolean) {
     this.adhesionService.updatePaiementSecretariat(adhesion.id, statut).subscribe({
       next: (data) => {
         adhesion.validPaiementSecretariat = data.validPaiementSecretariat;
-        adhesion.derniereModifs = data.derniereModifs
-        adhesion.derniereVisites = data.derniereVisites
+        adhesion.derniereModifs = data.derniereModifs || adhesion.derniereModifs;
+        adhesion.derniereVisites = data.derniereVisites || adhesion.derniereVisites;
+        if (this.validPaiementSecretariat !== null) {
+          this.reloadAfterFilteredMutation();
+        }
       },
       error: (error) => {
         console.log(error)
@@ -225,16 +418,19 @@ export class AdhesionsComponent implements OnInit {
     });
   }
 
-  choisirStatut(adhesion: Adhesion, statutActuel: string) {
+  choisirStatut(adhesion: AdhesionLite, statutActuel: string) {
     this.adhesionService.choisirStatut(adhesion.id, statutActuel).subscribe({
       next: (data) => {
         this.showSuccess("Changement de statut de l'adhésion réussie pour l'adhérent " + adhesion.adherent.prenom + " " + adhesion.adherent.nom)
-        adhesion.statutActuel = data.statutActuel;
-        adhesion.derniereModifs = data.derniereModifs
-        adhesion.derniereVisites = data.derniereVisites
+        adhesion.statutActuel = data.statutActuel.toString();
+        adhesion.derniereModifs = data.derniereModifs || adhesion.derniereModifs;
+        adhesion.derniereVisites = data.derniereVisites || adhesion.derniereVisites;
         adhesion.validDocumentSecretariat = data.validDocumentSecretariat
         adhesion.validPaiementSecretariat = data.validPaiementSecretariat
         adhesion.accords = data.accords
+        if (this.statutActuel && adhesion.statutActuel !== this.statutActuel) {
+          this.reloadAfterFilteredMutation();
+        }
       },
       error: (error) => {
         console.log(error)
@@ -247,18 +443,25 @@ export class AdhesionsComponent implements OnInit {
     window.open(page, '_blank');
   }
 
-  enregistrerRemarque(adhesion: Adhesion) {
+  enregistrerRemarque(adhesion: AdhesionLite) {
     this.adhesionService.enregistrerRemarque(adhesion.id, adhesion.remarqueSecretariat).subscribe({
       next: (data) => {
-        adhesion.remarqueSecretariat = data.remarqueSecretariat
-        adhesion.derniereModifs = data.derniereModifs
-        adhesion.derniereVisites = data.derniereVisites
+        adhesion.remarqueSecretariat = data.remarqueSecretariat?.toString() || '';
+        adhesion.derniereModifs = data.derniereModifs || adhesion.derniereModifs;
+        adhesion.derniereVisites = data.derniereVisites || adhesion.derniereVisites;
       },
       error: (error) => {
         console.log(error)
         this.showError(error.error.message)
       }
     });
+  }
+
+  private reloadAfterFilteredMutation() {
+    if (this.adhesions.length === 1 && this.page > 1) {
+      this.page--;
+    }
+    this.getAdhesion();
   }
 
 
@@ -268,12 +471,15 @@ export class AdhesionsComponent implements OnInit {
 
   }
 
-  acceptSupress(adhesion: Adhesion) {
+  acceptSupress(adhesion: AdhesionLite) {
     this.modalService.dismissAll();
     this.adhesionService.deleteAdhesion(adhesion.id).subscribe({
       next: (data) => {
         this.showSuccess("Suppresson de l'adhésion réussie pour l'adhérent " + adhesion.adherent.prenom + " " + adhesion.adherent.nom)
-        this.adhesions = this.adhesions.filter(adh => adh.id != adhesion.id)
+        if (this.adhesions.length === 1 && this.page > 1) {
+          this.page--;
+        }
+        this.getAdhesion();
       },
       error: (error) => {
         console.log(error)
@@ -282,9 +488,9 @@ export class AdhesionsComponent implements OnInit {
     })
   }
 
-  selectedAdhesion: Adhesion = new Adhesion;
+  selectedAdhesion: AdhesionLite = new AdhesionLite();
 
-  openModal(targetModal: any, adhesion: Adhesion) {
+  openModal(targetModal: any, adhesion: AdhesionLite) {
     this.selectedAdhesion = adhesion;
 
     this.modalService.open(targetModal, {
@@ -295,7 +501,7 @@ export class AdhesionsComponent implements OnInit {
 
   }
 
-  dismiss(selectedAdhesion: Adhesion) {
+  dismiss(selectedAdhesion: AdhesionLite) {
     this.modalService.dismissAll();
   }
 
@@ -307,7 +513,7 @@ export class AdhesionsComponent implements OnInit {
     this.modalService.dismissAll();
   }
 
-  retraitPaiement(adhesion: Adhesion, paiementId: number) {
+  retraitPaiement(adhesion: AdhesionLite, paiementId: number) {
     this.adhesionService.deletePaiement(adhesion.id, paiementId).subscribe({
       next: (data) => {
         adhesion.paiements = adhesion.paiements.filter(paiement => paiement.id != paiementId)
@@ -321,7 +527,7 @@ export class AdhesionsComponent implements OnInit {
     adhesion.paiements = adhesion.paiements.filter(paiement => paiement.id != paiementId)
   }
 
-  updatePaiement(adhesion: Adhesion, paiement: Paiement) {
+  updatePaiement(adhesion: AdhesionLite, paiement: Paiement) {
     this.adhesionService.savePaiement(adhesion.id, paiement).subscribe({
       next: (data) => {
         adhesion.paiements = data.paiements
@@ -334,7 +540,7 @@ export class AdhesionsComponent implements OnInit {
     });
   }
 
-  addNewPaiement(adhesion: Adhesion) {
+  addNewPaiement(adhesion: AdhesionLite) {
     this.adhesionService.savePaiement(adhesion.id, new Paiement).subscribe({
       next: (data) => {
         adhesion.paiements = data.paiements
@@ -346,8 +552,8 @@ export class AdhesionsComponent implements OnInit {
     });
   }
 
-  calculSomme(adhesion: Adhesion): number {
-    return adhesion.paiements.map(paiement => paiement.montant).reduce((a, b) => a + b, 0)
+  calculSomme(adhesion: AdhesionLite): number {
+    return adhesion.paiements.reduce((total, paiement) => total + (paiement.montant || 0), 0);
   }
 
   openEditModal(targetModal: any, doc: Document) {
@@ -370,7 +576,7 @@ export class AdhesionsComponent implements OnInit {
 
 
 
-  updateVisiteAdhesion(adhesion: Adhesion) {
+  updateVisiteAdhesion(adhesion: AdhesionLite) {
     this.adhesionService.addVisite(adhesion.id).subscribe({
       next: (response) => {
         adhesion.derniereModifs = response.derniereModifs
@@ -383,7 +589,7 @@ export class AdhesionsComponent implements OnInit {
     });
   }
 
-  updateVisiteAdherent(adhesion: Adhesion) {
+  updateVisiteAdherent(adhesion: AdhesionLite) {
     this.adherentService.addVisite(adhesion.adherent.id).subscribe({
       next: (response) => {
         adhesion.adherent.derniereModifs = response.derniereModifs
@@ -397,9 +603,10 @@ export class AdhesionsComponent implements OnInit {
   }
 
 
-  verifyAdhesion(adhesion: Adhesion): boolean {
+  verifyAdhesion(adhesion: AdhesionLite): boolean {
 
-    let lastVisite = adhesion.derniereVisites.length > 0 ? adhesion.derniereVisites.reduce(function (r, a) {
+    const visites = adhesion.derniereVisites || [];
+    let lastVisite = visites.length > 0 ? visites.reduce(function (r, a) {
       return r.date > a.date ? r : a;
     }) : undefined
 
@@ -411,9 +618,10 @@ export class AdhesionsComponent implements OnInit {
   }
 
 
-  verifyAdherent(adhesion: Adhesion): boolean {
+  verifyAdherent(adhesion: AdhesionLite): boolean {
 
-    let lastVisite = adhesion.adherent.derniereVisites.length > 0 ? adhesion.adherent?.derniereVisites?.reduce(function (r, a) {
+    const visites = adhesion.adherent.derniereVisites || [];
+    let lastVisite = visites.length > 0 ? visites.reduce(function (r, a) {
       return r.date > a.date ? r : a;
     }) : undefined
 

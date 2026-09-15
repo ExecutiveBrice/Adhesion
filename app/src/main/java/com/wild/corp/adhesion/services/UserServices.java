@@ -1,8 +1,9 @@
 package com.wild.corp.adhesion.services;
 
-import com.wild.corp.adhesion.repository.RoleRepository;
+import com.wild.corp.adhesion.repository.SeanceRepository;
 import com.wild.corp.adhesion.repository.UserRepository;
 import com.wild.corp.adhesion.models.*;
+import com.wild.corp.adhesion.models.resources.SeanceDuJourResponse;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -22,9 +25,9 @@ public class UserServices {
     @Autowired
     UserRepository userRepository;
     @Autowired
-    ConfirmationTokenService confirmationTokenService;
+    SeanceRepository seanceRepository;
     @Autowired
-    RoleRepository roleRepository;
+    ConfirmationTokenService confirmationTokenService;
     @Autowired
     EmailService emailService;
     @Autowired
@@ -35,17 +38,20 @@ public class UserServices {
     private String serverName;
 
 
-    public List<Seance> getSeancesDuJourForUser (String username){
+    public List<SeanceDuJourResponse> getSeancesDuJourForUser(String username) {
+        LocalDate today = LocalDate.now();
+        return seanceRepository.findTodayByProfessorUsername(
+                        username, today.atStartOfDay(), today.plusDays(1).atStartOfDay()).stream()
+                .map(SeanceDuJourResponse::from)
+                .toList();
+    }
 
-
-        User user = findByEmail(username);
-        List<Seance> seances = user.getAdherent().getCours().stream().flatMap(activite -> {
-            LocalDate now = LocalDate.now();
-            return activite.getSeances().stream().filter(seance -> now.equals(seance.getDateSeance()));
-        }).toList();
-
-
-        return seances;
+    /** Returns every session planned on a given day for the secretariat view. */
+    public List<SeanceDuJourResponse> getSeancesDuJourForSecretary(LocalDate date) {
+        return seanceRepository.findAllByDebutGreaterThanEqualAndDebutLessThanOrderByDebut(
+                        date.atStartOfDay(), date.plusDays(1).atStartOfDay()).stream()
+                .map(SeanceDuJourResponse::from)
+                .toList();
     }
 
 
@@ -100,56 +106,46 @@ public class UserServices {
         // Create new user's account
         User user = new User(email.toLowerCase(), encoder.encode(password));
         // Create new user's account
-        Role userRole = roleRepository.findByName(ERole.ROLE_USER)
-                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-        user.getRoles().add(userRole);
+        user.getRoles().add(ERole.ROLE_USER);
         user = userRepository.save(user);
 
         return user;
     }
 
     public User grantUser(ERole role, User user) {
-        Role userRole = roleRepository.findByName(role)
-                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-
-        user.getRoles().add(userRole);
+        user.getRoles().add(role);
         return userRepository.save(user);
     }
 
     public User unGrantUser(ERole role, User user) {
-        Role userRole = roleRepository.findByName(role)
-                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-
-        user.getRoles().remove(userRole);
+        user.getRoles().remove(role);
         return userRepository.save(user);
     }
 
     public void confirmEmailAnswer(String token) throws Exception {
-        ConfirmationToken confirmationToken = confirmationTokenService.findByToken(token);
+        Instant now = Instant.now();
+        ConfirmationToken confirmationToken = confirmationTokenService.consume(
+                token, ConfirmationTokenType.EMAIL_CONFIRMATION, now);
         final User user = confirmationToken.getUser();
         user.setEmailValid(true);
-        userRepository.save(user);
-        confirmationTokenService.deleteConfirmationToken(confirmationToken.getId());
+        userRepository.saveAndFlush(user);
+        confirmationTokenService.invalidateAll(user, ConfirmationTokenType.EMAIL_CONFIRMATION, now);
     }
 
     public void confirmEmailAsking(User user) {
-        ConfirmationToken cft = new ConfirmationToken();
-        cft.setUser(user);
-        cft.setCreatedDate(LocalDate.now());
-        UUID uuid = UUID.randomUUID();
-        cft.setConfirmationToken(uuid);
-        cft.setType("ConfirmationEmail");
+        Instant now = Instant.now();
+        confirmationTokenService.invalidateAll(user, ConfirmationTokenType.EMAIL_CONFIRMATION, now);
+        String rawToken = confirmationTokenService.create(
+                user, ConfirmationTokenType.EMAIL_CONFIRMATION, Duration.ofHours(24), now);
         EmailContent mess = new EmailContent();
         mess.getDestinataires().add(user.getUsername());
         mess.setSubject("Confirmation Email");
         mess.setText("Bonjour,<br>" +
-                "Ceci est le <a href=https://" + serverName + "/api_adhesion/auth/confirmEmail/" + uuid + ">lien de confirmation de votre adresse mail</a><br><br>" +
+                "Ceci est le <a href=https://" + serverName + "/api_adhesion/auth/confirmEmail/" + rawToken + ">lien de confirmation de votre adresse mail</a><br><br>" +
                 "Vous pouvez dors et déjà vous inscrire aux activités de votre choix<br><br>" +
                 "Cordialement,<br>" +
                 "l'équipe de l'ALOD");
         emailService.sendMessage(mess);
-
-        confirmationTokenService.saveConfirmationToken(cft);
     }
 
 
@@ -157,30 +153,6 @@ public class UserServices {
         findByEmail(email);
     }
 
-
-    public ConfirmationToken reinitPassword(String email) {
-        User user = findByEmail(email);
-
-        ConfirmationToken cft = new ConfirmationToken();
-        cft.setUser(user);
-        cft.setCreatedDate(LocalDate.now());
-        UUID uuid = UUID.randomUUID();
-        cft.setConfirmationToken(uuid);
-        cft.setType("ReinitPassword");
-
-        confirmationTokenService.saveConfirmationToken(cft);
-
-        EmailContent mess = new EmailContent();
-        mess.getDestinataires().add(user.getUsername());
-        mess.setSubject("Réinitialisation du mot de passe");
-        mess.setText("Bonjour,<br>" +
-                "Ceci est le <a href=https://" + serverName + "/adhesion/#/resetPassword/" + uuid + ">lien de renouvellement de votre mot de passe</a><br>" +
-                "Cordialement,<br>" +
-                "l'équipe de l'ALOD");
-
-        emailService.sendMessage(mess);
-        return cft;
-    }
 
 //pour les tests en local
     public void changeTestPassword() {
@@ -200,14 +172,6 @@ public class UserServices {
 
 
 
-    public void changePassword(String token, String password) {
-        ConfirmationToken confirmationToken = confirmationTokenService.findByToken(token);
-        final User user = confirmationToken.getUser();
-        user.setPassword(encoder.encode(password));
-        userRepository.save(user);
-        confirmationTokenService.deleteConfirmationToken(confirmationToken.getId());
-    }
-
     public List<UserLite> getAllLite() {
         return userRepository.findAll().stream().map(this::reduceUser).collect(Collectors.toList());
     }
@@ -221,7 +185,7 @@ public class UserServices {
 
 
     private UserLite reduceUser(User user){
-        log.info(user.getId().toString());
+        log.debug(user.getId().toString());
         UserLite userLite = new UserLite();
         userLite.setId(user.getId());
         if(user.getAdherent() == null){

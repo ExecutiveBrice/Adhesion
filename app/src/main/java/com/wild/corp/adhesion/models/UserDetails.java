@@ -16,26 +16,34 @@ public class UserDetails implements org.springframework.security.core.userdetail
 
 	@JsonIgnore
 	private String password;
+	private long sessionVersion;
 	private Collection<? extends GrantedAuthority> authorities;
 
 	public UserDetails(Long id, String username, String password,
 					   Collection<? extends GrantedAuthority> authorities) {
+		this(id, username, password, authorities, 0);
+	}
+
+	public UserDetails(Long id, String username, String password,
+					   Collection<? extends GrantedAuthority> authorities, long sessionVersion) {
 		this.id = id;
 		this.username = username;
 		this.password = password;
 		this.authorities = authorities;
+		this.sessionVersion = sessionVersion;
 	}
 
 	public static UserDetails build(User user) {
 		List<GrantedAuthority> authorities = user.getRoles().stream()
-				.map(role -> new SimpleGrantedAuthority(role.getName().name()))
+				.map(role -> new SimpleGrantedAuthority(role.name()))
 				.collect(Collectors.toList());
 
 		return new UserDetails(
 				user.getId(),
 				user.getUsername(),
 				user.getPassword(),
-				authorities);
+				authorities,
+				user.getSessionVersion());
 	}
 
 	@Override
@@ -45,6 +53,10 @@ public class UserDetails implements org.springframework.security.core.userdetail
 
 	public Long getId() {
 		return id;
+	}
+
+	public long getSessionVersion() {
+		return sessionVersion;
 	}
 
 	@Override

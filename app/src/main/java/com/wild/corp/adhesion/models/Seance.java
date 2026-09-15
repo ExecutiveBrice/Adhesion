@@ -7,6 +7,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,15 +30,37 @@ public class Seance {
     @JsonIgnoreProperties({"adhesions", "profs"})
     private Activite activite;
 
+    /** Category from which this session was generated. Null for legacy sessions. */
+    @ManyToOne
+    @JoinColumn(name = "planification_id")
+    @JsonIgnoreProperties({"activite", "profs", "referents"})
+    private PlanificationHebdomadaire planification;
+
+    /**
+     * Salle effectivement prévue pour cette séance. Elle est initialisée avec
+     * la salle de l'activité lors de la planification, puis peut évoluer sans
+     * modifier les autres séances.
+     */
+    @ManyToOne
+    @JoinColumn(name = "salle_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Salle salle;
+
     private ESeance etatSeance;
 
     private String causeAnnulation;
 
-    private LocalDate dateSeance;
+    private LocalDateTime debut;
+
+    private LocalDateTime fin;
 
     private String commentaire;
 
-    @OneToMany(mappedBy = "seanceId", cascade = CascadeType.ALL, orphanRemoval = true)
+    /** Short label inherited from the weekly schedule for calendar display. */
+    @Column(length = 100)
+    private String descriptif;
+
+    @OneToMany(mappedBy = "seance", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Presence> presences = new ArrayList<>();
 
 }

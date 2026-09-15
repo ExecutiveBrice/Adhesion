@@ -1,5 +1,7 @@
 import { Adherent } from "./adherent";
 import { Adhesion } from "./adhesion";
+import { SalleConfiguration } from './salle';
+import { PlanificationHebdomadaire } from './planificationHebdomadaire';
 
 export class Activite {
 
@@ -7,19 +9,26 @@ export class Activite {
   nom!: string;
   groupe!: string;
   groupeFiltre!: string;
+  groupeCompta!: string;
   tarif!: number;
   jour!: string;
+  horaireDebut!: string;
+  duree!: number;
+  planificationsHebdomadaires!: PlanificationHebdomadaire[];
   ageMin!: number;
   ageMax!: number;
   genre!: string;
   horaire!: string;
   lien!: string;
-  salle!: string;
+  salle?: SalleConfiguration;
   profs!: Adherent[];
+  referents!: Adherent[];
   nbPlaces!: number;
   nbAdhesionsEnCours!: number;
   nbAdhesionsCompletes!: number;
   nbAdhesionsAttente!: number;
+  nbSeancesRealisees!: number;
+  nbSeancesTotal!: number;
   montantCollecte!: number;
   adhesions!: Adhesion[];
   priseEnCharge!: boolean;
@@ -28,6 +37,7 @@ export class Activite {
   vieClub!: boolean;
   charteAmicale!: boolean;
   complete!: boolean;
+  majoration!: boolean;
   reinscription!: boolean;
   globaleSpecifique!: boolean;
 
@@ -36,7 +46,9 @@ export class Activite {
   constructor() {
 
     this.profs = [];
+    this.referents = [];
     this.adhesions = [];
+    this.planificationsHebdomadaires = [];
 
     this.nom = 'nouvelle activité'
     this.groupeFiltre = 'Amicaliste'

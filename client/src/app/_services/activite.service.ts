@@ -1,25 +1,161 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { Activite, Adherent, ActiviteDropDown, HoraireDropDown } from '../models';
-import { Seance } from '../models/seance';
+import { Activite, Adherent, AdherentLite, ActiviteNm1, ActiviteDropDown, HoraireDropDown } from '../models';
+import { CalendrierGoogle, Seance, SeanceCalendrier } from '../models/seance';
 
 const API_URL = environment.server + '/activite/';
+
+export interface ActivitePage {
+  content: Activite[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+}
+
+export interface ActivitePageQuery {
+  page: number;
+  size: number;
+  search?: string;
+  tarif?: number;
+  complete?: boolean;
+  reinscription?: boolean;
+  age?: number;
+  genre?: string;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class ActiviteService {
-  constructor(private http: HttpClient) { }
+  private http = inject(HttpClient);
+
+  private readonly libellesJours: Record<string, string> = {
+    MONDAY: 'Lundi',
+    TUESDAY: 'Mardi',
+    WEDNESDAY: 'Mercredi',
+    THURSDAY: 'Jeudi',
+    FRIDAY: 'Vendredi',
+    SATURDAY: 'Samedi',
+    SUNDAY: 'Dimanche'
+  };
+
 
   getSeancesDuJour(): Observable<Seance[]> {
     return this.http.get<Seance[]>(API_URL + 'seancesDuJour', { responseType: 'json' });
   }
 
+  getSeances(activiteId: number): Observable<Seance[]> {
+    return this.http.get<Seance[]>(API_URL + activiteId + '/seances', { responseType: 'json' });
+  }
+
+  getReferentsCandidates(activiteId: number): Observable<AdherentLite[]> {
+    return this.http.get<AdherentLite[]>(API_URL + activiteId + '/referents/candidats', { responseType: 'json' });
+  }
+
+  getCalendrier(dateDebut: string, dateFin: string, tribuUuid?: string): Observable<SeanceCalendrier[]> {
+    let params = new HttpParams().set('dateDebut', dateDebut).set('dateFin', dateFin);
+    if (tribuUuid) params = params.set('tribuUuid', tribuUuid);
+    return this.http.get<SeanceCalendrier[]>(API_URL + 'calendrier', { params, responseType: 'json' });
+  }
+
+  getCalendrierAdherent(dateDebut: string, dateFin: string, adherentId: number): Observable<SeanceCalendrier[]> {
+    const params = new HttpParams()
+      .set('dateDebut', dateDebut)
+      .set('dateFin', dateFin)
+      .set('adherentId', adherentId);
+    return this.http.get<SeanceCalendrier[]>(API_URL + 'calendrier', { params, responseType: 'json' });
+  }
+
+  getCalendrierGoogle(dateDebut: string, dateFin: string, sources: string[]): Observable<CalendrierGoogle> {
+    let params = new HttpParams().set('dateDebut', dateDebut).set('dateFin', dateFin);
+    sources.forEach(source => params = params.append('source', source));
+    return this.http.get<CalendrierGoogle>(API_URL + 'calendrier/google', { params, responseType: 'json' });
+  }
+
+  ajouterSeances(activiteId: number, nombreSeances: number, dateDebut: string): Observable<Seance[]> {
+    return this.http.post<Seance[]>(API_URL + activiteId + '/seances', {
+      nombreSeances,
+      dateDebut
+    }, { responseType: 'json' });
+  }
+
+  ajouterSeancesPlanification(activiteId: number, planificationId: number, nombreSemaines: number,
+    dateDebut: string): Observable<Seance[]> {
+    return this.http.post<Seance[]>(
+      API_URL + activiteId + '/planifications/' + planificationId + '/seances',
+      { nombreSeances: nombreSemaines, dateDebut },
+      { responseType: 'json' }
+    );
+  }
+
+  modifierEtatSeance(activiteId: number, seance: Seance): Observable<Seance> {
+    return this.http.patch<Seance>(API_URL + activiteId + '/seances/' + seance.id, {
+      etatSeance: seance.etatSeance
+    }, { responseType: 'json' });
+  }
+
+  modifierCommentaireSeance(activiteId: number, seance: Seance): Observable<Seance> {
+    return this.http.patch<Seance>(API_URL + activiteId + '/seances/' + seance.id, {
+      commentaire: seance.commentaire,
+      commentairePresent: true
+    }, { responseType: 'json' });
+  }
+
+  modifierHoraireSeance(activiteId: number, seance: Seance): Observable<Seance> {
+    return this.http.patch<Seance>(API_URL + activiteId + '/seances/' + seance.id, {
+      date: seance.dateEdition,
+      heureDebut: seance.heureEdition,
+      horairePresent: true
+    }, { responseType: 'json' });
+  }
+
+  modifierSalleSeance(activiteId: number, seance: Seance): Observable<Seance> {
+    return this.http.patch<Seance>(API_URL + activiteId + '/seances/' + seance.id, {
+      salleId: seance.salle?.id ?? null,
+      sallePresente: true
+    }, { responseType: 'json' });
+  }
+
+  supprimerSeance(activiteId: number, seanceId: number): Observable<void> {
+    return this.http.delete<void>(API_URL + activiteId + '/seances/' + seanceId);
+  }
+
+  getAllNm1(): Observable<ActiviteNm1[]> {
+    return this.http.get<ActiviteNm1[]>(API_URL + 'allNm1', { responseType: 'json' });
+  }
   getAll(): Observable<Activite[]> {
     return this.http.get<Activite[]>(API_URL + 'all', { responseType: 'json' });
   }
+
+  getPage(query: ActivitePageQuery): Observable<ActivitePage> {
+    let params = new HttpParams()
+      .set('page', query.page)
+      .set('size', query.size);
+    if (query.search) {
+      params = params.set('search', query.search);
+    }
+    if (query.tarif !== undefined) {
+      params = params.set('tarif', query.tarif);
+    }
+    if (query.complete !== undefined) {
+      params = params.set('complete', query.complete);
+    }
+    if (query.reinscription !== undefined) {
+      params = params.set('reinscription', query.reinscription);
+    }
+    if (query.age !== undefined) {
+      params = params.set('age', query.age);
+    }
+    if (query.genre) {
+      params = params.set('genre', query.genre);
+    }
+    return this.http.get<ActivitePage>(API_URL + 'page', { params, responseType: 'json' });
+  }
+
+
 
   addReferent(activiteId: number, adherentId: string): Observable<Activite[]> {
     let params = new HttpParams().set('activiteId', '' + activiteId + '').set('adherentId', '' + adherentId + '');
@@ -27,7 +163,20 @@ export class ActiviteService {
   }
 
   save(activite: Activite): Observable<Activite> {
-    return this.http.post<Activite>(API_URL + 'save', activite, { responseType: 'json' });
+    // Les intervenants sont associés aux catégories de séance. L'API attend
+    // uniquement leurs identifiants, afin d'éviter d'envoyer les sous-objets
+    // des DTO « lite ».
+    const activiteAEnregistrer = {
+      ...activite,
+      profs: activite.profs.map(({ id }) => ({ id })),
+      referents: activite.referents.map(({ id }) => ({ id })),
+      planificationsHebdomadaires: activite.planificationsHebdomadaires.map(planification => ({
+        ...planification,
+        profs: (planification.profs ?? []).map(({ id }) => ({ id })),
+        referents: (planification.referents ?? []).map(({ id }) => ({ id }))
+      }))
+    };
+    return this.http.post<Activite>(API_URL + 'save', activiteAEnregistrer, { responseType: 'json' });
   }
 
   fillObjects(activites: Activite[], activitesListe: ActiviteDropDown[], adherent?: Adherent) {
@@ -52,6 +201,7 @@ export class ActiviteService {
               } else {
                 activiteDropDown = new ActiviteDropDown()
                 activiteDropDown.nom = act.nom
+                activiteDropDown.groupeFiltre = act.groupeFiltre
                 activitesListe.push(activiteDropDown)
               }
 
@@ -65,7 +215,7 @@ export class ActiviteService {
 
               let horaireDropDown = new HoraireDropDown
               horaireDropDown.id = act.id
-              horaireDropDown.nom = act.horaire
+              horaireDropDown.nom = this.libelleCategories(act)
 
               //Gerer la possiblité de reinscrire
               if(!act.reinscription){
@@ -74,7 +224,7 @@ export class ActiviteService {
                 if(act.globaleSpecifique){
                   horaireDropDown.reinscription =  adherent.activitesNm1.map(value => value.activiteId).includes(act.id);
                 }else {
-                  horaireDropDown.reinscription =  adherent.activitesNm1.find(activiteNm1 => activiteNm1.nom == activiteDropDown.nom) != undefined
+                  horaireDropDown.reinscription =  adherent.activitesNm1.find(activiteNm1 => activiteNm1.nom == act.nom) != undefined
                 }
               }
               horaireDropDown.complete = act.complete
@@ -86,5 +236,21 @@ export class ActiviteService {
         console.log(error)
       }
     );
+  }
+
+  private libelleCategories(activite: Activite): string {
+    const categories = activite.planificationsHebdomadaires ?? [];
+
+    if (categories.length === 0) {
+      return activite.horaire;
+    }
+
+    return categories
+      .map(categorie => [
+        this.libellesJours[categorie.jour] ?? categorie.jour,
+        categorie.horaireDebut,
+        categorie.descriptif
+      ].filter(Boolean).join(' · '))
+      .join(' / ');
   }
 }

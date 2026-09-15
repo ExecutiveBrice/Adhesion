@@ -8,7 +8,7 @@ import java.util.List;
 @Data
 public class Groupe {
 
-
+ private Boolean nm1;
    private Boolean bold;
     private  Boolean checked;
     private   List<Horaire> horaires;

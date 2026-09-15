@@ -1,20 +1,32 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { AdherentService } from '../../_services/adherent.service';
 import { ActiviteLite, Adherent, AdherentLite } from 'src/app/models';
 import { faSquareCaretLeft, faSquareCaretDown, faSkull, faUsers, faEnvelope, faCircleXmark, faFlag, faPiggyBank, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TokenStorageService } from 'src/app/_services/token-storage.service';
 import { Router } from '@angular/router';
-import { Subscription } from 'rxjs';
 import { AuthService } from 'src/app/_services/auth.service';
 import { ParamService } from 'src/app/_services/param.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DatePipe } from '@angular/common';
+import { OrderByPipe } from '../../_helpers/sort.pipe';
 
 @Component({
-  selector: 'app-profs',
-  templateUrl: './profs.component.html',
-  styleUrls: ['./profs.component.css']
+    selector: 'app-profs',
+    templateUrl: './profs.component.html',
+    styleUrls: ['./profs.component.css'],
+    imports: [FaIconComponent, DatePipe, OrderByPipe]
 })
 export class ProfsComponent implements OnInit {
+  private readonly apiViewRefresh = registerApiViewRefresh();
+  private authService = inject(AuthService);
+  private adherentService = inject(AdherentService);
+  private tokenStorageService = inject(TokenStorageService);
+  private modalService = inject(NgbModal);
+  paramService = inject(ParamService);
+  router = inject(Router);
+
   faSquareCaretLeft=faSquareCaretLeft;
   faSquareCaretDown=faSquareCaretDown;
   faCircleCheck=faCircleCheck;
@@ -34,17 +46,6 @@ export class ProfsComponent implements OnInit {
   sens: boolean = false;
   showAdmin: boolean = false;
   filtres: Map<string, boolean> = new Map<string, boolean>();
-  subscription = new Subscription()
-
-  constructor(
-
-    private authService: AuthService,
-    private adherentService: AdherentService,
-    private tokenStorageService: TokenStorageService,
-    private modalService: NgbModal,
-    public paramService: ParamService,
-    public router: Router) { }
-
   ngOnInit(): void {
     if (this.tokenStorageService.getUser().roles) {
       this.showAdmin = this.tokenStorageService.getUser().roles.includes('ROLE_ADMIN');

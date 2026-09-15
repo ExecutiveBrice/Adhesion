@@ -25,7 +25,27 @@ logging.level.org.hibernate: ERROR
 server:
   name : ${DNS_NAME}
   app:
+    # Une clé d'au moins 64 octets est requise pour signer les jetons en HS512.
     jwtSecret: ${JWT_SECRET}
     jwtExpirationMs: 86400000
 
-image-storage-dir: C:\Users\PC\Documents\ProjetsDev\Adhesion
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    persist-authorization: true
+
+image-storage-dir: C:\Users\brice\Documents
+
+# Zone scolaire utilisée lors de la génération hebdomadaire des séances (A, B ou C).
+adhesion:
+  security:
+    password-reset:
+      token-lifetime-minutes: 30
+      rate-limit:
+        ip: 20
+        address: 5
+        window-seconds: 3600
+        max-tracked-keys: 100000
+  calendrier:
+    zone: ${ZONE_SCOLAIRE:C}
+    jours-feries-dataset: ${JOURS_FERIES_DATASET:jours-ouvres-week-end-feries-france-2010-a-2030}

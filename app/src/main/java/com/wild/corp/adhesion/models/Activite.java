@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.DayOfWeek;
+import java.time.LocalTime;
 import java.time.MonthDay;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -30,6 +31,8 @@ public class Activite {
 
     private String groupeFiltre;
 
+    private String groupeCompta;
+
     private String nom;
 
     private String lien;
@@ -46,7 +49,14 @@ public class Activite {
 
     private String horaire;
 
-    private String salle;
+    @Column(name = "salle")
+    @JsonIgnore
+    private String salleTexte;
+
+    @ManyToOne
+    @JoinColumn(name = "salle_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Salle salle;
 
     private Boolean reinscription;
 
@@ -63,10 +73,24 @@ public class Activite {
 
     private DayOfWeek jour;
 
+    private LocalTime horaireDebut;
+
+    private Long duree;
+
+    /**
+     * Weekly schedules. The legacy day/time/duration fields above are kept so
+     * existing exports and integrations remain compatible.
+     */
+    @OneToMany(mappedBy = "activite", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("jour ASC, horaireDebut ASC")
+    private List<PlanificationHebdomadaire> planificationsHebdomadaires = new ArrayList<>();
 
     private boolean certificatMedical;
 
     private boolean complete;
+
+    @Column(name = "majoration")
+    private boolean majoration;
 
     private Integer dureeVieCertif;
 
@@ -82,6 +106,12 @@ public class Activite {
     @Transient
     private Long nbAdhesionsAttente;
 
+    @Transient
+    private Long nbSeancesRealisees;
+
+    @Transient
+    private Long nbSeancesTotal;
+
     @OneToMany(mappedBy="activite")
     @JsonIgnore
     private Set<Adhesion> adhesions = new HashSet<>();
@@ -94,8 +124,16 @@ public class Activite {
     @JsonIgnoreProperties({"cours", "accords", "adhesions", "activitesNm1", "user", "tribu", "derniereModifs", "derniereVisites"})
     private Set<Adherent> profs = new HashSet<>();
 
+    @ManyToMany(mappedBy = "activitesReferent")
+    @JsonIgnoreProperties({"cours", "activitesReferent", "accords", "adhesions", "activitesNm1", "user", "tribu", "derniereModifs", "derniereVisites"})
+    private Set<Adherent> referents = new HashSet<>();
+
     @OneToMany(mappedBy = "activite", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Seance> seances = new ArrayList<>();
+
+    public String getNomSalle() {
+        return salle != null ? salle.getNom() : salleTexte;
+    }
 
 }

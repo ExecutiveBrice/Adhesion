@@ -1,26 +1,44 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
+import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import {MailService} from '../../_services/mail.service';
-import {DomSanitizer} from '@angular/platform-browser';
-import {Activite, Email, Groupe} from '../../models';
-import {Router, ActivatedRoute} from '@angular/router';
+import {Activite, ActiviteNm1, Email, ERole, Groupe} from '../../models';
+import {Router} from '@angular/router';
 
 import {ActiviteService} from 'src/app/_services/activite.service';
 import {ParamService} from 'src/app/_services/param.service';
-import {ToastrService} from 'ngx-toastr';
+import { ToastService } from '../../_services/toast.service';
 import {Historique} from "../../models/historique";
 
-import {FormArray, FormBuilder, FormControl, FormGroup} from '@angular/forms';
+import { FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { NgClass, DatePipe } from '@angular/common';
+import { AngularEditorModule } from '@wfpena/angular-wysiwyg';
+import { OrderSimplePipe } from '../../_helpers/sort-simple.pipe';
+import { OrderObjectByPipe } from '../../_helpers/sortObject.pipe';
 
 @Component({
-  selector: 'app-mailling',
-  templateUrl: './mailling.component.html',
-  styleUrls: ['./mailling.component.scss']
+    selector: 'app-mailling',
+    templateUrl: './mailling.component.html',
+    styleUrls: ['./mailling.component.scss'],
+    imports: [FormsModule, ReactiveFormsModule, NgClass, AngularEditorModule, DatePipe, OrderSimplePipe, OrderObjectByPipe]
 })
 
 export class MaillingComponent implements OnInit {
+  private readonly apiViewRefresh = registerApiViewRefresh();
+  private toastr = inject(ToastService);
+  fb = inject(FormBuilder);
+  activiteService = inject(ActiviteService);
+  router = inject(Router);
+  mailService = inject(MailService);
+  paramService = inject(ParamService);
 
+  pageReady: boolean = false;
   inProgress: boolean = false;
-  maillingListe!: FormArray;
+  role_bouton: boolean = false;
+  activite_bouton: boolean = false;
+  activiteNm1_bouton: boolean = false;
+  roleListe!: FormArray;
+  activiteListe!: FormArray;
+  activiteNm1Liste!: FormArray;
   subject: string = "";
 
 
@@ -55,59 +73,54 @@ export class MaillingComponent implements OnInit {
 
   };
 
-  constructor(
-    private toastr: ToastrService,
-    public fb: FormBuilder,
-    public activiteService: ActiviteService,
-    public router: Router,
-    public mailService: MailService,
-    public paramService: ParamService) {
-  }
-
-
 
   ngOnInit(): void {
-    this.maillingListe = this.fb.array([])
+    this.roleListe = this.fb.array([])
+
     const horairesForm: FormArray = this.fb.array([])
     const adherentForm: FormGroup = this.fb.group({
       ordre: [1, []],
-      id: [1, []],
+      role: [ERole.ROLE_USER, []],
       nom: ['adherent', []],
       text: ['Tous les adherents', []],
       bold: [false, []],
       indent: [false, []],
-      checked: [false, []]
+      checked: [false, []],
+      nm1: [false, []]
     });
     horairesForm.push(adherentForm)
 
     const bureauForm: FormGroup = this.fb.group({
       ordre: [2, []],
-      id: [4, []],
+      role: [ERole.ROLE_BUREAU, []],
       nom: ['bureau', []],
       text: ['Les membres du bureau', []],
       bold: [false, []],
       indent: [false, []],
-      checked: [false, []]
+      checked: [false, []],
+      nm1: [false, []]
     });
     horairesForm.push(bureauForm)
     const caForm: FormGroup = this.fb.group({
       ordre: [3, []],
-      id: [5, []],
+      role: [ERole.ROLE_MEMBRECA, []],
       nom: ['conseilAdministration', []],
       text: ['Les membres du conseil d\'administration', []],
       bold: [false, []],
       indent: [false, []],
-      checked: [false, []]
+      checked: [false, []],
+      nm1: [false, []]
     });
     horairesForm.push(caForm)
     const profForm: FormGroup = this.fb.group({
       ordre: [4, []],
-      id: [3, []],
+      role: [ERole.ROLE_ENCADRANT, []],
       nom: ['prof', []],
       text: ['Les profs et encadrants des sections', []],
       bold: [false, []],
       indent: [false, []],
-      checked: [false, []]
+      checked: [false, []],
+      nm1: [false, []]
     });
     horairesForm.push(profForm)
 
@@ -119,10 +132,11 @@ export class MaillingComponent implements OnInit {
       bold: [true, []],
       indent: [false, []],
       checked: [false, []],
+      nm1: [false, []],
       horaires: horairesForm
     });
-    this.maillingListe.push(activiteForm)
 
+    this.roleListe.push(activiteForm)
     this.getActivites()
     this.getHistorique()
   }
@@ -155,6 +169,7 @@ export class MaillingComponent implements OnInit {
   }
 
   getActivites() {
+    this.activiteListe = this.fb.array([])
     this.activiteService.getAll().subscribe(
       data => {
         const listeActivite = data.reduce<Record<string, Activite[]>>((acc, item) => {
@@ -188,11 +203,62 @@ export class MaillingComponent implements OnInit {
             bold: [true, []],
             indent: [false, []],
             checked: [false, []],
+            nm1: [false, []],
             horaires: horairesForm
           });
-          this.maillingListe.push(activiteForm)
+
+          this.activiteListe.push(activiteForm)
         }
       },
+      err => {
+        console.log(err)
+      }
+    );
+
+    this.activiteNm1Liste = this.fb.array([])
+    this.activiteService.getAllNm1().subscribe(
+      data => {
+        const listeActivite = data.reduce<Record<string, ActiviteNm1[]>>((acc, item) => {
+          (acc[item.nom] ??= []).push(item);
+          return acc;
+        }, {});
+        let ordre = 5
+        for (let listeActiviteKey in listeActivite) {
+          const horairesForm: FormArray = this.fb.array([])
+          listeActivite[listeActiviteKey].forEach(act => {
+
+            const horaireForm: FormGroup = this.fb.group({
+              ordre: [ordre, []],
+              id: [act.activiteId, []],
+              nom: [act.horaire, []],
+              text: [act.horaire, []],
+              bold: [false, []],
+              indent: [true, []],
+              checked: [false, []]
+            });
+            horairesForm.push(horaireForm)
+
+            ordre++;
+          });
+          const activiteForm: FormGroup = this.fb.group({
+            ordre: [ordre, []],
+            id: [0, []],
+            nom: [listeActiviteKey, []],
+            text: [listeActiviteKey, []],
+            bold: [true, []],
+            indent: [false, []],
+            checked: [false, []],
+            nm1: [true, []],
+            horaires: horairesForm
+          });
+
+          this.activiteNm1Liste.push(activiteForm)
+
+        }
+        console.log(this.activiteNm1Liste)
+        this.pageReady= true;
+        },
+
       err => {
         console.log(err)
       }
@@ -212,10 +278,27 @@ export class MaillingComponent implements OnInit {
   }
 
   envoiTemplate() {
-    console.log(this.maillingListe.getRawValue())
+
     this.inProgress = true;
     this.showWarning("Envoi de mail en cours, veuillez patienter")
-    this.mailService.sendTemplate(this.maillingListe.getRawValue(), this.template)
+
+    const diffusion: Groupe[]=[];
+
+    const roles = this.roleListe.getRawValue() as Groupe[];
+    roles.forEach(act => {
+      diffusion.push(act)
+    })
+    const acti = this.activiteListe.getRawValue() as Groupe[];
+    acti.forEach(act => {
+      diffusion.push(act)
+    })
+    const actiNm1 = this.activiteNm1Liste.getRawValue() as Groupe[];
+    actiNm1.forEach(act => {
+      diffusion.push(act)
+    })
+
+
+    this.mailService.sendTemplate(diffusion, this.template)
       .subscribe({
         next: (newHistorique) => {
           this.historiques.push(newHistorique);
@@ -242,12 +325,27 @@ export class MaillingComponent implements OnInit {
       let email = new Email();
       email.subject = subject;
       email.text = this.content;
-      email.diffusion = this.maillingListe.getRawValue() as Groupe[];
+
+
+      const roles = this.roleListe.getRawValue() as Groupe[];
+      roles.forEach(act => {
+        email.diffusion.push(act)
+      })
+      const acti = this.activiteListe.getRawValue() as Groupe[];
+      acti.forEach(act => {
+        email.diffusion.push(act)
+      })
+      const actiNm1 = this.activiteNm1Liste.getRawValue() as Groupe[];
+      actiNm1.forEach(act => {
+        email.diffusion.push(act)
+      })
+
+
       this.mailService.sendMail(email)
         .subscribe({
           next: (newHistorique) => {
             this.historiques.push(newHistorique);
-            this.showSucces("Votre message est à bien été envoyé")
+            this.showSucces("Votre message a bien été envoyé")
             this.inProgress = false;
           },
           error: (error) => {
@@ -255,6 +353,8 @@ export class MaillingComponent implements OnInit {
             this.showError("Il y a eu un problème lors de l'envoie du message: "+error.message)
           }
         });
+
+
     }
   }
 
