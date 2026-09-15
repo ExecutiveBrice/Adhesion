@@ -34,7 +34,7 @@ public class TribuController {
     }
 
     @PostMapping("/addActivitesNm1")
-    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('MEMBRECA') or hasRole('ADMIN')")
     public ResponseEntity<?> addActivitesNm1(@PathParam("tribuUuid") String tribuUuid, @RequestBody List<ActiviteNm1> activitesNm1) {
         return ResponseEntity.ok(tribuServices.addActivitesNm1(UUID.fromString(tribuUuid), activitesNm1));
     }
@@ -48,7 +48,7 @@ public class TribuController {
             ),
     })
     @GetMapping("/getTribuByUuid")
-    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('ADMINISTRATEUR')")
+    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MEMBRECA')")
     public ResponseEntity<Tribu> getTribuByUuid(@PathParam("tribuUuid") String tribuUuid) {
 
         Tribu tribu = tribuServices.getTribuByUuid(UUID.fromString(tribuUuid));

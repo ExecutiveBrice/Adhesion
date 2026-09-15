@@ -8,7 +8,7 @@ export * from './tribu';
 export * from './accord';
 export * from './user';
 export * from './userLite';
-export * from './role';
+export * from './eRole';
 export * from './document';
 export * from './paramBoolean';
 export * from './paramText';

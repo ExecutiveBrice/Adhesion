@@ -35,7 +35,7 @@ public class UserDetails implements org.springframework.security.core.userdetail
 
 	public static UserDetails build(User user) {
 		List<GrantedAuthority> authorities = user.getRoles().stream()
-				.map(role -> new SimpleGrantedAuthority(role.getName().name()))
+				.map(role -> new SimpleGrantedAuthority(role.name()))
 				.collect(Collectors.toList());
 
 		return new UserDetails(

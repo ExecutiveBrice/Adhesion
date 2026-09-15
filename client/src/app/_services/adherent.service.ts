@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { Accord, ActiviteLite, Adherent, AdherentLite, Document, Notification } from '../models';
+import { Accord, ActiviteLite, Adherent, AdherentLite, Document, ERole, Notification } from '../models';
 import {AdherentFlat} from "../models/adherentFlat";
 import {AdherentExport} from "../models/adherentExport";
 
@@ -140,8 +140,8 @@ export class AdherentService {
   }
 
 
-  getByRole(roleId : number): Observable<AdherentLite[]> {
-    let params = new HttpParams().set('roleId', '' + roleId + '');
+  getByRole(role: ERole): Observable<AdherentLite[]> {
+    let params = new HttpParams().set('role', role);
     return this.http.get<AdherentLite[]>(API_URL + 'getByRole', {params, responseType: 'json' });
   }
 
