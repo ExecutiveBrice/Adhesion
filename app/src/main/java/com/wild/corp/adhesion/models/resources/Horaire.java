@@ -10,6 +10,7 @@ public class Horaire {
     private  Boolean checked;
 
     private Long id;
+    private String role;
     private Boolean indent;
     private  String    nom;
     private  Integer    ordre;

@@ -4,6 +4,7 @@ import com.wild.corp.adhesion.security.WebSecurityConfig;
 import com.wild.corp.adhesion.security.jwt.AuthEntryPointJwt;
 import com.wild.corp.adhesion.security.jwt.JwtUtils;
 import com.wild.corp.adhesion.services.PasswordResetService;
+import com.wild.corp.adhesion.services.PwaSessionService;
 import com.wild.corp.adhesion.services.SurrogateService;
 import com.wild.corp.adhesion.services.UserDetailsService;
 import com.wild.corp.adhesion.services.UserServices;
@@ -35,6 +36,8 @@ class SignupAuthorizationMvcTest {
     @MockitoBean
     private PasswordResetService passwordResetService;
     @MockitoBean
+    private PwaSessionService pwaSessionService;
+    @MockitoBean
     private SurrogateService surrogateService;
     @MockitoBean
     private JwtUtils jwtUtils;
@@ -49,6 +52,16 @@ class SignupAuthorizationMvcTest {
                         .contentType(APPLICATION_JSON)
                         .content("{\"username\":\"new.member@example.org\",\"password\":\"secret1\"}"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void refreshAndSignoutDoNotRequireAnUnexpiredAccessToken() throws Exception {
+        mockMvc.perform(post("/auth/refresh").contentType(APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"session-secret\"}"))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/auth/signout").contentType(APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"session-secret\"}"))
+                .andExpect(status().isNoContent());
     }
 
 }

@@ -65,6 +65,13 @@ public interface SeanceRepository extends JpaRepository<Seance, Long> {
                                             @Param("etatRealisee") ESeance etatRealisee);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("update Seance s set s.etatSeance = :etatRealisee " +
+            "where s.debut < :fin and s.etatSeance in :etatsARealiser")
+    int updateEtatForDebutBeforeAndEtatIn(@Param("fin") LocalDateTime fin,
+                                          @Param("etatsARealiser") List<ESeance> etatsARealiser,
+                                          @Param("etatRealisee") ESeance etatRealisee);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("update Seance s set s.commentaire = :commentaire where s.id = :id and s.activite.id = :activiteId")
     int updateCommentaire(@Param("id") Long id, @Param("activiteId") Long activiteId,
                           @Param("commentaire") String commentaire);

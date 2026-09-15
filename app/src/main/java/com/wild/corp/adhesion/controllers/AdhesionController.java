@@ -62,7 +62,7 @@ AdhesionServices adhesionServices;
 	}
 
 	@GetMapping("/updateDocumentsSecretariat")
-	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('MEMBRECA') or hasRole('ADMIN')")
 	public ResponseEntity<?> updateDocumentsSecretariat(Authentication principal,@PathParam("inscriptionId") Long adhesionId, @PathParam("statut") Boolean statut) {
 		log.info("updateDocumentsSecretariat by " + principal.getName() + " for adhesion id "+adhesionId);
 		adhesionServices.addModification(principal.getName(), adhesionId, "Mise a jour du statut documentaire de l'adhesion pour "+ statut);
@@ -70,7 +70,7 @@ AdhesionServices adhesionServices;
 	}
 
 	@GetMapping("/updatePaiementSecretariat")
-	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('MEMBRECA') or hasRole('ADMIN')")
 	public ResponseEntity<?> updatePaiementSecretariat(Authentication principal,@PathParam("inscriptionId") Long adhesionId, @PathParam("statut") Boolean statut) {
 		log.info("updatePaiementSecretariat by " + principal.getName() + " for adhesion id "+adhesionId);
 		adhesionServices.addModification(principal.getName(), adhesionId, "Mise a jour du statut du paiement de l'adhesion pour "+ statut);
@@ -78,7 +78,7 @@ AdhesionServices adhesionServices;
 	}
 
 	@GetMapping("/updateFlag")
-	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('MEMBRECA') or hasRole('ADMIN')")
 	public ResponseEntity<?> updateFlag(Authentication principal,@PathParam("inscriptionId") Long adhesionId, @PathParam("statut") Boolean statut) {
 		log.info("updateFlag by " + principal.getName() + " for adhesion id "+adhesionId);
 		adhesionServices.addModification(principal.getName(), adhesionId,"Mise a jour du Flag d'alerte de l'adhesion pour "+ statut);
@@ -93,7 +93,7 @@ AdhesionServices adhesionServices;
 	}
 
 	@GetMapping("/enregistrerRemarque")
-	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('MEMBRECA') or hasRole('ADMIN')")
 	public ResponseEntity<?> enregistrerRemarque(Authentication principal,@PathParam("inscriptionId") Long adhesionId, @PathParam("remarqueSecretariat") String remarqueSecretariat) {
 		log.info("enregistrerRemarque by " + principal.getName() + " for adhesion id "+adhesionId);
 		adhesionServices.addModification(principal.getName(), adhesionId, "Mise a jour de la remarque de l'adhesion : "+ remarqueSecretariat);
@@ -109,14 +109,14 @@ AdhesionServices adhesionServices;
 	}
 
 	@GetMapping("/all")
-	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('MEMBRECA') or hasRole('ADMIN')")
 	public ResponseEntity<?> getAllLite(Authentication principal) {
 		log.info("getAllLite by " + principal.getName() );
 		return ResponseEntity.ok(adhesionServices.getAllLite());
 	}
 
 	@GetMapping("/page")
-	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('MEMBRECA') or hasRole('ADMIN')")
 	public ResponseEntity<?> getPage(Authentication principal, @RequestParam(defaultValue = "Toutes") String sections,
 			@RequestParam(defaultValue = "") String search,
 			@RequestParam(defaultValue = "") String status,
@@ -130,13 +130,13 @@ AdhesionServices adhesionServices;
 	}
 
 	@GetMapping("/statuses")
-	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('MEMBRECA') or hasRole('ADMIN')")
 	public ResponseEntity<List<String>> getStatuses() {
 		return ResponseEntity.ok(adhesionServices.getStatuses());
 	}
 
 	@GetMapping("/liteBysection")
-	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('MEMBRECA') or hasRole('ADMIN')")
 	public ResponseEntity<?> getLiteBySection(Authentication principal,@PathParam("sections") String sections) {
 		log.info("getLiteBySection by " + principal.getName() + " for section "+sections);
 		return ResponseEntity.ok(adhesionServices.getLiteBySection(sections));
@@ -160,7 +160,7 @@ AdhesionServices adhesionServices;
 	}
 
 	@DeleteMapping("/deletePaiement")
-	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('MEMBRECA') or hasRole('ADMIN')")
 	public ResponseEntity<?> deletePaiement(Authentication principal, @PathParam("adhesionId") Long adhesionId, @PathParam("paiementId") Long paiementId) {
 		log.info("deletePaiement by " + principal.getName() + " for paiement "+paiementId+" and adhesion id "+adhesionId);
 		adhesionServices.addModification(principal.getName(), adhesionId,"Supression d'un paiement"+paiementId);
@@ -177,7 +177,7 @@ AdhesionServices adhesionServices;
 	}
 
 	@DeleteMapping("/deleteSurclassement")
-	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('MEMBRECA') or hasRole('ADMIN')")
 	public ResponseEntity<?> deleteSurclassement(Authentication principal, @PathParam("adhesionId") Long adhesionId) {
 		log.info("deleteSurclassement by " + principal.getName() +" and adhesion id "+adhesionId);
 		adhesionServices.addModification(principal.getName(), adhesionId,"Supression du surclassement de l'adhesion");

@@ -20,19 +20,19 @@ public class ReportingController {
 	ReportingService reportingService;
 
 	@GetMapping("/getAllBasket")
-	@PreAuthorize("hasAnyRole('SECRETAIRE', 'BUREAU', 'ADMINISTRATEUR', 'ADMIN', 'COMPTABLE')")
+	@PreAuthorize("hasAnyRole('SECRETAIRE', 'BUREAU', 'MEMBRECA', 'ADMIN', 'COMPTABLE')")
 	public ResponseEntity<?> getAllBasket() {
 		return ResponseEntity.ok(reportingService.getAllActiviteBasket());
 	}
 
 	@GetMapping("/getAllGeneral")
-	@PreAuthorize("hasAnyRole('SECRETAIRE', 'BUREAU', 'ADMINISTRATEUR', 'ADMIN', 'COMPTABLE')")
+	@PreAuthorize("hasAnyRole('SECRETAIRE', 'BUREAU', 'MEMBRECA', 'ADMIN', 'COMPTABLE')")
 	public ResponseEntity<?> getAllGeneral() {
 		return ResponseEntity.ok(reportingService.getAllActiviteGeneral());
 	}
 
 	@GetMapping("/getAllAdhesions")
-	@PreAuthorize("hasAnyRole('SECRETAIRE', 'BUREAU', 'ADMINISTRATEUR', 'ADMIN', 'COMPTABLE')")
+	@PreAuthorize("hasAnyRole('SECRETAIRE', 'BUREAU', 'MEMBRECA', 'ADMIN', 'COMPTABLE')")
 	public ResponseEntity<?> getAllAdhesions() {
 		LocalDate debut = LocalDate.of(2026,05,01);
 

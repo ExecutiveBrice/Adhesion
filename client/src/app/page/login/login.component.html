@@ -191,26 +191,6 @@
           </div>
         </div>
 
-        <div class="card-footer bg-transparent d-flex gap-2">
-
-
-          <button type="button" class="btn flex-fill"
-                  [class.btn-primary]="connexion"
-                  [class.btn-light]="!connexion"
-                  [attr.aria-pressed]="connexion"
-                  (click)="newInscription = false; connexion = true; oublieMDP = false">
-            Page de connexion
-          </button>
-          <button type="button" class="btn flex-fill"
-                  [class.btn-primary]="newInscription"
-                  [class.btn-light]="!newInscription"
-                  [attr.aria-pressed]="newInscription"
-                  (click)="newInscription = true;  connexion = false; oublieMDP = false">
-            Page d'inscription
-          </button>
-        </div>
-
-
       </div>
     </div>
   </div>
