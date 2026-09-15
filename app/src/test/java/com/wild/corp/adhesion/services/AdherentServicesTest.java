@@ -51,14 +51,14 @@ class AdherentServicesTest {
     @Test
     void selectsMailRecipientsByEnumRoleWithoutReadingAnActivityId() {
         AdherentRepository repository = mock(AdherentRepository.class);
-        when(repository.findByUserRole(ERole.ROLE_PROF)).thenReturn(List.of(existingAdherent()));
+        when(repository.findByUserRole(ERole.ROLE_ENCADRANT)).thenReturn(List.of(existingAdherent()));
         ReflectionTestUtils.setField(adherentServices, "adherentRepository", repository);
         ActiviteServices activites = mock(ActiviteServices.class);
         ReflectionTestUtils.setField(adherentServices, "activiteServices", activites);
 
         Horaire selection = new Horaire();
         selection.setChecked(true);
-        selection.setRole("ROLE_PROF");
+        selection.setRole("ROLE_ENCADRANT");
         Groupe groupe = new Groupe();
         groupe.setNom("role");
         groupe.setNm1(false);
@@ -78,7 +78,7 @@ class AdherentServicesTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"USER", "MEMBRECA", "MODERATOR", "BUREAU", "PROF", "REFERENT", "COMPTABLE"})
+    @ValueSource(strings = {"USER", "MEMBRECA", "MODERATOR", "BUREAU", "ENCADRANT", "REFERENT", "COMPTABLE"})
     void refusesEmailChangesByOtherRolesBeforeChangingPersonalData(String role) {
         authenticateAs(role);
         Adherent existing = existingAdherent();

@@ -109,7 +109,7 @@ export class AppComponent {
     this.showBureau = this.roles.includes('ROLE_BUREAU');
     this.showMembreCA = this.roles.includes('ROLE_MEMBRECA');
     this.showSecretaire = this.roles.includes('ROLE_SECRETAIRE');
-    this.showProf = this.roles.includes('ROLE_PROF');
+    this.showProf = this.roles.includes('ROLE_ENCADRANT');
     this.showReferent = this.roles.includes('ROLE_REFERENT');
     this.showSeances = this.showProf || this.showReferent;
     this.showComptable = this.roles.includes('ROLE_COMPTABLE');

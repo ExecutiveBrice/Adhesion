@@ -32,7 +32,7 @@ class AdherentRoleRepositoryTest {
     void findsAdherentByDirectEnumRole() {
         User professor = new User("prof@example.test", "encoded-password");
         professor.getRoles().add(ERole.ROLE_USER);
-        professor.getRoles().add(ERole.ROLE_PROF);
+        professor.getRoles().add(ERole.ROLE_ENCADRANT);
         Adherent adherent = new Adherent();
         adherent.setPrenom("Alice");
         adherent.setUser(professor);
@@ -40,7 +40,7 @@ class AdherentRoleRepositoryTest {
         entityManager.flush();
         entityManager.clear();
 
-        assertThat(adherentRepository.findByUserRole(ERole.ROLE_PROF))
+        assertThat(adherentRepository.findByUserRole(ERole.ROLE_ENCADRANT))
                 .extracting(Adherent::getPrenom).containsExactly("Alice");
         assertThat(adherentRepository.findByUserRole(ERole.ROLE_BUREAU)).isEmpty();
     }
@@ -57,16 +57,16 @@ class AdherentRoleRepositoryTest {
         entityManager.clear();
 
         User storedUser = userRepository.findByUsername("member@example.test").orElseThrow();
-        storedUser.getRoles().add(ERole.ROLE_PROF);
+        storedUser.getRoles().add(ERole.ROLE_ENCADRANT);
         entityManager.flush();
         entityManager.clear();
-        assertThat(adherentRepository.findByUserRole(ERole.ROLE_PROF))
+        assertThat(adherentRepository.findByUserRole(ERole.ROLE_ENCADRANT))
                 .extracting(Adherent::getPrenom).containsExactly("Bob");
 
         storedUser = userRepository.findByUsername("member@example.test").orElseThrow();
-        storedUser.getRoles().remove(ERole.ROLE_PROF);
+        storedUser.getRoles().remove(ERole.ROLE_ENCADRANT);
         entityManager.flush();
         entityManager.clear();
-        assertThat(adherentRepository.findByUserRole(ERole.ROLE_PROF)).isEmpty();
+        assertThat(adherentRepository.findByUserRole(ERole.ROLE_ENCADRANT)).isEmpty();
     }
 }

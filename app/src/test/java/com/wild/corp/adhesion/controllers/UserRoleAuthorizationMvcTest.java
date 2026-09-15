@@ -26,6 +26,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = UserController.class)
@@ -43,13 +44,29 @@ class UserRoleAuthorizationMvcTest {
     @MockitoBean private AuthenticationManager authenticationManager;
 
     @Test
+    void encadrantCanReadTheirSessions() throws Exception {
+        mockMvc.perform(get("/user/seancesDuJour")
+                .with(user("encadrant@example.test").roles("ENCADRANT")))
+                .andExpect(status().isOk());
+        verify(userServices).getSeancesDuJourForUser("encadrant@example.test");
+    }
+
+    @Test
+    void oldProfAuthorityNoLongerGrantsAccess() throws Exception {
+        mockMvc.perform(get("/user/seancesDuJour")
+                .with(user("prof@example.test").roles("PROF")))
+                .andExpect(status().isForbidden());
+        verifyNoInteractions(userServices);
+    }
+
+    @Test
     void secretaryCanGrantOrdinaryRole() throws Exception {
         mockMvc.perform(post("/user/grantUser").with(user("secretary@example.test").roles("SECRETAIRE"))
                 .param("userEmail", "member@example.test")
-                .contentType(APPLICATION_JSON).content("ROLE_PROF"))
+                .contentType(APPLICATION_JSON).content("ROLE_ENCADRANT"))
                 .andExpect(status().isOk());
         verify(userServices).findByEmail("member@example.test");
-        verify(userServices).grantUser(eq(ERole.ROLE_PROF), any());
+        verify(userServices).grantUser(eq(ERole.ROLE_ENCADRANT), any());
     }
 
     @Test
@@ -74,7 +91,7 @@ class UserRoleAuthorizationMvcTest {
     void membreCaCannotChangeRoles() throws Exception {
         mockMvc.perform(post("/user/grantUser").with(user("member@example.test").roles("MEMBRECA"))
                 .param("userEmail", "member@example.test")
-                .contentType(APPLICATION_JSON).content("ROLE_PROF"))
+                .contentType(APPLICATION_JSON).content("ROLE_ENCADRANT"))
                 .andExpect(status().isForbidden());
         verifyNoInteractions(userServices);
     }
@@ -92,7 +109,7 @@ class UserRoleAuthorizationMvcTest {
     void ordinaryUserCannotChangeRoles() throws Exception {
         mockMvc.perform(post("/user/grantUser").with(user("member@example.test").roles("USER"))
                 .param("userEmail", "member@example.test")
-                .contentType(APPLICATION_JSON).content("ROLE_PROF"))
+                .contentType(APPLICATION_JSON).content("ROLE_ENCADRANT"))
                 .andExpect(status().isForbidden());
         verifyNoInteractions(userServices);
     }

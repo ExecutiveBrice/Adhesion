@@ -759,7 +759,7 @@ public class AdherentServices {
                             || role == ROLE_MEMBRECA
                             || role == ROLE_COMPTABLE
                             || role == ROLE_SECRETAIRE
-                            || role == ROLE_PROF
+                            || role == ROLE_ENCADRANT
             );
         }
         return false;

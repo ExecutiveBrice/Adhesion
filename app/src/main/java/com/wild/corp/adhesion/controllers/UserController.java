@@ -61,7 +61,7 @@ SeanceRepository seanceRepository;
 
 
 	@GetMapping("/seancesDuJour")
-	@PreAuthorize("hasAnyRole('PROF', 'REFERENT')")
+	@PreAuthorize("hasAnyRole('ENCADRANT', 'REFERENT')")
 	public ResponseEntity<?> getSeancesDuJour(Authentication principal) {
 		log.info("getAllCours by " + principal.getName() );
 		return ResponseEntity.ok(userServices.getSeancesDuJourForUser(principal.getName()));
@@ -96,20 +96,20 @@ SeanceRepository seanceRepository;
 	}
 
 	@GetMapping("/seances/{seanceId}/presences")
-	@PreAuthorize("hasAnyRole('PROF', 'REFERENT')")
+	@PreAuthorize("hasAnyRole('ENCADRANT', 'REFERENT')")
 	public ResponseEntity<?> getPresences(@PathVariable Long seanceId, Authentication principal) {
 		return ResponseEntity.ok(presenceServices.getPresences(seanceId, principal.getName()));
 	}
 
 	@PatchMapping("/seances/{seanceId}/presences/{presenceId}")
-	@PreAuthorize("hasAnyRole('PROF', 'REFERENT')")
+	@PreAuthorize("hasAnyRole('ENCADRANT', 'REFERENT')")
 	public ResponseEntity<?> updatePresence(@PathVariable Long seanceId, @PathVariable Long presenceId,
 			@RequestBody PresenceUpdateRequest request, Authentication principal) {
 		return ResponseEntity.ok(presenceServices.updatePresence(seanceId, presenceId, request.presence(), principal.getName()));
 	}
 
 	@PatchMapping("/seances/{seanceId}/commentaire")
-	@PreAuthorize("hasAnyRole('PROF', 'REFERENT')")
+	@PreAuthorize("hasAnyRole('ENCADRANT', 'REFERENT')")
 	public ResponseEntity<?> updateCommentaire(@PathVariable Long seanceId,
 			@RequestBody CommentaireSeanceRequest request, Authentication principal) {
 		return ResponseEntity.ok(SeanceDuJourResponse.from(
@@ -117,7 +117,7 @@ SeanceRepository seanceRepository;
 	}
 
 	@PostMapping("/seances/{seanceId}/adherents")
-	@PreAuthorize("hasAnyRole('PROF', 'REFERENT')")
+	@PreAuthorize("hasAnyRole('ENCADRANT', 'REFERENT')")
 	@Transactional
 	public ResponseEntity<PresenceSeanceResponse> ajouterNouvelAdherent(
 			@PathVariable Long seanceId,

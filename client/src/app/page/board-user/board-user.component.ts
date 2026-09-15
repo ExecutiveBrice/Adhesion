@@ -4,6 +4,7 @@ import {
   Accord,
   Adherent,
   Adhesion,
+  ERole,
   ParamText,
   Tribu,
   User
@@ -28,8 +29,16 @@ import {
   faSquarePlus,
   faSquareMinus,
   faCircleCheck,
-  faUserPlus
+  faUserPlus,
+  faUserShield,
+  faKeyboard,
+  faUsers,
+  faBuildingColumns,
+  faCalculator,
+  faChalkboardUser,
+  faUserCheck
 } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {TokenStorageService} from 'src/app/_services/token-storage.service';
 import {ParamService} from 'src/app/_services/param.service';
@@ -50,6 +59,23 @@ import { OrderByPipe } from '../../_helpers/sort.pipe';
     imports: [NgClass, DatePipe, FaIconComponent, CalendrierComponent, OrderByPipe]
 })
 export class BoardUserComponent implements OnInit {
+  readonly roleIcons: Partial<Record<ERole, { icon: IconDefinition; label: string }>> = {
+    [ERole.ROLE_ADMIN]: { icon: faUserShield, label: 'Administrateur du site' },
+    [ERole.ROLE_SECRETAIRE]: { icon: faKeyboard, label: 'Secrétariat' },
+    [ERole.ROLE_BUREAU]: { icon: faUsers, label: 'Bureau' },
+    [ERole.ROLE_MEMBRECA]: { icon: faBuildingColumns, label: 'Membre du CA' },
+    [ERole.ROLE_COMPTABLE]: { icon: faCalculator, label: 'Comptable' },
+    [ERole.ROLE_ENCADRANT]: { icon: faChalkboardUser, label: 'Encadrant' },
+    [ERole.ROLE_REFERENT]: { icon: faUserCheck, label: 'Référent' }
+  };
+
+  roleIconFor(role: ERole): { icon: IconDefinition; label: string } | undefined {
+    return this.roleIcons[role];
+  }
+
+  displayedRolesFor(adherent: Adherent): ERole[] {
+    return adherent.user?.roles?.filter(role => this.roleIconFor(role)) ?? [];
+  }
   private readonly apiViewRefresh = registerApiViewRefresh();
   private toastr = inject(ToastService);
   private tribuService = inject(TribuService);

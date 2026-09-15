@@ -114,7 +114,7 @@ export class MaillingComponent implements OnInit {
     horairesForm.push(caForm)
     const profForm: FormGroup = this.fb.group({
       ordre: [4, []],
-      role: [ERole.ROLE_PROF, []],
+      role: [ERole.ROLE_ENCADRANT, []],
       nom: ['prof', []],
       text: ['Les profs et encadrants des sections', []],
       bold: [false, []],

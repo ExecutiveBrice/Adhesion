@@ -26,7 +26,7 @@ describe('Navigation du bandeau', () => {
       sessionChanges$: sessionChanges
     });
     storage.getToken.and.returnValue('access-token');
-    storage.getUser.and.returnValue({ username: 'admin@example.org', roles: ['ROLE_ADMIN', 'ROLE_PROF'] });
+    storage.getUser.and.returnValue({ username: 'admin@example.org', roles: ['ROLE_ADMIN', 'ROLE_ENCADRANT'] });
     TestBed.configureTestingModule({
       imports: [AppComponent],
       providers: [
@@ -123,7 +123,7 @@ describe('Déconnexion depuis une page protégée', () => {
       sessionChanges$: sessionChanges
     });
     storage.getToken.and.returnValue('access-token');
-    storage.getUser.and.returnValue({ username: 'admin@example.org', roles: ['ROLE_ADMIN', 'ROLE_PROF'] });
+    storage.getUser.and.returnValue({ username: 'admin@example.org', roles: ['ROLE_ADMIN', 'ROLE_ENCADRANT'] });
     storage.signOut.and.callFake(() => storage.getToken.and.returnValue(null));
     logout = jasmine.createSpy('logout').and.callFake(() => {
       storage.signOut();

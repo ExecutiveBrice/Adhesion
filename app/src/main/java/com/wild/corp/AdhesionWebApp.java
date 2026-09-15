@@ -4,7 +4,6 @@ import com.wild.corp.adhesion.services.ParamBooleanServices;
 import com.wild.corp.adhesion.services.ParamNumberServices;
 import com.wild.corp.adhesion.services.ParamTextServices;
 import com.wild.corp.adhesion.services.UserServices;
-import com.wild.corp.adhesion.services.RoleTableMigration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -20,9 +19,6 @@ public class AdhesionWebApp {
 	@Autowired
 	UserServices userServices;
 	@Autowired
-	RoleTableMigration roleTableMigration;
-
-	@Autowired
 	ParamBooleanServices paramBooleanServices;
 
 	@Autowired
@@ -37,12 +33,6 @@ public class AdhesionWebApp {
 
 	@EventListener(ApplicationReadyEvent.class)
 	private void init() {
-		roleTableMigration.migrate();
-
-//		if(!userServices.existsByEmail("admin")){
-//			userServices.initAdmin();
-//		}
-
 		paramBooleanServices.fillParamBoolean();
 		paramTextServices.fillParamText();
 		paramNumberServices.fillParamNumber();

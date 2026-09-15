@@ -109,7 +109,7 @@ export class ModalActivite implements OnInit, OnDestroy {
 
 
   getProfs() {
-    this.adherentService.getByRole(ERole.ROLE_PROF).subscribe(
+    this.adherentService.getByRole(ERole.ROLE_ENCADRANT).subscribe(
       data => {
         this.profs = data;
       },
