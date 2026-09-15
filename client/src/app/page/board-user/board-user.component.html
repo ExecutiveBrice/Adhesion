@@ -32,6 +32,18 @@
               <div class="col-12 center" id="header">
                 {{ !adherent.prenom?"Nouveau":adherent.prenom+" "+adherent.nom}}
               </div>
+              @let displayedRoles = displayedRolesFor(adherent);
+              @if (displayedRoles.length) {
+                <div class="adherent-roles" aria-label="Rôles de l’adhérent">
+                  @for (role of displayedRoles; track role) {
+                    @if (roleIconFor(role); as roleIcon) {
+                      <span class="adherent-role-icon" role="img" [attr.title]="roleIcon.label" [attr.aria-label]="roleIcon.label">
+                        <fa-icon [icon]="roleIcon.icon" aria-hidden="true"></fa-icon>
+                      </span>
+                    }
+                  }
+                </div>
+              }
               @for (adhesion of adherent.adhesions | orderBy:'id':false ; track adhesion) {
                 <div>
                   {{adhesion.activite.nom}}

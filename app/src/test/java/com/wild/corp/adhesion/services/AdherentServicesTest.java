@@ -4,19 +4,38 @@ import com.wild.corp.adhesion.models.Accord;
 import com.wild.corp.adhesion.models.Activite;
 import com.wild.corp.adhesion.models.ActiviteNm1;
 import com.wild.corp.adhesion.models.Adherent;
+import com.wild.corp.adhesion.models.ERole;
 import com.wild.corp.adhesion.models.Adhesion;
 import com.wild.corp.adhesion.models.User;
+import com.wild.corp.adhesion.models.UserLite;
+import com.wild.corp.adhesion.models.Tribu;
 import com.wild.corp.adhesion.models.resources.AdherentExport;
 import com.wild.corp.adhesion.models.resources.AdherentLite;
+import com.wild.corp.adhesion.models.resources.Groupe;
+import com.wild.corp.adhesion.models.resources.Horaire;
 import com.wild.corp.adhesion.repository.AdherentRepository;
 import org.springframework.web.server.ResponseStatusException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 import static com.wild.corp.adhesion.utils.Status.VALIDEE;
 import static com.wild.corp.adhesion.utils.Status.ANNULEE;
@@ -24,10 +43,157 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.ArgumentMatchers.any;
 
 class AdherentServicesTest {
 
     private final AdherentServices adherentServices = new AdherentServices();
+
+    @Test
+    void includesAssignedRolesInPaginatedAdherentList() {
+        Adherent existing = existingAdherent();
+        existing.getUser().setRoles(Set.of(ERole.ROLE_USER, ERole.ROLE_BUREAU, ERole.ROLE_COMPTABLE));
+        AdherentRepository repository = mock(AdherentRepository.class);
+        when(repository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(existing)));
+        ReflectionTestUtils.setField(adherentServices, "adherentRepository", repository);
+
+        var page = adherentServices.getPage("", "", "", PageRequest.of(0, 10));
+
+        assertThat(page.getContent()).hasSize(1);
+        assertThat(page.getContent().get(0).getRoles())
+                .containsExactlyInAnyOrder(ERole.ROLE_USER, ERole.ROLE_BUREAU, ERole.ROLE_COMPTABLE);
+    }
+
+    @Test
+    void selectsMailRecipientsByEnumRoleWithoutReadingAnActivityId() {
+        AdherentRepository repository = mock(AdherentRepository.class);
+        when(repository.findByUserRole(ERole.ROLE_ENCADRANT)).thenReturn(List.of(existingAdherent()));
+        ReflectionTestUtils.setField(adherentServices, "adherentRepository", repository);
+        ActiviteServices activites = mock(ActiviteServices.class);
+        ReflectionTestUtils.setField(adherentServices, "activiteServices", activites);
+
+        Horaire selection = new Horaire();
+        selection.setChecked(true);
+        selection.setRole("ROLE_ENCADRANT");
+        Groupe groupe = new Groupe();
+        groupe.setNom("role");
+        groupe.setNm1(false);
+        groupe.setChecked(false);
+        groupe.setHoraires(List.of(selection));
+        List<String> recipients = new ArrayList<>();
+
+        adherentServices.findByGroup(List.of(groupe), recipients);
+
+        assertThat(recipients).containsExactly("alice@example.test");
+        verifyNoInteractions(activites);
+    }
+
+    @AfterEach
+    void clearAuthentication() {
+        SecurityContextHolder.clearContext();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"USER", "MEMBRECA", "MODERATOR", "BUREAU", "ENCADRANT", "REFERENT", "COMPTABLE"})
+    void refusesEmailChangesByOtherRolesBeforeChangingPersonalData(String role) {
+        authenticateAs(role);
+        Adherent existing = existingAdherent();
+        AdherentRepository repository = repositoryFor(existing);
+
+        assertThatThrownBy(() -> adherentServices.update(emailUpdate("new@example.test")))
+                .isInstanceOf(AccessDeniedException.class);
+
+        assertThat(existing.getUser().getUsername()).isEqualTo("alice@example.test");
+        assertThat(existing.getNom()).isEqualTo("MARTIN");
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void refusesEmailChangesWithoutAuthentication() {
+        repositoryFor(existingAdherent());
+        assertThatThrownBy(() -> adherentServices.update(emailUpdate("new@example.test")))
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"SECRETAIRE", "ADMIN"})
+    void allowsEmailChangesBySecretaryAndAdministrator(String role) {
+        authenticateAs(role);
+        Adherent existing = existingAdherent();
+        AdherentRepository repository = repositoryFor(existing);
+
+        adherentServices.update(emailUpdate(" NEW@Example.Test "));
+
+        assertThat(existing.getUser().getUsername()).isEqualTo("new@example.test");
+        verify(repository).save(existing);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"alice@example.test", " ALICE@EXAMPLE.TEST "})
+    void allowsAnOrdinaryUserToUpdateOtherFieldsWithoutChangingEmail(String email) {
+        authenticateAs("USER");
+        Adherent existing = existingAdherent();
+        repositoryFor(existing);
+
+        adherentServices.update(emailUpdate(email));
+
+        assertThat(existing.getUser().getUsername()).isEqualTo("alice@example.test");
+        assertThat(existing.getNom()).isEqualTo("DUPONT");
+    }
+
+    @Test
+    void preservesEmailWhenUserIsOmittedFromTheUpdate() {
+        authenticateAs("USER");
+        Adherent existing = existingAdherent();
+        repositoryFor(existing);
+        AdherentLite update = emailUpdate("unused@example.test");
+        update.setUser(null);
+
+        adherentServices.update(update);
+
+        assertThat(existing.getUser().getUsername()).isEqualTo("alice@example.test");
+    }
+
+    private void authenticateAs(String role) {
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                "actor@example.test", null, List.of(new SimpleGrantedAuthority("ROLE_" + role))));
+    }
+
+    private Adherent existingAdherent() {
+        Adherent existing = new Adherent();
+        existing.setId(42L);
+        existing.setNom("MARTIN");
+        existing.setPrenom("Alice");
+        existing.setUser(new User("alice@example.test", "unused"));
+        existing.setTribu(new Tribu(UUID.randomUUID()));
+        return existing;
+    }
+
+    private AdherentRepository repositoryFor(Adherent existing) {
+        AdherentRepository repository = mock(AdherentRepository.class);
+        when(repository.findById(existing.getId())).thenReturn(Optional.of(existing));
+        when(repository.save(existing)).thenReturn(existing);
+        ReflectionTestUtils.setField(adherentServices, "adherentRepository", repository);
+        AdhesionServices adhesions = mock(AdhesionServices.class);
+        when(adhesions.reduceAdhesions(any())).thenReturn(Set.of());
+        ReflectionTestUtils.setField(adherentServices, "adhesionServices", adhesions);
+        return repository;
+    }
+
+    private AdherentLite emailUpdate(String email) {
+        AdherentLite update = new AdherentLite();
+        update.setId(42L);
+        update.setNom("Dupont");
+        update.setPrenom("Alice");
+        UserLite user = new UserLite();
+        user.setUsername(email);
+        update.setUser(user);
+        return update;
+    }
 
     @Test
     void updatesTheStateAndDateOfExistingAccords() {

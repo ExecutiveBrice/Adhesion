@@ -3,7 +3,7 @@ import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { UserService } from '../../_services/user.service';
 import { ParamService } from '../../_services/param.service';
 
-import { AgendaGoogleConfiguration, ParamBoolean, ParamNumber, ParamText, SalleConfiguration, UserLite } from 'src/app/models';
+import { AgendaGoogleConfiguration, ERole, ParamBoolean, ParamNumber, ParamText, SalleConfiguration, UserLite } from 'src/app/models';
 import { forkJoin } from 'rxjs';
 import { faCalendarDays, faCircleCheck, faCircleXmark, faFont, faHashtag, faLocationDot, faPlus, faSliders, faTrash, faUserShield, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { AdherentService } from 'src/app/_services/adherent.service';
@@ -19,7 +19,8 @@ import { OrderByPipe } from '../../_helpers/sort.pipe';
 import { UserCheckboxDropdownComponent } from '../../template/user-checkbox-dropdown/user-checkbox-dropdown.component';
 import { UtilisateurSelectionnable } from '../../models/utilisateurSelectionnable';
 
-type RoleUtilisateur = 'ROLE_ADMIN' | 'ROLE_ADMINISTRATEUR' | 'ROLE_BUREAU' | 'ROLE_SECRETAIRE' | 'ROLE_COMPTABLE' | 'ROLE_PROF';
+type RoleUtilisateur = ERole.ROLE_ADMIN | ERole.ROLE_MEMBRECA | ERole.ROLE_BUREAU |
+  ERole.ROLE_SECRETAIRE | ERole.ROLE_COMPTABLE | ERole.ROLE_ENCADRANT;
 
 
 @Component({
@@ -67,24 +68,24 @@ export class BoardAdminComponent implements OnInit {
   usersLite: UserLite[] = [];
   utilisateursSelectionnables: UtilisateurSelectionnable[] = [];
   selectionsRoles: Record<RoleUtilisateur, UtilisateurSelectionnable[]> = {
-    ROLE_ADMIN: [],
-    ROLE_ADMINISTRATEUR: [],
-    ROLE_BUREAU: [],
-    ROLE_SECRETAIRE: [],
-    ROLE_COMPTABLE: [],
-    ROLE_PROF: []
+    [ERole.ROLE_ADMIN]: [],
+    [ERole.ROLE_MEMBRECA]: [],
+    [ERole.ROLE_BUREAU]: [],
+    [ERole.ROLE_SECRETAIRE]: [],
+    [ERole.ROLE_COMPTABLE]: [],
+    [ERole.ROLE_ENCADRANT]: []
   };
   rolesEnCoursDeMiseAJour: Partial<Record<RoleUtilisateur, boolean>> = {};
   maintenanceEnCours = false;
   maintenanceMessage = '';
   maintenanceErreur = '';
   readonly rolesUtilisateurs: { code: RoleUtilisateur; libelle: string }[] = [
-    { code: 'ROLE_ADMIN', libelle: 'Administrateurs du site' },
-    { code: 'ROLE_ADMINISTRATEUR', libelle: "Administrateurs de l’ALOD" },
-    { code: 'ROLE_BUREAU', libelle: 'Membres du bureau de l’ALOD' },
-    { code: 'ROLE_SECRETAIRE', libelle: 'Secrétaires de l’ALOD' },
-    { code: 'ROLE_COMPTABLE', libelle: 'Comptables de l’ALOD' },
-    { code: 'ROLE_PROF', libelle: 'Professeurs de l’ALOD' }
+    { code: ERole.ROLE_ADMIN, libelle: 'Administrateurs du site' },
+    { code: ERole.ROLE_MEMBRECA, libelle: "Membres du CA de l’ALOD" },
+    { code: ERole.ROLE_BUREAU, libelle: 'Membres du bureau de l’ALOD' },
+    { code: ERole.ROLE_SECRETAIRE, libelle: 'Secrétaires de l’ALOD' },
+    { code: ERole.ROLE_COMPTABLE, libelle: 'Comptables de l’ALOD' },
+    { code: ERole.ROLE_ENCADRANT, libelle: 'Encadrant de l’ALOD' }
   ];
 
   ngOnInit(): void {
@@ -108,7 +109,7 @@ export class BoardAdminComponent implements OnInit {
         }));
         this.selectionsRoles = this.rolesUtilisateurs.reduce((selections, role) => {
           selections[role.code] = this.utilisateursSelectionnables.filter(utilisateur =>
-            data.some(user => user.id === utilisateur.id && user.roles.some(userRole => userRole.name === role.code)));
+            data.some(user => user.id === utilisateur.id && user.roles.includes(role.code)));
           return selections;
         }, {} as Record<RoleUtilisateur, UtilisateurSelectionnable[]>);
       },

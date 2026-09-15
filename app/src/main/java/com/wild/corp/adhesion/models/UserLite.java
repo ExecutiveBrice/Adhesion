@@ -18,6 +18,6 @@ public class UserLite {
 
 	private String username;
 
-	private Set<Role> roles = new HashSet<>();
+	private Set<ERole> roles = new HashSet<>();
 
 }

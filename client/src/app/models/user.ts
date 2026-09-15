@@ -1,12 +1,12 @@
 import { Adherent } from "./adherent";
-import { Role } from "./role";
+import { ERole } from "./eRole";
 
 export class User {
 
   id!: number;
   username!: string;
   password!: string;
-  roles!: Role[];
+  roles!: ERole[];
   emailValid!: boolean;
   adherent!: Adherent;
 
