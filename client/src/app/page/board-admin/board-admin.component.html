@@ -1,14 +1,8 @@
 <main class="admin-page">
-  <header class="admin-page-header">
-    <div>
-      <p class="admin-page-kicker">Espace de configuration</p>
-      <h1>Administration</h1>
-      <p class="mb-0">Gérez les paramètres, les lieux et les droits d’accès de l’association.</p>
-    </div>
-  </header>
 
-  <div ngbAccordion class="admin-accordion" [closeOthers]="false">
-    <section ngbAccordionItem="agendas" [collapsed]="false">
+
+  <div ngbAccordion class="admin-accordion">
+    <section ngbAccordionItem="agendas">
       <h2 ngbAccordionHeader>
         <button ngbAccordionButton>
           <span class="admin-section-icon" aria-hidden="true"><fa-icon [icon]="faCalendarDays"></fa-icon></span>

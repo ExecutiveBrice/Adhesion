@@ -4,6 +4,7 @@ import {
   Accord,
   Adherent,
   Adhesion,
+  ERole,
   ParamText,
   Tribu,
   User
@@ -15,21 +16,10 @@ import {
   faCirclePause,
   faClock,
   faSquareXmark,
-  faFileSignature,
-  faSquareCaretLeft,
-  faSquareCaretDown,
-  faEye,
-  faCircleQuestion,
   faCircleXmark,
-  faCloudDownloadAlt,
-  faBook,
-  faScaleBalanced,
-  faPencilSquare,
-  faSquarePlus,
-  faSquareMinus,
-  faCircleCheck,
-  faUserPlus
+  faCircleCheck
 } from '@fortawesome/free-solid-svg-icons';
+import { displayedRolesFor, roleIconFor } from '../../_helpers/role-icons';
 import {ActivatedRoute, Router} from '@angular/router';
 import {TokenStorageService} from 'src/app/_services/token-storage.service';
 import {ParamService} from 'src/app/_services/param.service';
@@ -50,6 +40,11 @@ import { OrderByPipe } from '../../_helpers/sort.pipe';
     imports: [NgClass, DatePipe, FaIconComponent, CalendrierComponent, OrderByPipe]
 })
 export class BoardUserComponent implements OnInit {
+  readonly roleIconFor = roleIconFor;
+
+  displayedRolesFor(adherent: Adherent): ERole[] {
+    return displayedRolesFor(adherent.user?.roles);
+  }
   private readonly apiViewRefresh = registerApiViewRefresh();
   private toastr = inject(ToastService);
   private tribuService = inject(TribuService);
@@ -63,21 +58,9 @@ export class BoardUserComponent implements OnInit {
 
   faClock = faClock
   faCirclePause = faCirclePause
-  faFileSignature = faFileSignature;
   faSquareXmark = faSquareXmark;
-  faSquareCaretLeft = faSquareCaretLeft
-  faSquareCaretDown = faSquareCaretDown
-  faEye = faEye
-  faCircleQuestion = faCircleQuestion;
   faCircleXmark = faCircleXmark;
-  faCloudDownloadAlt = faCloudDownloadAlt;
-  faScaleBalanced = faScaleBalanced;
-  faBook = faBook;
-  faUserPlus = faUserPlus;
   faCircleCheck = faCircleCheck;
-  faSquareMinus = faSquareMinus;
-  faPencilSquare = faPencilSquare;
-  faSquarePlus = faSquarePlus;
 
   date: { year: number; month: number } | undefined;
   content?: string;

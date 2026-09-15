@@ -35,6 +35,10 @@ export class PwaService {
     this.resetInstallState();
   }
 
+  isMobileStandalone(): boolean {
+    return typeof window !== 'undefined' && this.isMobile() && this.isStandalone();
+  }
+
   private resetInstallState(): void {
     this.deferredPrompt = undefined;
     this.canInstall.set(false);

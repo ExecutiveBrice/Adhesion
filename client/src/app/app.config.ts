@@ -1,4 +1,4 @@
-import { ApplicationConfig, importProvidersFrom, LOCALE_ID } from '@angular/core';
+import { ApplicationConfig, importProvidersFrom, inject, LOCALE_ID, provideAppInitializer } from '@angular/core';
 import { DatePipe, registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
 import { provideHttpClient, withInterceptors, withInterceptorsFromDi } from '@angular/common/http';
@@ -10,11 +10,13 @@ import { NgbModal, NgbModalConfig, NgbModule } from '@ng-bootstrap/ng-bootstrap'
 import { routes } from './app.routes';
 import { apiChangeDetectionInterceptor, authInterceptorProviders } from './_helpers/auth.interceptor';
 import { environment } from '../environments/environment';
+import { AuthService } from './_services/auth.service';
 
 registerLocaleData(localeFr);
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    provideAppInitializer(() => inject(AuthService).restoreSession()),
     importProvidersFrom(
       NgbModule,
     ),
