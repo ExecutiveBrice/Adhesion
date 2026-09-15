@@ -38,6 +38,7 @@ public class AdherentFlat {
     private String activitesNm1;
 
     private UUID tribuId;
+    private List<ERole> roles = List.of();
 
 
 

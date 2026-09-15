@@ -21,6 +21,7 @@ import { FormsModule } from '@angular/forms';
 import { NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap/dropdown';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { OrderByPipe } from '../../_helpers/sort.pipe';
+import { displayedRolesFor, roleIconFor } from '../../_helpers/role-icons';
 
 @Component({
     selector: 'app-adherents',
@@ -29,6 +30,8 @@ import { OrderByPipe } from '../../_helpers/sort.pipe';
     imports: [FormsModule, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, FaIconComponent, OrderByPipe]
 })
 export class AdherentsComponent implements OnInit {
+  readonly displayedRolesFor = displayedRolesFor;
+  readonly roleIconFor = roleIconFor;
   private readonly apiViewRefresh = registerApiViewRefresh();
   private toastr = inject(ToastService);
   activiteService = inject(ActiviteService);

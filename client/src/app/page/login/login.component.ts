@@ -153,7 +153,7 @@ export class LoginComponent implements OnInit {
               this.router.navigate(['admin']);
             } else if (this.roles.includes('ROLE_SECRETAIRE')) {
               this.router.navigate(['adhesions']);
-            } else if (this.roles.includes('ROLE_PROF')) {
+            } else if (this.roles.includes('ROLE_ENCADRANT')) {
               this.router.navigate(['seances']);
             } else if (this.roles.includes('ROLE_USER')) {
               if (!this.maintenance) {

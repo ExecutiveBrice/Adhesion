@@ -75,13 +75,14 @@ public class AdherentServices {
             if (groupe.getNom().equals("role")) {
                 groupe.getHoraires().forEach(horaire -> {
                     if (horaire.getChecked()) {
-                        mailling.addAll(adherentRepository.findByUserRoleId(horaire.getId()).stream().map(adherent -> {
+                        mailling.addAll(adherentRepository.findByUserRole(ERole.valueOf(horaire.getRole())).stream().map(adherent -> {
                                     return Boolean.TRUE.equals(adherent.getEmailRepresentant()) && adherent.getRepresentant() != null ? adherent.getRepresentant().getUser().getUsername() : adherent.getUser().getUsername();
                                 }).filter(Objects::nonNull)
                                 .collect(Collectors.toSet()));
 
                     }
                 });
+                return;
             }
 
             if( groupe.getNm1()){
@@ -191,7 +192,7 @@ public class AdherentServices {
         boolean canChangeEmail = authentication != null && authentication.isAuthenticated()
                 && authentication.getAuthorities().stream().anyMatch(authority ->
                     "ROLE_SECRETAIRE".equals(authority.getAuthority())
-                            || "ROLE_ADMINISTRATEUR".equals(authority.getAuthority()));
+                            || "ROLE_ADMIN".equals(authority.getAuthority()));
         if (!canChangeEmail) {
             throw new AccessDeniedException("Seul un secrétaire ou un administrateur peut modifier l'adresse e-mail");
         }
@@ -626,11 +627,13 @@ public class AdherentServices {
                 + (Objects.equals(adherent.getPrenom(), "") ? "zzzz" : adherent.getPrenom()));
         adherentFlat.setLieuNaissance(adherent.getLieuNaissance());
         adherentFlat.setTribuId(adherent.getTribu().getUuid());
+        adherentFlat.setRoles(adherent.getUser() != null && adherent.getUser().getRoles() != null
+                ? adherent.getUser().getRoles().stream().toList() : List.of());
         return adherentFlat;
     }
 
-    public List<AdherentLite> getByRole(Long roleId) {
-        return adherentRepository.findByUserRoleId(roleId).stream().map(this::reduceAdherent).collect(Collectors.toList());
+    public List<AdherentLite> getByRole(ERole role) {
+        return adherentRepository.findByUserRole(role).stream().map(this::reduceAdherent).collect(Collectors.toList());
     }
 
     public List<AdherentLite> getLites(Collection<Adherent> adherents) {
@@ -753,12 +756,12 @@ public class AdherentServices {
     private boolean hasAdministrativeRole(Adherent adherent) {
         if (adherent.getUser() != null) {
             return adherent.getUser().getRoles().stream().anyMatch(role ->
-                    role.getName().equals(ROLE_ADMIN)
-                            || role.getName().equals(ROLE_BUREAU)
-                            || role.getName().equals(ROLE_ADMINISTRATEUR)
-                            || role.getName().equals(ROLE_COMPTABLE)
-                            || role.getName().equals(ROLE_SECRETAIRE)
-                            || role.getName().equals(ROLE_PROF)
+                    role == ROLE_ADMIN
+                            || role == ROLE_BUREAU
+                            || role == ROLE_MEMBRECA
+                            || role == ROLE_COMPTABLE
+                            || role == ROLE_SECRETAIRE
+                            || role == ROLE_ENCADRANT
             );
         }
         return false;

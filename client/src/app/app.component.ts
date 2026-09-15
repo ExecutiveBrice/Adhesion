@@ -40,7 +40,7 @@ export class AppComponent {
   isLoggedIn = false;
   showAdmin = false;
   showBureau = false;
-  showAdminstrateur = false;
+  showMembreCA = false;
   showSecretaire = false;
   showProf=false;
   showReferent=false;
@@ -107,9 +107,9 @@ export class AppComponent {
 
     this.showAdmin = this.roles.includes('ROLE_ADMIN');
     this.showBureau = this.roles.includes('ROLE_BUREAU');
-    this.showAdminstrateur = this.roles.includes('ROLE_ADMINISTRATEUR');
+    this.showMembreCA = this.roles.includes('ROLE_MEMBRECA');
     this.showSecretaire = this.roles.includes('ROLE_SECRETAIRE');
-    this.showProf = this.roles.includes('ROLE_PROF');
+    this.showProf = this.roles.includes('ROLE_ENCADRANT');
     this.showReferent = this.roles.includes('ROLE_REFERENT');
     this.showSeances = this.showProf || this.showReferent;
     this.showComptable = this.roles.includes('ROLE_COMPTABLE');

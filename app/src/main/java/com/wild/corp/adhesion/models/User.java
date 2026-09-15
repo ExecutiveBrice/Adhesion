@@ -34,8 +34,11 @@ public class User {
 	@JsonIgnore
 	private String password;
 
-	@ManyToMany(cascade = CascadeType.ALL)
-	private Set<Role> roles = new HashSet<>();
+	@ElementCollection(fetch = FetchType.EAGER)
+	@CollectionTable(name = "user_role_names", joinColumns = @JoinColumn(name = "user_id"))
+	@Enumerated(EnumType.STRING)
+	@Column(name = "role_name", length = 32, nullable = false)
+	private Set<ERole> roles = new HashSet<>();
 
 	private Boolean emailValid;
 

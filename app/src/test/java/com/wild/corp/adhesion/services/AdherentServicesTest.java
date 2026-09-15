@@ -4,12 +4,15 @@ import com.wild.corp.adhesion.models.Accord;
 import com.wild.corp.adhesion.models.Activite;
 import com.wild.corp.adhesion.models.ActiviteNm1;
 import com.wild.corp.adhesion.models.Adherent;
+import com.wild.corp.adhesion.models.ERole;
 import com.wild.corp.adhesion.models.Adhesion;
 import com.wild.corp.adhesion.models.User;
 import com.wild.corp.adhesion.models.UserLite;
 import com.wild.corp.adhesion.models.Tribu;
 import com.wild.corp.adhesion.models.resources.AdherentExport;
 import com.wild.corp.adhesion.models.resources.AdherentLite;
+import com.wild.corp.adhesion.models.resources.Groupe;
+import com.wild.corp.adhesion.models.resources.Horaire;
 import com.wild.corp.adhesion.repository.AdherentRepository;
 import org.springframework.web.server.ResponseStatusException;
 import org.junit.jupiter.api.Test;
@@ -21,6 +24,10 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -38,11 +45,52 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.ArgumentMatchers.any;
 
 class AdherentServicesTest {
 
     private final AdherentServices adherentServices = new AdherentServices();
+
+    @Test
+    void includesAssignedRolesInPaginatedAdherentList() {
+        Adherent existing = existingAdherent();
+        existing.getUser().setRoles(Set.of(ERole.ROLE_USER, ERole.ROLE_BUREAU, ERole.ROLE_COMPTABLE));
+        AdherentRepository repository = mock(AdherentRepository.class);
+        when(repository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(existing)));
+        ReflectionTestUtils.setField(adherentServices, "adherentRepository", repository);
+
+        var page = adherentServices.getPage("", "", "", PageRequest.of(0, 10));
+
+        assertThat(page.getContent()).hasSize(1);
+        assertThat(page.getContent().get(0).getRoles())
+                .containsExactlyInAnyOrder(ERole.ROLE_USER, ERole.ROLE_BUREAU, ERole.ROLE_COMPTABLE);
+    }
+
+    @Test
+    void selectsMailRecipientsByEnumRoleWithoutReadingAnActivityId() {
+        AdherentRepository repository = mock(AdherentRepository.class);
+        when(repository.findByUserRole(ERole.ROLE_ENCADRANT)).thenReturn(List.of(existingAdherent()));
+        ReflectionTestUtils.setField(adherentServices, "adherentRepository", repository);
+        ActiviteServices activites = mock(ActiviteServices.class);
+        ReflectionTestUtils.setField(adherentServices, "activiteServices", activites);
+
+        Horaire selection = new Horaire();
+        selection.setChecked(true);
+        selection.setRole("ROLE_ENCADRANT");
+        Groupe groupe = new Groupe();
+        groupe.setNom("role");
+        groupe.setNm1(false);
+        groupe.setChecked(false);
+        groupe.setHoraires(List.of(selection));
+        List<String> recipients = new ArrayList<>();
+
+        adherentServices.findByGroup(List.of(groupe), recipients);
+
+        assertThat(recipients).containsExactly("alice@example.test");
+        verifyNoInteractions(activites);
+    }
 
     @AfterEach
     void clearAuthentication() {
@@ -50,7 +98,7 @@ class AdherentServicesTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"USER", "ADMIN", "MODERATOR", "BUREAU", "PROF", "REFERENT", "COMPTABLE"})
+    @ValueSource(strings = {"USER", "MEMBRECA", "MODERATOR", "BUREAU", "ENCADRANT", "REFERENT", "COMPTABLE"})
     void refusesEmailChangesByOtherRolesBeforeChangingPersonalData(String role) {
         authenticateAs(role);
         Adherent existing = existingAdherent();
@@ -72,7 +120,7 @@ class AdherentServicesTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"SECRETAIRE", "ADMINISTRATEUR"})
+    @ValueSource(strings = {"SECRETAIRE", "ADMIN"})
     void allowsEmailChangesBySecretaryAndAdministrator(String role) {
         authenticateAs(role);
         Adherent existing = existingAdherent();

@@ -60,14 +60,14 @@
                   <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" [routerLink]="['/inscription', '']">{{showSecretaire ? "Inscriptions manuelles" : "Mes adhésions"}}</a>
                 </li>
               }
-              @if (showAdmin || showSecretaire || showAdminstrateur || showBureau) {
+              @if (showAdmin || showSecretaire || showMembreCA || showBureau) {
                 <li class="nav-item" (click)="isCollapsed = true">
                   <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="reporting">Reporting</a>
                 </li>
               }
               @if (showProf) {
                 <li class="nav-item" (click)="isCollapsed = true">
-                  <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="profs">Mes équipes</a>
+                  <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="profs">Mes groupes</a>
                 </li>
               }
               @if (showSeances) {
