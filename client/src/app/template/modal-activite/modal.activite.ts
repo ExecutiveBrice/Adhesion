@@ -1,7 +1,7 @@
 import { Component, inject, Input, OnDestroy, OnInit } from '@angular/core'
 import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap'
-import { Activite, AdherentLite, PlanificationHebdomadaire, SalleConfiguration } from 'src/app/models';
+import { Activite, AdherentLite, ERole, PlanificationHebdomadaire, SalleConfiguration } from 'src/app/models';
 import { Seance } from 'src/app/models/seance';
 import { faExternalLinkSquareAlt } from '@fortawesome/free-solid-svg-icons';
 import { AdherentService } from 'src/app/_services/adherent.service';
@@ -109,7 +109,7 @@ export class ModalActivite implements OnInit, OnDestroy {
 
 
   getProfs() {
-    this.adherentService.getByRole(3).subscribe(
+    this.adherentService.getByRole(ERole.ROLE_PROF).subscribe(
       data => {
         this.profs = data;
       },

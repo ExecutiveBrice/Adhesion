@@ -53,7 +53,7 @@ class AdherentEmailAuthorizationMvcTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"USER", "SECRETAIRE", "ADMINISTRATEUR"})
+    @ValueSource(strings = {"USER", "SECRETAIRE", "MEMBRECA", "ADMIN"})
     void allowsUpdatesForEachSupportedRoleWithoutRequiringAnAdditionalUserRole(String role) throws Exception {
         mockMvc.perform(post("/adherent/update").with(user("actor@example.test").roles(role))
                         .contentType(APPLICATION_JSON).content("{\"id\":42}"))

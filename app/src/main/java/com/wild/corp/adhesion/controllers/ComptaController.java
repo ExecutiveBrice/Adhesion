@@ -22,7 +22,7 @@ public class ComptaController {
 	ComptaService comptaService;
 
 	@GetMapping("/getAll")
-	@PreAuthorize("hasAnyRole('COMPTABLE', 'BUREAU', 'ADMINISTRATEUR', 'ADMIN')")
+	@PreAuthorize("hasAnyRole('COMPTABLE', 'BUREAU', 'MEMBRECA', 'ADMIN')")
 	public ResponseEntity<?> getAll(@PathParam("dateDebutPeriode") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate dateDebutPeriode, @PathParam("dateFinPeriode") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate dateFinPeriode) {
 
 

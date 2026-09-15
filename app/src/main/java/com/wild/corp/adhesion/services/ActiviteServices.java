@@ -5,7 +5,6 @@ import com.wild.corp.adhesion.models.resources.SeanceResponse;
 import com.wild.corp.adhesion.repository.ActiviteNm1Repository;
 import com.wild.corp.adhesion.repository.ActiviteRepository;
 import com.wild.corp.adhesion.repository.SalleRepository;
-import com.wild.corp.adhesion.repository.RoleRepository;
 import com.wild.corp.adhesion.utils.Status;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,8 +44,6 @@ public class ActiviteServices {
     SeanceServices seanceServices;
     @Autowired
     SalleRepository salleRepository;
-    @Autowired
-    RoleRepository roleRepository;
 
     public List<Seance> getSeancesDuJour(Long activiteId) {
 
@@ -392,15 +389,14 @@ public class ActiviteServices {
 
     private void ajouterRoleReferent(Adherent adherent) {
         if (adherent.getUser() != null && adherent.getUser().getRoles().stream()
-                .noneMatch(role -> role.getName() == ERole.ROLE_REFERENT)) {
-            Role roleReferent = roleRepository.findByName(ERole.ROLE_REFERENT).orElseThrow();
-            adherent.getUser().getRoles().add(roleReferent);
+                .noneMatch(role -> role == ERole.ROLE_REFERENT)) {
+            adherent.getUser().getRoles().add(ERole.ROLE_REFERENT);
         }
     }
 
     private void retirerRoleReferent(Adherent adherent) {
         if (adherent.getUser() != null) {
-            adherent.getUser().getRoles().removeIf(role -> role.getName() == ERole.ROLE_REFERENT);
+            adherent.getUser().getRoles().remove(ERole.ROLE_REFERENT);
         }
     }
 

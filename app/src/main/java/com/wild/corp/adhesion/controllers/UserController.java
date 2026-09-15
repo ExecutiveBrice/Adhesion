@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -162,21 +163,33 @@ SeanceRepository seanceRepository;
 	}
 
 	@PostMapping("/grantUser")
-	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<?> grantUser(@RequestBody String role, @PathParam("userEmail") String userEmail) {
-
-		return ResponseEntity.ok(userServices.grantUser(ERole.valueOf(role), userServices.findByEmail(userEmail)));
+	@PreAuthorize("hasAnyRole('SECRETAIRE', 'ADMIN')")
+	public ResponseEntity<?> grantUser(@RequestBody String role, @RequestParam("userEmail") String userEmail,
+			Authentication principal) {
+		ERole requestedRole = ERole.valueOf(role);
+		checkRoleAssignment(requestedRole, principal);
+		return ResponseEntity.ok(userServices.grantUser(requestedRole, userServices.findByEmail(userEmail)));
 	}
 
 	@PostMapping("/unGrantUser")
-	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<?> unGrantUser(@RequestBody String role, @PathParam("userEmail") String userEmail) {
+	@PreAuthorize("hasAnyRole('SECRETAIRE', 'ADMIN')")
+	public ResponseEntity<?> unGrantUser(@RequestBody String role, @RequestParam("userEmail") String userEmail,
+			Authentication principal) {
+		ERole requestedRole = ERole.valueOf(role);
+		checkRoleAssignment(requestedRole, principal);
+		return ResponseEntity.ok(userServices.unGrantUser(requestedRole, userServices.findByEmail(userEmail)));
+	}
 
-		return ResponseEntity.ok(userServices.unGrantUser(ERole.valueOf(role), userServices.findByEmail(userEmail)));
+	private void checkRoleAssignment(ERole role, Authentication principal) {
+		boolean siteAdmin = principal.getAuthorities().stream()
+				.anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+		if (role == ERole.ROLE_USER || (role == ERole.ROLE_ADMIN && !siteAdmin)) {
+			throw new AccessDeniedException("Attribution de ce rôle interdite");
+		}
 	}
 
 	@GetMapping("/allLite")
-	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('MEMBRECA') or hasRole('ADMIN')")
 	public ResponseEntity<?> getAllLite() {
 		return ResponseEntity.ok(userServices.getAllLite());
 	}

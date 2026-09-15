@@ -46,7 +46,7 @@ ActiviteServices activiteServices;
 	}
 
 	@GetMapping("/page")
-	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('BUREAU') or hasRole('MEMBRECA') or hasRole('ADMIN')")
 	public ResponseEntity<?> getPage(@RequestParam(defaultValue = "") String search,
 			@RequestParam(required = false) Integer tarif,
 			@RequestParam(required = false) Boolean complete,

@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import {MailService} from '../../_services/mail.service';
-import {Activite, ActiviteNm1, Email, Groupe} from '../../models';
+import {Activite, ActiviteNm1, Email, ERole, Groupe} from '../../models';
 import {Router} from '@angular/router';
 
 import {ActiviteService} from 'src/app/_services/activite.service';
@@ -80,7 +80,7 @@ export class MaillingComponent implements OnInit {
     const horairesForm: FormArray = this.fb.array([])
     const adherentForm: FormGroup = this.fb.group({
       ordre: [1, []],
-      id: [1, []],
+      role: [ERole.ROLE_USER, []],
       nom: ['adherent', []],
       text: ['Tous les adherents', []],
       bold: [false, []],
@@ -92,7 +92,7 @@ export class MaillingComponent implements OnInit {
 
     const bureauForm: FormGroup = this.fb.group({
       ordre: [2, []],
-      id: [4, []],
+      role: [ERole.ROLE_BUREAU, []],
       nom: ['bureau', []],
       text: ['Les membres du bureau', []],
       bold: [false, []],
@@ -103,7 +103,7 @@ export class MaillingComponent implements OnInit {
     horairesForm.push(bureauForm)
     const caForm: FormGroup = this.fb.group({
       ordre: [3, []],
-      id: [5, []],
+      role: [ERole.ROLE_MEMBRECA, []],
       nom: ['conseilAdministration', []],
       text: ['Les membres du conseil d\'administration', []],
       bold: [false, []],
@@ -114,7 +114,7 @@ export class MaillingComponent implements OnInit {
     horairesForm.push(caForm)
     const profForm: FormGroup = this.fb.group({
       ordre: [4, []],
-      id: [3, []],
+      role: [ERole.ROLE_PROF, []],
       nom: ['prof', []],
       text: ['Les profs et encadrants des sections', []],
       bold: [false, []],
