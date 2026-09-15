@@ -1,6 +1,7 @@
 package com.wild.corp.adhesion.controllers;
 
 import com.wild.corp.adhesion.models.Adherent;
+import com.wild.corp.adhesion.models.ERole;
 import com.wild.corp.adhesion.models.resources.AdherentLite;
 import com.wild.corp.adhesion.services.AdherentServices;
 import com.wild.corp.adhesion.services.UserServices;
@@ -16,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -72,7 +74,7 @@ public class AdherentController {
 
 
     @PostMapping("/update")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'SECRETAIRE', 'MEMBRECA', 'ADMIN')")
     public ResponseEntity<?> update(Authentication principal, @RequestBody AdherentLite adherent) {
 
         if(adherent.getId() == null){
@@ -89,6 +91,8 @@ public class AdherentController {
             AdherentLite adh = null;
             try {
                 adh = adherentServices.update(adherent);
+            } catch (AccessDeniedException exception) {
+                throw exception;
             } catch (Exception p) {
                 if (p.getMessage().contains("duplicate key value violates unique constraint")) {
 
@@ -111,7 +115,7 @@ public class AdherentController {
     }
 
     @GetMapping("/all")
-    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('MEMBRECA') or hasRole('ADMIN')")
     public ResponseEntity<?> getAll(Authentication principal) {
         log.info("getAll by " + principal.getName());
         return ResponseEntity.ok(adherentServices.getAll());
@@ -126,14 +130,14 @@ public class AdherentController {
     }
 
     @GetMapping("/allFlat")
-    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('MEMBRECA') or hasRole('ADMIN')")
     public ResponseEntity<?> getAllFlat(Authentication principal) {
         log.info("getAllFlat by " + principal.getName());
         return ResponseEntity.ok(adherentServices.getAllFlat());
     }
 
     @GetMapping("/page")
-    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('MEMBRECA') or hasRole('ADMIN')")
     public ResponseEntity<?> getPage(Authentication principal,
                                      @RequestParam(defaultValue = "") String search,
                                      @RequestParam(defaultValue = "") String activite,
@@ -143,20 +147,20 @@ public class AdherentController {
         return ResponseEntity.ok(adherentServices.getPage(search, activite, activiteNm1, pageable));
     }
     @GetMapping("/allExportLite")
-    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('MEMBRECA') or hasRole('ADMIN')")
     public ResponseEntity<?> getAllExportLite(Authentication principal) {
         log.info("getAllExportLite by " + principal.getName());
         return ResponseEntity.ok(adherentServices.getAllExportFlat());
     }
     @GetMapping("/allLite")
-    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('MEMBRECA') or hasRole('ADMIN')")
     public ResponseEntity<?> getAllLite(Authentication principal) {
         log.info("getAllLite by " + principal.getName());
         return ResponseEntity.ok(adherentServices.getAll());
     }
 
     @GetMapping("/allId")
-    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('MEMBRECA') or hasRole('ADMIN')")
     public ResponseEntity<?> getAllId(Authentication principal) {
         log.info("getAllId by " + principal.getName());
         return ResponseEntity.ok(adherentServices.getAllId());
@@ -170,17 +174,17 @@ public class AdherentController {
     }
 
     @GetMapping("/getById")
-    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('MEMBRECA') or hasRole('ADMIN')")
     public ResponseEntity<Adherent> getById(Authentication principal, @PathParam("adherentId") Long adherentId) {
         log.info("getById by " + principal.getName() + " for adherent id " + adherentId);
         return ResponseEntity.ok(adherentServices.getById(adherentId));
     }
 
     @GetMapping("/getByRole")
-    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('ADMINISTRATEUR') or hasRole('ADMIN')")
-    public ResponseEntity<?> getByRole(Authentication principal, @PathParam("roleId") Long roleId) {
-        log.info("getByRole by " + principal.getName() + " for roleId id " + roleId);
-        return ResponseEntity.ok(adherentServices.getByRole(roleId));
+    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('MEMBRECA') or hasRole('ADMIN')")
+    public ResponseEntity<?> getByRole(Authentication principal, @RequestParam("role") ERole role) {
+        log.info("getByRole by " + principal.getName() + " for role " + role);
+        return ResponseEntity.ok(adherentServices.getByRole(role));
     }
 
 

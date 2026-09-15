@@ -128,6 +128,24 @@
 .member-info span,
 .birth-cell span { display: block; }
 .member-info span { margin-top: .2rem; overflow-wrap: anywhere; }
+.member-name {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: .25rem .5rem;
+}
+.member-info .member-roles {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  margin-top: 0;
+  color: #495057;
+}
+.member-info .member-role-icon {
+  display: inline-flex;
+  margin-top: 0;
+  overflow-wrap: normal;
+}
 .phone-cell { min-width: 130px; white-space: nowrap; }
 .address-cell { min-width: 220px; }
 .birth-cell { min-width: 155px; }

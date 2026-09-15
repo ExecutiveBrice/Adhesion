@@ -1,3 +1,23 @@
+.adherent-modal-heading {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  min-width: 0;
+}
+
+.adherent-role-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.adherent-role-checkboxes .form-check-inline {
+  margin-right: 0;
+}
+
 .cadrePermanent{
   margin-bottom: 10px;
 padding: 10px;
