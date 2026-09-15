@@ -24,6 +24,10 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -47,6 +51,22 @@ import static org.mockito.ArgumentMatchers.any;
 class AdherentServicesTest {
 
     private final AdherentServices adherentServices = new AdherentServices();
+
+    @Test
+    void includesAssignedRolesInPaginatedAdherentList() {
+        Adherent existing = existingAdherent();
+        existing.getUser().setRoles(Set.of(ERole.ROLE_USER, ERole.ROLE_BUREAU, ERole.ROLE_COMPTABLE));
+        AdherentRepository repository = mock(AdherentRepository.class);
+        when(repository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(existing)));
+        ReflectionTestUtils.setField(adherentServices, "adherentRepository", repository);
+
+        var page = adherentServices.getPage("", "", "", PageRequest.of(0, 10));
+
+        assertThat(page.getContent()).hasSize(1);
+        assertThat(page.getContent().get(0).getRoles())
+                .containsExactlyInAnyOrder(ERole.ROLE_USER, ERole.ROLE_BUREAU, ERole.ROLE_COMPTABLE);
+    }
 
     @Test
     void selectsMailRecipientsByEnumRoleWithoutReadingAnActivityId() {

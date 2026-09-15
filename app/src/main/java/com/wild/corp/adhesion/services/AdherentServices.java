@@ -627,6 +627,8 @@ public class AdherentServices {
                 + (Objects.equals(adherent.getPrenom(), "") ? "zzzz" : adherent.getPrenom()));
         adherentFlat.setLieuNaissance(adherent.getLieuNaissance());
         adherentFlat.setTribuId(adherent.getTribu().getUuid());
+        adherentFlat.setRoles(adherent.getUser() != null && adherent.getUser().getRoles() != null
+                ? adherent.getUser().getRoles().stream().toList() : List.of());
         return adherentFlat;
     }
 

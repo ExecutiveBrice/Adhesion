@@ -37,7 +37,7 @@
                 <div class="adherent-roles" aria-label="Rôles de l’adhérent">
                   @for (role of displayedRoles; track role) {
                     @if (roleIconFor(role); as roleIcon) {
-                      <span class="adherent-role-icon" [attr.title]="roleIcon.label" [attr.aria-label]="roleIcon.label">
+                      <span class="adherent-role-icon" role="img" [attr.title]="roleIcon.label" [attr.aria-label]="roleIcon.label">
                         <fa-icon [icon]="roleIcon.icon" aria-hidden="true"></fa-icon>
                       </span>
                     }

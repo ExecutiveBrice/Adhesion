@@ -16,29 +16,10 @@ import {
   faCirclePause,
   faClock,
   faSquareXmark,
-  faFileSignature,
-  faSquareCaretLeft,
-  faSquareCaretDown,
-  faEye,
-  faCircleQuestion,
   faCircleXmark,
-  faCloudDownloadAlt,
-  faBook,
-  faScaleBalanced,
-  faPencilSquare,
-  faSquarePlus,
-  faSquareMinus,
-  faCircleCheck,
-  faUserPlus,
-  faUserShield,
-  faKeyboard,
-  faUsers,
-  faBuildingColumns,
-  faCalculator,
-  faChalkboardUser,
-  faUserCheck
+  faCircleCheck
 } from '@fortawesome/free-solid-svg-icons';
-import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { displayedRolesFor, roleIconFor } from '../../_helpers/role-icons';
 import {ActivatedRoute, Router} from '@angular/router';
 import {TokenStorageService} from 'src/app/_services/token-storage.service';
 import {ParamService} from 'src/app/_services/param.service';
@@ -59,22 +40,10 @@ import { OrderByPipe } from '../../_helpers/sort.pipe';
     imports: [NgClass, DatePipe, FaIconComponent, CalendrierComponent, OrderByPipe]
 })
 export class BoardUserComponent implements OnInit {
-  readonly roleIcons: Partial<Record<ERole, { icon: IconDefinition; label: string }>> = {
-    [ERole.ROLE_ADMIN]: { icon: faUserShield, label: 'Administrateur du site' },
-    [ERole.ROLE_SECRETAIRE]: { icon: faKeyboard, label: 'Secrétariat' },
-    [ERole.ROLE_BUREAU]: { icon: faUsers, label: 'Bureau' },
-    [ERole.ROLE_MEMBRECA]: { icon: faBuildingColumns, label: 'Membre du CA' },
-    [ERole.ROLE_COMPTABLE]: { icon: faCalculator, label: 'Comptable' },
-    [ERole.ROLE_ENCADRANT]: { icon: faChalkboardUser, label: 'Encadrant' },
-    [ERole.ROLE_REFERENT]: { icon: faUserCheck, label: 'Référent' }
-  };
-
-  roleIconFor(role: ERole): { icon: IconDefinition; label: string } | undefined {
-    return this.roleIcons[role];
-  }
+  readonly roleIconFor = roleIconFor;
 
   displayedRolesFor(adherent: Adherent): ERole[] {
-    return adherent.user?.roles?.filter(role => this.roleIconFor(role)) ?? [];
+    return displayedRolesFor(adherent.user?.roles);
   }
   private readonly apiViewRefresh = registerApiViewRefresh();
   private toastr = inject(ToastService);
@@ -89,21 +58,9 @@ export class BoardUserComponent implements OnInit {
 
   faClock = faClock
   faCirclePause = faCirclePause
-  faFileSignature = faFileSignature;
   faSquareXmark = faSquareXmark;
-  faSquareCaretLeft = faSquareCaretLeft
-  faSquareCaretDown = faSquareCaretDown
-  faEye = faEye
-  faCircleQuestion = faCircleQuestion;
   faCircleXmark = faCircleXmark;
-  faCloudDownloadAlt = faCloudDownloadAlt;
-  faScaleBalanced = faScaleBalanced;
-  faBook = faBook;
-  faUserPlus = faUserPlus;
   faCircleCheck = faCircleCheck;
-  faSquareMinus = faSquareMinus;
-  faPencilSquare = faPencilSquare;
-  faSquarePlus = faSquarePlus;
 
   date: { year: number; month: number } | undefined;
   content?: string;
