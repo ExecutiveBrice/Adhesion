@@ -66,6 +66,10 @@ export class AdherentService {
     return this.http.delete(API_URL + 'cleanUserAlone', {responseType: 'text'});
   }
 
+  envoyerRappels(): Observable<number> {
+    return this.http.post<number>(API_URL + 'rappel', null);
+  }
+
   deleteAdherent(adherentId : number): Observable<string> {
     let params = new HttpParams().set('adherentId', '' + adherentId + '');
     return this.http.delete(API_URL + 'deleteAdherent', {params, responseType: 'text' });

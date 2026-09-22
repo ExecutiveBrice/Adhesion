@@ -1,6 +1,7 @@
 package com.wild.corp.adhesion.controllers;
 
 import com.wild.corp.adhesion.services.AdherentServices;
+import com.wild.corp.adhesion.services.RappelServices;
 import com.wild.corp.adhesion.services.UserDetailsService;
 import com.wild.corp.adhesion.services.UserServices;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,8 @@ class MaintenanceAuthorizationMvcTest {
     @MockitoBean
     private UserServices userServices;
     @MockitoBean
+    private RappelServices rappelServices;
+    @MockitoBean
     private UserDetailsService userDetailsService;
     @Test
     void anonymousUserIsRejected() throws Exception {
@@ -47,6 +50,7 @@ class MaintenanceAuthorizationMvcTest {
 
         mockMvc.perform(post("/adherent/nouvelleAnnee").with(user)).andExpect(status().isForbidden());
         mockMvc.perform(post("/adherent/cleanNotification").with(user)).andExpect(status().isForbidden());
+        mockMvc.perform(post("/adherent/rappel").with(user)).andExpect(status().isForbidden());
         mockMvc.perform(delete("/adherent/cleanUserAlone").with(user)).andExpect(status().isForbidden());
         mockMvc.perform(post("/adherent/regenerate").param("adherentId", "1").with(user)).andExpect(status().isForbidden());
     }
@@ -57,6 +61,7 @@ class MaintenanceAuthorizationMvcTest {
 
         mockMvc.perform(post("/adherent/nouvelleAnnee").with(admin)).andExpect(status().isOk());
         mockMvc.perform(post("/adherent/cleanNotification").with(admin)).andExpect(status().isOk());
+        mockMvc.perform(post("/adherent/rappel").with(admin)).andExpect(status().isOk());
         mockMvc.perform(delete("/adherent/cleanUserAlone").with(admin)).andExpect(status().isOk());
         mockMvc.perform(post("/adherent/regenerate").param("adherentId", "1").with(admin)).andExpect(status().isOk());
     }
