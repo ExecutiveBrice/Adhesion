@@ -40,6 +40,9 @@ public class Product extends AuditableEntity {
     @Column(length = 5000)
     private String description;
 
+    @Column(name = "image_url", length = 2048)
+    private String imageUrl;
+
     @Column(nullable = false)
     private boolean active;
 
@@ -96,6 +99,19 @@ public class Product extends AuditableEntity {
         this.name = requireText(name, "Le nom du produit est obligatoire");
     }
 
+    public void updateDetails(String name, String slug, String description, String imageUrl, int displayOrder) {
+        this.name = requireText(name, "Le nom du produit est obligatoire");
+        this.slug = requireText(slug, "Le slug du produit est obligatoire");
+        this.description = description;
+        this.imageUrl = normalizeOptionalText(imageUrl);
+        setDisplayOrder(displayOrder);
+    }
+
+    public void replaceCategories(Iterable<ProductCategory> newCategories) {
+        categories.clear();
+        newCategories.forEach(this::addCategory);
+    }
+
     public void setDisplayOrder(int displayOrder) {
         if (displayOrder < 0) {
             throw new IllegalArgumentException("L'ordre d'affichage ne peut pas être négatif");
@@ -118,6 +134,8 @@ public class Product extends AuditableEntity {
     public String getDescription() {
         return description;
     }
+
+    public String getImageUrl() { return imageUrl; }
 
     public boolean isActive() {
         return active;
@@ -144,6 +162,10 @@ public class Product extends AuditableEntity {
             throw new IllegalArgumentException(message);
         }
         return value.trim();
+    }
+
+    private static String normalizeOptionalText(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     @Override

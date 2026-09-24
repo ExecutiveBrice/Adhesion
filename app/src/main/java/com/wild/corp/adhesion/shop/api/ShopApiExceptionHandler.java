@@ -3,6 +3,7 @@ package com.wild.corp.adhesion.shop.api;
 import com.wild.corp.adhesion.shop.common.exception.InsufficientStockException;
 import com.wild.corp.adhesion.shop.common.exception.InvalidStatusTransitionException;
 import com.wild.corp.adhesion.shop.common.exception.ProductNotOrderableException;
+import com.wild.corp.adhesion.shop.payment.provider.PaymentProviderException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -53,6 +54,17 @@ public class ShopApiExceptionHandler {
     @ExceptionHandler({InvalidStatusTransitionException.class, DataIntegrityViolationException.class})
     ProblemDetail conflict(RuntimeException exception) {
         return problem(HttpStatus.CONFLICT, "Conflit", exception.getMessage());
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    ProblemDetail invalidState(IllegalStateException exception) {
+        return problem(HttpStatus.CONFLICT, "État incompatible", exception.getMessage());
+    }
+
+    @ExceptionHandler(PaymentProviderException.class)
+    ProblemDetail paymentProvider(PaymentProviderException exception) {
+        HttpStatus status = exception.isRetryable() ? HttpStatus.SERVICE_UNAVAILABLE : HttpStatus.BAD_GATEWAY;
+        return problem(status, "Service de paiement indisponible", "Le paiement ne peut pas être initialisé ou vérifié pour le moment");
     }
 
     private ProblemDetail problem(HttpStatus status, String title, String detail) {

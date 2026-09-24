@@ -29,6 +29,7 @@ final class ShopApiMapper {
                 product.getName(),
                 product.getSlug(),
                 product.getDescription(),
+                product.getImageUrl(),
                 product.getCategories().stream()
                         .filter(ProductCategory::isActive)
                         .sorted(Comparator.comparing(ProductCategory::getDisplayOrder)
