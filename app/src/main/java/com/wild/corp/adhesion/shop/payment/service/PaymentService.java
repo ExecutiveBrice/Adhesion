@@ -8,8 +8,21 @@ import com.wild.corp.adhesion.shop.payment.model.Payment;
 import com.wild.corp.adhesion.shop.payment.model.PaymentAttempt;
 import com.wild.corp.adhesion.shop.payment.repository.PaymentAttemptRepository;
 import com.wild.corp.adhesion.shop.payment.repository.PaymentRepository;
+import com.wild.corp.adhesion.shop.payment.model.PaymentStatus;
+import com.wild.corp.adhesion.shop.payment.provider.PaymentGateway;
+import com.wild.corp.adhesion.shop.payment.provider.PaymentNotification;
+import com.wild.corp.adhesion.shop.payment.provider.PaymentProviderException;
+import com.wild.corp.adhesion.shop.payment.provider.PaymentProviderType;
+import com.wild.corp.adhesion.shop.payment.provider.PaymentRequest;
+import com.wild.corp.adhesion.shop.payment.provider.PaymentResult;
+import com.wild.corp.adhesion.shop.payment.provider.PaymentSession;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+
+import java.net.URI;
+import java.util.Locale;
+import java.util.NoSuchElementException;
+import java.util.Comparator;
 
 @Service
 @Transactional
@@ -19,15 +32,18 @@ public class PaymentService {
     private final PaymentAttemptRepository attemptRepository;
     private final ShopOrderRepository orderRepository;
     private final OrderService orderService;
+    private final PaymentGateway paymentGateway;
 
     public PaymentService(PaymentRepository paymentRepository,
                           PaymentAttemptRepository attemptRepository,
                           ShopOrderRepository orderRepository,
-                          OrderService orderService) {
+                          OrderService orderService,
+                          PaymentGateway paymentGateway) {
         this.paymentRepository = paymentRepository;
         this.attemptRepository = attemptRepository;
         this.orderRepository = orderRepository;
         this.orderService = orderService;
+        this.paymentGateway = paymentGateway;
     }
 
     public Payment getOrCreatePayment(Long orderId) {
@@ -40,26 +56,116 @@ public class PaymentService {
         });
     }
 
-    public PaymentAttempt createAttempt(Long paymentId, String providerKey, String idempotencyKey) {
+    private PaymentAttempt createAttempt(Long paymentId, PaymentProviderType providerType, String idempotencyKey) {
         return attemptRepository.findByPaymentIdAndIdempotencyKey(paymentId, idempotencyKey)
                 .orElseGet(() -> {
                     Payment payment = paymentRepository.findById(paymentId).orElseThrow();
-                    PaymentAttempt attempt = payment.startAttempt(providerKey, idempotencyKey);
+                    PaymentAttempt attempt = payment.startAttempt(providerType, idempotencyKey);
                     paymentRepository.save(payment);
                     return attempt;
                 });
     }
 
-    public PaymentAttempt markAttemptPending(Long attemptId, String externalPaymentId, String redirectUrl) {
-        PaymentAttempt attempt = attemptRepository.findById(attemptId).orElseThrow();
-        attempt.markPending(externalPaymentId, redirectUrl);
-        return attempt;
+    @Transactional(dontRollbackOn = PaymentProviderException.class)
+    public PaymentSession createPaymentSession(Long orderId,
+                                               String idempotencyKey,
+                                               URI returnUrl,
+                                               URI cancelUrl) {
+        ShopOrder order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NoSuchElementException("Commande introuvable"));
+        if (order.getStatus() != OrderStatus.PENDING_PAYMENT) {
+            throw new IllegalStateException("La commande n'est pas en attente de paiement");
+        }
+        Payment payment = getOrCreatePayment(orderId);
+        PaymentProviderType providerType = paymentGateway.configuredProvider();
+        PaymentAttempt attempt = createAttempt(payment.getId(), providerType, idempotencyKey);
+        requireProvider(attempt, providerType);
+
+        PaymentSession persistedSession = persistedSession(attempt);
+        if (persistedSession != null) {
+            return persistedSession;
+        }
+        if (attempt.getStatus() == PaymentStatus.FAILED || attempt.getStatus() == PaymentStatus.CANCELLED) {
+            throw new IllegalStateException("Cette tentative est terminée ; utilisez une nouvelle clé d'idempotence");
+        }
+
+        PaymentRequest request = new PaymentRequest(order.getId(), order.getOrderNumber(), payment.getExpectedAmount(),
+                idempotencyKey, returnUrl, cancelUrl);
+        try {
+            PaymentSession session = paymentGateway.createPayment(request);
+            attempt.markPending(session.externalPaymentId(), uriToString(session.redirectUrl()));
+            if (session.status() == PaymentStatus.SUCCEEDED) {
+                completePayment(payment, attempt, order);
+            }
+            return session;
+        } catch (PaymentProviderException exception) {
+            payment.recordFailed(attempt, exception.getMessage());
+            throw exception;
+        }
     }
 
-    public Payment markAttemptSucceeded(Long attemptId) {
-        PaymentAttempt attempt = attemptRepository.findById(attemptId).orElseThrow();
+    public Payment refreshPaymentStatus(Long attemptId) {
+        PaymentAttempt attempt = attemptRepository.findById(attemptId)
+                .orElseThrow(() -> new NoSuchElementException("Tentative de paiement introuvable"));
+        if (attempt.getExternalPaymentId() == null) {
+            throw new IllegalStateException("La tentative ne possède pas encore d'identifiant externe");
+        }
+        PaymentResult result = paymentGateway.retrievePayment(attempt.getProviderType(), attempt.getExternalPaymentId());
+        return applyVerifiedResult(attempt, result);
+    }
+
+    public Payment refreshPaymentStatusForOrder(Long orderId) {
+        Payment payment = paymentRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new NoSuchElementException("Paiement introuvable"));
+        PaymentAttempt attempt = payment.getAttempts().stream()
+                .filter(candidate -> candidate.getExternalPaymentId() != null)
+                .filter(candidate -> candidate.getStatus() == PaymentStatus.PENDING)
+                .max(Comparator.comparing(PaymentAttempt::getId))
+                .orElseThrow(() -> new IllegalStateException("Aucune tentative de paiement en attente"));
+        return refreshPaymentStatus(attempt.getId());
+    }
+
+    public Payment processNotification(PaymentProviderType providerType, PaymentNotification notification) {
+        PaymentResult result = paymentGateway.processNotification(providerType, notification);
+        PaymentAttempt attempt = attemptRepository.findByProviderKeyAndExternalPaymentId(
+                        providerType.name().toLowerCase(Locale.ROOT), result.externalPaymentId())
+                .orElseThrow(() -> new NoSuchElementException("Tentative de paiement introuvable"));
+        requireProvider(attempt, providerType);
+        return applyVerifiedResult(attempt, result);
+    }
+
+    private Payment applyVerifiedResult(PaymentAttempt attempt, PaymentResult result) {
         Payment payment = attempt.getPayment();
-        ShopOrder order = orderRepository.findById(payment.getOrderId()).orElseThrow();
+        validateResult(attempt, payment, result);
+        ShopOrder order = orderRepository.findById(payment.getOrderId())
+                .orElseThrow(() -> new NoSuchElementException("Commande introuvable"));
+
+        return switch (result.status()) {
+            case CREATED -> throw invalidProviderResponse(attempt, "Le fournisseur a retourné un statut non vérifiable");
+            case PENDING -> payment;
+            case SUCCEEDED -> {
+                completePayment(payment, attempt, order);
+                yield payment;
+            }
+            case FAILED -> {
+                payment.recordFailed(attempt, failureReason(result));
+                yield payment;
+            }
+            case CANCELLED -> {
+                payment.recordCancelledAttempt(attempt);
+                yield payment;
+            }
+            case REFUNDED -> {
+                payment.refund(attempt);
+                if (order.getStatus() != OrderStatus.REFUNDED) {
+                    order.transitionTo(OrderStatus.REFUNDED);
+                }
+                yield payment;
+            }
+        };
+    }
+
+    private void completePayment(Payment payment, PaymentAttempt attempt, ShopOrder order) {
         payment.getExpectedAmount().requireSameCurrency(order.getTotal());
         if (!payment.getExpectedAmount().equals(order.getTotal())) {
             throw new IllegalStateException("Le montant du paiement ne correspond plus à la commande");
@@ -69,13 +175,47 @@ public class PaymentService {
             orderService.consumeReservedStock(order);
             order.transitionTo(OrderStatus.PAID);
         }
-        return payment;
     }
 
-    public Payment markAttemptFailed(Long attemptId, String reason) {
-        PaymentAttempt attempt = attemptRepository.findById(attemptId).orElseThrow();
-        Payment payment = attempt.getPayment();
-        payment.recordFailed(attempt, reason);
-        return payment;
+    private void validateResult(PaymentAttempt attempt, Payment payment, PaymentResult result) {
+        if (!attempt.getExternalPaymentId().equals(result.externalPaymentId())) {
+            throw invalidProviderResponse(attempt, "L'identifiant externe vérifié ne correspond pas à la tentative");
+        }
+        if (result.status() == PaymentStatus.SUCCEEDED || result.status() == PaymentStatus.REFUNDED) {
+            payment.getExpectedAmount().requireSameCurrency(result.amount());
+            if (!payment.getExpectedAmount().equals(result.amount())) {
+                throw invalidProviderResponse(attempt, "Le montant vérifié ne correspond pas au montant attendu");
+            }
+        }
+    }
+
+    private PaymentProviderException invalidProviderResponse(PaymentAttempt attempt, String message) {
+        return new PaymentProviderException(attempt.getProviderType(), "INVALID_PROVIDER_RESPONSE", message, false);
+    }
+
+    private void requireProvider(PaymentAttempt attempt, PaymentProviderType providerType) {
+        if (attempt.getProviderType() != providerType) {
+            throw new IllegalStateException("La clé d'idempotence appartient à un autre fournisseur de paiement");
+        }
+    }
+
+    private PaymentSession persistedSession(PaymentAttempt attempt) {
+        if (attempt.getExternalPaymentId() == null
+                || (attempt.getStatus() != PaymentStatus.PENDING && attempt.getStatus() != PaymentStatus.SUCCEEDED)) {
+            return null;
+        }
+        URI redirectUrl = attempt.getRedirectUrl() == null ? null : URI.create(attempt.getRedirectUrl());
+        return new PaymentSession(attempt.getExternalPaymentId(), redirectUrl, attempt.getStatus());
+    }
+
+    private String failureReason(PaymentResult result) {
+        if (result.failureMessage() != null) {
+            return result.failureMessage();
+        }
+        return result.failureCode() == null ? "Paiement refusé par le fournisseur" : result.failureCode();
+    }
+
+    private String uriToString(URI uri) {
+        return uri == null ? null : uri.toASCIIString();
     }
 }

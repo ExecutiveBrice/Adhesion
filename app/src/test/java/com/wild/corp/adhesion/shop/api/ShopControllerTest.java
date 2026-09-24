@@ -12,6 +12,7 @@ import com.wild.corp.adhesion.shop.catalog.service.CatalogService;
 import com.wild.corp.adhesion.shop.common.money.Money;
 import com.wild.corp.adhesion.shop.order.model.ShopOrder;
 import com.wild.corp.adhesion.shop.order.service.OrderService;
+import com.wild.corp.adhesion.shop.payment.service.PaymentService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -51,6 +52,8 @@ class ShopControllerTest {
     private CartPricingService cartPricingService;
     @MockitoBean
     private OrderService orderService;
+    @MockitoBean
+    private PaymentService paymentService;
     @MockitoBean
     private UserDetailsService userDetailsService;
     @MockitoBean

@@ -3,6 +3,7 @@ package com.wild.corp.adhesion.shop.payment.model;
 import com.wild.corp.adhesion.shop.common.exception.InvalidStatusTransitionException;
 import com.wild.corp.adhesion.shop.common.money.Money;
 import com.wild.corp.adhesion.shop.common.persistence.AuditableEntity;
+import com.wild.corp.adhesion.shop.payment.provider.PaymentProviderType;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
@@ -113,10 +114,16 @@ public class PaymentAttempt extends AuditableEntity {
     }
 
     public void cancel() {
+        if (status == PaymentStatus.CANCELLED) {
+            return;
+        }
         transitionTo(PaymentStatus.CANCELLED);
     }
 
     public void refund() {
+        if (status == PaymentStatus.REFUNDED) {
+            return;
+        }
         transitionTo(PaymentStatus.REFUNDED);
     }
 
@@ -137,6 +144,10 @@ public class PaymentAttempt extends AuditableEntity {
 
     public String getProviderKey() {
         return providerKey;
+    }
+
+    public PaymentProviderType getProviderType() {
+        return PaymentProviderType.valueOf(providerKey.toUpperCase(Locale.ROOT));
     }
 
     public PaymentStatus getStatus() {

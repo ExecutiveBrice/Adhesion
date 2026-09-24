@@ -11,6 +11,7 @@ import { NgbToast, NgbToastHeader } from '@ng-bootstrap/ng-bootstrap/toast';
 import { PwaService } from './_services/pwa.service';
 import { AuthService } from './_services/auth.service';
 import { LoginPageService } from './_services/login-page.service';
+import { ShopCartLinkComponent } from './shop/components/shop-cart-link.component';
 import { filter } from 'rxjs';
 
 
@@ -18,7 +19,7 @@ import { filter } from 'rxjs';
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.css'],
-    imports: [NgbCollapse, RouterLinkActive, RouterLink, RouterOutlet, NgbToast, NgbToastHeader]
+    imports: [NgbCollapse, RouterLinkActive, RouterLink, RouterOutlet, NgbToast, NgbToastHeader, ShopCartLinkComponent]
 })
 export class AppComponent {
   private readonly apiViewRefresh = registerApiViewRefresh();

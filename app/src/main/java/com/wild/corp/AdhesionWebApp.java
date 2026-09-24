@@ -13,7 +13,10 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 
 
 @SpringBootApplication
-@EnableFeignClients(basePackages = "com.wild.corp.adhesion.config")
+@EnableFeignClients(basePackages = {
+        "com.wild.corp.adhesion.config",
+        "com.wild.corp.adhesion.shop.payment.helloasso.client"
+})
 public class AdhesionWebApp {
 
 	@Autowired

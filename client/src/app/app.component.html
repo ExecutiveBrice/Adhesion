@@ -7,6 +7,7 @@
         </a>
         @if (isLoginPage()) {
           <div class="navbar-login-actions d-flex gap-2 ms-auto" role="group" aria-label="Connexion ou inscription">
+            <a class="btn btn-outline-light" routerLink="/boutique">Boutique</a>
             <button type="button" class="btn"
               [class.btn-primary]="loginPage.view() !== 'inscription'"
               [class.btn-outline-light]="loginPage.view() === 'inscription'"
@@ -30,6 +31,9 @@
 
           <div class="navbar-collapse" [ngbCollapse]="isCollapsed" [animation]="false" id="navbarToggler">
             <ul class="navbar-nav flex-xxl-wrap me-xxl-auto gap-1">
+              <li class="nav-item" (click)="isCollapsed = true">
+                <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="boutique">Boutique</a>
+              </li>
               @if (showAdmin) {
                 <li class="nav-item" (click)="isCollapsed = true">
                   <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="admin">Administration</a>
@@ -89,6 +93,7 @@
             </ul>
 
             <div class="navbar-account d-flex flex-column flex-xxl-row align-items-xxl-center gap-2 ms-xxl-3">
+              <app-shop-cart-link (click)="isCollapsed = true"></app-shop-cart-link>
               @if (isLoggedIn) {
                 <span class="navbar-text account-name" [title]="username">{{ username }}</span>
                 <button type="button" class="btn btn-outline-light" (click)="isCollapsed = true; logout()">Déconnexion</button>

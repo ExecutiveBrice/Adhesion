@@ -7,6 +7,14 @@ const inscriptionTitle = () => inject(TokenStorageService).getUser().roles?.incl
   : 'Mes adhésions';
 
 export const routes: Routes = [
+  { path: 'boutique', title: 'Boutique', loadComponent: () => import('./shop/pages/shop-catalog.component').then((m) => m.ShopCatalogComponent) },
+  { path: 'boutique/panier', title: 'Panier', loadComponent: () => import('./shop/pages/shop-cart.component').then((m) => m.ShopCartComponent) },
+  { path: 'boutique/checkout', title: 'Finaliser la commande', loadComponent: () => import('./shop/pages/shop-checkout.component').then((m) => m.ShopCheckoutComponent) },
+  { path: 'boutique/produits/:id', title: 'Produit', loadComponent: () => import('./shop/pages/shop-product-detail.component').then((m) => m.ShopProductDetailComponent) },
+  { path: 'boutique/commandes/:orderNumber/paiement-reussi', title: 'Paiement réussi', loadComponent: () => import('./shop/pages/shop-payment-success.component').then((m) => m.ShopPaymentSuccessComponent) },
+  { path: 'boutique/commandes/:orderNumber/paiement-echoue', title: 'Paiement échoué', loadComponent: () => import('./shop/pages/shop-payment-status.component').then((m) => m.ShopPaymentStatusComponent) },
+  { path: 'boutique/commandes/:orderNumber/paiement', title: 'Vérification du paiement', loadComponent: () => import('./shop/pages/shop-payment-status.component').then((m) => m.ShopPaymentStatusComponent) },
+  { path: 'boutique/commandes/:orderNumber', title: 'Commande', loadComponent: () => import('./shop/pages/shop-order-detail.component').then((m) => m.ShopOrderDetailComponent) },
   { path: 'login', title: 'Connexion', loadComponent: () => import('./page/login/login.component').then((m) => m.LoginComponent) },
   { path: 'resetPassword/:token', title: 'Réinitialisation du mot de passe', loadComponent: () => import('./page/resetPassword/resetpassword.component').then((m) => m.ResetPasswordComponent) },
   { path: 'inscription/:tribuUuid', title: inscriptionTitle, loadComponent: () => import('./page/board-user/board-user.component').then((m) => m.BoardUserComponent) },

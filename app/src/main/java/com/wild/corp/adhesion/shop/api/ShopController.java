@@ -6,10 +6,13 @@ import com.wild.corp.adhesion.shop.api.dto.CartQuoteRequest;
 import com.wild.corp.adhesion.shop.api.dto.CartQuoteResponse;
 import com.wild.corp.adhesion.shop.api.dto.OrderResponse;
 import com.wild.corp.adhesion.shop.api.dto.ProductResponse;
+import com.wild.corp.adhesion.shop.api.dto.PaymentSessionRequest;
+import com.wild.corp.adhesion.shop.api.dto.PaymentSessionResponse;
 import com.wild.corp.adhesion.shop.cart.service.CartPricingService;
 import com.wild.corp.adhesion.shop.catalog.service.CatalogService;
 import com.wild.corp.adhesion.shop.order.service.OrderItemRequest;
 import com.wild.corp.adhesion.shop.order.service.OrderService;
+import com.wild.corp.adhesion.shop.payment.service.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -46,13 +49,16 @@ public class ShopController {
     private final CatalogService catalogService;
     private final CartPricingService cartPricingService;
     private final OrderService orderService;
+    private final PaymentService paymentService;
 
     public ShopController(CatalogService catalogService,
                           CartPricingService cartPricingService,
-                          OrderService orderService) {
+                          OrderService orderService,
+                          PaymentService paymentService) {
         this.catalogService = catalogService;
         this.cartPricingService = cartPricingService;
         this.orderService = orderService;
+        this.paymentService = paymentService;
     }
 
     @GetMapping("/products")
@@ -111,6 +117,30 @@ public class ShopController {
     public ResponseEntity<OrderResponse> order(@PathVariable String orderNumber, Authentication authentication) {
         UserDetails user = currentUser(authentication);
         return ResponseEntity.ok(ShopApiMapper.order(orderService.findOrderForCustomer(orderNumber, user.getId())));
+    }
+
+    @PostMapping("/orders/{orderNumber}/payment-session")
+    @PreAuthorize("hasRole('USER')")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Crée ou retrouve une session de paiement pour une commande")
+    public ResponseEntity<PaymentSessionResponse> createPaymentSession(
+            @PathVariable String orderNumber,
+            @RequestHeader("Idempotency-Key") @NotBlank @Size(max = 100) String idempotencyKey,
+            @Valid @RequestBody PaymentSessionRequest request,
+            Authentication authentication) {
+        var order = orderService.findOrderForCustomer(orderNumber, currentUser(authentication).getId());
+        var session = paymentService.createPaymentSession(order.getId(), idempotencyKey, request.returnUrl(), request.cancelUrl());
+        return ResponseEntity.ok(PaymentSessionResponse.from(session));
+    }
+
+    @PostMapping("/orders/{orderNumber}/payment/verify")
+    @PreAuthorize("hasRole('USER')")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Vérifie côté serveur le statut de la dernière tentative de paiement")
+    public ResponseEntity<OrderResponse> verifyPayment(@PathVariable String orderNumber, Authentication authentication) {
+        var order = orderService.findOrderForCustomer(orderNumber, currentUser(authentication).getId());
+        paymentService.refreshPaymentStatusForOrder(order.getId());
+        return ResponseEntity.ok(ShopApiMapper.order(orderService.findOrderForCustomer(orderNumber, currentUser(authentication).getId())));
     }
 
     private static List<OrderItemRequest> toOrderItems(List<CartItemRequest> items) {

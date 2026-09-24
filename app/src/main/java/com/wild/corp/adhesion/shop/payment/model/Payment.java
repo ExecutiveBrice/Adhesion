@@ -3,6 +3,7 @@ package com.wild.corp.adhesion.shop.payment.model;
 import com.wild.corp.adhesion.shop.common.exception.InvalidStatusTransitionException;
 import com.wild.corp.adhesion.shop.common.money.Money;
 import com.wild.corp.adhesion.shop.common.persistence.AuditableEntity;
+import com.wild.corp.adhesion.shop.payment.provider.PaymentProviderType;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.CascadeType;
@@ -94,6 +95,10 @@ public class Payment extends AuditableEntity {
         return attempt;
     }
 
+    public PaymentAttempt startAttempt(PaymentProviderType providerType, String idempotencyKey) {
+        return startAttempt(Objects.requireNonNull(providerType, "Le fournisseur est obligatoire").name(), idempotencyKey);
+    }
+
     public void recordSucceeded(PaymentAttempt attempt) {
         requireOwnedAttempt(attempt);
         attempt.getAmount().requireSameCurrency(expectedAmount);
@@ -108,8 +113,22 @@ public class Payment extends AuditableEntity {
 
     public void recordFailed(PaymentAttempt attempt, String reason) {
         requireOwnedAttempt(attempt);
+        if (attempt.getStatus() == PaymentStatus.FAILED) {
+            return;
+        }
         attempt.markFailed(reason);
-        if (status != PaymentStatus.FAILED) {
+        if (!hasPendingAttempt() && status == PaymentStatus.PENDING) {
+            transitionTo(PaymentStatus.FAILED);
+        }
+    }
+
+    public void recordCancelledAttempt(PaymentAttempt attempt) {
+        requireOwnedAttempt(attempt);
+        if (attempt.getStatus() == PaymentStatus.CANCELLED) {
+            return;
+        }
+        attempt.cancel();
+        if (!hasPendingAttempt() && status == PaymentStatus.PENDING) {
             transitionTo(PaymentStatus.FAILED);
         }
     }
@@ -120,6 +139,9 @@ public class Payment extends AuditableEntity {
 
     public void refund(PaymentAttempt successfulAttempt) {
         requireOwnedAttempt(successfulAttempt);
+        if (status == PaymentStatus.REFUNDED) {
+            return;
+        }
         successfulAttempt.refund();
         transitionTo(PaymentStatus.REFUNDED);
     }
@@ -128,6 +150,10 @@ public class Payment extends AuditableEntity {
         if (attempt == null || attempt.getPayment() != this || !attempts.contains(attempt)) {
             throw new IllegalArgumentException("La tentative n'appartient pas à ce paiement");
         }
+    }
+
+    private boolean hasPendingAttempt() {
+        return attempts.stream().anyMatch(attempt -> attempt.getStatus() == PaymentStatus.PENDING);
     }
 
     private void transitionTo(PaymentStatus targetStatus) {

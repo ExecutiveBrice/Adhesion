@@ -42,6 +42,27 @@ springdoc:
 
 image-storage-dir: C:\Users\brice\Documents
 
+shop:
+  payment:
+    # Aucun secret ici : ils devront être fournis par variables d'environnement
+    # dans la configuration propre à l'adaptateur choisi.
+    provider: ${SHOP_PAYMENT_PROVIDER:manual}
+    helloasso:
+      # L'URL non secrète par défaut permet le démarrage avec le provider manuel.
+      # Les profils helloasso-sandbox et helloasso-production sélectionnent explicitement leur environnement.
+      base-url: ${HELLOASSO_BASE_URL:https://api.helloasso-sandbox.com}
+      client-id: ${HELLOASSO_CLIENT_ID:}
+      client-secret: ${HELLOASSO_CLIENT_SECRET:}
+      organization-slug: ${HELLOASSO_ORGANIZATION_SLUG:}
+
+spring.cloud.openfeign.client.config:
+  helloAssoCheckoutClient:
+    connect-timeout: 3000
+    read-timeout: 10000
+  helloAssoOAuthClient:
+    connect-timeout: 3000
+    read-timeout: 10000
+
 # Zone scolaire utilisée lors de la génération hebdomadaire des séances (A, B ou C).
 adhesion:
   security:

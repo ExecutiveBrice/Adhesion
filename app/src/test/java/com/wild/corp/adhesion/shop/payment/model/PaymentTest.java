@@ -31,4 +31,19 @@ class PaymentTest {
         assertThatThrownBy(() -> payment.startAttempt("provider-b", "attempt-2"))
                 .isInstanceOf(InvalidStatusTransitionException.class);
     }
+
+    @Test
+    void ignoresRepeatedFailureFromAnOlderAttemptWhileAnotherAttemptIsPending() {
+        Payment payment = new Payment(12L, new Money(3_000, "EUR"));
+        PaymentAttempt oldAttempt = payment.startAttempt("provider-a", "attempt-1");
+        oldAttempt.markPending("external-1", null);
+        payment.recordFailed(oldAttempt, "refused");
+        PaymentAttempt newAttempt = payment.startAttempt("provider-a", "attempt-2");
+        newAttempt.markPending("external-2", null);
+
+        payment.recordFailed(oldAttempt, "late duplicate notification");
+
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PENDING);
+        assertThat(newAttempt.getStatus()).isEqualTo(PaymentStatus.PENDING);
+    }
 }

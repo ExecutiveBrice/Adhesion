@@ -1,0 +1,11 @@
+<main class="shop-page container py-3 py-md-4">
+  <header class="shop-hero"><p class="shop-eyebrow">Boutique ALOD</p><h1>Nos produits</h1><p>Choisissez vos articles, puis le montant sera toujours vérifié par le serveur avant le paiement.</p></header>
+  <section class="shop-filters" aria-label="Filtrer le catalogue">
+    <label for="shop-search" class="visually-hidden">Rechercher un produit</label><input id="shop-search" class="form-control" type="search" placeholder="Rechercher un produit" [ngModel]="search()" (ngModelChange)="search.set($event)">
+    <label for="shop-category" class="visually-hidden">Catégorie</label><select id="shop-category" class="form-select" [ngModel]="category()" (ngModelChange)="category.set($event)"><option value="">Toutes les catégories</option>@for (item of categories(); track item.id) { <option [value]="item.slug">{{ item.name }}</option> }</select>
+  </section>
+  @if (loading()) { <section class="shop-grid" aria-label="Chargement du catalogue">@for (item of [1,2,3,4,5,6]; track item) { <div class="shop-skeleton" aria-hidden="true"></div> }</section> }
+  @else if (error()) { <section class="shop-state alert alert-warning" role="alert"><p>{{ error() }}</p><button type="button" class="btn btn-outline-dark" (click)="load()">Réessayer</button></section> }
+  @else if (filteredProducts().length === 0) { <section class="shop-state"><h2>Aucun produit trouvé</h2><p>Modifiez votre recherche ou votre filtre de catégorie.</p><button type="button" class="btn btn-outline-primary" (click)="search.set(''); category.set('')">Réinitialiser les filtres</button></section> }
+  @else { <section class="shop-grid" aria-label="Produits">@for (product of filteredProducts(); track product.id) { <app-shop-product-card [product]="product" (add)="add(product, $event)"></app-shop-product-card> }</section> }
+</main>
