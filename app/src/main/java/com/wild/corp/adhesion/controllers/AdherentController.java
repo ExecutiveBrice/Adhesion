@@ -4,6 +4,7 @@ import com.wild.corp.adhesion.models.Adherent;
 import com.wild.corp.adhesion.models.ERole;
 import com.wild.corp.adhesion.models.resources.AdherentLite;
 import com.wild.corp.adhesion.services.AdherentServices;
+import com.wild.corp.adhesion.services.RappelServices;
 import com.wild.corp.adhesion.services.UserServices;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -32,6 +33,8 @@ public class AdherentController {
     AdherentServices adherentServices;
     @Autowired
     UserServices userServices;
+    @Autowired
+    RappelServices rappelServices;
 
     @PostMapping("/nouvelleAnnee")
     @PreAuthorize("hasRole('ADMIN')")
@@ -53,6 +56,14 @@ public class AdherentController {
         log.warn("AUDIT action=cleanNotification actor={}", principal.getName());
         adherentServices.cleanNotification();
         return ResponseEntity.ok("cleanNotification");
+    }
+
+    @PostMapping("/rappel")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> rappel(Authentication principal) {
+        log.warn("AUDIT action=rappel actor={}", principal.getName());
+        int rappelsEnvoyes = rappelServices.envoyerRappels();
+        return ResponseEntity.ok(rappelsEnvoyes);
     }
 
     @DeleteMapping("/cleanUserAlone")

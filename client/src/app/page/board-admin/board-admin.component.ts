@@ -415,11 +415,12 @@ export class BoardAdminComponent implements OnInit {
   }
 
 
-  executerMaintenance(action: 'nouvelleAnnee' | 'cleanNotification' | 'cleanUserAlone'): void {
+  executerMaintenance(action: 'nouvelleAnnee' | 'cleanNotification' | 'cleanUserAlone' | 'rappel'): void {
     const libelles = {
       nouvelleAnnee: 'Lancer la préparation de la nouvelle année',
       cleanNotification: 'Supprimer les notifications obsolètes',
-      cleanUserAlone: 'Supprimer les comptes sans adhérent associé'
+      cleanUserAlone: 'Supprimer les comptes sans adhérent associé',
+      rappel: 'Envoyer les rappels en attente'
     };
     if (this.maintenanceEnCours || !window.confirm(`${libelles[action]} ? Cette action sera journalisée.`)) {
       return;
@@ -431,11 +432,15 @@ export class BoardAdminComponent implements OnInit {
       ? this.adherentService.nouvelleAnnee()
       : action === 'cleanNotification'
         ? this.adherentService.cleanNotification()
-        : this.adherentService.cleanUserAlone();
+        : action === 'rappel'
+          ? this.adherentService.envoyerRappels()
+          : this.adherentService.cleanUserAlone();
     request.subscribe({
-      next: () => {
+      next: resultat => {
         this.maintenanceEnCours = false;
-        this.maintenanceMessage = `${libelles[action]} : terminé.`;
+        this.maintenanceMessage = action === 'rappel'
+          ? `${resultat} rappel(s) envoyé(s).`
+          : `${libelles[action]} : terminé.`;
       },
       error: response => {
         this.maintenanceEnCours = false;

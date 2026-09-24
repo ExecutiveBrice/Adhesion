@@ -6,9 +6,9 @@ import com.wild.corp.adhesion.services.AdhesionServices;
 import com.wild.corp.adhesion.services.EmailService;
 import com.wild.corp.adhesion.services.ParamBooleanServices;
 import com.wild.corp.adhesion.services.ParamNumberServices;
+import com.wild.corp.adhesion.services.RappelServices;
 import com.wild.corp.adhesion.services.SeanceServices;
 import com.wild.corp.adhesion.utils.Status;
-import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -39,6 +39,8 @@ public class Config {
     EmailService emailService;
     @Autowired
     SeanceServices seanceServices;
+    @Autowired
+    RappelServices rappelServices;
     @Scheduled(cron = "0 0 1 * * ?", zone = "Europe/Paris")
     public void tachesJournalieres() {
         log.info("tachesJournalieres");
@@ -49,7 +51,7 @@ public class Config {
         }
         if(paramBooleanServices.findByParamValue("Mail_Rappel")) {
             log.info("rappel");
-            rappel();
+            rappelServices.envoyerRappels();
         }
     }
 
@@ -62,26 +64,6 @@ public class Config {
         int seancesRealisees = seanceServices.realiserSeancesAvant(LocalDate.now(PARIS));
         log.info("{} séance(s) antérieure(s) à aujourd'hui passée(s) au statut réalisée", seancesRealisees);
     }
-
-
-    @Transactional
-    private void rappel(){
-
-        LocalDate dtr = LocalDate.now().minus(paramNumberServices.findByParamValue("Jours_Avant_Rappel"), ChronoUnit.DAYS);
-
-        adhesionServices.getAll().stream().filter(adhesion ->
-                ( Status.ATTENTE_ADHERENT.label.equals(adhesion.getStatutActuel()) ||  Status.ATTENTE_SECRETARIAT.label.equals(adhesion.getStatutActuel())) &&
-                       adhesion.getDateAjoutPanier().atStartOfDay().isBefore(dtr.atStartOfDay()) &&
-                       !adhesion.getRappel()).forEach(adhesion -> {
-            log.info("rappel "+adhesion.getAdherent().getNom() +" "+adhesion.getAdherent().getPrenom()+" pour l'activité "+adhesion.getActivite().getNom()+" "+adhesion.getActivite().getHoraire());
-
-            emailService.sendAutoMail(adhesion, "Sujet_Mail_Rappel", "Corp_Mail_Rappel", false);
-            adhesion.setRappel(true);
-            adhesion.setRemarqueSecretariat((adhesion.getRemarqueSecretariat() != null?adhesion.getRemarqueSecretariat():"")+" mail de rappel auto fait le "+LocalDate.now());
-            adhesionServices.saveUnique(adhesion);
-        });
-    }
-
 
     private void annulation(){
 
