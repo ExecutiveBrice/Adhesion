@@ -12,10 +12,13 @@ import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -23,6 +26,8 @@ import java.util.List;
 @Configuration
 @EnableScheduling
 public class Config {
+
+    private static final ZoneId PARIS = ZoneId.of("Europe/Paris");
 
     @Autowired
     AdhesionServices adhesionServices;
@@ -37,8 +42,7 @@ public class Config {
     @Scheduled(cron = "0 0 1 * * ?", zone = "Europe/Paris")
     public void tachesJournalieres() {
         log.info("tachesJournalieres");
-        int seancesRealisees = seanceServices.realiserSeancesDu(LocalDate.now().minusDays(1));
-        log.info("{} séance(s) de la veille passée(s) au statut réalisée", seancesRealisees);
+        rattraperSeancesPassees();
         if(paramBooleanServices.findByParamValue("Mail_Annulation")) {
             log.info("annulation");
             annulation();
@@ -47,6 +51,16 @@ public class Config {
             log.info("rappel");
             rappel();
         }
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void rattraperSeancesAuDemarrage() {
+        rattraperSeancesPassees();
+    }
+
+    private void rattraperSeancesPassees() {
+        int seancesRealisees = seanceServices.realiserSeancesAvant(LocalDate.now(PARIS));
+        log.info("{} séance(s) antérieure(s) à aujourd'hui passée(s) au statut réalisée", seancesRealisees);
     }
 
 

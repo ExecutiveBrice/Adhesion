@@ -143,7 +143,21 @@
                 <button type="button" class="icon-action" title="Ouvrir la fiche adhérent"
                   (click)="opennewTab('#/inscription/' + adherent.tribuId)"><fa-icon [icon]="faUsersRays"></fa-icon></button>
                   <div class="member-info">
-                    <strong>{{adherent.nom}} {{adherent.prenom}}</strong>
+                    <div class="member-name">
+                      <strong>{{adherent.nom}} {{adherent.prenom}}</strong>
+                      @let displayedRoles = displayedRolesFor(adherent.roles);
+                      @if (displayedRoles.length) {
+                        <span class="member-roles">
+                          @for (role of displayedRoles; track role) {
+                            @if (roleIconFor(role); as roleIcon) {
+                              <span class="member-role-icon" role="img" [attr.title]="roleIcon.label" [attr.aria-label]="roleIcon.label">
+                                <fa-icon [icon]="roleIcon.icon" aria-hidden="true"></fa-icon>
+                              </span>
+                            }
+                          }
+                        </span>
+                      }
+                    </div>
                     <span>{{adherent.email}}</span>
                   </div>
                 </div>

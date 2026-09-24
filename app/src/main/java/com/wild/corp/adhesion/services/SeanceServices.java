@@ -137,6 +137,13 @@ public class SeanceServices {
                 ESeance.REALISEE);
     }
 
+    public int realiserSeancesAvant(LocalDate date) {
+        return seanceRepository.updateEtatForDebutBeforeAndEtatIn(
+                date.atStartOfDay(),
+                List.of(ESeance.PROGRAMMEE, ESeance.MODIFIEE),
+                ESeance.REALISEE);
+    }
+
     public Seance addFirstSeance(Activite activite, LocalDate date) {
         return addFirstSeance(activite, date, planificationHistorique(activite));
     }

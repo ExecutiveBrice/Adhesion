@@ -2,6 +2,24 @@
   font-weight: bold;
 }
 
+.adherent-roles {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.25rem 0;
+  color: #495057;
+}
+
+.adherent-role-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  font-size: 2rem;
+  line-height: 1;
+}
+
 .cadrePermanent:hover {
   box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
 }

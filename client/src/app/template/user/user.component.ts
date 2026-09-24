@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, Input } from '@angular/core';
 import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
-import { Accord, Activite, ActiviteDropDown, Adherent, Adhesion, Document, Tribu } from '../../models';
+import { Accord, Activite, ActiviteDropDown, Adherent, Adhesion, Document, ERole, Tribu } from '../../models';
 
 import { ActiviteService } from '../../_services/activite.service';
 import { AdherentService, AdherentUpdate } from 'src/app/_services/adherent.service';
@@ -13,6 +13,7 @@ import { UtilService } from 'src/app/_services/util.service';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FileService } from 'src/app/_services/file.service';
 import { TokenStorageService } from 'src/app/_services/token-storage.service';
+import { UserService } from 'src/app/_services/user.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -28,15 +29,24 @@ import { SimpleFilterPipe } from '../../_helpers/simpleFilter.pipe';
     imports: [FaIconComponent, NgClass, FormsModule, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, DatePipe, OrderByPipe, SimpleFilterPipe]
 })
 export class UserComponent implements OnInit {
+  readonly rolesDisponibles = [
+    { code: ERole.ROLE_ADMIN, libelle: 'Administrateur du site' },
+    { code: ERole.ROLE_SECRETAIRE, libelle: 'Secrétariat' },
+    { code: ERole.ROLE_BUREAU, libelle: 'Bureau' },
+    { code: ERole.ROLE_MEMBRECA, libelle: 'Membre du CA' },
+    { code: ERole.ROLE_COMPTABLE, libelle: 'Comptable' },
+    { code: ERole.ROLE_ENCADRANT, libelle: 'Encadrant' },
+    { code: ERole.ROLE_REFERENT, libelle: 'Référent' }
+  ];
   private readonly apiViewRefresh = registerApiViewRefresh();
   private toastr = inject(ToastService);
   private adherentService = inject(AdherentService);
+  private userService = inject(UserService);
   private adhesionService = inject(AdhesionService);
   activiteService = inject(ActiviteService);
   utilService = inject(UtilService);
   private tokenStorageService = inject(TokenStorageService);
   router = inject(Router);
-  route = inject(ActivatedRoute);
   paramService = inject(ParamService);
   fileService = inject(FileService);
 
@@ -53,18 +63,10 @@ export class UserComponent implements OnInit {
   faRefresh = faRefresh;
   faClock = faClock;
   faCirclePause = faCirclePause;
-  faPiggyBank = faPiggyBank;
-  faFileSignature = faFileSignature;
-  faSkull = faSkull;
-  faSquareCaretLeft = faSquareCaretLeft
-  faSquareCaretDown = faSquareCaretDown
   faEye = faEye
   faCircleQuestion = faCircleQuestion;
   faCircleXmark = faCircleXmark;
   faCloudDownloadAlt = faCloudDownloadAlt;
-  faScaleBalanced = faScaleBalanced;
-  faBook = faBook;
-  faUserPlus = faUserPlus;
   faCircleCheck = faCircleCheck;
   faSquareMinus = faSquareMinus;
   faPencilSquare = faPencilSquare;
@@ -81,6 +83,8 @@ export class UserComponent implements OnInit {
   isInscriptionOpen: boolean = false;
   showAdmin: boolean = false;
   showSecretaire: boolean = false;
+  roleEnCours: string | null = null;
+  canChangeEmail: boolean = false;
 
   activites: Activite[] = []
 
@@ -113,7 +117,7 @@ export class UserComponent implements OnInit {
 
     this.showAdmin = this.tokenStorageService.getUser().roles.includes('ROLE_ADMIN');
     this.showSecretaire = this.tokenStorageService.getUser().roles.includes('ROLE_SECRETAIRE');
-
+    this.canChangeEmail = this.showSecretaire || this.showAdmin;
 
     this.adultes = this.tribu.adherents.filter(adh => adh.mineur == false && adh.representant == null && adh.id != this.adherent.id);
 
@@ -130,6 +134,45 @@ export class UserComponent implements OnInit {
     this.activiteService.fillObjects(this.activites, this.activitesListe, this.adherent);
     console.log(this.activites)
     this.fillFiles();
+  }
+
+  get canManageRoles(): boolean {
+    return this.showSecretaire || this.showAdmin;
+  }
+
+  hasRole(role: ERole): boolean {
+    return this.adherent.user?.roles?.includes(role) ?? false;
+  }
+
+  canChangeRole(role: ERole): boolean {
+    if (role === ERole.ROLE_ADMIN) return this.showAdmin;
+    return this.canManageRoles;
+  }
+
+  modifierRole(role: ERole, event: Event): void {
+    const checkbox = event.target as HTMLInputElement;
+    const previousValue = this.hasRole(role);
+    if (!this.canChangeRole(role) || this.roleEnCours || !this.adherent.user?.id) {
+      checkbox.checked = previousValue;
+      return;
+    }
+
+    this.roleEnCours = role;
+    const request = checkbox.checked
+      ? this.userService.grantUser(role, this.adherent.user.username)
+      : this.userService.unGrantUser(role, this.adherent.user.username);
+    request.subscribe({
+      next: user => {
+        this.adherent.user.roles = user.roles;
+        this.roleEnCours = null;
+        this.showSuccess('Les rôles de l’adhérent ont été mis à jour');
+      },
+      error: error => {
+        checkbox.checked = previousValue;
+        this.roleEnCours = null;
+        this.showError(error.error?.message || error.message);
+      }
+    });
   }
 
 
@@ -271,6 +314,8 @@ export class UserComponent implements OnInit {
           this.isFailed = true;
           if (error.status == 409) {
             this.toastr.error("Cette adresse e-mail est déjà utilisée. Veuillez en choisir une autre", 'Erreur')
+          } else if (error.status == 403) {
+            this.toastr.error("Seul le secrétariat ou un administrateur peut modifier l'adresse e-mail", 'Accès refusé')
           } else {
             this.showError(error.error)
           }
