@@ -5,6 +5,7 @@ import com.wild.corp.adhesion.security.WebSecurityConfig;
 import com.wild.corp.adhesion.security.jwt.AuthEntryPointJwt;
 import com.wild.corp.adhesion.security.jwt.JwtUtils;
 import com.wild.corp.adhesion.services.AdherentServices;
+import com.wild.corp.adhesion.services.RappelServices;
 import com.wild.corp.adhesion.services.UserDetailsService;
 import com.wild.corp.adhesion.services.UserServices;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,8 @@ class AdherentEmailAuthorizationMvcTest {
     private AdherentServices adherentServices;
     @MockitoBean
     private UserServices userServices;
+    @MockitoBean
+    private RappelServices rappelServices;
     @MockitoBean
     private UserDetailsService userDetailsService;
     @MockitoBean
