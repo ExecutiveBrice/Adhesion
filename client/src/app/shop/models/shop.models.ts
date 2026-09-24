@@ -26,6 +26,69 @@ export interface ShopProductDto {
   variants: ShopVariantDto[];
 }
 
+export interface ShopAdminCategoryDto {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  active: boolean;
+  displayOrder: number;
+}
+
+export interface ShopAdminVariantDto {
+  id: number;
+  sku: string;
+  label: string | null;
+  priceAmountInCents: number;
+  currency: string;
+  active: boolean;
+  displayOrder: number;
+  stockTracked: boolean;
+  stockOnHand: number | null;
+  stockReserved: number;
+}
+
+export interface ShopAdminProductDto {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  imageUrl: string | null;
+  active: boolean;
+  displayOrder: number;
+  categories: ShopAdminCategoryDto[];
+  variants: ShopAdminVariantDto[];
+}
+
+export interface ShopAdminProductRequest {
+  name: string;
+  slug: string;
+  description: string | null;
+  imageUrl: string | null;
+  active: boolean;
+  displayOrder: number;
+  categoryIds: number[];
+}
+
+export interface ShopAdminCategoryRequest {
+  name: string;
+  slug: string;
+  description: string | null;
+  active: boolean;
+  displayOrder: number;
+}
+
+export interface ShopAdminVariantRequest {
+  sku: string;
+  label: string | null;
+  priceAmountInCents: number;
+  currency: string;
+  active: boolean;
+  displayOrder: number;
+  stockTracked: boolean;
+  stockOnHand: number | null;
+}
+
 export interface CartItemRequestDto {
   variantId: number;
   quantity: number;

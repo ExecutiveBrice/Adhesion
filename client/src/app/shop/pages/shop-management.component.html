@@ -1,0 +1,101 @@
+<main class="shop-management container py-4">
+  <header class="management-header">
+    <div><p class="shop-eyebrow">Espace responsable</p><h1>Gestion de la boutique</h1><p>Ajoutez, modifiez ou retirez les produits, variantes et catégories.</p></div>
+    <a routerLink="/boutique" class="btn btn-outline-primary">Voir la boutique</a>
+  </header>
+
+  @if (error) { <div class="alert alert-danger" role="alert">{{ error }}</div> }
+  @if (message) { <div class="alert alert-success" role="status">{{ message }}</div> }
+  @if (loading) { <p role="status">Chargement de la gestion de la boutique…</p> }
+
+  @if (!loading) {
+    <section class="management-section">
+      <h2>Catégories</h2>
+      <form class="management-form compact" #categoryForm="ngForm" (ngSubmit)="createCategory()">
+        <input class="form-control" name="newCategoryName" required placeholder="Nom" [(ngModel)]="newCategory.name">
+        <input class="form-control" name="newCategorySlug" required placeholder="Slug" [(ngModel)]="newCategory.slug">
+        <input class="form-control" name="newCategoryOrder" type="number" min="0" placeholder="Ordre" [(ngModel)]="newCategory.displayOrder">
+        <label class="form-check"><input class="form-check-input" name="newCategoryActive" type="checkbox" [(ngModel)]="newCategory.active"> Active</label>
+        <button class="btn btn-primary" [disabled]="saving || categoryForm.invalid">Ajouter</button>
+      </form>
+      <div class="management-list">
+        @for (category of categories; track category.id) {
+          <form class="management-row" #categoryEditForm="ngForm" (ngSubmit)="updateCategory(category)">
+            <input class="form-control" [name]="'categoryName' + category.id" required [(ngModel)]="category.name">
+            <input class="form-control" [name]="'categorySlug' + category.id" required [(ngModel)]="category.slug">
+            <input class="form-control" [name]="'categoryOrder' + category.id" type="number" min="0" [(ngModel)]="category.displayOrder">
+            <label class="form-check"><input class="form-check-input" [name]="'categoryActive' + category.id" type="checkbox" [(ngModel)]="category.active"> Active</label>
+            <button class="btn btn-outline-primary btn-sm" [disabled]="saving || categoryEditForm.invalid">Enregistrer</button>
+            <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="saving" (click)="deleteCategory(category)">Retirer</button>
+          </form>
+        } @empty { <p class="text-body-secondary mb-0">Aucune catégorie.</p> }
+      </div>
+    </section>
+
+    <section class="management-section">
+      <h2>Nouveau produit</h2>
+      <form class="management-form" #productForm="ngForm" (ngSubmit)="createProduct()">
+        <input class="form-control" name="newProductName" required placeholder="Nom du produit" [(ngModel)]="newProduct.name">
+        <input class="form-control" name="newProductSlug" required placeholder="Slug" [(ngModel)]="newProduct.slug">
+        <input class="form-control" name="newProductImage" placeholder="URL de l’image (facultatif)" [(ngModel)]="newProduct.imageUrl">
+        <input class="form-control" name="newProductOrder" type="number" min="0" placeholder="Ordre" [(ngModel)]="newProduct.displayOrder">
+        <textarea class="form-control form-wide" name="newProductDescription" rows="2" placeholder="Description" [(ngModel)]="newProduct.description"></textarea>
+        <fieldset class="category-picker form-wide"><legend>Catégories</legend>@for (category of categories; track category.id) { <label class="form-check"><input class="form-check-input" type="checkbox" [checked]="selectedCategoryIds.has(category.id)" (change)="toggleNewProductCategory(category.id, $any($event.target).checked)"> {{ category.name }}</label> }</fieldset>
+        <label class="form-check"><input class="form-check-input" name="newProductActive" type="checkbox" [(ngModel)]="newProduct.active"> Visible dans la boutique</label>
+        <button class="btn btn-primary" [disabled]="saving || productForm.invalid">Ajouter le produit</button>
+      </form>
+    </section>
+
+    <section class="management-section">
+      <h2>Produits</h2>
+      <div class="product-list">
+        @for (product of products; track product.id) {
+          <article class="product-card">
+            <form #productEditForm="ngForm" (ngSubmit)="updateProduct(product)">
+              <div class="product-card-header"><h3>{{ product.name || 'Nouveau produit' }}</h3><span [class.inactive]="!product.active" class="status">{{ product.active ? 'Visible' : 'Masqué' }}</span></div>
+              <div class="management-form">
+                <input class="form-control" [name]="'productName' + product.id" required placeholder="Nom" [(ngModel)]="product.name">
+                <input class="form-control" [name]="'productSlug' + product.id" required placeholder="Slug" [(ngModel)]="product.slug">
+                <input class="form-control" [name]="'productImage' + product.id" placeholder="URL de l’image" [(ngModel)]="product.imageUrl">
+                <input class="form-control" [name]="'productOrder' + product.id" type="number" min="0" placeholder="Ordre" [(ngModel)]="product.displayOrder">
+                <textarea class="form-control form-wide" [name]="'productDescription' + product.id" rows="2" placeholder="Description" [(ngModel)]="product.description"></textarea>
+                <fieldset class="category-picker form-wide"><legend>Catégories</legend>@for (category of categories; track category.id) { <label class="form-check"><input class="form-check-input" type="checkbox" [checked]="isCategoryOnProduct(product, category.id)" (change)="toggleProductCategory(product, category, $any($event.target).checked)"> {{ category.name }}</label> }</fieldset>
+                <label class="form-check"><input class="form-check-input" [name]="'productActive' + product.id" type="checkbox" [(ngModel)]="product.active"> Visible dans la boutique</label>
+                <button class="btn btn-outline-primary" [disabled]="saving || productEditForm.invalid">Enregistrer</button>
+                <button type="button" class="btn btn-outline-danger" [disabled]="saving" (click)="deleteProduct(product)">Supprimer</button>
+              </div>
+            </form>
+
+            <section class="variants"><h4>Variantes</h4>
+              @for (variant of product.variants; track variant.id) {
+                <form class="variant-row" #variantForm="ngForm" (ngSubmit)="updateVariant(variant)">
+                  <input class="form-control" [name]="'variantSku' + variant.id" required placeholder="SKU" [(ngModel)]="variant.sku">
+                  <input class="form-control" [name]="'variantLabel' + variant.id" placeholder="Libellé" [(ngModel)]="variant.label">
+                  <input class="form-control" [name]="'variantPrice' + variant.id" type="number" min="0" placeholder="Prix (centimes)" [(ngModel)]="variant.priceAmountInCents">
+                  <input class="form-control currency" [name]="'variantCurrency' + variant.id" required maxlength="3" placeholder="EUR" [(ngModel)]="variant.currency">
+                  <input class="form-control" [name]="'variantOrder' + variant.id" type="number" min="0" placeholder="Ordre" [(ngModel)]="variant.displayOrder">
+                  <label class="form-check"><input class="form-check-input" [name]="'variantActive' + variant.id" type="checkbox" [(ngModel)]="variant.active"> Active</label>
+                  <label class="form-check"><input class="form-check-input" [name]="'variantStock' + variant.id" type="checkbox" [(ngModel)]="variant.stockTracked"> Stock</label>
+                  @if (variant.stockTracked) { <input class="form-control" [name]="'variantStockOnHand' + variant.id" type="number" min="0" placeholder="En stock" [(ngModel)]="variant.stockOnHand"> <small>Réservé : {{ variant.stockReserved }}</small> }
+                  <button class="btn btn-outline-primary btn-sm" [disabled]="saving || variantForm.invalid">Enregistrer</button>
+                  <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="saving" (click)="deleteVariant(variant.id)">Retirer</button>
+                </form>
+              }
+              <form class="variant-row new-variant" #newVariantForm="ngForm" (ngSubmit)="createVariant(product)">
+                <input class="form-control" [name]="'newVariantSku' + product.id" required placeholder="SKU" [(ngModel)]="draftFor(product.id).sku">
+                <input class="form-control" [name]="'newVariantLabel' + product.id" placeholder="Libellé" [(ngModel)]="draftFor(product.id).label">
+                <input class="form-control" [name]="'newVariantPrice' + product.id" type="number" min="0" placeholder="Prix (centimes)" [(ngModel)]="draftFor(product.id).priceAmountInCents">
+                <input class="form-control currency" [name]="'newVariantCurrency' + product.id" required maxlength="3" [(ngModel)]="draftFor(product.id).currency">
+                <input class="form-control" [name]="'newVariantOrder' + product.id" type="number" min="0" placeholder="Ordre" [(ngModel)]="draftFor(product.id).displayOrder">
+                <label class="form-check"><input class="form-check-input" [name]="'newVariantActive' + product.id" type="checkbox" [(ngModel)]="draftFor(product.id).active"> Active</label>
+                <label class="form-check"><input class="form-check-input" [name]="'newVariantStock' + product.id" type="checkbox" [(ngModel)]="draftFor(product.id).stockTracked"> Stock</label>
+                @if (draftFor(product.id).stockTracked) { <input class="form-control" [name]="'newVariantStockOnHand' + product.id" type="number" min="0" placeholder="En stock" [(ngModel)]="draftFor(product.id).stockOnHand"> }
+                <button class="btn btn-primary btn-sm" [disabled]="saving || newVariantForm.invalid">Ajouter une variante</button>
+              </form>
+            </section>
+          </article>
+        } @empty { <p class="text-body-secondary">Aucun produit. Créez le premier produit ci-dessus.</p> }
+      </div>
+    </section>
+  }
+</main>

@@ -150,6 +150,24 @@ public class ProductVariant extends AuditableEntity {
         active = false;
     }
 
+    public void updateDetails(String sku, String label, Money price, boolean active, int displayOrder,
+                              boolean stockTracked, Long stockOnHand) {
+        this.sku = requireText(sku, "Le SKU est obligatoire");
+        this.label = normalizeOptionalText(label);
+        this.price = Objects.requireNonNull(price, "Le prix est obligatoire");
+        this.active = active;
+        setDisplayOrder(displayOrder);
+        if (!stockTracked) {
+            stopTrackingStock();
+            return;
+        }
+        if (stockOnHand == null || stockOnHand < stockReserved) {
+            throw new IllegalArgumentException("Le stock doit couvrir les réservations en cours");
+        }
+        this.stockTracked = true;
+        this.stockOnHand = stockOnHand;
+    }
+
     public void setDisplayOrder(int displayOrder) {
         if (displayOrder < 0) {
             throw new IllegalArgumentException("L'ordre d'affichage ne peut pas être négatif");

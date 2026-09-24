@@ -7,6 +7,7 @@ import com.wild.corp.adhesion.shop.payment.provider.PaymentProviderType;
 import feign.FeignException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -26,6 +27,7 @@ public class HelloAssoAccessTokenService {
     private final Clock clock;
     private volatile AccessToken currentToken;
 
+    @Autowired
     public HelloAssoAccessTokenService(HelloAssoOAuthClient oauthClient,
                                        HelloAssoPaymentProperties properties) {
         this(oauthClient, properties, Clock.systemUTC());

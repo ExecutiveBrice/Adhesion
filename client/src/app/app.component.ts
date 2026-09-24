@@ -47,6 +47,7 @@ export class AppComponent {
   showReferent=false;
   showSeances=false;
   showComptable=false;
+  showShopManager=false;
   username?: string;
   maintenance: Boolean = false
 
@@ -114,6 +115,7 @@ export class AppComponent {
     this.showReferent = this.roles.includes('ROLE_REFERENT');
     this.showSeances = this.showProf || this.showReferent;
     this.showComptable = this.roles.includes('ROLE_COMPTABLE');
+    this.showShopManager = this.roles.includes('ROLE_RESPONSABLE_BOUTIQUE');
     this.username = user.username;
   }
 

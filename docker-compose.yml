@@ -27,17 +27,20 @@ services:
     volumes:
       - /home/ubuntu/adhesion/:/home/ubuntu/adhesion/
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://db_adhesion:5432/${DB_NAME}
-      - SPRING_DATASOURCE_USERNAME=${DB_USER}
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
-      - DNS_NAME=${DNS_NAME}
-      - JWT_SECRET=${JWT_SECRET}
-      - SERVER_PORT=8000
-      - MJ_MAIL=${MJ_MAIL}
-      - MJ_APIKEY_PUBLIC=${MJ_APIKEY_PUBLIC}
-      - MJ_APIKEY_PRIVATE=${MJ_APIKEY_PRIVATE}
-      - BREVO_APIKEY_PRIVATE=${BREVO_APIKEY_PRIVATE}
-      - IMAGE_STORAGE_DIR=/home/ubuntu/adhesion
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db_adhesion:5432/${DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      DNS_NAME: ${DNS_NAME}
+      JWT_SECRET: ${JWT_SECRET}
+      SERVER_PORT: 8000
+      BREVO_APIKEY_PRIVATE: ${BREVO_APIKEY_PRIVATE}
+      IMAGE_STORAGE_DIR: /home/ubuntu/adhesion
+      # The production environment explicitly selects its profile. Local
+      # docker-compose.local.yml overrides this with helloasso-sandbox.
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      HELLOASSO_CLIENT_ID: ${HELLOASSO_CLIENT_ID}
+      HELLOASSO_CLIENT_SECRET: ${HELLOASSO_CLIENT_SECRET}
+      HELLOASSO_ORGANIZATION_SLUG: ${HELLOASSO_ORGANIZATION_SLUG}
     expose:
       - "8000"
     networks:

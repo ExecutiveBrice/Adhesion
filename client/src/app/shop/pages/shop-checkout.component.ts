@@ -18,7 +18,11 @@ export class ShopCheckoutComponent {
   readonly error = signal<string | null>(null);
   ngOnInit(): void { void this.cart.refreshQuote(); }
   async submit(): Promise<void> {
-    if (this.submitting() || this.cart.isEmpty()) return;
+    if (this.submitting()) return;
+    if (this.cart.isEmpty()) {
+      this.error.set('Votre panier est vide. Ajoutez au moins un article avant de créer une commande.');
+      return;
+    }
     this.submitting.set(true); this.error.set(null);
     const quote = await this.cart.refreshQuote();
     if (!quote) { this.error.set(this.cart.error() ?? 'Le panier doit être actualisé avant le paiement.'); this.submitting.set(false); return; }

@@ -82,7 +82,8 @@ BEGIN
         SELECT 1 FROM user_role_names
         WHERE role_name NOT IN (
             'ROLE_USER', 'ROLE_SECRETAIRE', 'ROLE_BUREAU', 'ROLE_MEMBRECA',
-            'ROLE_ADMIN', 'ROLE_COMPTABLE', 'ROLE_ENCADRANT', 'ROLE_REFERENT'
+            'ROLE_ADMIN', 'ROLE_COMPTABLE', 'ROLE_ENCADRANT', 'ROLE_REFERENT',
+            'ROLE_RESPONSABLE_BOUTIQUE'
         )
     ) THEN
         RAISE EXCEPTION 'Un rôle inconnu reste dans user_role_names';
@@ -99,11 +100,25 @@ WHERE a.ctid < b.ctid
 CREATE UNIQUE INDEX IF NOT EXISTS user_role_names_user_role_unique
     ON user_role_names (user_id, role_name);
 
-ALTER TABLE user_role_names DROP CONSTRAINT IF EXISTS user_role_names_erole_check;
+DO $$
+DECLARE
+    role_check record;
+BEGIN
+    FOR role_check IN
+        SELECT conname
+        FROM pg_constraint
+        WHERE conrelid = 'user_role_names'::regclass
+          AND contype = 'c'
+          AND pg_get_constraintdef(oid) LIKE '%role_name%'
+    LOOP
+        EXECUTE format('ALTER TABLE user_role_names DROP CONSTRAINT %I', role_check.conname);
+    END LOOP;
+END $$;
 ALTER TABLE user_role_names ADD CONSTRAINT user_role_names_erole_check
     CHECK (role_name IN (
         'ROLE_USER', 'ROLE_SECRETAIRE', 'ROLE_BUREAU', 'ROLE_MEMBRECA',
-        'ROLE_ADMIN', 'ROLE_COMPTABLE', 'ROLE_ENCADRANT', 'ROLE_REFERENT'
+        'ROLE_ADMIN', 'ROLE_COMPTABLE', 'ROLE_ENCADRANT', 'ROLE_REFERENT',
+        'ROLE_RESPONSABLE_BOUTIQUE'
     ));
 
 DROP TABLE IF EXISTS users_roles;
@@ -116,7 +131,7 @@ SELECT role_name, count(*)
 FROM user_role_names
 WHERE role_name NOT IN (
     'ROLE_USER', 'ROLE_SECRETAIRE', 'ROLE_BUREAU', 'ROLE_MEMBRECA',
-    'ROLE_ADMIN', 'ROLE_COMPTABLE', 'ROLE_ENCADRANT', 'ROLE_REFERENT'
+    'ROLE_ADMIN', 'ROLE_COMPTABLE', 'ROLE_ENCADRANT', 'ROLE_REFERENT',
+    'ROLE_RESPONSABLE_BOUTIQUE'
 )
 GROUP BY role_name;
-

@@ -1,5 +1,6 @@
 package com.wild.corp.adhesion.shop.order.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +13,7 @@ public class DatabaseOrderNumberGenerator implements OrderNumberGenerator {
     private final JdbcTemplate jdbcTemplate;
     private final Clock clock;
 
+    @Autowired
     public DatabaseOrderNumberGenerator(JdbcTemplate jdbcTemplate) {
         this(jdbcTemplate, Clock.systemUTC());
     }

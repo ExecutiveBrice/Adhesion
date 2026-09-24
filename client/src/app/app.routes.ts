@@ -1,12 +1,14 @@
 import { inject } from '@angular/core';
 import { Routes } from '@angular/router';
 import { TokenStorageService } from './_services/token-storage.service';
+import { shopManagerGuard } from './shop/shop-manager.guard';
 
 const inscriptionTitle = () => inject(TokenStorageService).getUser().roles?.includes('ROLE_SECRETAIRE')
   ? 'Inscriptions manuelles'
   : 'Mes adhésions';
 
 export const routes: Routes = [
+  { path: 'boutique/gestion', title: 'Gestion de la boutique', canActivate: [shopManagerGuard], loadComponent: () => import('./shop/pages/shop-management.component').then((m) => m.ShopManagementComponent) },
   { path: 'boutique', title: 'Boutique', loadComponent: () => import('./shop/pages/shop-catalog.component').then((m) => m.ShopCatalogComponent) },
   { path: 'boutique/panier', title: 'Panier', loadComponent: () => import('./shop/pages/shop-cart.component').then((m) => m.ShopCartComponent) },
   { path: 'boutique/checkout', title: 'Finaliser la commande', loadComponent: () => import('./shop/pages/shop-checkout.component').then((m) => m.ShopCheckoutComponent) },

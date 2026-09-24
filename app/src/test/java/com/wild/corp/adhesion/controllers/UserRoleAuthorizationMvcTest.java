@@ -79,6 +79,15 @@ class UserRoleAuthorizationMvcTest {
     }
 
     @Test
+    void secretaryCanGrantShopManagerRole() throws Exception {
+        mockMvc.perform(post("/user/grantUser").with(user("secretary@example.test").roles("SECRETAIRE"))
+                .param("userEmail", "member@example.test")
+                .contentType(APPLICATION_JSON).content("ROLE_RESPONSABLE_BOUTIQUE"))
+                .andExpect(status().isOk());
+        verify(userServices).grantUser(eq(ERole.ROLE_RESPONSABLE_BOUTIQUE), any());
+    }
+
+    @Test
     void secretaryCannotGrantSiteAdministratorRole() throws Exception {
         mockMvc.perform(post("/user/grantUser").with(user("secretary@example.test").roles("SECRETAIRE"))
                 .param("userEmail", "member@example.test")

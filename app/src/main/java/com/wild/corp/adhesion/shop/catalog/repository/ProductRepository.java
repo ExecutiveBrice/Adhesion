@@ -20,5 +20,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Optional<Product> findByIdAndActiveTrue(Long id);
 
     @EntityGraph(attributePaths = {"categories", "variants"})
+    List<Product> findAllByOrderByDisplayOrderAscNameAsc();
+
+    @EntityGraph(attributePaths = {"categories", "variants"})
     Page<Product> findByNameContainingIgnoreCaseOrSlugContainingIgnoreCase(String name, String slug, Pageable pageable);
 }

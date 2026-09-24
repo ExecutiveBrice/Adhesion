@@ -10,7 +10,9 @@ spring:
   flyway:
     enabled: true
     baseline-on-migrate: true
-    baseline-version: 0
+    # Les bases historiques ont deja ete creees par Hibernate jusqu'a V3.
+    # Une base vide execute toujours toutes les migrations depuis V1.
+    baseline-version: 3
     locations: classpath:db/migration
 
   jpa:

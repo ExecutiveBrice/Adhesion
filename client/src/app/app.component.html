@@ -34,6 +34,11 @@
               <li class="nav-item" (click)="isCollapsed = true">
                 <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="boutique">Boutique</a>
               </li>
+              @if (showShopManager) {
+                <li class="nav-item" (click)="isCollapsed = true">
+                  <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="boutique/gestion">Gestion boutique</a>
+                </li>
+              }
               @if (showAdmin) {
                 <li class="nav-item" (click)="isCollapsed = true">
                   <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="admin">Administration</a>

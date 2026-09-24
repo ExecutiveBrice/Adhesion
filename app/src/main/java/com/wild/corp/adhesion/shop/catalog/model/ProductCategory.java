@@ -58,6 +58,14 @@ public class ProductCategory extends AuditableEntity {
         active = false;
     }
 
+    public void updateDetails(String name, String slug, String description, boolean active, int displayOrder) {
+        this.name = requireText(name, "Le nom de la catégorie est obligatoire");
+        this.slug = requireText(slug, "Le slug de la catégorie est obligatoire");
+        this.description = description;
+        this.active = active;
+        setDisplayOrder(displayOrder);
+    }
+
     public void setDisplayOrder(int displayOrder) {
         if (displayOrder < 0) {
             throw new IllegalArgumentException("L'ordre d'affichage ne peut pas être négatif");

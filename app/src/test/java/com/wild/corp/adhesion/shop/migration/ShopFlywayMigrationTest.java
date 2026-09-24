@@ -17,6 +17,7 @@ class ShopFlywayMigrationTest {
         Flyway.configure()
                 .dataSource(dataSource)
                 .locations("classpath:db/migration")
+                .target("3.1")
                 .load()
                 .migrate();
 
@@ -30,5 +31,12 @@ class ShopFlywayMigrationTest {
                 """, Integer.class);
 
         assertThat(tableCount).isEqualTo(6);
+
+        Integer sequenceCount = jdbcTemplate.queryForObject("""
+                select count(*) from information_schema.sequences
+                where sequence_name = 'SHOP_ORDER_NUMBER_SEQ'
+                """, Integer.class);
+
+        assertThat(sequenceCount).isEqualTo(1);
     }
 }

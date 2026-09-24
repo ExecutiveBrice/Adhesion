@@ -18,7 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-@RestControllerAdvice(assignableTypes = ShopController.class)
+@RestControllerAdvice(assignableTypes = {ShopController.class, ShopAdminController.class})
 public class ShopApiExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

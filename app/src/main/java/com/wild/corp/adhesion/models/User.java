@@ -36,7 +36,7 @@ public class User {
 
 	@ElementCollection(fetch = FetchType.EAGER)
 	@CollectionTable(name = "user_role_names", joinColumns = @JoinColumn(name = "user_id"))
-	@Enumerated(EnumType.STRING)
+	@Convert(converter = ERoleConverter.class)
 	@Column(name = "role_name", length = 32, nullable = false)
 	private Set<ERole> roles = new HashSet<>();
 

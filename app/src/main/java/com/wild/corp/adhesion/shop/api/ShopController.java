@@ -29,6 +29,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -36,15 +37,20 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.List;
 
 @RestController
+@CrossOrigin(origins = "*", maxAge = 3600)
 @RequestMapping("/shop")
 @Validated
 @Tag(name = "Boutique", description = "Catalogue public, prévisualisation du panier et commandes")
 public class ShopController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ShopController.class);
 
     private final CatalogService catalogService;
     private final CartPricingService cartPricingService;
@@ -106,6 +112,7 @@ public class ShopController {
             Authentication authentication) {
         UserDetails user = currentUser(authentication);
         var order = orderService.createOrder(user.getId(), idempotencyKey, toOrderItems(request.items()));
+        LOGGER.info("Commande boutique {} créée ou retrouvée pour l'utilisateur {}", order.getOrderNumber(), user.getId());
         return ResponseEntity.created(URI.create("/shop/orders/" + order.getOrderNumber()))
                 .body(ShopApiMapper.order(order));
     }
@@ -129,7 +136,9 @@ public class ShopController {
             @Valid @RequestBody PaymentSessionRequest request,
             Authentication authentication) {
         var order = orderService.findOrderForCustomer(orderNumber, currentUser(authentication).getId());
+        LOGGER.info("Initialisation du paiement pour la commande boutique {}", order.getOrderNumber());
         var session = paymentService.createPaymentSession(order.getId(), idempotencyKey, request.returnUrl(), request.cancelUrl());
+        LOGGER.info("Session de paiement {} créée pour la commande boutique {}", session.externalPaymentId(), order.getOrderNumber());
         return ResponseEntity.ok(PaymentSessionResponse.from(session));
     }
 
