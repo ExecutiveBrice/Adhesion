@@ -10,6 +10,9 @@ import com.wild.corp.adhesion.shop.common.money.Money;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.NoSuchElementException;
+
 @Service
 @Transactional
 public class CatalogService {
@@ -48,5 +51,16 @@ public class CatalogService {
             product.deactivate();
         }
         return product;
+    }
+
+    @Transactional(Transactional.TxType.SUPPORTS)
+    public List<Product> findActiveProducts() {
+        return productRepository.findByActiveTrueOrderByDisplayOrderAscNameAsc();
+    }
+
+    @Transactional(Transactional.TxType.SUPPORTS)
+    public Product findActiveProduct(Long productId) {
+        return productRepository.findByIdAndActiveTrue(productId)
+                .orElseThrow(() -> new NoSuchElementException("Produit introuvable"));
     }
 }

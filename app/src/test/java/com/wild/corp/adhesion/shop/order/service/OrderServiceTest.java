@@ -103,6 +103,19 @@ class OrderServiceTest {
         assertThat(variant.availableStock()).isEqualTo(5);
     }
 
+    @Test
+    void returnsExistingOrderForTheSameCheckoutKeyWithoutCreatingAnotherOne() {
+        ShopOrder existingOrder = new ShopOrder("CMD-2026-000001", 42L, "checkout-1", "EUR");
+        when(orderRepository.findByCustomerUserIdAndCheckoutKey(42L, "checkout-1"))
+                .thenReturn(java.util.Optional.of(existingOrder));
+
+        ShopOrder result = orderService.createOrder(42L, "checkout-1", List.of(new OrderItemRequest(20L, 1)));
+
+        assertThat(result).isSameAs(existingOrder);
+        verify(variantRepository, never()).findByIdForUpdate(any());
+        verify(orderRepository, never()).save(any());
+    }
+
     private Product product(Long id, boolean active) {
         Product product = new Product("Tee-shirt", "tee-shirt", null, active, 0);
         ReflectionTestUtils.setField(product, "id", id);

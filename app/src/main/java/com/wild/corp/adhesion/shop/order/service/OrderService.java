@@ -33,6 +33,17 @@ public class OrderService {
     }
 
     public ShopOrder createOrder(Long customerUserId, List<OrderItemRequest> requestedItems) {
+        return createOrder(customerUserId, null, requestedItems);
+    }
+
+    public ShopOrder createOrder(Long customerUserId, String checkoutKey, List<OrderItemRequest> requestedItems) {
+        if (checkoutKey != null) {
+            ShopOrder existingOrder = orderRepository.findByCustomerUserIdAndCheckoutKey(customerUserId, checkoutKey)
+                    .orElse(null);
+            if (existingOrder != null) {
+                return existingOrder;
+            }
+        }
         Map<Long, Integer> quantities = normalizeQuantities(requestedItems);
         Map<Long, ProductVariant> variantsById = new LinkedHashMap<>();
         quantities.keySet().stream().sorted(Comparator.naturalOrder()).forEach(variantId -> {
@@ -46,7 +57,7 @@ public class OrderService {
         }
 
         ProductVariant firstVariant = variantsById.get(quantities.keySet().iterator().next());
-        ShopOrder order = new ShopOrder(orderNumberGenerator.nextOrderNumber(), customerUserId,
+        ShopOrder order = new ShopOrder(orderNumberGenerator.nextOrderNumber(), customerUserId, checkoutKey,
                 firstVariant.getPrice().getCurrency());
 
         for (Map.Entry<Long, Integer> requested : quantities.entrySet()) {
@@ -67,6 +78,15 @@ public class OrderService {
 
         order.submitForPayment();
         return orderRepository.save(order);
+    }
+
+    public ShopOrder findOrderForCustomer(String orderNumber, Long customerUserId) {
+        ShopOrder order = orderRepository.findByOrderNumber(orderNumber)
+                .orElseThrow(() -> new java.util.NoSuchElementException("Commande introuvable"));
+        if (!order.getCustomerUserId().equals(customerUserId)) {
+            throw new java.util.NoSuchElementException("Commande introuvable");
+        }
+        return order;
     }
 
     public ShopOrder transition(Long orderId, com.wild.corp.adhesion.shop.order.model.OrderStatus targetStatus) {

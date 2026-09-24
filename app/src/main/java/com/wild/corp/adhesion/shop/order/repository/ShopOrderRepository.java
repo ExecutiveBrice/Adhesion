@@ -8,4 +8,6 @@ import java.util.Optional;
 public interface ShopOrderRepository extends JpaRepository<ShopOrder, Long> {
 
     Optional<ShopOrder> findByOrderNumber(String orderNumber);
+
+    Optional<ShopOrder> findByCustomerUserIdAndCheckoutKey(Long customerUserId, String checkoutKey);
 }

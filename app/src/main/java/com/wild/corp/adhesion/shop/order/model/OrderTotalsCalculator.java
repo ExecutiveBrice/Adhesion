@@ -10,9 +10,13 @@ public final class OrderTotalsCalculator {
     }
 
     public static Money calculate(Collection<OrderItem> items, String currency) {
+        return calculateLineTotals(items.stream().map(OrderItem::getLineTotal).toList(), currency);
+    }
+
+    public static Money calculateLineTotals(Collection<Money> lineTotals, String currency) {
         Money total = Money.zero(currency);
-        for (OrderItem item : items) {
-            total = total.add(item.getLineTotal());
+        for (Money lineTotal : lineTotals) {
+            total = total.add(lineTotal);
         }
         return total;
     }

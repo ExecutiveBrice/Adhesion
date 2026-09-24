@@ -29,7 +29,10 @@ public final class PublicApiEndpoints {
             new Endpoint(HttpMethod.GET, "/param/allBoolean", "Indicateur public d'ouverture des inscriptions"),
             new Endpoint(HttpMethod.GET, "/param/isClose", "Indicateur public de maintenance"),
             new Endpoint(HttpMethod.GET, "/activite/calendrier", "Calendrier public des activités"),
-            new Endpoint(HttpMethod.GET, "/activite/calendrier/google", "Événements des agendas publics")
+            new Endpoint(HttpMethod.GET, "/activite/calendrier/google", "Événements des agendas publics"),
+            new Endpoint(HttpMethod.GET, "/shop/products", "Catalogue public de la boutique"),
+            new Endpoint(HttpMethod.GET, "/shop/products/{productId}", "Fiche d'un produit actif"),
+            new Endpoint(HttpMethod.POST, "/shop/cart/quote", "Prévisualisation serveur d'un panier temporaire")
     );
 
     private static final Set<EndpointKey> KEYS = ENDPOINTS.stream()

@@ -47,6 +47,15 @@ public class Money {
         return new Money(Math.multiplyExact(amountInCents, quantity), currency);
     }
 
+    public Money subtract(Money other) {
+        requireSameCurrency(other);
+        long result = Math.subtractExact(amountInCents, other.amountInCents);
+        if (result < 0) {
+            throw new IllegalArgumentException("Un montant monétaire ne peut pas être négatif");
+        }
+        return new Money(result, currency);
+    }
+
     public void requireSameCurrency(Money other) {
         Objects.requireNonNull(other, "Le montant est obligatoire");
         if (!currency.equals(other.currency)) {

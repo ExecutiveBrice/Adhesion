@@ -50,6 +50,9 @@ public class ShopOrder extends AuditableEntity {
     @Column(name = "customer_user_id", nullable = false)
     private Long customerUserId;
 
+    @Column(name = "checkout_key", length = 100)
+    private String checkoutKey;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
     private OrderStatus status;
@@ -76,6 +79,10 @@ public class ShopOrder extends AuditableEntity {
     }
 
     public ShopOrder(String orderNumber, Long customerUserId, String currency) {
+        this(orderNumber, customerUserId, null, currency);
+    }
+
+    public ShopOrder(String orderNumber, Long customerUserId, String checkoutKey, String currency) {
         if (orderNumber == null || orderNumber.isBlank()) {
             throw new IllegalArgumentException("Le numéro de commande est obligatoire");
         }
@@ -84,6 +91,7 @@ public class ShopOrder extends AuditableEntity {
         }
         this.orderNumber = orderNumber.trim();
         this.customerUserId = customerUserId;
+        this.checkoutKey = normalizeCheckoutKey(checkoutKey);
         this.status = OrderStatus.DRAFT;
         this.total = Money.zero(currency);
     }
@@ -132,6 +140,10 @@ public class ShopOrder extends AuditableEntity {
         return customerUserId;
     }
 
+    public String getCheckoutKey() {
+        return checkoutKey;
+    }
+
     public OrderStatus getStatus() {
         return status;
     }
@@ -146,5 +158,16 @@ public class ShopOrder extends AuditableEntity {
 
     public long getVersion() {
         return version;
+    }
+
+    private static String normalizeCheckoutKey(String checkoutKey) {
+        if (checkoutKey == null) {
+            return null;
+        }
+        String normalized = checkoutKey.trim();
+        if (normalized.isEmpty() || normalized.length() > 100) {
+            throw new IllegalArgumentException("La clé d'idempotence est invalide");
+        }
+        return normalized;
     }
 }
