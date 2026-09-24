@@ -1,9 +1,5 @@
 package com.wild.corp;
 
-import com.wild.corp.adhesion.models.ERole;
-import com.wild.corp.adhesion.models.Role;
-import com.wild.corp.adhesion.repository.RoleRepository;
-
 import com.wild.corp.adhesion.services.ParamBooleanServices;
 import com.wild.corp.adhesion.services.ParamNumberServices;
 import com.wild.corp.adhesion.services.ParamTextServices;
@@ -23,9 +19,6 @@ public class AdhesionWebApp {
 	@Autowired
 	UserServices userServices;
 	@Autowired
-	RoleRepository roleRepository;
-
-	@Autowired
 	ParamBooleanServices paramBooleanServices;
 
 	@Autowired
@@ -40,35 +33,6 @@ public class AdhesionWebApp {
 
 	@EventListener(ApplicationReadyEvent.class)
 	private void init() {
-		if(!roleRepository.findByName(ERole.ROLE_USER).isPresent()){
-			roleRepository.save(new Role(ERole.ROLE_USER));
-		}
-		if(!roleRepository.findByName(ERole.ROLE_ADMIN).isPresent()){
-			roleRepository.save(new Role(ERole.ROLE_ADMIN));
-		}
-		if(!roleRepository.findByName(ERole.ROLE_PROF).isPresent()){
-			roleRepository.save(new Role(ERole.ROLE_PROF));
-		}
-		if(!roleRepository.findByName(ERole.ROLE_REFERENT).isPresent()){
-			roleRepository.save(new Role(ERole.ROLE_REFERENT));
-		}
-		if(!roleRepository.findByName(ERole.ROLE_COMPTABLE).isPresent()){
-			roleRepository.save(new Role(ERole.ROLE_COMPTABLE));
-		}
-		if(!roleRepository.findByName(ERole.ROLE_BUREAU).isPresent()){
-			roleRepository.save(new Role(ERole.ROLE_BUREAU));
-		}
-		if(!roleRepository.findByName(ERole.ROLE_ADMINISTRATEUR).isPresent()){
-			roleRepository.save(new Role(ERole.ROLE_ADMINISTRATEUR));
-		}
-		if(!roleRepository.findByName(ERole.ROLE_SECRETAIRE).isPresent()){
-			roleRepository.save(new Role(ERole.ROLE_SECRETAIRE));
-		}
-
-//		if(!userServices.existsByEmail("admin")){
-//			userServices.initAdmin();
-//		}
-
 		paramBooleanServices.fillParamBoolean();
 		paramTextServices.fillParamText();
 		paramNumberServices.fillParamNumber();

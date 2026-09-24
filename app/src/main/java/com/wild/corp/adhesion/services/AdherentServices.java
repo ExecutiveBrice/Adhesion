@@ -23,6 +23,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -72,13 +75,14 @@ public class AdherentServices {
             if (groupe.getNom().equals("role")) {
                 groupe.getHoraires().forEach(horaire -> {
                     if (horaire.getChecked()) {
-                        mailling.addAll(adherentRepository.findByUserRoleId(horaire.getId()).stream().map(adherent -> {
+                        mailling.addAll(adherentRepository.findByUserRole(ERole.valueOf(horaire.getRole())).stream().map(adherent -> {
                                     return Boolean.TRUE.equals(adherent.getEmailRepresentant()) && adherent.getRepresentant() != null ? adherent.getRepresentant().getUser().getUsername() : adherent.getUser().getUsername();
                                 }).filter(Objects::nonNull)
                                 .collect(Collectors.toSet()));
 
                     }
                 });
+                return;
             }
 
             if( groupe.getNm1()){
@@ -138,6 +142,7 @@ public class AdherentServices {
         Optional<Adherent> indbAdherent = adherentRepository.findById(frontAdherent.getId());
         if (indbAdherent.isPresent()) {
             Adherent dataAdherent = indbAdherent.get();
+            updateEmail(frontAdherent, dataAdherent);
             dataAdherent.setNom(frontAdherent.getNom().toUpperCase());
             dataAdherent.setPrenom(frontAdherent.getPrenom().substring(0, 1).toUpperCase() + frontAdherent.getPrenom()
                     .substring(1));
@@ -148,9 +153,6 @@ public class AdherentServices {
 
             if (!Boolean.TRUE.equals(frontAdherent.getTelephoneRepresentant())) {
                 dataAdherent.setTelephone(frontAdherent.getTelephone());
-            }
-            if (!Boolean.TRUE.equals(frontAdherent.getEmailRepresentant())) {
-                dataAdherent.getUser().setUsername(frontAdherent.getUser().getUsername() != null ? frontAdherent.getUser().getUsername().toLowerCase() : dataAdherent.getUser().getUsername().toLowerCase());
             }
             if (!Boolean.TRUE.equals(frontAdherent.getAdresseRepresentant())) {
                 dataAdherent.setAdresse(frontAdherent.getAdresse());
@@ -174,6 +176,27 @@ public class AdherentServices {
         }
 
         return null;
+    }
+
+    private void updateEmail(AdherentLite frontAdherent, Adherent dataAdherent) {
+        if (Boolean.TRUE.equals(frontAdherent.getEmailRepresentant())
+                || frontAdherent.getUser() == null || frontAdherent.getUser().getUsername() == null
+                || dataAdherent.getUser() == null) {
+            return;
+        }
+        String email = frontAdherent.getUser().getUsername().trim().toLowerCase(Locale.ROOT);
+        if (email.equalsIgnoreCase(dataAdherent.getUser().getUsername())) {
+            return;
+        }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean canChangeEmail = authentication != null && authentication.isAuthenticated()
+                && authentication.getAuthorities().stream().anyMatch(authority ->
+                    "ROLE_SECRETAIRE".equals(authority.getAuthority())
+                            || "ROLE_ADMIN".equals(authority.getAuthority()));
+        if (!canChangeEmail) {
+            throw new AccessDeniedException("Seul un secrétaire ou un administrateur peut modifier l'adresse e-mail");
+        }
+        dataAdherent.getUser().setUsername(email);
     }
 
     /** Copies only the consent values supplied for the adherent's existing accords. */
@@ -604,11 +627,13 @@ public class AdherentServices {
                 + (Objects.equals(adherent.getPrenom(), "") ? "zzzz" : adherent.getPrenom()));
         adherentFlat.setLieuNaissance(adherent.getLieuNaissance());
         adherentFlat.setTribuId(adherent.getTribu().getUuid());
+        adherentFlat.setRoles(adherent.getUser() != null && adherent.getUser().getRoles() != null
+                ? adherent.getUser().getRoles().stream().toList() : List.of());
         return adherentFlat;
     }
 
-    public List<AdherentLite> getByRole(Long roleId) {
-        return adherentRepository.findByUserRoleId(roleId).stream().map(this::reduceAdherent).collect(Collectors.toList());
+    public List<AdherentLite> getByRole(ERole role) {
+        return adherentRepository.findByUserRole(role).stream().map(this::reduceAdherent).collect(Collectors.toList());
     }
 
     public List<AdherentLite> getLites(Collection<Adherent> adherents) {
@@ -731,12 +756,12 @@ public class AdherentServices {
     private boolean hasAdministrativeRole(Adherent adherent) {
         if (adherent.getUser() != null) {
             return adherent.getUser().getRoles().stream().anyMatch(role ->
-                    role.getName().equals(ROLE_ADMIN)
-                            || role.getName().equals(ROLE_BUREAU)
-                            || role.getName().equals(ROLE_ADMINISTRATEUR)
-                            || role.getName().equals(ROLE_COMPTABLE)
-                            || role.getName().equals(ROLE_SECRETAIRE)
-                            || role.getName().equals(ROLE_PROF)
+                    role == ROLE_ADMIN
+                            || role == ROLE_BUREAU
+                            || role == ROLE_MEMBRECA
+                            || role == ROLE_COMPTABLE
+                            || role == ROLE_SECRETAIRE
+                            || role == ROLE_ENCADRANT
             );
         }
         return false;

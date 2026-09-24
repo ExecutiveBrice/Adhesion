@@ -33,7 +33,7 @@ public class MailController {
 
 
     @GetMapping("/historique")
-    @PreAuthorize("hasAnyRole('SECRETAIRE', 'BUREAU', 'ADMINISTRATEUR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('SECRETAIRE', 'BUREAU', 'MEMBRECA', 'ADMIN')")
     public ResponseEntity<?> historique() {
 
         return ResponseEntity.ok(historiqueRepository.findAll());
@@ -41,7 +41,7 @@ public class MailController {
     }
 
     @PostMapping(value = "/sendTemplate")
-    @PreAuthorize("hasAnyRole('SECRETAIRE', 'BUREAU', 'ADMINISTRATEUR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('SECRETAIRE', 'BUREAU', 'MEMBRECA', 'ADMIN')")
     public ResponseEntity<Historique> sendTemplate(@RequestBody List<Groupe> maillingListe, @RequestParam(value = "templateId") Long templateId) {
         log.debug("send sendTemplate " + templateId);
         if (!emailService.isMailSendingEnabled()) {
@@ -54,7 +54,7 @@ public class MailController {
     }
 
     @RequestMapping(value = "/", method = RequestMethod.POST)
-    @PreAuthorize("hasAnyRole('SECRETAIRE', 'BUREAU', 'ADMINISTRATEUR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('SECRETAIRE', 'BUREAU', 'MEMBRECA', 'ADMIN')")
     public ResponseEntity<Historique> send(@RequestBody EmailContent mail) {
         log.debug("send mail ");
         if (!emailService.isMailSendingEnabled()) {
