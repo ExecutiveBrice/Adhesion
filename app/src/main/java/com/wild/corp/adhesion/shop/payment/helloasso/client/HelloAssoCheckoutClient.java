@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
-import org.wild.corp.adhesion.client.helloasso.model.HelloAssoApiV5CommonModelsCartsCheckoutIntentResponse;
 import org.wild.corp.adhesion.client.helloasso.model.HelloAssoApiV5CommonModelsCartsInitCheckoutBody;
 import org.wild.corp.adhesion.client.helloasso.model.HelloAssoApiV5CommonModelsCartsInitCheckoutResponse;
 
@@ -25,7 +24,7 @@ public interface HelloAssoCheckoutClient {
             @RequestBody HelloAssoApiV5CommonModelsCartsInitCheckoutBody body);
 
     @GetMapping("/v5/organizations/{organizationSlug}/checkout-intents/{checkoutIntentId}")
-    HelloAssoApiV5CommonModelsCartsCheckoutIntentResponse getCheckoutIntent(
+    String getCheckoutIntent(
             @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization,
             @PathVariable String organizationSlug,
             @PathVariable String checkoutIntentId);

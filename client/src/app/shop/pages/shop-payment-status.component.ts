@@ -1,6 +1,7 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom, timer } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ShopOrderDto } from '../models/shop.models';
 import { ShopApiService } from '../services/shop-api.service';
@@ -20,16 +21,30 @@ export class ShopPaymentStatusComponent {
   readonly error = signal<string | null>(null);
   readonly requestedFailure = this.route.snapshot.routeConfig?.path?.endsWith('paiement-echoue') ?? false;
   private orderNumber = '';
+  private automaticVerification = true;
   ngOnInit(): void {
     this.orderNumber = this.route.snapshot.paramMap.get('orderNumber') ?? '';
     void this.verify();
-    timer(5000, 5000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => void this.load());
+    timer(5000, 5000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      if (this.automaticVerification) void this.verify();
+    });
   }
   async verify(): Promise<void> {
     if (this.verifying()) return;
     this.verifying.set(true); this.error.set(null);
-    try { this.order.set(await firstValueFrom(this.api.verifyPayment(this.orderNumber))); this.redirectByStatus(); }
-    catch { await this.load(); }
+    try {
+      this.order.set(await firstValueFrom(this.api.verifyPayment(this.orderNumber)));
+      this.automaticVerification = true;
+      this.redirectByStatus();
+    } catch (error) {
+      if (error instanceof HttpErrorResponse && error.status === 502) this.automaticVerification = false;
+      await this.load();
+      if (!this.error() && this.order()?.status === 'PENDING_PAYMENT' && !this.requestedFailure) {
+        this.error.set(this.automaticVerification
+          ? 'La vérification auprès de HelloAsso a échoué. Une nouvelle tentative sera lancée automatiquement.'
+          : 'La vérification auprès de HelloAsso a échoué. Réessayez avec « Vérifier maintenant » après correction du problème.');
+      }
+    }
     finally { this.verifying.set(false); }
   }
   async load(): Promise<void> { try { this.order.set(await firstValueFrom(this.api.order(this.orderNumber))); this.redirectByStatus(); } catch { this.error.set('Impossible de vérifier le statut de la commande pour le moment.'); } }

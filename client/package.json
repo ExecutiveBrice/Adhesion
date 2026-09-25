@@ -4,6 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve --serve-path /adhesion/",
+    "start:helloasso": "ng serve --serve-path /adhesion/ --configuration=helloasso-local --ssl --proxy-config proxy.helloasso-local.json",
     "build": "ng build",
     "build:production": "ng build --base-href /adhesion/ --configuration=production",
     "build:integration": "ng build --base-href /adhesion/ --configuration=integration",

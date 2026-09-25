@@ -5,6 +5,8 @@ import com.wild.corp.adhesion.shop.catalog.model.ProductVariant;
 import com.wild.corp.adhesion.shop.catalog.repository.ProductVariantRepository;
 import com.wild.corp.adhesion.shop.common.exception.InvalidQuantityException;
 import com.wild.corp.adhesion.shop.order.model.OrderItem;
+import com.wild.corp.adhesion.shop.order.model.OrderItemStatus;
+import com.wild.corp.adhesion.shop.order.model.OrderStatus;
 import com.wild.corp.adhesion.shop.order.model.ShopOrder;
 import com.wild.corp.adhesion.shop.order.repository.ShopOrderRepository;
 import jakarta.transaction.Transactional;
@@ -85,6 +87,41 @@ public class OrderService {
                 .orElseThrow(() -> new java.util.NoSuchElementException("Commande introuvable"));
         if (!order.getCustomerUserId().equals(customerUserId)) {
             throw new java.util.NoSuchElementException("Commande introuvable");
+        }
+        return order;
+    }
+
+    public List<ShopOrder> findAllOrders() {
+        return orderRepository.findAllByOrderByCreatedAtDescIdDesc();
+    }
+
+    public List<ShopOrder> findOrdersForCustomer(Long customerUserId) {
+        return orderRepository.findAllByCustomerUserIdOrderByCreatedAtDescIdDesc(customerUserId);
+    }
+
+    public OrderItem updateItemStatus(String orderNumber, Long itemId, OrderItemStatus status) {
+        ShopOrder order = orderRepository.findByOrderNumber(orderNumber)
+                .orElseThrow(() -> new java.util.NoSuchElementException("Commande introuvable"));
+        OrderItem item = order.getItems().stream()
+                .filter(candidate -> candidate.getId().equals(itemId))
+                .findFirst()
+                .orElseThrow(() -> new java.util.NoSuchElementException("Ligne de commande introuvable"));
+        item.setStatus(status);
+        return item;
+    }
+
+    public ShopOrder updateAdminOrderStatus(String orderNumber, OrderStatus status) {
+        ShopOrder order = orderRepository.findByOrderNumber(orderNumber)
+                .orElseThrow(() -> new java.util.NoSuchElementException("Commande introuvable"));
+        if (status != OrderStatus.PROCESSING && status != OrderStatus.COMPLETED && status != OrderStatus.CANCELLED) {
+            throw new IllegalArgumentException("Ce statut de commande ne peut pas être défini depuis la gestion boutique");
+        }
+        if (status == OrderStatus.CANCELLED && order.getStatus() != OrderStatus.PENDING_PAYMENT) {
+            throw new IllegalArgumentException("Seules les commandes en attente de paiement peuvent être annulées depuis la gestion boutique");
+        }
+        order.transitionTo(status);
+        if (status == OrderStatus.CANCELLED) {
+            releaseReservedStock(order);
         }
         return order;
     }

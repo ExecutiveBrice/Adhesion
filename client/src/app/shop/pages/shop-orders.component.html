@@ -1,0 +1,8 @@
+<main class="shop-orders-page container py-3 py-md-4">
+  <a routerLink="/boutique" class="shop-back">← Retour à la boutique</a>
+  <header><p class="shop-eyebrow">Boutique ALOD</p><h1>Mes commandes</h1><p>Retrouvez le suivi et le détail de toutes vos commandes.</p></header>
+  @if (loading()) { <p role="status">Chargement de vos commandes…</p> }
+  @else if (error()) { <section class="alert alert-warning" role="alert"><p>{{ error() }}</p><button type="button" class="btn btn-outline-dark" (click)="load()">Réessayer</button></section> }
+  @else if (orders().length === 0) { <section class="shop-empty"><h2>Aucune commande</h2><p>Vos prochaines commandes apparaîtront ici.</p><a routerLink="/boutique" class="btn btn-primary">Voir la boutique</a></section> }
+  @else { <ul class="shop-order-list">@for (order of orders(); track order.orderNumber) { <li><a [routerLink]="['/boutique/commandes', order.orderNumber]"><div><strong>{{ order.orderNumber }}</strong><span>Passée le {{ order.createdAt | date:'mediumDate':'':'fr-FR' }}</span></div><div class="shop-order-meta"><strong>{{ money(order.total) }}</strong><span class="shop-status">{{ order.status }}</span></div></a></li> }</ul> }
+</main>

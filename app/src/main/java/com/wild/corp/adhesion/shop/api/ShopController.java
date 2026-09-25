@@ -47,7 +47,7 @@ import java.util.List;
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RequestMapping("/shop")
 @Validated
-@Tag(name = "Boutique", description = "Catalogue public, prévisualisation du panier et commandes")
+@Tag(name = "Boutique", description = "Catalogue, panier et commandes réservés aux utilisateurs connectés")
 public class ShopController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ShopController.class);
@@ -68,6 +68,8 @@ public class ShopController {
     }
 
     @GetMapping("/products")
+    @PreAuthorize("isAuthenticated()")
+    @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Liste les produits actifs de la boutique")
     @ApiResponses(@ApiResponse(responseCode = "200", description = "Catalogue actif",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProductResponse.class))))
@@ -76,6 +78,8 @@ public class ShopController {
     }
 
     @GetMapping("/products/{productId}")
+    @PreAuthorize("isAuthenticated()")
+    @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Retourne un produit actif")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Produit actif"),
@@ -86,6 +90,8 @@ public class ShopController {
     }
 
     @PostMapping("/cart/quote")
+    @PreAuthorize("isAuthenticated()")
+    @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Calcule le panier côté serveur sans réserver le stock")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Panier chiffré côté serveur"),
@@ -115,6 +121,15 @@ public class ShopController {
         LOGGER.info("Commande boutique {} créée ou retrouvée pour l'utilisateur {}", order.getOrderNumber(), user.getId());
         return ResponseEntity.created(URI.create("/shop/orders/" + order.getOrderNumber()))
                 .body(ShopApiMapper.order(order));
+    }
+
+    @GetMapping("/orders")
+    @PreAuthorize("hasRole('USER')")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Liste les commandes de l'utilisateur connecté")
+    public ResponseEntity<List<OrderResponse>> orders(Authentication authentication) {
+        UserDetails user = currentUser(authentication);
+        return ResponseEntity.ok(orderService.findOrdersForCustomer(user.getId()).stream().map(ShopApiMapper::order).toList());
     }
 
     @GetMapping("/orders/{orderNumber}")

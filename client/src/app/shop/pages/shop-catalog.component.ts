@@ -2,13 +2,14 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ShopProductCardComponent } from '../components/shop-product-card.component';
+import { ShopCartLinkComponent } from '../components/shop-cart-link.component';
 import { ShopProductDto, ShopVariantDto } from '../models/shop.models';
 import { CartStore } from '../services/cart.store';
 import { ShopApiService } from '../services/shop-api.service';
 import { ToastService } from '../../_services/toast.service';
 
 @Component({
-  imports: [FormsModule, RouterLink, ShopProductCardComponent],
+  imports: [FormsModule, RouterLink, ShopProductCardComponent, ShopCartLinkComponent],
   templateUrl: './shop-catalog.component.html',
   styleUrl: './shop-catalog.component.css'
 })

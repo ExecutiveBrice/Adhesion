@@ -2,12 +2,19 @@ package com.wild.corp.adhesion.shop.api;
 
 import com.wild.corp.adhesion.shop.api.dto.AdminCategoryRequest;
 import com.wild.corp.adhesion.shop.api.dto.AdminCategoryResponse;
+import com.wild.corp.adhesion.shop.api.dto.AdminOrderResponse;
+import com.wild.corp.adhesion.shop.api.dto.AdminOrderItemResponse;
+import com.wild.corp.adhesion.shop.api.dto.AdminOrderItemStatusRequest;
+import com.wild.corp.adhesion.shop.api.dto.AdminOrderStatusRequest;
 import com.wild.corp.adhesion.shop.api.dto.AdminProductRequest;
 import com.wild.corp.adhesion.shop.api.dto.AdminProductResponse;
 import com.wild.corp.adhesion.shop.api.dto.AdminVariantRequest;
 import com.wild.corp.adhesion.shop.api.dto.AdminVariantResponse;
 import com.wild.corp.adhesion.shop.catalog.service.CatalogService;
+import com.wild.corp.adhesion.models.User;
+import com.wild.corp.adhesion.repository.UserRepository;
 import com.wild.corp.adhesion.shop.common.money.Money;
+import com.wild.corp.adhesion.shop.order.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -25,6 +32,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @RestController
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -34,9 +44,36 @@ import java.util.List;
 public class ShopAdminController {
 
     private final CatalogService catalogService;
+    private final OrderService orderService;
+    private final UserRepository userRepository;
 
-    public ShopAdminController(CatalogService catalogService) {
+    public ShopAdminController(CatalogService catalogService, OrderService orderService, UserRepository userRepository) {
         this.catalogService = catalogService;
+        this.orderService = orderService;
+        this.userRepository = userRepository;
+    }
+
+    @GetMapping("/orders")
+    public List<AdminOrderResponse> orders() {
+        List<com.wild.corp.adhesion.shop.order.model.ShopOrder> orders = orderService.findAllOrders();
+        Map<Long, User> customersById = userRepository.findAllByIdIn(orders.stream()
+                        .map(com.wild.corp.adhesion.shop.order.model.ShopOrder::getCustomerUserId).collect(Collectors.toSet()))
+                .stream().collect(Collectors.toMap(User::getId, Function.identity()));
+        return orders.stream().map(order -> ShopAdminMapper.order(order, customersById.get(order.getCustomerUserId()))).toList();
+    }
+
+    @PutMapping("/orders/{orderNumber}/status")
+    public AdminOrderResponse updateOrderStatus(@PathVariable String orderNumber,
+                                                @Valid @RequestBody AdminOrderStatusRequest request) {
+        var order = orderService.updateAdminOrderStatus(orderNumber, request.status());
+        return ShopAdminMapper.order(order, userRepository.findAllByIdIn(List.of(order.getCustomerUserId())).stream()
+                .findFirst().orElse(null));
+    }
+
+    @PutMapping("/orders/{orderNumber}/items/{itemId}/status")
+    public AdminOrderItemResponse updateOrderItemStatus(@PathVariable String orderNumber, @PathVariable Long itemId,
+                                                         @Valid @RequestBody AdminOrderItemStatusRequest request) {
+        return ShopAdminMapper.orderItem(orderService.updateItemStatus(orderNumber, itemId, request.status()));
     }
 
     @GetMapping("/products")

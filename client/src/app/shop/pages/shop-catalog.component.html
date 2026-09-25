@@ -1,5 +1,5 @@
 <main class="shop-page container py-3 py-md-4">
-  <header class="shop-hero"><p class="shop-eyebrow">Boutique ALOD</p><h1>Nos produits</h1><p>Choisissez vos articles, puis le montant sera toujours vérifié par le serveur avant le paiement.</p></header>
+  <header class="shop-hero"><div><p class="shop-eyebrow">Boutique ALOD</p><h1>Nos produits</h1><p>Choisissez vos articles, puis le montant sera toujours vérifié par le serveur avant le paiement.</p></div><div class="shop-hero-actions"><app-shop-cart-link></app-shop-cart-link><a routerLink="/boutique/commandes" class="btn btn-outline-success">Mes commandes</a></div></header>
   <section class="shop-filters" aria-label="Filtrer le catalogue">
     <label for="shop-search" class="visually-hidden">Rechercher un produit</label><input id="shop-search" class="form-control" type="search" placeholder="Rechercher un produit" [ngModel]="search()" (ngModelChange)="search.set($event)">
     <label for="shop-category" class="visually-hidden">Catégorie</label><select id="shop-category" class="form-select" [ngModel]="category()" (ngModelChange)="category.set($event)"><option value="">Toutes les catégories</option>@for (item of categories(); track item.id) { <option [value]="item.slug">{{ item.name }}</option> }</select>

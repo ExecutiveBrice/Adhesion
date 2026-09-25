@@ -1,0 +1,60 @@
+<article class="order-card">
+  <div class="order-header">
+    <button class="order-toggle" type="button" [attr.aria-expanded]="expanded" [attr.aria-controls]="'order-items-' + order.orderNumber" (click)="expanded = !expanded">
+      <span class="order-identity"><strong>{{ order.orderNumber }}</strong><small>{{ order.createdAt | date:'dd/MM/yyyy à HH:mm':'':'fr-FR' }}</small></span>
+      <span class="order-status" [class.closed]="order.status === 'CANCELLED' || order.status === 'EXPIRED' || order.status === 'REFUNDED'">{{ statusLabel }}</span>
+      <strong class="order-total">{{ order.total.amountInCents / 100 | currency:order.total.currency:'symbol':'1.2-2':'fr-FR' }}</strong>
+      <span class="order-chevron" aria-hidden="true">{{ expanded ? '▾' : '▸' }}</span>
+    </button>
+    @if (order.customerEmail) {
+      <div class="order-customer">
+        <a [href]="'mailto:' + order.customerEmail" class="customer-email">{{ order.customerEmail }}</a>
+        <button type="button" class="btn btn-outline-secondary btn-sm" (click)="copyCustomerEmail()">Copier</button>
+        @if (order.customerTribeId) {
+          <span class="customer-tribe">Tribu {{ order.customerTribeId }}</span>
+        }
+        @if (customerEmailCopied) { <small class="text-success" role="status">Adresse e-mail copiée.</small> }
+        @if (customerEmailCopyError) { <small class="text-danger" role="alert">{{ customerEmailCopyError }}</small> }
+      </div>
+    }
+  </div>
+
+  @if (expanded) {
+    <div class="order-details" [id]="'order-items-' + order.orderNumber">
+      <div class="order-status-control">
+        <label [for]="'order-status-' + order.orderNumber">Statut global de la commande</label>
+        @if (order.status === 'PENDING_PAYMENT' || order.status === 'PAID' || order.status === 'PROCESSING') {
+          <select #orderStatusSelect class="form-select form-select-sm" [id]="'order-status-' + order.orderNumber" [value]="order.status" (change)="setOrderStatus($any($event.target).value, orderStatusSelect)" [disabled]="savingOrderStatus">
+            <option [value]="order.status">{{ statusLabel }}</option>
+            @if (order.status === 'PENDING_PAYMENT') { <option value="CANCELLED">Annulée</option> }
+            @if (order.status === 'PAID') { <option value="PROCESSING">En préparation</option> }
+            @if (order.status === 'PROCESSING') { <option value="COMPLETED">Terminée</option> }
+          </select>
+        } @else { <span>{{ statusLabel }}</span> }
+        @if (savingOrderStatus) { <small role="status">Enregistrement…</small> }
+        @if (orderStatusSaved) { <small class="text-success" role="status">Statut de la commande enregistré.</small> }
+        @if (orderStatusError) { <small class="text-danger" role="alert">{{ orderStatusError }}</small> }
+      </div>
+      <h3>Articles de la commande</h3>
+      @for (item of order.items; track item.id) {
+        <div class="order-item">
+          <div class="item-description">
+            <strong>{{ item.productName }}</strong>
+            @if (item.variantName) { <span>{{ item.variantName }}</span> }
+            @if (item.sku) { <small>Référence : {{ item.sku }}</small> }
+          </div>
+          <div class="item-pricing"><span>{{ item.quantity }} × {{ item.unitPrice.amountInCents / 100 | currency:item.unitPrice.currency:'symbol':'1.2-2':'fr-FR' }}</span><strong>{{ item.lineTotal.amountInCents / 100 | currency:item.lineTotal.currency:'symbol':'1.2-2':'fr-FR' }}</strong></div>
+          <div class="item-status-control">
+            <label [for]="'item-status-' + item.id">Statut de l’article</label>
+            <select #statusSelect class="form-select form-select-sm" [id]="'item-status-' + item.id" [value]="item.status" (change)="setStatus(item, $any($event.target).value, statusSelect)" [disabled]="savingItemIds.has(item.id)">
+              @for (option of statuses; track option.value) { <option [value]="option.value">{{ option.label }}</option> }
+            </select>
+            @if (savingItemIds.has(item.id)) { <small role="status">Enregistrement…</small> }
+            @if (savedItemIds.has(item.id)) { <small class="text-success" role="status">Statut enregistré.</small> }
+            @if (itemErrors[item.id]) { <small class="text-danger" role="alert">{{ itemErrors[item.id] }}</small> }
+          </div>
+        </div>
+      } @empty { <p class="text-body-secondary mb-0">Aucun article dans cette commande.</p> }
+    </div>
+  }
+</article>

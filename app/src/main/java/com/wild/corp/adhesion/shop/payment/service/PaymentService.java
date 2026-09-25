@@ -1,5 +1,8 @@
 package com.wild.corp.adhesion.shop.payment.service;
 
+import com.wild.corp.adhesion.models.Adherent;
+import com.wild.corp.adhesion.models.User;
+import com.wild.corp.adhesion.repository.UserRepository;
 import com.wild.corp.adhesion.shop.order.model.OrderStatus;
 import com.wild.corp.adhesion.shop.order.model.ShopOrder;
 import com.wild.corp.adhesion.shop.order.repository.ShopOrderRepository;
@@ -10,6 +13,8 @@ import com.wild.corp.adhesion.shop.payment.repository.PaymentAttemptRepository;
 import com.wild.corp.adhesion.shop.payment.repository.PaymentRepository;
 import com.wild.corp.adhesion.shop.payment.model.PaymentStatus;
 import com.wild.corp.adhesion.shop.payment.provider.PaymentGateway;
+import com.wild.corp.adhesion.shop.payment.provider.PaymentLine;
+import com.wild.corp.adhesion.shop.payment.provider.PaymentPayer;
 import com.wild.corp.adhesion.shop.payment.provider.PaymentNotification;
 import com.wild.corp.adhesion.shop.payment.provider.PaymentProviderException;
 import com.wild.corp.adhesion.shop.payment.provider.PaymentProviderType;
@@ -17,6 +22,8 @@ import com.wild.corp.adhesion.shop.payment.provider.PaymentRequest;
 import com.wild.corp.adhesion.shop.payment.provider.PaymentResult;
 import com.wild.corp.adhesion.shop.payment.provider.PaymentSession;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -28,20 +35,25 @@ import java.util.Comparator;
 @Transactional
 public class PaymentService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(PaymentService.class);
+
     private final PaymentRepository paymentRepository;
     private final PaymentAttemptRepository attemptRepository;
     private final ShopOrderRepository orderRepository;
+    private final UserRepository userRepository;
     private final OrderService orderService;
     private final PaymentGateway paymentGateway;
 
     public PaymentService(PaymentRepository paymentRepository,
                           PaymentAttemptRepository attemptRepository,
                           ShopOrderRepository orderRepository,
+                          UserRepository userRepository,
                           OrderService orderService,
                           PaymentGateway paymentGateway) {
         this.paymentRepository = paymentRepository;
         this.attemptRepository = attemptRepository;
         this.orderRepository = orderRepository;
+        this.userRepository = userRepository;
         this.orderService = orderService;
         this.paymentGateway = paymentGateway;
     }
@@ -56,13 +68,15 @@ public class PaymentService {
         });
     }
 
-    private PaymentAttempt createAttempt(Long paymentId, PaymentProviderType providerType, String idempotencyKey) {
-        return attemptRepository.findByPaymentIdAndIdempotencyKey(paymentId, idempotencyKey)
+    private PaymentAttempt createAttempt(Payment payment, PaymentProviderType providerType, String idempotencyKey) {
+        return attemptRepository.findByPaymentIdAndIdempotencyKey(payment.getId(), idempotencyKey)
                 .orElseGet(() -> {
-                    Payment payment = paymentRepository.findById(paymentId).orElseThrow();
-                    PaymentAttempt attempt = payment.startAttempt(providerType, idempotencyKey);
-                    paymentRepository.save(payment);
-                    return attempt;
+                    payment.startAttempt(providerType, idempotencyKey);
+                    Payment savedPayment = paymentRepository.save(payment);
+                    return savedPayment.getAttempts().stream()
+                            .filter(candidate -> idempotencyKey.equals(candidate.getIdempotencyKey()))
+                            .findFirst()
+                            .orElseThrow();
                 });
     }
 
@@ -78,7 +92,8 @@ public class PaymentService {
         }
         Payment payment = getOrCreatePayment(orderId);
         PaymentProviderType providerType = paymentGateway.configuredProvider();
-        PaymentAttempt attempt = createAttempt(payment.getId(), providerType, idempotencyKey);
+        PaymentAttempt attempt = createAttempt(payment, providerType, idempotencyKey);
+        Payment owningPayment = attempt.getPayment();
         requireProvider(attempt, providerType);
 
         PaymentSession persistedSession = persistedSession(attempt);
@@ -89,19 +104,39 @@ public class PaymentService {
             throw new IllegalStateException("Cette tentative est terminée ; utilisez une nouvelle clé d'idempotence");
         }
 
-        PaymentRequest request = new PaymentRequest(order.getId(), order.getOrderNumber(), payment.getExpectedAmount(),
-                idempotencyKey, returnUrl, cancelUrl);
+        PaymentRequest request = new PaymentRequest(order.getId(), order.getOrderNumber(), owningPayment.getExpectedAmount(),
+                idempotencyKey, returnUrl, cancelUrl, order.getItems().stream()
+                .map(item -> new PaymentLine(item.getProductName(), item.getVariantName(), item.getQuantity()))
+                .toList(), payerFor(order.getCustomerUserId()));
         try {
             PaymentSession session = paymentGateway.createPayment(request);
             attempt.markPending(session.externalPaymentId(), uriToString(session.redirectUrl()));
             if (session.status() == PaymentStatus.SUCCEEDED) {
-                completePayment(payment, attempt, order);
+                completePayment(owningPayment, attempt, order);
             }
             return session;
         } catch (PaymentProviderException exception) {
-            payment.recordFailed(attempt, exception.getMessage());
+            owningPayment.recordFailed(attempt, exception.getMessage());
+            LOGGER.warn("Échec du fournisseur de paiement pour la commande {} : {} ({})",
+                    order.getOrderNumber(), exception.getProviderType(), exception.getErrorCode());
             throw exception;
         }
+    }
+
+    private PaymentPayer payerFor(Long userId) {
+        return userRepository.findById(userId).map(user -> {
+            Adherent adherent = user.getAdherent();
+            if (adherent != null && Boolean.TRUE.equals(adherent.getMineur())
+                    && adherent.getRepresentant() != null) {
+                adherent = adherent.getRepresentant();
+                User representative = adherent.getUser();
+                if (representative != null) {
+                    user = representative;
+                }
+            }
+            return new PaymentPayer(adherent == null ? null : adherent.getPrenom(),
+                    adherent == null ? null : adherent.getNom(), user.getUsername());
+        }).orElse(null);
     }
 
     public Payment refreshPaymentStatus(Long attemptId) {
@@ -171,7 +206,9 @@ public class PaymentService {
             throw new IllegalStateException("Le montant du paiement ne correspond plus à la commande");
         }
         payment.recordSucceeded(attempt);
-        if (order.getStatus() != OrderStatus.PAID) {
+        if (order.getStatus() != OrderStatus.PAID
+                && order.getStatus() != OrderStatus.PROCESSING
+                && order.getStatus() != OrderStatus.COMPLETED) {
             orderService.consumeReservedStock(order);
             order.transitionTo(OrderStatus.PAID);
         }

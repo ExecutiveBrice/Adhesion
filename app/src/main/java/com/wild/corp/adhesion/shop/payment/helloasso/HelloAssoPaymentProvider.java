@@ -1,12 +1,11 @@
 package com.wild.corp.adhesion.shop.payment.helloasso;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wild.corp.adhesion.shop.common.money.Money;
 import com.wild.corp.adhesion.shop.payment.helloasso.client.HelloAssoCheckoutClient;
 import com.wild.corp.adhesion.shop.payment.model.PaymentStatus;
 import com.wild.corp.adhesion.shop.payment.provider.PaymentNotification;
+import com.wild.corp.adhesion.shop.payment.provider.PaymentLine;
+import com.wild.corp.adhesion.shop.payment.provider.PaymentPayer;
 import com.wild.corp.adhesion.shop.payment.provider.PaymentProvider;
 import com.wild.corp.adhesion.shop.payment.provider.PaymentProviderException;
 import com.wild.corp.adhesion.shop.payment.provider.PaymentProviderType;
@@ -19,19 +18,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
-import org.wild.corp.adhesion.client.helloasso.model.HelloAssoApiV5CommonModelsCartsCheckoutIntentResponse;
+import org.wild.corp.adhesion.client.helloasso.model.HelloAssoApiV5CommonModelsCartsCheckoutPayer;
 import org.wild.corp.adhesion.client.helloasso.model.HelloAssoApiV5CommonModelsCartsInitCheckoutBody;
 import org.wild.corp.adhesion.client.helloasso.model.HelloAssoApiV5CommonModelsCartsInitCheckoutResponse;
-import org.wild.corp.adhesion.client.helloasso.model.HelloAssoApiV5CommonModelsEnumsPaymentState;
-import org.wild.corp.adhesion.client.helloasso.model.HelloAssoApiV5CommonModelsStatisticsOrderDetail;
-import org.wild.corp.adhesion.client.helloasso.model.HelloAssoApiV5CommonModelsStatisticsOrderPayment;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.net.URI;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.regex.Pattern;
 
 /** Adaptateur HelloAsso : toutes les confirmations passent par une lecture serveur de l'intent. */
 @Component
@@ -40,20 +42,24 @@ public class HelloAssoPaymentProvider implements PaymentProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HelloAssoPaymentProvider.class);
     private static final String CURRENCY = "EUR";
+    private static final Pattern CHECKOUT_NAME = Pattern.compile("[\\p{IsLatin} '\\-’]+", Pattern.UNICODE_CASE);
+    private static final Pattern CHECKOUT_EMAIL = Pattern.compile("[^\\s@]+@[^\\s@]+\\.[^\\s@]+");
+    private static final Set<String> REJECTED_NAMES = Set.of("firstname", "lastname", "unknown",
+            "first_name", "last_name", "anonyme", "user", "admin", "name", "nom", "prénom", "test");
 
     private final HelloAssoCheckoutClient checkoutClient;
     private final HelloAssoAccessTokenService accessTokenService;
     private final HelloAssoPaymentProperties properties;
-    private final ObjectMapper objectMapper;
+    private final JsonMapper jsonMapper;
 
     public HelloAssoPaymentProvider(HelloAssoCheckoutClient checkoutClient,
                                     HelloAssoAccessTokenService accessTokenService,
                                     HelloAssoPaymentProperties properties,
-                                    ObjectMapper objectMapper) {
+                                    JsonMapper jsonMapper) {
         this.checkoutClient = checkoutClient;
         this.accessTokenService = accessTokenService;
         this.properties = properties;
-        this.objectMapper = objectMapper;
+        this.jsonMapper = jsonMapper;
         properties.requireCredentials();
     }
 
@@ -64,6 +70,8 @@ public class HelloAssoPaymentProvider implements PaymentProvider {
 
     @Override
     public PaymentSession createPayment(PaymentRequest request) {
+        requireHttpsUrl(request.returnUrl());
+        requireHttpsUrl(request.cancelUrl());
         requireEuro(request.amount());
         int amountInCents;
         try {
@@ -74,8 +82,12 @@ public class HelloAssoPaymentProvider implements PaymentProvider {
         }
 
         HelloAssoApiV5CommonModelsCartsInitCheckoutBody body = new HelloAssoApiV5CommonModelsCartsInitCheckoutBody(
-                amountInCents, amountInCents, itemName(request.orderNumber()), request.cancelUrl().toASCIIString(),
+                amountInCents, amountInCents, itemName(request), request.cancelUrl().toASCIIString(),
                 request.cancelUrl().toASCIIString(), request.returnUrl().toASCIIString(), false);
+        HelloAssoApiV5CommonModelsCartsCheckoutPayer payer = checkoutPayer(request.payer());
+        if (payer != null) {
+            body.payer(payer);
+        }
         body.metadata(Map.of(
                 "shopOrderId", request.orderId(),
                 "shopOrderNumber", request.orderNumber(),
@@ -95,7 +107,7 @@ public class HelloAssoPaymentProvider implements PaymentProvider {
     @Override
     public PaymentResult retrievePayment(String externalPaymentId) {
         String checkoutIntentId = validCheckoutIntentId(externalPaymentId);
-        HelloAssoApiV5CommonModelsCartsCheckoutIntentResponse intent = authenticated(authorization ->
+        String intent = authenticated(authorization ->
                 checkoutClient.getCheckoutIntent(authorization, properties.getOrganizationSlug(), checkoutIntentId));
         return toPaymentResult(checkoutIntentId, intent);
     }
@@ -108,15 +120,28 @@ public class HelloAssoPaymentProvider implements PaymentProvider {
         return retrievePayment(checkoutIntentId);
     }
 
-    private PaymentResult toPaymentResult(String checkoutIntentId,
-                                          HelloAssoApiV5CommonModelsCartsCheckoutIntentResponse intent) {
-        if (intent == null || intent.getOrder() == null) {
+    private PaymentResult toPaymentResult(String checkoutIntentId, String responseBody) {
+        if (responseBody == null || responseBody.isBlank()) {
+            throw invalidResponse("HelloAsso a retourné un checkout vide");
+        }
+        JsonNode intent;
+        try {
+            intent = jsonMapper.readTree(responseBody);
+        } catch (JacksonException exception) {
+            throw new PaymentProviderException(type(), "INVALID_PROVIDER_RESPONSE",
+                    "La réponse de vérification HelloAsso est illisible", false, exception);
+        }
+        if (intent == null || !intent.isObject()) {
+            throw invalidResponse("HelloAsso a retourné un checkout invalide");
+        }
+        JsonNode order = intent.get("order");
+        if (order == null || order.isNull()) {
             return pending(checkoutIntentId);
         }
-        HelloAssoApiV5CommonModelsStatisticsOrderDetail order = intent.getOrder();
-        Money amount = amountOf(order, checkoutIntentId);
-        List<HelloAssoApiV5CommonModelsStatisticsOrderPayment> payments = values(order.getPayments());
-        PaymentStatus status = statusOf(payments);
+        if (!order.isObject()) {
+            throw invalidResponse("HelloAsso a retourné une commande invalide");
+        }
+        PaymentStatus status = statusOf(order.get("payments"));
         if (status == PaymentStatus.PENDING) {
             return pending(checkoutIntentId);
         }
@@ -128,41 +153,40 @@ public class HelloAssoPaymentProvider implements PaymentProvider {
             return new PaymentResult(checkoutIntentId, status, Money.zero(CURRENCY), "CANCELLED",
                     "Paiement annulé ou abandonné sur HelloAsso");
         }
-        return new PaymentResult(checkoutIntentId, status, amount, null, null);
+        return new PaymentResult(checkoutIntentId, status, amountOf(order, checkoutIntentId), null, null);
     }
 
     private PaymentResult pending(String checkoutIntentId) {
         return new PaymentResult(checkoutIntentId, PaymentStatus.PENDING, Money.zero(CURRENCY), null, null);
     }
 
-    private Money amountOf(HelloAssoApiV5CommonModelsStatisticsOrderDetail order, String checkoutIntentId) {
-        if (order.getAmount() == null || order.getAmount().getTotal() == null || order.getAmount().getTotal() < 0) {
+    private Money amountOf(JsonNode order, String checkoutIntentId) {
+        JsonNode amount = order.path("amount").path("total");
+        if (!amount.isIntegralNumber() || !amount.canConvertToLong() || amount.longValue() < 0) {
             throw invalidResponse("HelloAsso n'a pas retourné le montant vérifié de l'intent " + checkoutIntentId);
         }
-        return new Money(order.getAmount().getTotal(), CURRENCY);
+        return new Money(amount.longValue(), CURRENCY);
     }
 
-    private PaymentStatus statusOf(List<HelloAssoApiV5CommonModelsStatisticsOrderPayment> payments) {
-        if (payments.stream().map(HelloAssoApiV5CommonModelsStatisticsOrderPayment::getState)
-                .anyMatch(state -> state == HelloAssoApiV5CommonModelsEnumsPaymentState.REFUNDED)) {
-            return PaymentStatus.REFUNDED;
+    private PaymentStatus statusOf(JsonNode payments) {
+        if (payments == null || payments.isNull()) return PaymentStatus.PENDING;
+        if (!payments.isArray()) throw invalidResponse("HelloAsso a retourné une liste de paiements invalide");
+        boolean authorized = false;
+        boolean failed = false;
+        boolean cancelled = false;
+        for (JsonNode payment : payments) {
+            String state = payment.path("state").asText().toLowerCase(Locale.ROOT);
+            switch (state) {
+                case "refunded" -> { return PaymentStatus.REFUNDED; }
+                case "authorized", "authorizedpreprod" -> authorized = true;
+                case "refused", "error" -> failed = true;
+                case "canceled", "abandoned" -> cancelled = true;
+                default -> { }
+            }
         }
-        if (payments.stream().map(HelloAssoApiV5CommonModelsStatisticsOrderPayment::getState)
-                .anyMatch(state -> state == HelloAssoApiV5CommonModelsEnumsPaymentState.AUTHORIZED
-                        || state == HelloAssoApiV5CommonModelsEnumsPaymentState.AUTHORIZED_PREPROD)) {
-            return PaymentStatus.SUCCEEDED;
-        }
-        if (payments.stream().map(HelloAssoApiV5CommonModelsStatisticsOrderPayment::getState)
-                .anyMatch(state -> state == HelloAssoApiV5CommonModelsEnumsPaymentState.REFUSED
-                        || state == HelloAssoApiV5CommonModelsEnumsPaymentState.ERROR)) {
-            return PaymentStatus.FAILED;
-        }
-        if (payments.stream().map(HelloAssoApiV5CommonModelsStatisticsOrderPayment::getState)
-                .anyMatch(state -> state == HelloAssoApiV5CommonModelsEnumsPaymentState.CANCELED
-                        || state == HelloAssoApiV5CommonModelsEnumsPaymentState.ABANDONED)) {
-            return PaymentStatus.CANCELLED;
-        }
-        return PaymentStatus.PENDING;
+        if (authorized) return PaymentStatus.SUCCEEDED;
+        if (failed) return PaymentStatus.FAILED;
+        return cancelled ? PaymentStatus.CANCELLED : PaymentStatus.PENDING;
     }
 
     private <T> T authenticated(Function<String, T> call) {
@@ -199,13 +223,13 @@ public class HelloAssoPaymentProvider implements PaymentProvider {
 
     private String checkoutIntentIdFrom(String payload) {
         try {
-            JsonNode root = objectMapper.readTree(payload);
+            JsonNode root = jsonMapper.readTree(payload);
             JsonNode identifier = findCheckoutIntentId(root);
             if (identifier == null || !identifier.canConvertToInt() || identifier.intValue() <= 0) {
                 throw invalidNotification();
             }
             return Integer.toString(identifier.intValue());
-        } catch (JsonProcessingException exception) {
+        } catch (JacksonException exception) {
             throw new PaymentProviderException(type(), "INVALID_NOTIFICATION",
                     "La notification HelloAsso est illisible", false, exception);
         }
@@ -250,9 +274,83 @@ public class HelloAssoPaymentProvider implements PaymentProvider {
         }
     }
 
-    private String itemName(String orderNumber) {
-        String value = "Commande " + orderNumber;
-        return value.length() <= 250 ? value : value.substring(0, 250);
+    private void requireHttpsUrl(URI url) {
+        if (!"https".equalsIgnoreCase(url.getScheme()) || url.getHost() == null) {
+            throw new PaymentProviderException(type(), "INSECURE_CHECKOUT_URL",
+                    "HelloAsso exige des URL de retour HTTPS", false);
+        }
+    }
+
+    private String itemName(PaymentRequest request) {
+        String prefix = "Commande " + request.orderNumber();
+        if (request.lines().isEmpty()) {
+            return limitItemName(prefix);
+        }
+        Map<String, Integer> quantities = new LinkedHashMap<>();
+        for (PaymentLine line : request.lines()) {
+            String name = line.productName();
+            if (line.variantName() != null && !line.variantName().isBlank()) {
+                name += " (" + line.variantName() + ")";
+            }
+            quantities.merge(name, line.quantity(), Math::addExact);
+        }
+        String products = quantities.entrySet().stream()
+                .map(entry -> entry.getKey() + " x " + entry.getValue())
+                .collect(Collectors.joining(" ; "));
+        return limitItemName(prefix + " : " + products);
+    }
+
+    private String limitItemName(String value) {
+        return value.length() <= 250 ? value : value.substring(0, 249) + "…";
+    }
+
+    private HelloAssoApiV5CommonModelsCartsCheckoutPayer checkoutPayer(PaymentPayer source) {
+        if (source == null) {
+            return null;
+        }
+        String firstName = validName(source.firstName());
+        String lastName = validName(source.lastName());
+        if (firstName != null && lastName != null && firstName.equalsIgnoreCase(lastName)) {
+            firstName = null;
+            lastName = null;
+        }
+        String email = validEmail(source.email());
+        if (firstName == null && lastName == null && email == null) {
+            return null;
+        }
+        HelloAssoApiV5CommonModelsCartsCheckoutPayer payer = new HelloAssoApiV5CommonModelsCartsCheckoutPayer();
+        if (firstName != null) {
+            payer.firstName(firstName);
+        }
+        if (lastName != null) {
+            payer.lastName(lastName);
+        }
+        if (email != null) {
+            payer.email(email);
+        }
+        return payer;
+    }
+
+    private String validName(String value) {
+        if (value == null) {
+            return null;
+        }
+        String name = value.trim();
+        String lower = name.toLowerCase(Locale.ROOT);
+        if (name.length() < 2 || name.length() > 255 || !CHECKOUT_NAME.matcher(name).matches()
+                || !lower.matches(".*[aeiouyàâäéèêëîïôöùûü].*")
+                || lower.matches(".*(.)\\1\\1.*") || REJECTED_NAMES.contains(lower)) {
+            return null;
+        }
+        return name;
+    }
+
+    private String validEmail(String value) {
+        if (value == null) {
+            return null;
+        }
+        String email = value.trim();
+        return email.length() <= 255 && CHECKOUT_EMAIL.matcher(email).matches() ? email : null;
     }
 
     private PaymentProviderException invalidResponse(String message) {
@@ -264,7 +362,4 @@ public class HelloAssoPaymentProvider implements PaymentProvider {
                 "La notification HelloAsso ne contient pas d'identifiant de checkout", false);
     }
 
-    private static <T> List<T> values(JsonNullable<List<T>> value) {
-        return value != null && value.isPresent() && value.get() != null ? value.get() : List.of();
-    }
 }

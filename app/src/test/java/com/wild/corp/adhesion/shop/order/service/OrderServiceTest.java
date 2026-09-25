@@ -7,6 +7,8 @@ import com.wild.corp.adhesion.shop.common.exception.InvalidQuantityException;
 import com.wild.corp.adhesion.shop.common.exception.ProductNotOrderableException;
 import com.wild.corp.adhesion.shop.common.money.Money;
 import com.wild.corp.adhesion.shop.order.model.ShopOrder;
+import com.wild.corp.adhesion.shop.order.model.OrderItem;
+import com.wild.corp.adhesion.shop.order.model.OrderItemStatus;
 import com.wild.corp.adhesion.shop.order.model.OrderStatus;
 import com.wild.corp.adhesion.shop.order.repository.ShopOrderRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +26,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
@@ -114,6 +118,70 @@ class OrderServiceTest {
         assertThat(result).isSameAs(existingOrder);
         verify(variantRepository, never()).findByIdForUpdate(any());
         verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    void updatesAdminOrderStatusWithoutChangingItemStatuses() {
+        ShopOrder order = new ShopOrder("CMD-2026-000001", 42L, "EUR");
+        OrderItem item = OrderItem.snapshot(10L, "Tee-shirt", 20L, "M", "TS-M", new Money(1_500, "EUR"), 1);
+        order.addItem(item);
+        order.submitForPayment();
+        order.transitionTo(OrderStatus.PAID);
+        item.setStatus(OrderItemStatus.PENDING);
+        when(orderRepository.findByOrderNumber(order.getOrderNumber())).thenReturn(Optional.of(order));
+
+        orderService.updateAdminOrderStatus(order.getOrderNumber(), OrderStatus.PROCESSING);
+        orderService.updateAdminOrderStatus(order.getOrderNumber(), OrderStatus.COMPLETED);
+
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.COMPLETED);
+        assertThat(item.getStatus()).isEqualTo(OrderItemStatus.PENDING);
+    }
+
+    @Test
+    void cancelsPendingPaymentOrderFromAdminAndReleasesItsStockWithoutChangingItemStatuses() {
+        Product product = product(10L, true);
+        ProductVariant variant = variant(20L, product, new Money(1_500, "EUR"));
+        variant.trackStock(5);
+        when(variantRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(variant));
+        when(orderNumberGenerator.nextOrderNumber()).thenReturn("CMD-2026-000001");
+        when(orderRepository.save(any(ShopOrder.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ShopOrder order = orderService.createOrder(42L, List.of(new OrderItemRequest(20L, 2)));
+        OrderItem item = order.getItems().getFirst();
+        when(orderRepository.findByOrderNumber(order.getOrderNumber())).thenReturn(Optional.of(order));
+
+        orderService.updateAdminOrderStatus(order.getOrderNumber(), OrderStatus.CANCELLED);
+
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+        assertThat(item.getStatus()).isEqualTo(OrderItemStatus.PENDING);
+        assertThat(variant.getStockReserved()).isZero();
+        assertThat(variant.availableStock()).isEqualTo(5);
+    }
+
+    @Test
+    void rejectsPaymentStatusChangesFromAdmin() {
+        ShopOrder order = new ShopOrder("CMD-2026-000001", 42L, "EUR");
+        when(orderRepository.findByOrderNumber(order.getOrderNumber())).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> orderService.updateAdminOrderStatus(order.getOrderNumber(), OrderStatus.PAID))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.DRAFT);
+    }
+
+    @Test
+    void updatesOnlyAnItemBelongingToTheRequestedOrder() {
+        ShopOrder order = new ShopOrder("CMD-2026-000001", 42L, "EUR");
+        OrderItem item = OrderItem.snapshot(10L, "Tee-shirt", 20L, "M", "TS-M", new Money(1_500, "EUR"), 1);
+        order.addItem(item);
+        ReflectionTestUtils.setField(item, "id", 7L);
+        when(orderRepository.findByOrderNumber(order.getOrderNumber())).thenReturn(Optional.of(order));
+
+        assertThat(orderService.updateItemStatus(order.getOrderNumber(), 7L, OrderItemStatus.PROCESSING))
+                .isSameAs(item);
+        assertThat(item.getStatus()).isEqualTo(OrderItemStatus.PROCESSING);
+        assertThatThrownBy(() -> orderService.updateItemStatus(order.getOrderNumber(), 8L, OrderItemStatus.COMPLETED))
+                .isInstanceOf(java.util.NoSuchElementException.class);
+        assertThat(item.getStatus()).isEqualTo(OrderItemStatus.PROCESSING);
     }
 
     private Product product(Long id, boolean active) {

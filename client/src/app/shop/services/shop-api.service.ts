@@ -27,6 +27,10 @@ export class ShopApiService {
     });
   }
 
+  orders(): Observable<ShopOrderDto[]> {
+    return this.http.get<ShopOrderDto[]>(`${this.apiUrl}/orders`);
+  }
+
   order(orderNumber: string): Observable<ShopOrderDto> {
     return this.http.get<ShopOrderDto>(`${this.apiUrl}/orders/${encodeURIComponent(orderNumber)}`);
   }

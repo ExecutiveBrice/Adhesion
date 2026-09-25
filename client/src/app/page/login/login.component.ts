@@ -146,10 +146,13 @@ export class LoginComponent implements OnInit {
         next: (data) => {
           this.maintenance = data;
 
-          if (this.tokenStorage.getToken()) {
+          if (this.tokenStorage.getToken() && !this.tokenStorage.isTokenExpired()) {
             this.isLoggedIn = true;
             this.roles = this.tokenStorage.getUser().roles;
-            if (this.roles.includes('ROLE_ADMIN')) {
+            const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+            if (returnUrl && /^\/boutique(?:\/|\?|$)/.test(returnUrl)) {
+              this.router.navigateByUrl(returnUrl);
+            } else if (this.roles.includes('ROLE_ADMIN')) {
               this.router.navigate(['admin']);
             } else if (this.roles.includes('ROLE_SECRETAIRE')) {
               this.router.navigate(['adhesions']);

@@ -3,17 +3,18 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { forkJoin, Observable, timeout } from 'rxjs';
 import {
-  ShopAdminCategoryDto, ShopAdminCategoryRequest, ShopAdminProductDto, ShopAdminProductRequest,
+  ShopAdminCategoryDto, ShopAdminCategoryRequest, ShopAdminOrderDto, ShopAdminProductDto, ShopAdminProductRequest,
   ShopAdminVariantRequest
 } from '../models/shop.models';
 import { ShopAdminApiService } from '../services/shop-admin-api.service';
+import { ShopAdminOrderCardComponent } from '../components/shop-admin-order-card.component';
 import { registerApiViewRefresh } from '../../_services/api-render.service';
 
 type VariantDraft = ShopAdminVariantRequest;
 
 @Component({
   selector: 'app-shop-management',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, ShopAdminOrderCardComponent],
   templateUrl: './shop-management.component.html',
   styleUrl: './shop-management.component.css'
 })
@@ -22,6 +23,12 @@ export class ShopManagementComponent implements OnInit {
   private readonly api = inject(ShopAdminApiService);
   products: ShopAdminProductDto[] = [];
   categories: ShopAdminCategoryDto[] = [];
+  activeTab: 'stocks' | 'orders' = 'stocks';
+  ordersInProgress: ShopAdminOrderDto[] = [];
+  completedOrders: ShopAdminOrderDto[] = [];
+  ordersLoading = false;
+  ordersLoaded = false;
+  ordersError = '';
   loading = true;
   saving = false;
   error = '';
@@ -35,6 +42,48 @@ export class ShopManagementComponent implements OnInit {
   };
 
   ngOnInit(): void { this.load(); }
+
+  selectTab(tab: 'stocks' | 'orders'): void {
+    this.activeTab = tab;
+    if (tab === 'orders' && !this.ordersLoaded && !this.ordersLoading) this.loadOrders();
+  }
+
+  loadOrders(): void {
+    this.ordersLoading = true;
+    this.ordersError = '';
+    this.api.orders().pipe(timeout({ first: 10_000 })).subscribe({
+      next: response => {
+        const orders = this.collection<ShopAdminOrderDto>(response);
+        this.ordersInProgress = orders.filter(order => !this.isCompletedOrder(order));
+        this.completedOrders = orders.filter(order => this.isCompletedOrder(order));
+        this.ordersLoaded = true;
+        this.ordersLoading = false;
+      },
+      error: () => {
+        this.ordersError = 'Impossible de charger les commandes. Réessayez.';
+        this.ordersLoading = false;
+      }
+    });
+  }
+
+  orderStatus(status: ShopAdminOrderDto['status']): string {
+    const labels: Record<ShopAdminOrderDto['status'], string> = {
+      DRAFT: 'Brouillon', PENDING_PAYMENT: 'En attente de paiement', PAID: 'Payée',
+      PROCESSING: 'En préparation', COMPLETED: 'Terminée', CANCELLED: 'Annulée',
+      EXPIRED: 'Expirée', REFUNDED: 'Remboursée'
+    };
+    return labels[status];
+  }
+
+  reclassifyOrders(): void {
+    const orders = [...this.ordersInProgress, ...this.completedOrders];
+    this.ordersInProgress = orders.filter(order => !this.isCompletedOrder(order));
+    this.completedOrders = orders.filter(order => this.isCompletedOrder(order));
+  }
+
+  private isCompletedOrder(order: ShopAdminOrderDto): boolean {
+    return ['COMPLETED', 'CANCELLED', 'EXPIRED', 'REFUNDED'].includes(order.status);
+  }
 
   load(): void {
     this.loading = true;

@@ -12,6 +12,8 @@ import com.wild.corp.adhesion.shop.catalog.service.CatalogService;
 import com.wild.corp.adhesion.shop.common.money.Money;
 import com.wild.corp.adhesion.shop.order.model.ShopOrder;
 import com.wild.corp.adhesion.shop.order.service.OrderService;
+import com.wild.corp.adhesion.shop.payment.provider.PaymentProviderException;
+import com.wild.corp.adhesion.shop.payment.provider.PaymentProviderType;
 import com.wild.corp.adhesion.shop.payment.service.PaymentService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,7 +64,7 @@ class ShopControllerTest {
     private AuthenticationManager authenticationManager;
 
     @Test
-    void exposesOnlyActiveProductsWithoutAuthentication() throws Exception {
+    void exposesOnlyActiveProductsToAuthenticatedUsers() throws Exception {
         Product product = new Product("Tee-shirt", "tee-shirt", "Coton", true, 0);
         ReflectionTestUtils.setField(product, "id", 10L);
         ProductVariant variant = new ProductVariant(product, "TS-M", "M", new Money(1_500, "EUR"), true, 0);
@@ -70,15 +72,26 @@ class ShopControllerTest {
         product.addVariant(variant);
         given(catalogService.findActiveProducts()).willReturn(List.of(product));
 
-        mockMvc.perform(get("/shop/products"))
+        mockMvc.perform(get("/shop/products").with(authentication(customerAuthentication())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(10))
                 .andExpect(jsonPath("$[0].variants[0].price.amountInCents").value(1500));
     }
 
     @Test
-    void rejectsNegativeQuantityBeforePricingCart() throws Exception {
+    void rejectsAnonymousCatalogAndCartRequests() throws Exception {
+        mockMvc.perform(get("/shop/products"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/shop/products/10"))
+                .andExpect(status().isUnauthorized());
         mockMvc.perform(post("/shop/cart/quote").contentType(APPLICATION_JSON)
+                        .content("{\"items\":[{\"variantId\":20,\"quantity\":1}]}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void rejectsNegativeQuantityBeforePricingCart() throws Exception {
+        mockMvc.perform(post("/shop/cart/quote").with(authentication(customerAuthentication())).contentType(APPLICATION_JSON)
                         .content("{\"items\":[{\"variantId\":20,\"quantity\":-1}]}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors['items[0].quantity']").exists());
@@ -117,10 +130,40 @@ class ShopControllerTest {
 
     @Test
     void rejectsClientSuppliedTotals() throws Exception {
-        mockMvc.perform(post("/shop/cart/quote").contentType(APPLICATION_JSON)
+        mockMvc.perform(post("/shop/cart/quote").with(authentication(customerAuthentication())).contentType(APPLICATION_JSON)
                         .content("{\"items\":[{\"variantId\":20,\"quantity\":1}],\"total\":{\"amountInCents\":1}}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.title").value("Requête invalide"));
+    }
+
+    @Test
+    void listsOnlyOrdersForTheAuthenticatedCustomer() throws Exception {
+        ShopOrder order = new ShopOrder("CMD-2026-000456", 42L, "EUR");
+        order.addItem(com.wild.corp.adhesion.shop.order.model.OrderItem.snapshot(10L, "Tee-shirt", 20L, "M", "TS-M",
+                new Money(1_500, "EUR"), 1));
+        order.submitForPayment();
+        given(orderService.findOrdersForCustomer(42L)).willReturn(List.of(order));
+
+        mockMvc.perform(get("/shop/orders").with(authentication(customerAuthentication())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].orderNumber").value("CMD-2026-000456"));
+
+        verify(orderService).findOrdersForCustomer(42L);
+    }
+
+    @Test
+    void paymentVerificationExposesProviderErrorCodeWithoutProviderResponse() throws Exception {
+        ShopOrder order = new ShopOrder("CMD-2026-000007", 42L, "checkout-7", "EUR");
+        ReflectionTestUtils.setField(order, "id", 7L);
+        given(orderService.findOrderForCustomer("CMD-2026-000007", 42L)).willReturn(order);
+        given(paymentService.refreshPaymentStatusForOrder(7L)).willThrow(new PaymentProviderException(
+                PaymentProviderType.HELLOASSO, "CHECKOUT_CALL_HTTP_404", "Détail privé HelloAsso", false));
+
+        mockMvc.perform(post("/shop/orders/CMD-2026-000007/payment/verify")
+                        .with(authentication(customerAuthentication())))
+                .andExpect(status().isBadGateway())
+                .andExpect(jsonPath("$.code").value("CHECKOUT_CALL_HTTP_404"))
+                .andExpect(jsonPath("$.detail").value("Le paiement ne peut pas être initialisé ou vérifié pour le moment"));
     }
 
     private UsernamePasswordAuthenticationToken customerAuthentication() {

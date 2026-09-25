@@ -3,7 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
-  ShopAdminCategoryDto, ShopAdminCategoryRequest, ShopAdminProductDto, ShopAdminProductRequest,
+  ShopAdminCategoryDto, ShopAdminCategoryRequest, ShopAdminOrderDto, ShopAdminOrderItemDto,
+  ShopAdminOrderItemStatus, ShopAdminProductDto, ShopAdminProductRequest,
   ShopAdminVariantDto, ShopAdminVariantRequest
 } from '../models/shop.models';
 
@@ -12,6 +13,15 @@ export class ShopAdminApiService {
   private readonly apiUrl = `${environment.server.replace(/\/$/, '')}/shop/admin`;
 
   constructor(private readonly http: HttpClient) {}
+
+  orders(): Observable<ShopAdminOrderDto[]> { return this.http.get<ShopAdminOrderDto[]>(`${this.apiUrl}/orders`); }
+  updateOrderStatus(orderNumber: string, status: ShopAdminOrderDto['status']): Observable<ShopAdminOrderDto> {
+    return this.http.put<ShopAdminOrderDto>(`${this.apiUrl}/orders/${encodeURIComponent(orderNumber)}/status`, { status });
+  }
+  updateOrderItemStatus(orderNumber: string, itemId: number, status: ShopAdminOrderItemStatus): Observable<ShopAdminOrderItemDto> {
+    return this.http.put<ShopAdminOrderItemDto>(
+      `${this.apiUrl}/orders/${encodeURIComponent(orderNumber)}/items/${itemId}/status`, { status });
+  }
 
   products(): Observable<ShopAdminProductDto[]> { return this.http.get<ShopAdminProductDto[]>(`${this.apiUrl}/products`); }
   createProduct(request: ShopAdminProductRequest): Observable<ShopAdminProductDto> { return this.http.post<ShopAdminProductDto>(`${this.apiUrl}/products`, request); }

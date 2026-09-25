@@ -5,6 +5,8 @@ import com.wild.corp.adhesion.shop.common.exception.InvalidStatusTransitionExcep
 import com.wild.corp.adhesion.shop.common.exception.ProductNotOrderableException;
 import com.wild.corp.adhesion.shop.payment.provider.PaymentProviderException;
 import jakarta.validation.ConstraintViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -20,6 +22,8 @@ import java.util.NoSuchElementException;
 
 @RestControllerAdvice(assignableTypes = {ShopController.class, ShopAdminController.class})
 public class ShopApiExceptionHandler {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ShopApiExceptionHandler.class);
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ProblemDetail validation(MethodArgumentNotValidException exception) {
@@ -63,8 +67,18 @@ public class ShopApiExceptionHandler {
 
     @ExceptionHandler(PaymentProviderException.class)
     ProblemDetail paymentProvider(PaymentProviderException exception) {
+        LOGGER.warn("Échec du fournisseur de paiement {} ({})",
+                exception.getProviderType(), exception.getErrorCode());
+        if ("INSECURE_CHECKOUT_URL".equals(exception.getErrorCode())) {
+            ProblemDetail problem = problem(HttpStatus.BAD_REQUEST, "URL de retour non sécurisée", exception.getMessage());
+            problem.setProperty("code", exception.getErrorCode());
+            return problem;
+        }
         HttpStatus status = exception.isRetryable() ? HttpStatus.SERVICE_UNAVAILABLE : HttpStatus.BAD_GATEWAY;
-        return problem(status, "Service de paiement indisponible", "Le paiement ne peut pas être initialisé ou vérifié pour le moment");
+        ProblemDetail problem = problem(status, "Service de paiement indisponible",
+                "Le paiement ne peut pas être initialisé ou vérifié pour le moment");
+        problem.setProperty("code", exception.getErrorCode());
+        return problem;
     }
 
     private ProblemDetail problem(HttpStatus status, String title, String detail) {

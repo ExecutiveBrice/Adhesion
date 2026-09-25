@@ -5,6 +5,16 @@ npm install
 #Démarage local
 npm start
 
+## Paiement HelloAsso en local
+
+Le Checkout HelloAsso exige des URL de retour HTTPS. Démarrer le backend sur le port 8000 avec le profil `helloasso-sandbox`, puis lancer :
+
+```sh
+npm run start:helloasso
+```
+
+Ouvrir `https://localhost:4200/adhesion/` et accepter le certificat de développement du navigateur. Ce démarrage sert Angular en HTTPS et transmet `/adhesion/api/**` au backend local. Le démarrage habituel `npm start` reste en HTTP et ne peut pas lancer un Checkout HelloAsso.
+
 #Build des sources pour dépot docker (local ou remote)
 npm run build --prod
 

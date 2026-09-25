@@ -128,13 +128,36 @@ export interface ShopOrderItemDto {
 export interface ShopOrderDto {
   id: number;
   orderNumber: string;
-  status: 'DRAFT' | 'PENDING_PAYMENT' | 'PAID' | 'PROCESSING' | 'COMPLETED' | 'CANCELLED' | 'REFUNDED';
+  status: 'DRAFT' | 'PENDING_PAYMENT' | 'PAID' | 'PROCESSING' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED' | 'REFUNDED';
   items: ShopOrderItemDto[];
   subtotal: ShopMoneyDto;
   discountTotal: ShopMoneyDto;
   feesTotal: ShopMoneyDto;
   total: ShopMoneyDto;
   createdAt: string;
+}
+
+export interface ShopAdminOrderDto {
+  orderNumber: string;
+  status: ShopOrderDto['status'];
+  total: ShopMoneyDto;
+  createdAt: string;
+  customerEmail: string | null;
+  customerTribeId: number | null;
+  items: ShopAdminOrderItemDto[];
+}
+
+export type ShopAdminOrderItemStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'CANCELLED';
+
+export interface ShopAdminOrderItemDto {
+  id: number;
+  productName: string;
+  variantName: string | null;
+  sku: string | null;
+  unitPrice: ShopMoneyDto;
+  quantity: number;
+  lineTotal: ShopMoneyDto;
+  status: ShopAdminOrderItemStatus;
 }
 
 /** État local minimal : aucune somme ni prix n'est conservé comme référence de paiement. */

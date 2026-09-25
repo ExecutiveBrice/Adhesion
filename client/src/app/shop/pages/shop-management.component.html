@@ -1,12 +1,46 @@
 <main class="shop-management container py-4">
   <header class="management-header">
-    <div><p class="shop-eyebrow">Espace responsable</p><h1>Gestion de la boutique</h1><p>Ajoutez, modifiez ou retirez les produits, variantes et catégories.</p></div>
+    <div><p class="shop-eyebrow">Espace responsable</p><h1>Gestion de la boutique</h1><p>Gérez les stocks et suivez les commandes de la boutique.</p></div>
     <a routerLink="/boutique" class="btn btn-outline-primary">Voir la boutique</a>
   </header>
 
+  <div class="management-tabs" role="tablist" aria-label="Gestion de la boutique">
+    <button #stocksTab id="stocks-tab" type="button" role="tab" [attr.aria-selected]="activeTab === 'stocks'" [attr.tabindex]="activeTab === 'stocks' ? 0 : -1" aria-controls="stocks-panel" [class.active]="activeTab === 'stocks'" (click)="selectTab('stocks')" (keydown.arrowright)="$event.preventDefault(); selectTab('orders'); ordersTab.focus()" (keydown.arrowleft)="$event.preventDefault(); selectTab('orders'); ordersTab.focus()">Gestion des stocks</button>
+    <button #ordersTab id="orders-tab" type="button" role="tab" [attr.aria-selected]="activeTab === 'orders'" [attr.tabindex]="activeTab === 'orders' ? 0 : -1" aria-controls="orders-panel" [class.active]="activeTab === 'orders'" (click)="selectTab('orders')" (keydown.arrowright)="$event.preventDefault(); selectTab('stocks'); stocksTab.focus()" (keydown.arrowleft)="$event.preventDefault(); selectTab('stocks'); stocksTab.focus()">Gestion des commandes</button>
+  </div>
+
+  <div id="orders-panel" role="tabpanel" aria-labelledby="orders-tab" [hidden]="activeTab !== 'orders'">
+    <div class="orders-heading"><p>Suivez les commandes depuis leur création jusqu’à leur clôture.</p><button type="button" class="btn btn-outline-primary btn-sm" (click)="loadOrders()" [disabled]="ordersLoading">Actualiser</button></div>
+    @if (ordersLoading) { <p role="status">Chargement des commandes…</p> }
+    @if (ordersError) { <div class="alert alert-danger" role="alert">{{ ordersError }}</div> }
+    @if (ordersLoaded && !ordersLoading) {
+      <section class="management-section" aria-labelledby="in-progress-title">
+        <h2 id="in-progress-title">Commandes en cours <span class="order-count">{{ ordersInProgress.length }}</span></h2>
+        @if (ordersInProgress.length) {
+          <div class="order-list">
+            @for (order of ordersInProgress; track order.orderNumber) {
+              <app-shop-admin-order-card [order]="order" [statusLabel]="orderStatus(order.status)" (statusChanged)="reclassifyOrders()"></app-shop-admin-order-card>
+            }
+          </div>
+        } @else { <p class="text-body-secondary mb-0">Aucune commande en cours.</p> }
+      </section>
+      <section class="management-section" aria-labelledby="completed-title">
+        <h2 id="completed-title">Commandes terminées <span class="order-count">{{ completedOrders.length }}</span></h2>
+        @if (completedOrders.length) {
+          <div class="order-list">
+            @for (order of completedOrders; track order.orderNumber) {
+              <app-shop-admin-order-card [order]="order" [statusLabel]="orderStatus(order.status)" (statusChanged)="reclassifyOrders()"></app-shop-admin-order-card>
+            }
+          </div>
+        } @else { <p class="text-body-secondary mb-0">Aucune commande terminée.</p> }
+      </section>
+    }
+  </div>
+
+  <div id="stocks-panel" role="tabpanel" aria-labelledby="stocks-tab" [hidden]="activeTab !== 'stocks'">
   @if (error) { <div class="alert alert-danger" role="alert">{{ error }}</div> }
   @if (message) { <div class="alert alert-success" role="status">{{ message }}</div> }
-  @if (loading) { <p role="status">Chargement de la gestion de la boutique…</p> }
+  @if (loading) { <p role="status">Chargement de la gestion des stocks…</p> }
 
   @if (!loading) {
     <section class="management-section">
@@ -98,4 +132,5 @@
       </div>
     </section>
   }
+  </div>
 </main>
