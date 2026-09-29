@@ -30,4 +30,22 @@ class ParamBooleanServicesTest {
                 .extracting(ParamBoolean::getParamName, ParamBoolean::getParamValue)
                 .containsExactly("Envoi_Mails", true);
     }
+
+    @Test
+    void createsShopVisibilityParameterDisabledByDefault() {
+        ParamBooleanRepository repository = mock(ParamBooleanRepository.class);
+        when(repository.existsByParamName(anyString())).thenReturn(true);
+        when(repository.existsByParamName("Show_Boutique")).thenReturn(false);
+
+        ParamBooleanServices service = new ParamBooleanServices();
+        service.paramBooleanRepository = repository;
+
+        service.fillParamBoolean();
+
+        ArgumentCaptor<ParamBoolean> parameter = ArgumentCaptor.forClass(ParamBoolean.class);
+        verify(repository).save(parameter.capture());
+        assertThat(parameter.getValue())
+                .extracting(ParamBoolean::getParamName, ParamBoolean::getParamValue)
+                .containsExactly("Show_Boutique", false);
+    }
 }

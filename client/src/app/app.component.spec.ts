@@ -37,7 +37,7 @@ describe('Navigation du bandeau', () => {
         ]),
         { provide: TokenStorageService, useValue: storage },
         { provide: AuthService, useValue: { logout: () => of(null) } },
-        { provide: ParamService, useValue: { isClose: () => of(false) } },
+        { provide: ParamService, useValue: { isClose: () => of(false), getAllBoolean: () => of([{ paramName: 'Show_Boutique', paramValue: true }]) } },
         { provide: ParamTransmissionService, useValue: {} },
         { provide: PwaService, useValue: { canInstall: () => false, showIosInstallHint: () => false } },
         { provide: ToastService, useValue: { toasts: [] } }
@@ -106,6 +106,13 @@ describe('Navigation du bandeau', () => {
     expect(fixture.componentInstance.showSeances).toBeFalse();
     expect(fixture.componentInstance.username).toBeUndefined();
   });
+
+  it('masque le lien vers la boutique lorsque son paramètre est désactivé', () => {
+    expect(fixture.nativeElement.querySelector('app-shop-cart-link')).not.toBeNull();
+    fixture.componentInstance.showShop = false;
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-shop-cart-link')).toBeNull();
+  });
 });
 
 describe('Déconnexion depuis une page protégée', () => {
@@ -135,7 +142,7 @@ describe('Déconnexion depuis une page protégée', () => {
         provideRouter([]),
         { provide: TokenStorageService, useValue: storage },
         { provide: AuthService, useValue: { logout } },
-        { provide: ParamService, useValue: { isClose: () => of(false) } },
+        { provide: ParamService, useValue: { isClose: () => of(false), getAllBoolean: () => of([]) } },
         { provide: ParamTransmissionService, useValue: {} },
         { provide: PwaService, useValue: {} },
         { provide: ToastService, useValue: {} }

@@ -17,7 +17,10 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest(properties = "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect")
+@DataJpaTest(properties = {
+        "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect",
+        "spring.flyway.enabled=false"
+})
 @ContextConfiguration(classes = SeanceRepositoryTest.JpaTestApplication.class)
 class SeanceRepositoryTest {
     @SpringBootConfiguration

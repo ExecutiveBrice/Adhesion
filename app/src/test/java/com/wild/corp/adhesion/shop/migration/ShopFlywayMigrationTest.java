@@ -43,6 +43,27 @@ class ShopFlywayMigrationTest {
     }
 
     @Test
+    void createsShopSchemaForDatabaseBaselinedAfterV1() {
+        DriverManagerDataSource dataSource = new DriverManagerDataSource(
+                "jdbc:h2:mem:shop-baselined;MODE=PostgreSQL;DB_CLOSE_DELAY=-1", "sa", "");
+
+        new ResourceDatabasePopulator(
+                new ClassPathResource("db/migration/V8__create_shop_domain_for_baselined_databases.sql"))
+                .execute(dataSource);
+
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        Integer tableCount = jdbcTemplate.queryForObject("""
+                select count(*) from information_schema.tables
+                where table_name in (
+                    'SHOP_PRODUCTS', 'SHOP_PRODUCT_VARIANTS', 'SHOP_ORDERS',
+                    'SHOP_ORDER_ITEMS', 'SHOP_PAYMENTS', 'SHOP_PAYMENT_ATTEMPTS'
+                )
+                """, Integer.class);
+
+        assertThat(tableCount).isEqualTo(6);
+    }
+
+    @Test
     void createsShopSchemaFromAnEmptyDatabase() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource(
                 "jdbc:h2:mem:shop-migration;MODE=PostgreSQL;DB_CLOSE_DELAY=-1", "sa", "");

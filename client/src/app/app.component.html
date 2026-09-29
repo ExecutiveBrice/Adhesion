@@ -95,7 +95,9 @@
 
             <div class="navbar-account d-flex flex-column flex-xxl-row align-items-xxl-center gap-2 ms-xxl-3">
               @if (isLoggedIn) {
+                @if (showShop) {
                 <app-shop-cart-link link="shop" (click)="isCollapsed = true"></app-shop-cart-link>
+                }
                 <span class="navbar-text account-name" [title]="username">{{ username }}</span>
                 <button type="button" class="btn btn-outline-light" (click)="isCollapsed = true; logout()">Déconnexion</button>
               } @else {

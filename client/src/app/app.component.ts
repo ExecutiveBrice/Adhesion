@@ -48,6 +48,7 @@ export class AppComponent {
   showSeances=false;
   showComptable=false;
   showShopManager=false;
+  showShop = false;
   username?: string;
   maintenance: Boolean = false
 
@@ -80,6 +81,10 @@ export class AppComponent {
     this.paramService.isClose().subscribe({
       next: data => this.maintenance = data,
       error: () => this.maintenance = true
+    });
+    this.paramService.getAllBoolean().subscribe({
+      next: params => this.showShop = params.some(param => param.paramName === 'Show_Boutique' && param.paramValue),
+      error: () => this.showShop = false
     });
   }
 
