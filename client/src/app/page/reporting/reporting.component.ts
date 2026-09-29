@@ -96,6 +96,7 @@ export class ReportingComponent implements OnInit {
           email: adherent.email,
           telephone: adherent.telephone,
           lieuNaissance: adherent.lieuNaissance,
+          dateNaissance: adherent.naissance,
           majorite: adherent.majorite,
           adresse: adherent.adresse,
           cp: adherent.cp,
