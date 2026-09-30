@@ -1,8 +1,9 @@
-<article class="order-card">
+<article class="order-card" [class.refund-requested]="order.refundRequested">
   <div class="order-header">
     <button class="order-toggle" type="button" [attr.aria-expanded]="expanded" [attr.aria-controls]="'order-items-' + order.orderNumber" (click)="expanded = !expanded">
       <span class="order-identity"><strong>{{ order.orderNumber }}</strong><small>{{ order.createdAt | date:'dd/MM/yyyy à HH:mm':'':'fr-FR' }}</small></span>
       <span class="order-status" [class.closed]="order.status === 'CANCELLED' || order.status === 'EXPIRED' || order.status === 'REFUNDED'">{{ statusLabel }}</span>
+      @if (order.refundRequested) { <span class="refund-request-badge">Remboursement demandé</span> }
       <strong class="order-total">{{ order.total.amountInCents / 100 | currency:order.total.currency:'symbol':'1.2-2':'fr-FR' }}</strong>
       <span class="order-chevron" aria-hidden="true">{{ expanded ? '▾' : '▸' }}</span>
     </button>
@@ -21,6 +22,7 @@
 
   @if (expanded) {
     <div class="order-details" [id]="'order-items-' + order.orderNumber">
+      @if (order.refundRequested) { <a class="btn btn-outline-danger btn-sm mb-3" [routerLink]="['/boutique/commandes', order.orderNumber, 'messages']">Ouvrir la conversation de remboursement</a> }
       <div class="order-status-control">
         <label [for]="'order-status-' + order.orderNumber">Statut global de la commande</label>
         @if (order.status === 'PENDING_PAYMENT' || order.status === 'PAID' || order.status === 'PROCESSING') {

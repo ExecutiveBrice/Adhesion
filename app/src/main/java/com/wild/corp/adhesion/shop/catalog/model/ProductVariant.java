@@ -136,6 +136,23 @@ public class ProductVariant extends AuditableEntity {
         return stockTracked && stockOnHand != null ? stockOnHand - stockReserved : Long.MAX_VALUE;
     }
 
+    public void updateStockOnHand(long quantity, long expectedVersion) {
+        requireVersion(expectedVersion);
+        if (!stockTracked) {
+            throw new IllegalStateException("Le suivi du stock est désactivé pour cette variante");
+        }
+        if (quantity < stockReserved) {
+            throw new IllegalArgumentException("Le stock doit couvrir les réservations en cours");
+        }
+        stockOnHand = quantity;
+    }
+
+    public void requireVersion(long expectedVersion) {
+        if (version != expectedVersion) {
+            throw new IllegalStateException("La variante a changé depuis son chargement. Actualisez la page avant de réessayer.");
+        }
+    }
+
     private void requireExistingReservation(int quantity) {
         if (quantity <= 0 || !stockTracked || stockOnHand == null || stockReserved < quantity) {
             throw new IllegalStateException("La réservation de stock est absente ou insuffisante");

@@ -4,6 +4,7 @@ import com.wild.corp.adhesion.shop.api.dto.CartLineResponse;
 import com.wild.corp.adhesion.shop.api.dto.CartQuoteResponse;
 import com.wild.corp.adhesion.shop.api.dto.MoneyResponse;
 import com.wild.corp.adhesion.shop.api.dto.OrderItemResponse;
+import com.wild.corp.adhesion.shop.api.dto.OrderMessageResponse;
 import com.wild.corp.adhesion.shop.api.dto.OrderResponse;
 import com.wild.corp.adhesion.shop.api.dto.ProductCategoryResponse;
 import com.wild.corp.adhesion.shop.api.dto.ProductResponse;
@@ -14,6 +15,7 @@ import com.wild.corp.adhesion.shop.catalog.model.Product;
 import com.wild.corp.adhesion.shop.catalog.model.ProductCategory;
 import com.wild.corp.adhesion.shop.catalog.model.ProductVariant;
 import com.wild.corp.adhesion.shop.order.model.OrderItem;
+import com.wild.corp.adhesion.shop.order.model.OrderMessage;
 import com.wild.corp.adhesion.shop.order.model.ShopOrder;
 
 import java.util.Comparator;
@@ -40,7 +42,8 @@ final class ShopApiMapper {
                         .filter(ProductVariant::isActive)
                         .map(variant -> new ProductVariantResponse(
                                 variant.getId(), variant.getSku(), variant.getLabel(), MoneyResponse.from(variant.getPrice()),
-                                !variant.isStockTracked() || variant.availableStock() > 0))
+                                !variant.isStockTracked() || variant.availableStock() > 0,
+                                variant.isStockTracked() ? variant.availableStock() : null))
                         .toList());
     }
 
@@ -59,8 +62,12 @@ final class ShopApiMapper {
                 order.getId(), order.getOrderNumber(), order.getStatus(),
                 order.getItems().stream().map(ShopApiMapper::orderItem).toList(),
                 total, MoneyResponse.from(com.wild.corp.adhesion.shop.common.money.Money.zero(total.currency())),
-                MoneyResponse.from(com.wild.corp.adhesion.shop.common.money.Money.zero(total.currency())), total,
+                MoneyResponse.from(com.wild.corp.adhesion.shop.common.money.Money.zero(total.currency())), total, order.isRefundRequested(),
                 order.getCreatedAt());
+    }
+
+    static OrderMessageResponse orderMessage(OrderMessage message) {
+        return new OrderMessageResponse(message.getId(), message.getSenderType(), message.getContent(), message.getCreatedAt());
     }
 
     private static CartLineResponse quoteLine(CartQuoteLine line) {

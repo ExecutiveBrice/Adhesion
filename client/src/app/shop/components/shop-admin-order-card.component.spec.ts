@@ -10,8 +10,8 @@ describe('ShopAdminOrderCardComponent', () => {
   const order: ShopAdminOrderDto = {
     orderNumber: 'CMD-2026-000001', status: 'PAID',
     total: { amountInCents: 3000, currency: 'EUR' }, createdAt: '2026-09-25T10:00:00Z',
-    customerEmail: 'client@example.test', customerTribeId: 17,
-    items: [{ id: 7, productName: 'Tee-shirt', variantName: 'M', sku: 'TS-M',
+    customerEmail: 'client@example.test', customerTribeId: 17, refundRequested: false,
+    items: [{ id: 7, productVariantId: 42, productName: 'Tee-shirt', variantName: 'M', sku: 'TS-M',
       unitPrice: { amountInCents: 1500, currency: 'EUR' }, quantity: 2,
       lineTotal: { amountInCents: 3000, currency: 'EUR' }, status: 'PENDING' }]
   };

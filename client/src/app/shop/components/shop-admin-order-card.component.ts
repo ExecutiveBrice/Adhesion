@@ -1,6 +1,7 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { timeout } from 'rxjs';
+import { RouterLink } from '@angular/router';
 import {
   ShopAdminOrderDto, ShopAdminOrderItemDto, ShopAdminOrderItemStatus
 } from '../models/shop.models';
@@ -9,7 +10,7 @@ import { registerApiViewRefresh } from '../../_services/api-render.service';
 
 @Component({
   selector: 'app-shop-admin-order-card',
-  imports: [CurrencyPipe, DatePipe],
+  imports: [CurrencyPipe, DatePipe, RouterLink],
   templateUrl: './shop-admin-order-card.component.html',
   styleUrl: './shop-admin-order-card.component.css'
 })

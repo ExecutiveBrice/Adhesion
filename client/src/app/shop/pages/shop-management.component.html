@@ -1,12 +1,17 @@
 <main class="shop-management container py-4">
   <header class="management-header">
-    <div><p class="shop-eyebrow">Espace responsable</p><h1>Gestion de la boutique</h1><p>Gérez les stocks et suivez les commandes de la boutique.</p></div>
+    <div><p class="shop-eyebrow">Espace responsable</p><h1>Gestion de la boutique</h1><p>Suivez les stocks, préparez le réapprovisionnement et gérez le catalogue et les commandes.</p></div>
     <a routerLink="/boutique" class="btn btn-outline-primary">Voir la boutique</a>
   </header>
 
   <div class="management-tabs" role="tablist" aria-label="Gestion de la boutique">
-    <button #stocksTab id="stocks-tab" type="button" role="tab" [attr.aria-selected]="activeTab === 'stocks'" [attr.tabindex]="activeTab === 'stocks' ? 0 : -1" aria-controls="stocks-panel" [class.active]="activeTab === 'stocks'" (click)="selectTab('stocks')" (keydown.arrowright)="$event.preventDefault(); selectTab('orders'); ordersTab.focus()" (keydown.arrowleft)="$event.preventDefault(); selectTab('orders'); ordersTab.focus()">Gestion des stocks</button>
-    <button #ordersTab id="orders-tab" type="button" role="tab" [attr.aria-selected]="activeTab === 'orders'" [attr.tabindex]="activeTab === 'orders' ? 0 : -1" aria-controls="orders-panel" [class.active]="activeTab === 'orders'" (click)="selectTab('orders')" (keydown.arrowright)="$event.preventDefault(); selectTab('stocks'); stocksTab.focus()" (keydown.arrowleft)="$event.preventDefault(); selectTab('stocks'); stocksTab.focus()">Gestion des commandes</button>
+    <button #stocksTab id="stocks-tab" type="button" role="tab" [attr.aria-selected]="activeTab === 'stocks'" [attr.tabindex]="activeTab === 'stocks' ? 0 : -1" aria-controls="stocks-panel" [class.active]="activeTab === 'stocks'" (click)="selectTab('stocks')" (keydown.arrowright)="$event.preventDefault(); selectTab('catalogue'); catalogueTab.focus()" (keydown.arrowleft)="$event.preventDefault(); selectTab('orders'); ordersTab.focus()">Gestion du stock</button>
+    <button #catalogueTab id="catalogue-tab" type="button" role="tab" [attr.aria-selected]="activeTab === 'catalogue'" [attr.tabindex]="activeTab === 'catalogue' ? 0 : -1" aria-controls="catalogue-panel" [class.active]="activeTab === 'catalogue'" (click)="selectTab('catalogue')" (keydown.arrowright)="$event.preventDefault(); selectTab('orders'); ordersTab.focus()" (keydown.arrowleft)="$event.preventDefault(); selectTab('stocks'); stocksTab.focus()">Catalogue</button>
+    <button #ordersTab id="orders-tab" type="button" role="tab" [attr.aria-selected]="activeTab === 'orders'" [attr.tabindex]="activeTab === 'orders' ? 0 : -1" aria-controls="orders-panel" [class.active]="activeTab === 'orders'" (click)="selectTab('orders')" (keydown.arrowright)="$event.preventDefault(); selectTab('stocks'); stocksTab.focus()" (keydown.arrowleft)="$event.preventDefault(); selectTab('catalogue'); catalogueTab.focus()">Gestion des commandes</button>
+  </div>
+
+  <div id="stocks-panel" role="tabpanel" aria-labelledby="stocks-tab" [hidden]="activeTab !== 'stocks'">
+    <app-shop-stock-overview></app-shop-stock-overview>
   </div>
 
   <div id="orders-panel" role="tabpanel" aria-labelledby="orders-tab" [hidden]="activeTab !== 'orders'">
@@ -37,12 +42,13 @@
     }
   </div>
 
-  <div id="stocks-panel" role="tabpanel" aria-labelledby="stocks-tab" [hidden]="activeTab !== 'stocks'">
-  @if (error) { <div class="alert alert-danger" role="alert">{{ error }}</div> }
+  <div id="catalogue-panel" role="tabpanel" aria-labelledby="catalogue-tab" [hidden]="activeTab !== 'catalogue'">
+  @if (error) { <div class="alert alert-danger" role="alert">{{ error }} @if (catalogConflict) { <button type="button" class="btn btn-outline-danger btn-sm ms-2" (click)="load()">Actualiser le catalogue</button> }</div> }
+  @if (imageUploadError) { <div class="alert alert-danger" role="alert">{{ imageUploadError }}</div> }
   @if (message) { <div class="alert alert-success" role="status">{{ message }}</div> }
-  @if (loading) { <p role="status">Chargement de la gestion des stocks…</p> }
+  @if (loading) { <p role="status">Chargement du catalogue…</p> }
 
-  @if (!loading) {
+  @if (!loading && catalogLoaded) {
     <section class="management-section">
       <h2>Catégories</h2>
       <form class="management-form compact" #categoryForm="ngForm" (ngSubmit)="createCategory()">
@@ -71,7 +77,7 @@
       <form class="management-form" #productForm="ngForm" (ngSubmit)="createProduct()">
         <input class="form-control" name="newProductName" required placeholder="Nom du produit" [(ngModel)]="newProduct.name">
         <input class="form-control" name="newProductSlug" required placeholder="Slug" [(ngModel)]="newProduct.slug">
-        <input class="form-control" name="newProductImage" placeholder="URL de l’image (facultatif)" [(ngModel)]="newProduct.imageUrl">
+        <div class="image-upload form-wide"><label class="btn btn-outline-secondary" for="newProductImage">Importer une image</label><input id="newProductImage" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/gif,image/webp" (change)="onNewProductImageSelected($event)"><small>PNG, JPEG, GIF ou WebP — 1 Mo maximum.</small>@if (newProductImagePreview) { <div class="image-preview"><img [src]="newProductImagePreview" alt="Aperçu de l’image du nouveau produit"><button type="button" class="btn btn-sm btn-outline-danger" (click)="removeNewProductImage()">Retirer l’image</button></div> }</div>
         <input class="form-control" name="newProductOrder" type="number" min="0" placeholder="Ordre" [(ngModel)]="newProduct.displayOrder">
         <textarea class="form-control form-wide" name="newProductDescription" rows="2" placeholder="Description" [(ngModel)]="newProduct.description"></textarea>
         <fieldset class="category-picker form-wide"><legend>Catégories</legend>@for (category of categories; track category.id) { <label class="form-check"><input class="form-check-input" type="checkbox" [checked]="selectedCategoryIds.has(category.id)" (change)="toggleNewProductCategory(category.id, $any($event.target).checked)"> {{ category.name }}</label> }</fieldset>
@@ -90,7 +96,7 @@
               <div class="management-form">
                 <input class="form-control" [name]="'productName' + product.id" required placeholder="Nom" [(ngModel)]="product.name">
                 <input class="form-control" [name]="'productSlug' + product.id" required placeholder="Slug" [(ngModel)]="product.slug">
-                <input class="form-control" [name]="'productImage' + product.id" placeholder="URL de l’image" [(ngModel)]="product.imageUrl">
+                <div class="image-upload form-wide"><label class="btn btn-outline-secondary" [for]="'productImage' + product.id">Importer une image</label><input [id]="'productImage' + product.id" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/gif,image/webp" (change)="onProductImageSelected(product.id, $event)"><small>PNG, JPEG, GIF ou WebP — 1 Mo maximum.</small>@if (previewFor(product); as preview) { <div class="image-preview"><img [src]="preview" [alt]="'Aperçu de ' + product.name"><button type="button" class="btn btn-sm btn-outline-danger" (click)="removeProductImage(product)">Retirer l’image</button></div> }</div>
                 <input class="form-control" [name]="'productOrder' + product.id" type="number" min="0" placeholder="Ordre" [(ngModel)]="product.displayOrder">
                 <textarea class="form-control form-wide" [name]="'productDescription' + product.id" rows="2" placeholder="Description" [(ngModel)]="product.description"></textarea>
                 <fieldset class="category-picker form-wide"><legend>Catégories</legend>@for (category of categories; track category.id) { <label class="form-check"><input class="form-check-input" type="checkbox" [checked]="isCategoryOnProduct(product, category.id)" (change)="toggleProductCategory(product, category, $any($event.target).checked)"> {{ category.name }}</label> }</fieldset>

@@ -57,6 +57,9 @@ public class ShopOrder extends AuditableEntity {
     @Column(nullable = false, length = 32)
     private OrderStatus status;
 
+    @Column(name = "refund_requested", nullable = false)
+    private boolean refundRequested;
+
     @Embedded
     @AttributeOverrides({
             @AttributeOverride(name = "amountInCents",
@@ -118,6 +121,10 @@ public class ShopOrder extends AuditableEntity {
         status = targetStatus;
     }
 
+    public void requestRefund() {
+        refundRequested = true;
+    }
+
     private void recalculateTotal() {
         total = OrderTotalsCalculator.calculate(items, total.getCurrency());
     }
@@ -146,6 +153,10 @@ public class ShopOrder extends AuditableEntity {
 
     public OrderStatus getStatus() {
         return status;
+    }
+
+    public boolean isRefundRequested() {
+        return refundRequested;
     }
 
     public Money getTotal() {

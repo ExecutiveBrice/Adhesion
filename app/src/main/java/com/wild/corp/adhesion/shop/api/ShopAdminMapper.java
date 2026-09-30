@@ -23,11 +23,12 @@ final class ShopAdminMapper {
                 : null;
         return new AdminOrderResponse(order.getOrderNumber(), order.getStatus(), MoneyResponse.from(order.getTotal()),
                 order.getCreatedAt(), customer == null ? null : customer.getUsername(), customerTribeId,
+                order.isRefundRequested(),
                 order.getItems().stream().map(ShopAdminMapper::orderItem).toList());
     }
 
     static AdminOrderItemResponse orderItem(OrderItem item) {
-        return new AdminOrderItemResponse(item.getId(), item.getProductName(), item.getVariantName(), item.getSku(),
+        return new AdminOrderItemResponse(item.getId(), item.getProductVariantId(), item.getProductName(), item.getVariantName(), item.getSku(),
                 MoneyResponse.from(item.getUnitPrice()), item.getQuantity(), MoneyResponse.from(item.getLineTotal()),
                 item.getStatus());
     }
@@ -47,6 +48,6 @@ final class ShopAdminMapper {
     static AdminVariantResponse variant(ProductVariant variant) {
         return new AdminVariantResponse(variant.getId(), variant.getSku(), variant.getLabel(),
                 variant.getPrice().getAmountInCents(), variant.getPrice().getCurrency(), variant.isActive(), variant.getDisplayOrder(),
-                variant.isStockTracked(), variant.getStockOnHand(), variant.getStockReserved());
+                variant.isStockTracked(), variant.getStockOnHand(), variant.getStockReserved(), variant.getVersion());
     }
 }

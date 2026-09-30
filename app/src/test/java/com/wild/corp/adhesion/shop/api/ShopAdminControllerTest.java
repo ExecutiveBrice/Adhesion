@@ -9,12 +9,16 @@ import com.wild.corp.adhesion.models.User;
 import com.wild.corp.adhesion.repository.UserRepository;
 import com.wild.corp.adhesion.services.UserDetailsService;
 import com.wild.corp.adhesion.shop.catalog.service.CatalogService;
+import com.wild.corp.adhesion.shop.catalog.service.ProductImageStorageService;
+import com.wild.corp.adhesion.shop.catalog.model.Product;
+import com.wild.corp.adhesion.shop.catalog.model.ProductVariant;
 import com.wild.corp.adhesion.shop.common.money.Money;
 import com.wild.corp.adhesion.shop.order.model.OrderItem;
 import com.wild.corp.adhesion.shop.order.model.OrderItemStatus;
 import com.wild.corp.adhesion.shop.order.model.OrderStatus;
 import com.wild.corp.adhesion.shop.order.model.ShopOrder;
 import com.wild.corp.adhesion.shop.order.service.OrderService;
+import com.wild.corp.adhesion.shop.order.service.OrderConversationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -32,6 +36,7 @@ import java.util.UUID;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -45,7 +50,9 @@ class ShopAdminControllerTest {
 
     @Autowired private MockMvc mockMvc;
     @MockitoBean private CatalogService catalogService;
+    @MockitoBean private ProductImageStorageService productImageStorage;
     @MockitoBean private OrderService orderService;
+    @MockitoBean private OrderConversationService orderConversationService;
     @MockitoBean private UserRepository userRepository;
     @MockitoBean private UserDetailsService userDetailsService;
     @MockitoBean private JwtUtils jwtUtils;
@@ -92,6 +99,7 @@ class ShopAdminControllerTest {
                 .andExpect(jsonPath("$[0].customerTribeId").value(17))
                 .andExpect(jsonPath("$[0].total.amountInCents").value(3000))
                 .andExpect(jsonPath("$[0].items[0].id").value(7))
+                .andExpect(jsonPath("$[0].items[0].productVariantId").value(20))
                 .andExpect(jsonPath("$[0].items[0].productName").value("Tee-shirt"))
                 .andExpect(jsonPath("$[0].items[0].status").value("PENDING"));
     }
@@ -133,5 +141,74 @@ class ShopAdminControllerTest {
                         .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"PROCESSING\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("PROCESSING"));
+    }
+
+    @Test
+    void updatesOnlyVariantStockForShopManager() throws Exception {
+        Product product = new Product("Tee-shirt", "tee-shirt", null, true, 0);
+        ProductVariant variant = new ProductVariant(product, "TS-M", "M", new Money(1_500, "EUR"), true, 0);
+        ReflectionTestUtils.setField(variant, "id", 20L);
+        variant.trackStock(5);
+        given(catalogService.updateVariantStock(20L, 5L, 0L)).willReturn(variant);
+        given(catalogService.updateVariantStock(20L, 5L, 1L))
+                .willThrow(new IllegalStateException("Le stock a changé depuis son chargement"));
+
+        mockMvc.perform(put("/shop/admin/variants/20/stock")
+                        .with(user("member@example.test").roles("USER"))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"stockOnHand\":5,\"expectedVersion\":0}"))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(put("/shop/admin/variants/20/stock")
+                        .with(user("manager@example.test").roles("RESPONSABLE_BOUTIQUE"))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"stockOnHand\":-1,\"expectedVersion\":0}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(put("/shop/admin/variants/20/stock")
+                        .with(user("manager@example.test").roles("RESPONSABLE_BOUTIQUE"))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"stockOnHand\":5}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(put("/shop/admin/variants/20/stock")
+                        .with(user("manager@example.test").roles("RESPONSABLE_BOUTIQUE"))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"stockOnHand\":5,\"expectedVersion\":1}"))
+                .andExpect(status().isConflict());
+        mockMvc.perform(put("/shop/admin/variants/20/stock")
+                        .with(user("manager@example.test").roles("RESPONSABLE_BOUTIQUE"))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"stockOnHand\":5,\"expectedVersion\":0}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(20))
+                .andExpect(jsonPath("$.stockOnHand").value(5))
+                .andExpect(jsonPath("$.version").value(0));
+        verify(catalogService).updateVariantStock(20L, 5L, 0L);
+    }
+
+    @Test
+    void requiresCurrentVersionWhenUpdatingVariantDetails() throws Exception {
+        Product product = new Product("Tee-shirt", "tee-shirt", null, true, 0);
+        ProductVariant variant = new ProductVariant(product, "TS-M", "M", new Money(1_500, "EUR"), true, 0);
+        ReflectionTestUtils.setField(variant, "id", 20L);
+        variant.trackStock(5);
+        Money price = new Money(1_500, "EUR");
+        given(catalogService.updateVariant(20L, "TS-M", "M", price, true, 0, true, 5L, null))
+                .willThrow(new IllegalArgumentException("La version est obligatoire"));
+        given(catalogService.updateVariant(20L, "TS-M", "M", price, true, 0, true, 5L, 1L))
+                .willThrow(new IllegalStateException("La variante a changé depuis son chargement"));
+        given(catalogService.updateVariant(20L, "TS-M", "M", price, true, 0, true, 5L, 0L))
+                .willReturn(variant);
+
+        String details = "\"sku\":\"TS-M\",\"label\":\"M\",\"priceAmountInCents\":1500,"
+                + "\"currency\":\"EUR\",\"active\":true,\"displayOrder\":0,"
+                + "\"stockTracked\":true,\"stockOnHand\":5";
+        mockMvc.perform(put("/shop/admin/variants/20")
+                        .with(user("manager@example.test").roles("RESPONSABLE_BOUTIQUE"))
+                        .contentType(MediaType.APPLICATION_JSON).content("{" + details + "}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(put("/shop/admin/variants/20")
+                        .with(user("manager@example.test").roles("RESPONSABLE_BOUTIQUE"))
+                        .contentType(MediaType.APPLICATION_JSON).content("{" + details + ",\"expectedVersion\":1}"))
+                .andExpect(status().isConflict());
+        mockMvc.perform(put("/shop/admin/variants/20")
+                        .with(user("manager@example.test").roles("RESPONSABLE_BOUTIQUE"))
+                        .contentType(MediaType.APPLICATION_JSON).content("{" + details + ",\"expectedVersion\":0}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.version").value(0));
+        verify(catalogService).updateVariant(20L, "TS-M", "M", price, true, 0, true, 5L, 0L);
     }
 }

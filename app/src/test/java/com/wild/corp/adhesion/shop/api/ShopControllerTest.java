@@ -10,8 +10,10 @@ import com.wild.corp.adhesion.shop.catalog.model.Product;
 import com.wild.corp.adhesion.shop.catalog.model.ProductVariant;
 import com.wild.corp.adhesion.shop.catalog.service.CatalogService;
 import com.wild.corp.adhesion.shop.common.money.Money;
+import com.wild.corp.adhesion.shop.order.model.OrderStatus;
 import com.wild.corp.adhesion.shop.order.model.ShopOrder;
 import com.wild.corp.adhesion.shop.order.service.OrderService;
+import com.wild.corp.adhesion.shop.order.service.OrderConversationService;
 import com.wild.corp.adhesion.shop.payment.provider.PaymentProviderException;
 import com.wild.corp.adhesion.shop.payment.provider.PaymentProviderType;
 import com.wild.corp.adhesion.shop.payment.service.PaymentService;
@@ -55,6 +57,8 @@ class ShopControllerTest {
     @MockitoBean
     private OrderService orderService;
     @MockitoBean
+    private OrderConversationService orderConversationService;
+    @MockitoBean
     private PaymentService paymentService;
     @MockitoBean
     private UserDetailsService userDetailsService;
@@ -69,13 +73,15 @@ class ShopControllerTest {
         ReflectionTestUtils.setField(product, "id", 10L);
         ProductVariant variant = new ProductVariant(product, "TS-M", "M", new Money(1_500, "EUR"), true, 0);
         ReflectionTestUtils.setField(variant, "id", 20L);
+        variant.trackStock(3);
         product.addVariant(variant);
         given(catalogService.findActiveProducts()).willReturn(List.of(product));
 
         mockMvc.perform(get("/shop/products").with(authentication(customerAuthentication())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(10))
-                .andExpect(jsonPath("$[0].variants[0].price.amountInCents").value(1500));
+                .andExpect(jsonPath("$[0].variants[0].price.amountInCents").value(1500))
+                .andExpect(jsonPath("$[0].variants[0].availableQuantity").value(3));
     }
 
     @Test
@@ -149,6 +155,39 @@ class ShopControllerTest {
                 .andExpect(jsonPath("$[0].orderNumber").value("CMD-2026-000456"));
 
         verify(orderService).findOrdersForCustomer(42L);
+    }
+
+    @Test
+    void cancelsAnUnpaidOrderForTheAuthenticatedCustomer() throws Exception {
+        ShopOrder order = new ShopOrder("CMD-2026-000789", 42L, "EUR");
+        order.addItem(com.wild.corp.adhesion.shop.order.model.OrderItem.snapshot(10L, "Tee-shirt", 20L, "M", "TS-M",
+                new Money(1_500, "EUR"), 1));
+        order.submitForPayment();
+        order.transitionTo(OrderStatus.CANCELLED);
+        given(orderService.cancelOrderForCustomer("CMD-2026-000789", 42L)).willReturn(order);
+
+        mockMvc.perform(post("/shop/orders/CMD-2026-000789/cancel").with(authentication(customerAuthentication())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("CANCELLED"));
+
+        verify(orderService).cancelOrderForCustomer("CMD-2026-000789", 42L);
+    }
+
+    @Test
+    void opensRefundRequestForAnAuthenticatedCustomer() throws Exception {
+        ShopOrder order = new ShopOrder("CMD-2026-000790", 42L, "EUR");
+        order.addItem(com.wild.corp.adhesion.shop.order.model.OrderItem.snapshot(10L, "Tee-shirt", 20L, "M", "TS-M",
+                new Money(1_500, "EUR"), 1));
+        order.submitForPayment();
+        order.transitionTo(OrderStatus.PAID);
+        order.requestRefund();
+        given(orderService.requestRefundForCustomer("CMD-2026-000790", 42L)).willReturn(order);
+
+        mockMvc.perform(post("/shop/orders/CMD-2026-000790/refund-request").with(authentication(customerAuthentication())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.refundRequested").value(true));
+
+        verify(orderService).requestRefundForCustomer("CMD-2026-000790", 42L);
     }
 
     @Test

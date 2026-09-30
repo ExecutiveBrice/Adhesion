@@ -5,13 +5,17 @@ import com.wild.corp.adhesion.shop.api.dto.CartItemRequest;
 import com.wild.corp.adhesion.shop.api.dto.CartQuoteRequest;
 import com.wild.corp.adhesion.shop.api.dto.CartQuoteResponse;
 import com.wild.corp.adhesion.shop.api.dto.OrderResponse;
+import com.wild.corp.adhesion.shop.api.dto.OrderMessageRequest;
+import com.wild.corp.adhesion.shop.api.dto.OrderMessageResponse;
 import com.wild.corp.adhesion.shop.api.dto.ProductResponse;
 import com.wild.corp.adhesion.shop.api.dto.PaymentSessionRequest;
 import com.wild.corp.adhesion.shop.api.dto.PaymentSessionResponse;
 import com.wild.corp.adhesion.shop.cart.service.CartPricingService;
 import com.wild.corp.adhesion.shop.catalog.service.CatalogService;
+import com.wild.corp.adhesion.shop.order.model.ShopOrder;
 import com.wild.corp.adhesion.shop.order.service.OrderItemRequest;
 import com.wild.corp.adhesion.shop.order.service.OrderService;
+import com.wild.corp.adhesion.shop.order.service.OrderConversationService;
 import com.wild.corp.adhesion.shop.payment.service.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -55,15 +59,18 @@ public class ShopController {
     private final CatalogService catalogService;
     private final CartPricingService cartPricingService;
     private final OrderService orderService;
+    private final OrderConversationService orderConversationService;
     private final PaymentService paymentService;
 
     public ShopController(CatalogService catalogService,
                           CartPricingService cartPricingService,
                           OrderService orderService,
+                          OrderConversationService orderConversationService,
                           PaymentService paymentService) {
         this.catalogService = catalogService;
         this.cartPricingService = cartPricingService;
         this.orderService = orderService;
+        this.orderConversationService = orderConversationService;
         this.paymentService = paymentService;
     }
 
@@ -139,6 +146,55 @@ public class ShopController {
     public ResponseEntity<OrderResponse> order(@PathVariable String orderNumber, Authentication authentication) {
         UserDetails user = currentUser(authentication);
         return ResponseEntity.ok(ShopApiMapper.order(orderService.findOrderForCustomer(orderNumber, user.getId())));
+    }
+
+    @PostMapping("/orders/{orderNumber}/cancel")
+    @PreAuthorize("hasRole('USER')")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Annule une commande de l'utilisateur encore en attente de paiement")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Commande annulée"),
+            @ApiResponse(responseCode = "404", description = "Commande introuvable ou non accessible"),
+            @ApiResponse(responseCode = "409", description = "Commande déjà payée ou non annulable")
+    })
+    public ResponseEntity<OrderResponse> cancelOrder(@PathVariable String orderNumber, Authentication authentication) {
+        UserDetails user = currentUser(authentication);
+        ShopOrder order = orderService.cancelOrderForCustomer(orderNumber, user.getId());
+        LOGGER.info("Commande boutique {} annulée par l'utilisateur {}", order.getOrderNumber(), user.getId());
+        return ResponseEntity.ok(ShopApiMapper.order(order));
+    }
+
+    @PostMapping("/orders/{orderNumber}/refund-request")
+    @PreAuthorize("hasRole('USER')")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Ouvre une demande de remboursement pour une commande payée")
+    public ResponseEntity<OrderResponse> requestRefund(@PathVariable String orderNumber, Authentication authentication) {
+        UserDetails user = currentUser(authentication);
+        ShopOrder order = orderService.requestRefundForCustomer(orderNumber, user.getId());
+        LOGGER.info("Demande de remboursement ouverte pour la commande boutique {} par l'utilisateur {}", order.getOrderNumber(), user.getId());
+        return ResponseEntity.ok(ShopApiMapper.order(order));
+    }
+
+    @GetMapping("/orders/{orderNumber}/conversation")
+    @PreAuthorize("hasRole('USER')")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Liste les messages liés à une demande de remboursement")
+    public ResponseEntity<List<OrderMessageResponse>> conversation(@PathVariable String orderNumber, Authentication authentication) {
+        UserDetails user = currentUser(authentication);
+        return ResponseEntity.ok(orderConversationService.messagesForCustomer(orderNumber, user.getId()).stream()
+                .map(ShopApiMapper::orderMessage).toList());
+    }
+
+    @PostMapping("/orders/{orderNumber}/conversation")
+    @PreAuthorize("hasRole('USER')")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Envoie un message à la gestion boutique concernant une demande de remboursement")
+    public ResponseEntity<OrderMessageResponse> sendConversationMessage(@PathVariable String orderNumber,
+                                                                          @Valid @RequestBody OrderMessageRequest request,
+                                                                          Authentication authentication) {
+        UserDetails user = currentUser(authentication);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ShopApiMapper.orderMessage(
+                orderConversationService.sendAsCustomer(orderNumber, user.getId(), request.content())));
     }
 
     @PostMapping("/orders/{orderNumber}/payment-session")

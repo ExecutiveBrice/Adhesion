@@ -11,5 +11,6 @@ public record AdminOrderResponse(String orderNumber,
                                  Instant createdAt,
                                  String customerEmail,
                                  Long customerTribeId,
+                                 boolean refundRequested,
                                  List<AdminOrderItemResponse> items) {
 }

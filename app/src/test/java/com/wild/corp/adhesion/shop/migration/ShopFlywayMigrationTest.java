@@ -64,6 +64,29 @@ class ShopFlywayMigrationTest {
     }
 
     @Test
+    void addsRefundRequestFlagAndConversationStorage() {
+        DriverManagerDataSource dataSource = new DriverManagerDataSource(
+                "jdbc:h2:mem:shop-refund-request;MODE=PostgreSQL;DB_CLOSE_DELAY=-1", "sa", "");
+
+        new ResourceDatabasePopulator(
+                new ClassPathResource("db/migration/V8__create_shop_domain_for_baselined_databases.sql"),
+                new ClassPathResource("db/migration/V9__add_shop_refund_requests_and_order_messages.sql"))
+                .execute(dataSource);
+
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        Integer messageTableCount = jdbcTemplate.queryForObject("""
+                select count(*) from information_schema.tables where table_name = 'SHOP_ORDER_MESSAGES'
+                """, Integer.class);
+        Integer refundColumnCount = jdbcTemplate.queryForObject("""
+                select count(*) from information_schema.columns
+                where table_name = 'SHOP_ORDERS' and column_name = 'REFUND_REQUESTED'
+                """, Integer.class);
+
+        assertThat(messageTableCount).isEqualTo(1);
+        assertThat(refundColumnCount).isEqualTo(1);
+    }
+
+    @Test
     void createsShopSchemaFromAnEmptyDatabase() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource(
                 "jdbc:h2:mem:shop-migration;MODE=PostgreSQL;DB_CLOSE_DELAY=-1", "sa", "");

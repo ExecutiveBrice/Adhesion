@@ -23,6 +23,25 @@ export class ShopProductDetailComponent {
   readonly error = signal<string | null>(null);
   readonly money = formatShopMoney;
 
+  priceRange(product: ShopProductDto): string {
+    const prices = product.variants.map(variant => variant.price)
+      .sort((left, right) => left.amountInCents - right.amountInCents);
+    if (prices.length === 0) return '';
+
+    const lowest = prices[0];
+    const highest = prices[prices.length - 1];
+    return lowest.amountInCents === highest.amountInCents && lowest.currency === highest.currency
+      ? this.money(lowest)
+      : `${this.money(lowest)} – ${this.money(highest)}`;
+  }
+
+  availabilityLabel(variant: ShopVariantDto): string {
+    if (variant.availableQuantity !== null) {
+      return `${variant.availableQuantity} produit${variant.availableQuantity > 1 ? 's' : ''} disponible${variant.availableQuantity > 1 ? 's' : ''}`;
+    }
+    return variant.available ? 'Stock illimité' : '0 produit disponible';
+  }
+
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (!Number.isInteger(id) || id <= 0) { this.error.set('Produit introuvable.'); this.loading.set(false); return; }

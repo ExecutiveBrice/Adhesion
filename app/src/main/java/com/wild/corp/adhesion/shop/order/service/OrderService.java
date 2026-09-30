@@ -99,6 +99,26 @@ public class OrderService {
         return orderRepository.findAllByCustomerUserIdOrderByCreatedAtDescIdDesc(customerUserId);
     }
 
+    public ShopOrder cancelOrderForCustomer(String orderNumber, Long customerUserId) {
+        ShopOrder order = findOrderForCustomer(orderNumber, customerUserId);
+        if (order.getStatus() != OrderStatus.PENDING_PAYMENT) {
+            throw new IllegalStateException("Seules les commandes en attente de paiement peuvent être annulées");
+        }
+        order.transitionTo(OrderStatus.CANCELLED);
+        releaseReservedStock(order);
+        return order;
+    }
+
+    public ShopOrder requestRefundForCustomer(String orderNumber, Long customerUserId) {
+        ShopOrder order = findOrderForCustomer(orderNumber, customerUserId);
+        if (order.getStatus() != OrderStatus.PAID && order.getStatus() != OrderStatus.PROCESSING
+                && order.getStatus() != OrderStatus.COMPLETED) {
+            throw new IllegalStateException("Seules les commandes déjà payées peuvent faire l'objet d'une demande de remboursement");
+        }
+        order.requestRefund();
+        return order;
+    }
+
     public OrderItem updateItemStatus(String orderNumber, Long itemId, OrderItemStatus status) {
         ShopOrder order = orderRepository.findByOrderNumber(orderNumber)
                 .orElseThrow(() -> new java.util.NoSuchElementException("Commande introuvable"));

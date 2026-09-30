@@ -10,16 +10,23 @@ import com.wild.corp.adhesion.shop.api.dto.AdminProductRequest;
 import com.wild.corp.adhesion.shop.api.dto.AdminProductResponse;
 import com.wild.corp.adhesion.shop.api.dto.AdminVariantRequest;
 import com.wild.corp.adhesion.shop.api.dto.AdminVariantResponse;
+import com.wild.corp.adhesion.shop.api.dto.AdminVariantStockRequest;
+import com.wild.corp.adhesion.shop.api.dto.OrderMessageRequest;
+import com.wild.corp.adhesion.shop.api.dto.OrderMessageResponse;
+import com.wild.corp.adhesion.shop.api.dto.ProductImageUploadResponse;
 import com.wild.corp.adhesion.shop.catalog.service.CatalogService;
+import com.wild.corp.adhesion.shop.catalog.service.ProductImageStorageService;
 import com.wild.corp.adhesion.models.User;
 import com.wild.corp.adhesion.repository.UserRepository;
 import com.wild.corp.adhesion.shop.common.money.Money;
 import com.wild.corp.adhesion.shop.order.service.OrderService;
+import com.wild.corp.adhesion.shop.order.service.OrderConversationService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,7 +35,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
 import java.util.List;
@@ -45,12 +54,18 @@ public class ShopAdminController {
 
     private final CatalogService catalogService;
     private final OrderService orderService;
+    private final OrderConversationService orderConversationService;
     private final UserRepository userRepository;
+    private final ProductImageStorageService productImageStorage;
 
-    public ShopAdminController(CatalogService catalogService, OrderService orderService, UserRepository userRepository) {
+    public ShopAdminController(CatalogService catalogService, OrderService orderService,
+                               OrderConversationService orderConversationService, UserRepository userRepository,
+                               ProductImageStorageService productImageStorage) {
         this.catalogService = catalogService;
         this.orderService = orderService;
+        this.orderConversationService = orderConversationService;
         this.userRepository = userRepository;
+        this.productImageStorage = productImageStorage;
     }
 
     @GetMapping("/orders")
@@ -76,11 +91,31 @@ public class ShopAdminController {
         return ShopAdminMapper.orderItem(orderService.updateItemStatus(orderNumber, itemId, request.status()));
     }
 
+    @GetMapping("/orders/{orderNumber}/conversation")
+    public List<OrderMessageResponse> conversation(@PathVariable String orderNumber) {
+        return orderConversationService.messagesForManager(orderNumber).stream().map(ShopApiMapper::orderMessage).toList();
+    }
+
+    @PostMapping("/orders/{orderNumber}/conversation")
+    public ResponseEntity<OrderMessageResponse> sendConversationMessage(@PathVariable String orderNumber,
+                                                                          @Valid @RequestBody OrderMessageRequest request,
+                                                                          Authentication authentication) {
+        Long managerUserId = authentication != null && authentication.getPrincipal() instanceof com.wild.corp.adhesion.models.UserDetails user
+                ? user.getId() : null;
+        return ResponseEntity.status(HttpStatus.CREATED).body(ShopApiMapper.orderMessage(
+                orderConversationService.sendAsManager(orderNumber, managerUserId, request.content())));
+    }
+
     @GetMapping("/products")
     public List<AdminProductResponse> products() {
         List<AdminProductResponse> products = catalogService.findAllProducts().stream().map(ShopAdminMapper::product).toList();
         log.info("Gestion boutique : {} produit(s) chargé(s)", products.size());
         return products;
+    }
+
+    @PostMapping(value = "/product-images", consumes = "multipart/form-data")
+    public ProductImageUploadResponse uploadProductImage(@RequestParam("file") MultipartFile file) {
+        return new ProductImageUploadResponse(productImageStorage.store(file));
     }
 
     @PostMapping("/products")
@@ -114,7 +149,13 @@ public class ShopAdminController {
     @PutMapping("/variants/{variantId}")
     public AdminVariantResponse updateVariant(@PathVariable Long variantId, @Valid @RequestBody AdminVariantRequest request) {
         return ShopAdminMapper.variant(catalogService.updateVariant(variantId, request.sku(), request.label(), money(request),
-                request.active(), request.displayOrder(), request.stockTracked(), request.stockOnHand()));
+                request.active(), request.displayOrder(), request.stockTracked(), request.stockOnHand(), request.expectedVersion()));
+    }
+
+    @PutMapping("/variants/{variantId}/stock")
+    public AdminVariantResponse updateVariantStock(@PathVariable Long variantId,
+                                                   @Valid @RequestBody AdminVariantStockRequest request) {
+        return ShopAdminMapper.variant(catalogService.updateVariantStock(variantId, request.stockOnHand(), request.expectedVersion()));
     }
 
     @DeleteMapping("/variants/{variantId}")

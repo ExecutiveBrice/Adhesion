@@ -1,50 +1,66 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, ViewChild, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { forkJoin, Observable, timeout } from 'rxjs';
+import { forkJoin, map, Observable, of, switchMap, timeout } from 'rxjs';
 import {
   ShopAdminCategoryDto, ShopAdminCategoryRequest, ShopAdminOrderDto, ShopAdminProductDto, ShopAdminProductRequest,
-  ShopAdminVariantRequest
+  ShopAdminVariantDto, ShopAdminVariantRequest
 } from '../models/shop.models';
 import { ShopAdminApiService } from '../services/shop-admin-api.service';
 import { ShopAdminOrderCardComponent } from '../components/shop-admin-order-card.component';
+import { ShopStockOverviewComponent } from '../components/shop-stock-overview.component';
 import { registerApiViewRefresh } from '../../_services/api-render.service';
 
 type VariantDraft = ShopAdminVariantRequest;
 
 @Component({
   selector: 'app-shop-management',
-  imports: [FormsModule, RouterLink, ShopAdminOrderCardComponent],
+  imports: [FormsModule, RouterLink, ShopAdminOrderCardComponent, ShopStockOverviewComponent],
   templateUrl: './shop-management.component.html',
   styleUrl: './shop-management.component.css'
 })
-export class ShopManagementComponent implements OnInit {
+export class ShopManagementComponent implements OnDestroy {
+  @ViewChild(ShopStockOverviewComponent) stockOverview?: ShopStockOverviewComponent;
+  readonly maxImageFileSizeBytes = 1_024 * 1_024;
   private readonly apiViewRefresh = registerApiViewRefresh();
   private readonly api = inject(ShopAdminApiService);
   products: ShopAdminProductDto[] = [];
   categories: ShopAdminCategoryDto[] = [];
-  activeTab: 'stocks' | 'orders' = 'stocks';
+  activeTab: 'stocks' | 'catalogue' | 'orders' = 'stocks';
   ordersInProgress: ShopAdminOrderDto[] = [];
   completedOrders: ShopAdminOrderDto[] = [];
   ordersLoading = false;
   ordersLoaded = false;
   ordersError = '';
-  loading = true;
+  loading = false;
+  catalogLoaded = false;
   saving = false;
   error = '';
+  catalogConflict = false;
   message = '';
+  imageUploadError = '';
   selectedCategoryIds = new Set<number>();
   readonly variantDrafts: Record<number, VariantDraft> = {};
+  private newProductImageFile: File | null = null;
+  newProductImagePreview: string | null = null;
+  private readonly productImageFiles: Record<number, File | undefined> = {};
+  readonly productImagePreviews: Record<number, string | undefined> = {};
 
   newCategory: ShopAdminCategoryRequest = { name: '', slug: '', description: null, active: true, displayOrder: 0 };
   newProduct: ShopAdminProductRequest = {
     name: '', slug: '', description: null, imageUrl: null, active: false, displayOrder: 0, categoryIds: []
   };
 
-  ngOnInit(): void { this.load(); }
+  ngOnDestroy(): void {
+    this.revokePreview(this.newProductImagePreview);
+    Object.values(this.productImagePreviews).forEach(preview => this.revokePreview(preview));
+  }
 
-  selectTab(tab: 'stocks' | 'orders'): void {
+  selectTab(tab: 'stocks' | 'catalogue' | 'orders'): void {
+    const previous = this.activeTab;
     this.activeTab = tab;
+    if (tab === 'stocks' && previous !== 'stocks') this.stockOverview?.load();
+    if (tab === 'catalogue' && !this.catalogLoaded && !this.loading) this.load();
     if (tab === 'orders' && !this.ordersLoaded && !this.ordersLoading) this.loadOrders();
   }
 
@@ -95,6 +111,7 @@ export class ShopManagementComponent implements OnInit {
       next: ({ products, categories }) => {
         this.products = this.collection<ShopAdminProductDto>(products);
         this.categories = this.collection<ShopAdminCategoryDto>(categories);
+        this.catalogLoaded = true;
         this.loading = false;
       },
       error: error => this.fail(error)
@@ -130,8 +147,9 @@ export class ShopManagementComponent implements OnInit {
   }
 
   createProduct(): void {
-    this.run(this.api.createProduct(this.cleanProduct(this.newProduct)), () => {
+    this.run(this.requestWithNewProductImage().pipe(switchMap(request => this.api.createProduct(request))), () => {
       this.newProduct = { name: '', slug: '', description: null, imageUrl: null, active: false, displayOrder: this.products.length, categoryIds: [] };
+      this.clearNewProductImage();
       this.selectedCategoryIds.clear();
       this.message = 'Produit ajouté.';
       this.load();
@@ -139,9 +157,11 @@ export class ShopManagementComponent implements OnInit {
   }
 
   updateProduct(product: ShopAdminProductDto): void {
-    this.run(this.api.updateProduct(product.id, this.cleanProduct({
-      ...product, categoryIds: product.categories.map(category => category.id)
-    })), () => {
+    const request = this.cleanProduct({ ...product, categoryIds: product.categories.map(category => category.id) });
+    this.run(this.requestWithProductImage(product.id, request).pipe(
+      switchMap(productRequest => this.api.updateProduct(product.id, productRequest))
+    ), () => {
+      this.clearProductImage(product.id);
       this.message = 'Produit mis à jour.';
       this.load();
     });
@@ -170,8 +190,9 @@ export class ShopManagementComponent implements OnInit {
     });
   }
 
-  updateVariant(variant: VariantDraft & { id: number }): void {
-    this.run(this.api.updateVariant(variant.id, this.cleanVariant(variant)), () => {
+  updateVariant(variant: ShopAdminVariantDto): void {
+    const request = { ...this.cleanVariant(variant), expectedVersion: variant.version };
+    this.run(this.api.updateVariant(variant.id, request), () => {
       this.message = 'Variante mise à jour.';
       this.load();
     });
@@ -195,9 +216,48 @@ export class ShopManagementComponent implements OnInit {
       : product.categories.filter(item => item.id !== category.id);
   }
 
+  onNewProductImageSelected(event: Event): void {
+    const file = this.fileFrom(event);
+    if (!file) return;
+    if (!this.validateImage(file)) return;
+    this.clearNewProductImage();
+    this.newProductImageFile = file;
+    this.newProductImagePreview = URL.createObjectURL(file);
+  }
+
+  onProductImageSelected(productId: number, event: Event): void {
+    const file = this.fileFrom(event);
+    if (!file) return;
+    if (!this.validateImage(file)) return;
+    this.clearProductImage(productId);
+    this.productImageFiles[productId] = file;
+    this.productImagePreviews[productId] = URL.createObjectURL(file);
+  }
+
+  previewFor(product: ShopAdminProductDto): string | null {
+    return this.productImagePreviews[product.id] ?? product.imageUrl;
+  }
+
+  clearNewProductImage(): void {
+    this.revokePreview(this.newProductImagePreview);
+    this.newProductImageFile = null;
+    this.newProductImagePreview = null;
+  }
+
+  removeNewProductImage(): void {
+    this.clearNewProductImage();
+    this.newProduct.imageUrl = null;
+  }
+
+  removeProductImage(product: ShopAdminProductDto): void {
+    this.clearProductImage(product.id);
+    product.imageUrl = null;
+  }
+
   private run(request: Observable<unknown>, success: () => void): void {
     this.saving = true;
     this.error = '';
+    this.catalogConflict = false;
     this.message = '';
     request.subscribe({ next: success, error: error => this.fail(error), complete: () => this.saving = false });
   }
@@ -205,6 +265,7 @@ export class ShopManagementComponent implements OnInit {
   private fail(error: any): void {
     this.loading = false;
     this.saving = false;
+    this.catalogConflict = error?.status === 409;
     this.error = error?.error?.detail || 'La modification n’a pas pu être enregistrée.';
   }
 
@@ -214,6 +275,48 @@ export class ShopManagementComponent implements OnInit {
 
   private cleanProduct(product: ShopAdminProductRequest): ShopAdminProductRequest {
     return { ...product, name: product.name.trim(), slug: product.slug.trim(), description: this.optional(product.description), imageUrl: this.optional(product.imageUrl), displayOrder: Number(product.displayOrder) || 0 };
+  }
+
+  private requestWithNewProductImage(): Observable<ShopAdminProductRequest> {
+    const request = this.cleanProduct(this.newProduct);
+    return this.newProductImageFile
+      ? this.api.uploadProductImage(this.newProductImageFile).pipe(map(imageUrl => ({ ...request, imageUrl })))
+      : of(request);
+  }
+
+  private requestWithProductImage(productId: number, request: ShopAdminProductRequest): Observable<ShopAdminProductRequest> {
+    const image = this.productImageFiles[productId];
+    return image ? this.api.uploadProductImage(image).pipe(map(imageUrl => ({ ...request, imageUrl }))) : of(request);
+  }
+
+  private fileFrom(event: Event): File | null {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.item(0) ?? null;
+    input.value = '';
+    return file;
+  }
+
+  private validateImage(file: File): boolean {
+    this.imageUploadError = '';
+    if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)) {
+      this.imageUploadError = 'Choisissez une image PNG, JPEG, GIF ou WebP.';
+      return false;
+    }
+    if (file.size > this.maxImageFileSizeBytes) {
+      this.imageUploadError = 'L’image ne doit pas dépasser 1 Mo.';
+      return false;
+    }
+    return true;
+  }
+
+  private clearProductImage(productId: number): void {
+    this.revokePreview(this.productImagePreviews[productId]);
+    delete this.productImageFiles[productId];
+    delete this.productImagePreviews[productId];
+  }
+
+  private revokePreview(preview: string | null | undefined): void {
+    if (preview?.startsWith('blob:')) URL.revokeObjectURL(preview);
   }
 
   private cleanVariant(variant: VariantDraft): VariantDraft {

@@ -1,0 +1,13 @@
+<main class="container py-4 shop-page">
+  <section class="shop-success">
+    <div aria-hidden="true">✓</div>
+    <p>Commande confirmée</p>
+    <h1>Merci pour votre commande</h1>
+    @if (order(); as item) {
+      <p>Le paiement de la commande <strong>{{ item.orderNumber }}</strong> a été confirmé.</p>
+      <a class="btn btn-primary" [routerLink]="['/boutique/commandes', item.orderNumber]">Voir le récapitulatif</a>
+    } @else {
+      <p>Nous mettons à jour le statut de votre commande.</p>
+    }
+  </section>
+</main>

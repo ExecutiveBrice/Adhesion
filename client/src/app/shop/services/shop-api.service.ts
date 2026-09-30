@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { CartItemRequestDto, CartQuoteDto, PaymentSessionDto, ShopOrderDto, ShopProductDto } from '../models/shop.models';
+import { CartItemRequestDto, CartQuoteDto, PaymentSessionDto, ShopOrderDto, ShopOrderMessageDto, ShopProductDto } from '../models/shop.models';
 
 @Injectable({ providedIn: 'root' })
 export class ShopApiService {
@@ -33,6 +33,22 @@ export class ShopApiService {
 
   order(orderNumber: string): Observable<ShopOrderDto> {
     return this.http.get<ShopOrderDto>(`${this.apiUrl}/orders/${encodeURIComponent(orderNumber)}`);
+  }
+
+  cancelOrder(orderNumber: string): Observable<ShopOrderDto> {
+    return this.http.post<ShopOrderDto>(`${this.apiUrl}/orders/${encodeURIComponent(orderNumber)}/cancel`, {});
+  }
+
+  requestRefund(orderNumber: string): Observable<ShopOrderDto> {
+    return this.http.post<ShopOrderDto>(`${this.apiUrl}/orders/${encodeURIComponent(orderNumber)}/refund-request`, {});
+  }
+
+  conversation(orderNumber: string): Observable<ShopOrderMessageDto[]> {
+    return this.http.get<ShopOrderMessageDto[]>(`${this.apiUrl}/orders/${encodeURIComponent(orderNumber)}/conversation`);
+  }
+
+  sendConversationMessage(orderNumber: string, content: string): Observable<ShopOrderMessageDto> {
+    return this.http.post<ShopOrderMessageDto>(`${this.apiUrl}/orders/${encodeURIComponent(orderNumber)}/conversation`, { content });
   }
 
   createPaymentSession(orderNumber: string, idempotencyKey: string, returnUrl: string, cancelUrl: string): Observable<PaymentSessionDto> {

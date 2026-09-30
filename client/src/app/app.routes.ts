@@ -18,6 +18,7 @@ export const routes: Routes = [
   { path: 'boutique/commandes/:orderNumber/paiement-reussi', title: 'Paiement réussi', canActivate: [shopAuthGuard], loadComponent: () => import('./shop/pages/shop-payment-success.component').then((m) => m.ShopPaymentSuccessComponent) },
   { path: 'boutique/commandes/:orderNumber/paiement-echoue', title: 'Paiement échoué', canActivate: [shopAuthGuard], loadComponent: () => import('./shop/pages/shop-payment-status.component').then((m) => m.ShopPaymentStatusComponent) },
   { path: 'boutique/commandes/:orderNumber/paiement', title: 'Vérification du paiement', canActivate: [shopAuthGuard], loadComponent: () => import('./shop/pages/shop-payment-status.component').then((m) => m.ShopPaymentStatusComponent) },
+  { path: 'boutique/commandes/:orderNumber/messages', title: 'Demande de remboursement', canActivate: [shopAuthGuard], loadComponent: () => import('./shop/pages/shop-order-conversation.component').then((m) => m.ShopOrderConversationComponent) },
   { path: 'boutique/commandes/:orderNumber', title: 'Commande', canActivate: [shopAuthGuard], loadComponent: () => import('./shop/pages/shop-order-detail.component').then((m) => m.ShopOrderDetailComponent) },
   { path: 'login', title: 'Connexion', loadComponent: () => import('./page/login/login.component').then((m) => m.LoginComponent) },
   { path: 'resetPassword/:token', title: 'Réinitialisation du mot de passe', loadComponent: () => import('./page/resetPassword/resetpassword.component').then((m) => m.ResetPasswordComponent) },

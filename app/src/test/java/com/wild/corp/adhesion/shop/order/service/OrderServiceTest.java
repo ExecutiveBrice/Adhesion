@@ -159,6 +159,63 @@ class OrderServiceTest {
     }
 
     @Test
+    void customerCancelsOnlyTheirPendingPaymentOrderAndReleasesItsStock() {
+        Product product = product(10L, true);
+        ProductVariant variant = variant(20L, product, new Money(1_500, "EUR"));
+        variant.trackStock(5);
+        when(variantRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(variant));
+        when(orderNumberGenerator.nextOrderNumber()).thenReturn("CMD-2026-000001");
+        when(orderRepository.save(any(ShopOrder.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ShopOrder order = orderService.createOrder(42L, List.of(new OrderItemRequest(20L, 2)));
+        when(orderRepository.findByOrderNumber(order.getOrderNumber())).thenReturn(Optional.of(order));
+
+        orderService.cancelOrderForCustomer(order.getOrderNumber(), 42L);
+
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+        assertThat(variant.getStockReserved()).isZero();
+        assertThat(variant.availableStock()).isEqualTo(5);
+    }
+
+    @Test
+    void customerCannotCancelAnAlreadyPaidOrder() {
+        ShopOrder order = new ShopOrder("CMD-2026-000001", 42L, "EUR");
+        order.addItem(OrderItem.snapshot(10L, "Tee-shirt", 20L, "M", "TS-M", new Money(1_500, "EUR"), 1));
+        order.submitForPayment();
+        order.transitionTo(OrderStatus.PAID);
+        when(orderRepository.findByOrderNumber(order.getOrderNumber())).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> orderService.cancelOrderForCustomer(order.getOrderNumber(), 42L))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
+    }
+
+    @Test
+    void customerCanRequestRefundForTheirPaidOrderOnly() {
+        ShopOrder order = new ShopOrder("CMD-2026-000001", 42L, "EUR");
+        order.addItem(OrderItem.snapshot(10L, "Tee-shirt", 20L, "M", "TS-M", new Money(1_500, "EUR"), 1));
+        order.submitForPayment();
+        order.transitionTo(OrderStatus.PAID);
+        when(orderRepository.findByOrderNumber(order.getOrderNumber())).thenReturn(Optional.of(order));
+
+        orderService.requestRefundForCustomer(order.getOrderNumber(), 42L);
+
+        assertThat(order.isRefundRequested()).isTrue();
+    }
+
+    @Test
+    void customerCannotRequestRefundBeforePayment() {
+        ShopOrder order = new ShopOrder("CMD-2026-000001", 42L, "EUR");
+        order.addItem(OrderItem.snapshot(10L, "Tee-shirt", 20L, "M", "TS-M", new Money(1_500, "EUR"), 1));
+        order.submitForPayment();
+        when(orderRepository.findByOrderNumber(order.getOrderNumber())).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> orderService.requestRefundForCustomer(order.getOrderNumber(), 42L))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(order.isRefundRequested()).isFalse();
+    }
+
+    @Test
     void rejectsPaymentStatusChangesFromAdmin() {
         ShopOrder order = new ShopOrder("CMD-2026-000001", 42L, "EUR");
         when(orderRepository.findByOrderNumber(order.getOrderNumber())).thenReturn(Optional.of(order));

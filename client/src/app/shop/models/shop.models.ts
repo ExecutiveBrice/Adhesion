@@ -15,6 +15,7 @@ export interface ShopVariantDto {
   label: string;
   price: ShopMoneyDto;
   available: boolean;
+  availableQuantity: number | null;
 }
 
 export interface ShopProductDto {
@@ -22,6 +23,7 @@ export interface ShopProductDto {
   name: string;
   slug: string;
   description: string | null;
+  imageUrl: string | null;
   categories: ShopCategoryDto[];
   variants: ShopVariantDto[];
 }
@@ -46,6 +48,7 @@ export interface ShopAdminVariantDto {
   stockTracked: boolean;
   stockOnHand: number | null;
   stockReserved: number;
+  version: number;
 }
 
 export interface ShopAdminProductDto {
@@ -87,6 +90,7 @@ export interface ShopAdminVariantRequest {
   displayOrder: number;
   stockTracked: boolean;
   stockOnHand: number | null;
+  expectedVersion?: number;
 }
 
 export interface CartItemRequestDto {
@@ -134,6 +138,7 @@ export interface ShopOrderDto {
   discountTotal: ShopMoneyDto;
   feesTotal: ShopMoneyDto;
   total: ShopMoneyDto;
+  refundRequested: boolean;
   createdAt: string;
 }
 
@@ -144,13 +149,24 @@ export interface ShopAdminOrderDto {
   createdAt: string;
   customerEmail: string | null;
   customerTribeId: number | null;
+  refundRequested: boolean;
   items: ShopAdminOrderItemDto[];
+}
+
+export type ShopOrderMessageSender = 'CUSTOMER' | 'SHOP_MANAGER';
+
+export interface ShopOrderMessageDto {
+  id: number;
+  senderType: ShopOrderMessageSender;
+  content: string;
+  createdAt: string;
 }
 
 export type ShopAdminOrderItemStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'CANCELLED';
 
 export interface ShopAdminOrderItemDto {
   id: number;
+  productVariantId: number | null;
   productName: string;
   variantName: string | null;
   sku: string | null;

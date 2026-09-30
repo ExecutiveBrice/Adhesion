@@ -13,5 +13,6 @@ public record OrderResponse(Long id,
                             MoneyResponse discountTotal,
                             MoneyResponse feesTotal,
                             MoneyResponse total,
+                            boolean refundRequested,
                             Instant createdAt) {
 }
