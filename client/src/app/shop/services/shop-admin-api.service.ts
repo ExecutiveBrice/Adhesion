@@ -3,9 +3,10 @@ import { HttpClient } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
-  ShopAdminCategoryDto, ShopAdminCategoryRequest, ShopAdminOrderDto, ShopAdminOrderItemDto,
+  ShopAdminCategoryDto, ShopAdminCategoryRequest, ShopAdminOrderDto,
   ShopAdminOrderItemStatus, ShopAdminProductDto, ShopAdminProductRequest,
-  ShopAdminVariantDto, ShopAdminVariantRequest, ShopOrderMessageDto
+  ShopAdminVariantCreateRequest, ShopAdminVariantDto, ShopAdminVariantRequest, ShopOrderMessageDto,
+  ShopSupplierOrderCreateRequest, ShopSupplierOrderDto
 } from '../models/shop.models';
 
 @Injectable({ providedIn: 'root' })
@@ -15,11 +16,14 @@ export class ShopAdminApiService {
   constructor(private readonly http: HttpClient) {}
 
   orders(): Observable<ShopAdminOrderDto[]> { return this.http.get<ShopAdminOrderDto[]>(`${this.apiUrl}/orders`); }
+  verifyPayment(orderNumber: string): Observable<ShopAdminOrderDto> {
+    return this.http.post<ShopAdminOrderDto>(`${this.apiUrl}/orders/${encodeURIComponent(orderNumber)}/payment/verify`, {});
+  }
   updateOrderStatus(orderNumber: string, status: ShopAdminOrderDto['status']): Observable<ShopAdminOrderDto> {
     return this.http.put<ShopAdminOrderDto>(`${this.apiUrl}/orders/${encodeURIComponent(orderNumber)}/status`, { status });
   }
-  updateOrderItemStatus(orderNumber: string, itemId: number, status: ShopAdminOrderItemStatus): Observable<ShopAdminOrderItemDto> {
-    return this.http.put<ShopAdminOrderItemDto>(
+  updateOrderItemStatus(orderNumber: string, itemId: number, status: ShopAdminOrderItemStatus): Observable<ShopAdminOrderDto> {
+    return this.http.put<ShopAdminOrderDto>(
       `${this.apiUrl}/orders/${encodeURIComponent(orderNumber)}/items/${itemId}/status`, { status });
   }
   conversation(orderNumber: string): Observable<ShopOrderMessageDto[]> {
@@ -41,12 +45,31 @@ export class ShopAdminApiService {
   updateProduct(id: number, request: ShopAdminProductRequest): Observable<ShopAdminProductDto> { return this.http.put<ShopAdminProductDto>(`${this.apiUrl}/products/${id}`, request); }
   deleteProduct(id: number): Observable<void> { return this.http.delete<void>(`${this.apiUrl}/products/${id}`); }
 
-  createVariant(productId: number, request: ShopAdminVariantRequest): Observable<ShopAdminVariantDto> { return this.http.post<ShopAdminVariantDto>(`${this.apiUrl}/products/${productId}/variants`, request); }
+  createVariant(productId: number, request: ShopAdminVariantCreateRequest): Observable<ShopAdminVariantDto> { return this.http.post<ShopAdminVariantDto>(`${this.apiUrl}/products/${productId}/variants`, request); }
   updateVariant(id: number, request: ShopAdminVariantRequest): Observable<ShopAdminVariantDto> { return this.http.put<ShopAdminVariantDto>(`${this.apiUrl}/variants/${id}`, request); }
   updateVariantStock(id: number, stockOnHand: number, expectedVersion: number): Observable<ShopAdminVariantDto> {
     return this.http.put<ShopAdminVariantDto>(`${this.apiUrl}/variants/${id}/stock`, { stockOnHand, expectedVersion });
   }
   deleteVariant(id: number): Observable<void> { return this.http.delete<void>(`${this.apiUrl}/variants/${id}`); }
+
+  supplierOrders(): Observable<ShopSupplierOrderDto[]> {
+    return this.http.get<ShopSupplierOrderDto[]>(`${this.apiUrl}/supplier-orders`);
+  }
+  createSupplierOrder(request: ShopSupplierOrderCreateRequest): Observable<ShopSupplierOrderDto> {
+    return this.http.post<ShopSupplierOrderDto>(`${this.apiUrl}/supplier-orders`, request);
+  }
+  createSupplierOrderDraft(request: ShopSupplierOrderCreateRequest): Observable<ShopSupplierOrderDto> {
+    return this.http.post<ShopSupplierOrderDto>(`${this.apiUrl}/supplier-orders/draft`, request);
+  }
+  updateSupplierOrderDraft(id: number, request: ShopSupplierOrderCreateRequest): Observable<ShopSupplierOrderDto> {
+    return this.http.put<ShopSupplierOrderDto>(`${this.apiUrl}/supplier-orders/${id}/draft`, request);
+  }
+  placeSupplierOrderDraft(id: number): Observable<ShopSupplierOrderDto> {
+    return this.http.put<ShopSupplierOrderDto>(`${this.apiUrl}/supplier-orders/${id}/place`, {});
+  }
+  receiveSupplierOrder(id: number): Observable<ShopSupplierOrderDto> {
+    return this.http.put<ShopSupplierOrderDto>(`${this.apiUrl}/supplier-orders/${id}/receive`, {});
+  }
 
   categories(): Observable<ShopAdminCategoryDto[]> { return this.http.get<ShopAdminCategoryDto[]>(`${this.apiUrl}/categories`); }
   createCategory(request: ShopAdminCategoryRequest): Observable<ShopAdminCategoryDto> { return this.http.post<ShopAdminCategoryDto>(`${this.apiUrl}/categories`, request); }

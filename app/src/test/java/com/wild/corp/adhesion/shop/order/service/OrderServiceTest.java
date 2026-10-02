@@ -108,6 +108,23 @@ class OrderServiceTest {
     }
 
     @Test
+    void acceptsOrderAtZeroStockAndKeepsItsReservation() {
+        Product product = product(10L, true);
+        ProductVariant variant = variant(20L, product, new Money(1_500, "EUR"));
+        variant.trackStock(0);
+        when(variantRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(variant));
+        when(orderNumberGenerator.nextOrderNumber()).thenReturn("CMD-2026-000001");
+        when(orderRepository.save(any(ShopOrder.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ShopOrder order = orderService.createOrder(42L, List.of(new OrderItemRequest(20L, 2)));
+
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING_PAYMENT);
+        assertThat(order.getItems().getFirst().isStockReserved()).isTrue();
+        assertThat(variant.getStockReserved()).isEqualTo(2);
+        assertThat(variant.availableStock()).isEqualTo(-2);
+    }
+
+    @Test
     void returnsExistingOrderForTheSameCheckoutKeyWithoutCreatingAnotherOne() {
         ShopOrder existingOrder = new ShopOrder("CMD-2026-000001", 42L, "checkout-1", "EUR");
         when(orderRepository.findByCustomerUserIdAndCheckoutKey(42L, "checkout-1"))
@@ -121,24 +138,25 @@ class OrderServiceTest {
     }
 
     @Test
-    void updatesAdminOrderStatusWithoutChangingItemStatuses() {
+    void updatesAdminOrderStatusAndItsItems() {
         ShopOrder order = new ShopOrder("CMD-2026-000001", 42L, "EUR");
         OrderItem item = OrderItem.snapshot(10L, "Tee-shirt", 20L, "M", "TS-M", new Money(1_500, "EUR"), 1);
         order.addItem(item);
         order.submitForPayment();
         order.transitionTo(OrderStatus.PAID);
         item.setStatus(OrderItemStatus.PENDING);
-        when(orderRepository.findByOrderNumber(order.getOrderNumber())).thenReturn(Optional.of(order));
+        when(orderRepository.findByOrderNumberForUpdate(order.getOrderNumber())).thenReturn(Optional.of(order));
 
         orderService.updateAdminOrderStatus(order.getOrderNumber(), OrderStatus.PROCESSING);
+        assertThat(item.getStatus()).isEqualTo(OrderItemStatus.PROCESSING);
         orderService.updateAdminOrderStatus(order.getOrderNumber(), OrderStatus.COMPLETED);
 
         assertThat(order.getStatus()).isEqualTo(OrderStatus.COMPLETED);
-        assertThat(item.getStatus()).isEqualTo(OrderItemStatus.PENDING);
+        assertThat(item.getStatus()).isEqualTo(OrderItemStatus.COMPLETED);
     }
 
     @Test
-    void cancelsPendingPaymentOrderFromAdminAndReleasesItsStockWithoutChangingItemStatuses() {
+    void cancelsPendingPaymentOrderAndItsItemsAndReleasesStock() {
         Product product = product(10L, true);
         ProductVariant variant = variant(20L, product, new Money(1_500, "EUR"));
         variant.trackStock(5);
@@ -148,12 +166,12 @@ class OrderServiceTest {
 
         ShopOrder order = orderService.createOrder(42L, List.of(new OrderItemRequest(20L, 2)));
         OrderItem item = order.getItems().getFirst();
-        when(orderRepository.findByOrderNumber(order.getOrderNumber())).thenReturn(Optional.of(order));
+        when(orderRepository.findByOrderNumberForUpdate(order.getOrderNumber())).thenReturn(Optional.of(order));
 
         orderService.updateAdminOrderStatus(order.getOrderNumber(), OrderStatus.CANCELLED);
 
         assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
-        assertThat(item.getStatus()).isEqualTo(OrderItemStatus.PENDING);
+        assertThat(item.getStatus()).isEqualTo(OrderItemStatus.CANCELLED);
         assertThat(variant.getStockReserved()).isZero();
         assertThat(variant.availableStock()).isEqualTo(5);
     }
@@ -173,6 +191,7 @@ class OrderServiceTest {
         orderService.cancelOrderForCustomer(order.getOrderNumber(), 42L);
 
         assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+        assertThat(order.getItems().getFirst().getStatus()).isEqualTo(OrderItemStatus.CANCELLED);
         assertThat(variant.getStockReserved()).isZero();
         assertThat(variant.availableStock()).isEqualTo(5);
     }
@@ -218,7 +237,7 @@ class OrderServiceTest {
     @Test
     void rejectsPaymentStatusChangesFromAdmin() {
         ShopOrder order = new ShopOrder("CMD-2026-000001", 42L, "EUR");
-        when(orderRepository.findByOrderNumber(order.getOrderNumber())).thenReturn(Optional.of(order));
+        when(orderRepository.findByOrderNumberForUpdate(order.getOrderNumber())).thenReturn(Optional.of(order));
 
         assertThatThrownBy(() -> orderService.updateAdminOrderStatus(order.getOrderNumber(), OrderStatus.PAID))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -231,14 +250,117 @@ class OrderServiceTest {
         OrderItem item = OrderItem.snapshot(10L, "Tee-shirt", 20L, "M", "TS-M", new Money(1_500, "EUR"), 1);
         order.addItem(item);
         ReflectionTestUtils.setField(item, "id", 7L);
-        when(orderRepository.findByOrderNumber(order.getOrderNumber())).thenReturn(Optional.of(order));
+        order.submitForPayment();
+        order.transitionTo(OrderStatus.PAID);
+        when(orderRepository.findByOrderNumberForUpdate(order.getOrderNumber())).thenReturn(Optional.of(order));
 
         assertThat(orderService.updateItemStatus(order.getOrderNumber(), 7L, OrderItemStatus.PROCESSING))
-                .isSameAs(item);
+                .isSameAs(order);
         assertThat(item.getStatus()).isEqualTo(OrderItemStatus.PROCESSING);
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PROCESSING);
         assertThatThrownBy(() -> orderService.updateItemStatus(order.getOrderNumber(), 8L, OrderItemStatus.COMPLETED))
                 .isInstanceOf(java.util.NoSuchElementException.class);
         assertThat(item.getStatus()).isEqualTo(OrderItemStatus.PROCESSING);
+    }
+
+    @Test
+    void completesOrderWhenItsLastItemIsCompleted() {
+        ShopOrder order = new ShopOrder("CMD-2026-000002", 42L, "EUR");
+        OrderItem first = OrderItem.snapshot(10L, "Tee-shirt", 20L, "M", "TS-M", new Money(1_500, "EUR"), 1);
+        OrderItem second = OrderItem.snapshot(11L, "Casquette", 21L, "Unique", "CAP", new Money(1_000, "EUR"), 1);
+        order.addItem(first);
+        order.addItem(second);
+        ReflectionTestUtils.setField(first, "id", 7L);
+        ReflectionTestUtils.setField(second, "id", 8L);
+        order.submitForPayment();
+        order.transitionTo(OrderStatus.PAID);
+        when(orderRepository.findByOrderNumberForUpdate(order.getOrderNumber())).thenReturn(Optional.of(order));
+
+        orderService.updateItemStatus(order.getOrderNumber(), 7L, OrderItemStatus.COMPLETED);
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
+        assertThat(first.getStatus()).isEqualTo(OrderItemStatus.COMPLETED);
+        assertThat(second.getStatus()).isEqualTo(OrderItemStatus.PENDING);
+
+        orderService.updateItemStatus(order.getOrderNumber(), 8L, OrderItemStatus.COMPLETED);
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.COMPLETED);
+        assertThat(order.getItems()).allMatch(item -> item.getStatus() == OrderItemStatus.COMPLETED);
+    }
+
+    @Test
+    void preparingOneItemDoesNotPrepareTheOtherItems() {
+        ShopOrder order = new ShopOrder("CMD-2026-000003", 42L, "EUR");
+        OrderItem first = OrderItem.snapshot(10L, "Tee-shirt", 20L, "M", "TS-M", new Money(1_500, "EUR"), 1);
+        OrderItem second = OrderItem.snapshot(11L, "Casquette", 21L, "Unique", "CAP", new Money(1_000, "EUR"), 1);
+        order.addItem(first);
+        order.addItem(second);
+        ReflectionTestUtils.setField(first, "id", 7L);
+        ReflectionTestUtils.setField(second, "id", 8L);
+        order.submitForPayment();
+        order.transitionTo(OrderStatus.PAID);
+        when(orderRepository.findByOrderNumberForUpdate(order.getOrderNumber())).thenReturn(Optional.of(order));
+
+        orderService.updateItemStatus(order.getOrderNumber(), 7L, OrderItemStatus.PROCESSING);
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
+        assertThat(second.getStatus()).isEqualTo(OrderItemStatus.PENDING);
+
+        orderService.updateItemStatus(order.getOrderNumber(), 8L, OrderItemStatus.PROCESSING);
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PROCESSING);
+        assertThat(order.getItems()).allMatch(item -> item.getStatus() == OrderItemStatus.PROCESSING);
+    }
+
+    @Test
+    void refusesPaidItemCancellationWithoutChangingTotalOrStock() {
+        ShopOrder order = new ShopOrder("CMD-2026-000002", 42L, "EUR");
+        OrderItem item = OrderItem.snapshot(10L, "Tee-shirt", 20L, "M", "TS-M", new Money(1_500, "EUR"), 1);
+        order.addItem(item);
+        ReflectionTestUtils.setField(item, "id", 7L);
+        order.submitForPayment();
+        order.transitionTo(OrderStatus.PAID);
+        when(orderRepository.findByOrderNumberForUpdate(order.getOrderNumber())).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> orderService.updateItemStatus(order.getOrderNumber(), 7L, OrderItemStatus.CANCELLED))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("remboursement");
+        assertThat(order.getTotal()).isEqualTo(new Money(1_500, "EUR"));
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
+        assertThat(item.getStatus()).isEqualTo(OrderItemStatus.PENDING);
+    }
+
+    @Test
+    void cancellingTheOnlyUnpaidItemCancelsTheOrderAndReleasesItsReservation() {
+        Product product = product(10L, true);
+        ProductVariant variant = variant(20L, product, new Money(1_500, "EUR"));
+        variant.trackStock(5);
+        when(variantRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(variant));
+        when(orderNumberGenerator.nextOrderNumber()).thenReturn("CMD-2026-000001");
+        when(orderRepository.save(any(ShopOrder.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        ShopOrder order = orderService.createOrder(42L, List.of(new OrderItemRequest(20L, 2)));
+        OrderItem item = order.getItems().getFirst();
+        ReflectionTestUtils.setField(item, "id", 7L);
+        when(orderRepository.findByOrderNumberForUpdate(order.getOrderNumber())).thenReturn(Optional.of(order));
+
+        assertThat(orderService.updateItemStatus(order.getOrderNumber(), 7L, OrderItemStatus.CANCELLED)).isSameAs(order);
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+        assertThat(item.getStatus()).isEqualTo(OrderItemStatus.CANCELLED);
+        assertThat(variant.getStockReserved()).isZero();
+        assertThat(variant.getStockOnHand()).isEqualTo(5);
+        assertThat(order.getTotal()).isEqualTo(new Money(3_000, "EUR"));
+    }
+
+    @Test
+    void refusesPartialCancellationOfAnUnpaidOrder() {
+        ShopOrder order = new ShopOrder("CMD-2026-000002", 42L, "EUR");
+        OrderItem first = OrderItem.snapshot(10L, "Tee-shirt", 20L, "M", "TS-M", new Money(1_500, "EUR"), 1);
+        order.addItem(first);
+        order.addItem(OrderItem.snapshot(11L, "Casquette", 21L, "Unique", "CAP", new Money(1_000, "EUR"), 1));
+        ReflectionTestUtils.setField(first, "id", 7L);
+        order.submitForPayment();
+        when(orderRepository.findByOrderNumberForUpdate(order.getOrderNumber())).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> orderService.updateItemStatus(order.getOrderNumber(), 7L, OrderItemStatus.CANCELLED))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING_PAYMENT);
+        assertThat(first.getStatus()).isEqualTo(OrderItemStatus.PENDING);
+        assertThat(order.getTotal()).isEqualTo(new Money(2_500, "EUR"));
     }
 
     private Product product(Long id, boolean active) {

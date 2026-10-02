@@ -10,5 +10,6 @@ public record AdminOrderItemResponse(Long id,
                                      MoneyResponse unitPrice,
                                      int quantity,
                                      MoneyResponse lineTotal,
-                                     OrderItemStatus status) {
+                                     OrderItemStatus status,
+                                     boolean stockReserved) {
 }

@@ -24,10 +24,14 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.time.Duration;
+import java.time.Instant;
 
 @Entity
 @Table(name = "shop_orders")
 public class ShopOrder extends AuditableEntity {
+
+    public static final Duration PAYMENT_WINDOW = Duration.ofHours(24);
 
     private static final Map<OrderStatus, EnumSet<OrderStatus>> ALLOWED_TRANSITIONS = Map.of(
             OrderStatus.DRAFT, EnumSet.of(OrderStatus.PENDING_PAYMENT, OrderStatus.CANCELLED),
@@ -115,6 +119,31 @@ public class ShopOrder extends AuditableEntity {
     }
 
     public void transitionTo(OrderStatus targetStatus) {
+        changeStatus(targetStatus);
+        switch (targetStatus) {
+            case PROCESSING -> items.stream()
+                    .filter(item -> item.getStatus() == OrderItemStatus.PENDING)
+                    .forEach(item -> item.setStatus(OrderItemStatus.PROCESSING));
+            case COMPLETED -> items.forEach(item -> item.setStatus(OrderItemStatus.COMPLETED));
+            case CANCELLED, EXPIRED, REFUNDED -> items.forEach(item -> item.setStatus(OrderItemStatus.CANCELLED));
+            default -> { // Payment states do not imply that an item has been prepared.
+            }
+        }
+    }
+
+    public void synchronizeStatusFromItems() {
+        if (status != OrderStatus.PAID && status != OrderStatus.PROCESSING) {
+            throw new IllegalStateException("Les articles ne peuvent pas modifier le statut de cette commande");
+        }
+        if (items.stream().allMatch(item -> item.getStatus() == OrderItemStatus.COMPLETED)) {
+            if (status == OrderStatus.PAID) changeStatus(OrderStatus.PROCESSING);
+            changeStatus(OrderStatus.COMPLETED);
+        } else if (status == OrderStatus.PAID && items.stream().allMatch(item -> item.getStatus() != OrderItemStatus.PENDING)) {
+            changeStatus(OrderStatus.PROCESSING);
+        }
+    }
+
+    private void changeStatus(OrderStatus targetStatus) {
         if (targetStatus == null || !ALLOWED_TRANSITIONS.get(status).contains(targetStatus)) {
             throw new InvalidStatusTransitionException(status, targetStatus);
         }
@@ -157,6 +186,10 @@ public class ShopOrder extends AuditableEntity {
 
     public boolean isRefundRequested() {
         return refundRequested;
+    }
+
+    public Instant getPaymentExpiresAt() {
+        return getCreatedAt() == null ? null : getCreatedAt().plus(PAYMENT_WINDOW);
     }
 
     public Money getTotal() {

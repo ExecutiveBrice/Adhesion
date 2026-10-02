@@ -24,13 +24,13 @@ final class ShopAdminMapper {
         return new AdminOrderResponse(order.getOrderNumber(), order.getStatus(), MoneyResponse.from(order.getTotal()),
                 order.getCreatedAt(), customer == null ? null : customer.getUsername(), customerTribeId,
                 order.isRefundRequested(),
-                order.getItems().stream().map(ShopAdminMapper::orderItem).toList());
+                order.getItems().stream().map(ShopAdminMapper::orderItem).toList(), order.getPaymentExpiresAt());
     }
 
     static AdminOrderItemResponse orderItem(OrderItem item) {
         return new AdminOrderItemResponse(item.getId(), item.getProductVariantId(), item.getProductName(), item.getVariantName(), item.getSku(),
                 MoneyResponse.from(item.getUnitPrice()), item.getQuantity(), MoneyResponse.from(item.getLineTotal()),
-                item.getStatus());
+                item.getStatus(), item.isStockReserved());
     }
 
     static AdminProductResponse product(Product product) {

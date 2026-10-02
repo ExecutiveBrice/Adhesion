@@ -29,10 +29,7 @@ export class ShopProductCardComponent {
   }
 
   availabilityLabel(variant: ShopVariantDto): string {
-    if (variant.availableQuantity !== null) {
-      return `${variant.availableQuantity} disponible${variant.availableQuantity > 1 ? 's' : ''}`;
-    }
-    return variant.available ? 'Stock illimité' : '0 disponible';
+    return variant.available ? 'Disponible' : 'Indisponible';
   }
 
   ngOnChanges(): void {

@@ -3,7 +3,7 @@ import localeFr from '@angular/common/locales/fr';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
-import { ShopAdminOrderDto } from '../models/shop.models';
+import { ShopAdminOrderDto, ShopAdminProductDto } from '../models/shop.models';
 import { ShopAdminApiService } from '../services/shop-admin-api.service';
 import { ShopManagementComponent } from './shop-management.component';
 
@@ -31,6 +31,48 @@ describe('ShopManagementComponent', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('#catalogue-tab')?.getAttribute('aria-selected')).toBe('true');
     expect(api.categories).toHaveBeenCalledTimes(1);
+    fixture.destroy();
+  });
+
+  it('crée une variante sans choix de quantité ni de suivi du stock', () => {
+    const product: ShopAdminProductDto = {
+      id: 1, name: 'T-shirt', slug: 't-shirt', description: null, imageUrl: null,
+      active: true, displayOrder: 0, categories: [], variants: [{
+        id: 41, sku: 'TS-S', label: 'S', priceAmountInCents: 1500, currency: 'EUR',
+        active: true, displayOrder: 0, stockTracked: true, stockOnHand: 0, stockReserved: 0, version: 0
+      }]
+    };
+    const api = jasmine.createSpyObj<ShopAdminApiService>('ShopAdminApiService',
+      ['products', 'orders', 'categories', 'createVariant']);
+    api.products.and.returnValue(of([product]));
+    api.orders.and.returnValue(of([]));
+    api.categories.and.returnValue(of([]));
+    api.createVariant.and.returnValue(of({
+      id: 42, sku: 'TS-M', label: 'M', priceAmountInCents: 1500, currency: 'EUR',
+      active: true, displayOrder: 0, stockTracked: true, stockOnHand: 0, stockReserved: 0, version: 0
+    }));
+    TestBed.configureTestingModule({
+      imports: [ShopManagementComponent],
+      providers: [provideRouter([]), { provide: ShopAdminApiService, useValue: api }]
+    });
+    const fixture = TestBed.createComponent(ShopManagementComponent);
+    fixture.detectChanges();
+    fixture.componentInstance.selectTab('catalogue');
+    fixture.detectChanges();
+
+    const form = fixture.nativeElement.querySelector('.new-variant') as HTMLFormElement;
+    expect(form.querySelector('input[name^="newVariantStock"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('input[name^="variantStock"]')).toBeNull();
+    expect(form.textContent).toContain('Stock initial : 0');
+    Object.assign(fixture.componentInstance.draftFor(product.id), {
+      sku: ' TS-M ', label: ' M ', priceAmountInCents: 1500
+    });
+    fixture.componentInstance.createVariant(product);
+
+    expect(api.createVariant).toHaveBeenCalledWith(1, {
+      sku: 'TS-M', label: 'M', priceAmountInCents: 1500,
+      currency: 'EUR', active: true, displayOrder: 0
+    });
     fixture.destroy();
   });
 

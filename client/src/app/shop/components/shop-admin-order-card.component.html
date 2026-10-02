@@ -22,11 +22,19 @@
 
   @if (expanded) {
     <div class="order-details" [id]="'order-items-' + order.orderNumber">
+      <app-shop-payment-countdown [status]="order.status" [paymentExpiresAt]="order.paymentExpiresAt"></app-shop-payment-countdown>
+      @if (order.status === 'PENDING_PAYMENT') {
+        <button type="button" class="btn btn-outline-primary btn-sm mb-3 verify-payment" (click)="verifyPayment()" [disabled]="verifyingPayment || savingOrderStatus">
+          {{ verifyingPayment ? 'Vérification du paiement…' : 'Vérifier le paiement' }}
+        </button>
+      }
+      @if (paymentVerificationMessage) { <p class="text-success" role="status">{{ paymentVerificationMessage }}</p> }
+      @if (paymentVerificationError) { <p class="text-danger" role="alert">{{ paymentVerificationError }}</p> }
       @if (order.refundRequested) { <a class="btn btn-outline-danger btn-sm mb-3" [routerLink]="['/boutique/commandes', order.orderNumber, 'messages']">Ouvrir la conversation de remboursement</a> }
       <div class="order-status-control">
         <label [for]="'order-status-' + order.orderNumber">Statut global de la commande</label>
         @if (order.status === 'PENDING_PAYMENT' || order.status === 'PAID' || order.status === 'PROCESSING') {
-          <select #orderStatusSelect class="form-select form-select-sm" [id]="'order-status-' + order.orderNumber" [value]="order.status" (change)="setOrderStatus($any($event.target).value, orderStatusSelect)" [disabled]="savingOrderStatus">
+          <select #orderStatusSelect class="form-select form-select-sm" [id]="'order-status-' + order.orderNumber" [value]="order.status" (change)="setOrderStatus($any($event.target).value, orderStatusSelect)" [disabled]="savingOrderStatus || verifyingPayment">
             <option [value]="order.status">{{ statusLabel }}</option>
             @if (order.status === 'PENDING_PAYMENT') { <option value="CANCELLED">Annulée</option> }
             @if (order.status === 'PAID') { <option value="PROCESSING">En préparation</option> }
@@ -38,6 +46,9 @@
         @if (orderStatusError) { <small class="text-danger" role="alert">{{ orderStatusError }}</small> }
       </div>
       <h3>Articles de la commande</h3>
+      @if (order.status === 'PAID' || order.status === 'PROCESSING') {
+        <p class="text-body-secondary">L’annulation d’un article payé nécessite un traitement du remboursement ; son statut ne peut pas être changé ici.</p>
+      }
       @for (item of order.items; track item.id) {
         <div class="order-item">
           <div class="item-description">
@@ -48,8 +59,8 @@
           <div class="item-pricing"><span>{{ item.quantity }} × {{ item.unitPrice.amountInCents / 100 | currency:item.unitPrice.currency:'symbol':'1.2-2':'fr-FR' }}</span><strong>{{ item.lineTotal.amountInCents / 100 | currency:item.lineTotal.currency:'symbol':'1.2-2':'fr-FR' }}</strong></div>
           <div class="item-status-control">
             <label [for]="'item-status-' + item.id">Statut de l’article</label>
-            <select #statusSelect class="form-select form-select-sm" [id]="'item-status-' + item.id" [value]="item.status" (change)="setStatus(item, $any($event.target).value, statusSelect)" [disabled]="savingItemIds.has(item.id)">
-              @for (option of statuses; track option.value) { <option [value]="option.value">{{ option.label }}</option> }
+            <select #statusSelect class="form-select form-select-sm" [id]="'item-status-' + item.id" [value]="item.status" (change)="setStatus(item, $any($event.target).value, statusSelect)" [disabled]="savingItemIds.has(item.id) || savingOrderStatus || availableItemStatuses(item).length === 1">
+              @for (option of availableItemStatuses(item); track option.value) { <option [value]="option.value">{{ option.label }}</option> }
             </select>
             @if (savingItemIds.has(item.id)) { <small role="status">Enregistrement…</small> }
             @if (savedItemIds.has(item.id)) { <small class="text-success" role="status">Statut enregistré.</small> }

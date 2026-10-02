@@ -3,24 +3,29 @@ package com.wild.corp.adhesion.shop.api;
 import com.wild.corp.adhesion.shop.api.dto.AdminCategoryRequest;
 import com.wild.corp.adhesion.shop.api.dto.AdminCategoryResponse;
 import com.wild.corp.adhesion.shop.api.dto.AdminOrderResponse;
-import com.wild.corp.adhesion.shop.api.dto.AdminOrderItemResponse;
 import com.wild.corp.adhesion.shop.api.dto.AdminOrderItemStatusRequest;
 import com.wild.corp.adhesion.shop.api.dto.AdminOrderStatusRequest;
 import com.wild.corp.adhesion.shop.api.dto.AdminProductRequest;
 import com.wild.corp.adhesion.shop.api.dto.AdminProductResponse;
+import com.wild.corp.adhesion.shop.api.dto.AdminVariantCreateRequest;
 import com.wild.corp.adhesion.shop.api.dto.AdminVariantRequest;
 import com.wild.corp.adhesion.shop.api.dto.AdminVariantResponse;
 import com.wild.corp.adhesion.shop.api.dto.AdminVariantStockRequest;
 import com.wild.corp.adhesion.shop.api.dto.OrderMessageRequest;
 import com.wild.corp.adhesion.shop.api.dto.OrderMessageResponse;
 import com.wild.corp.adhesion.shop.api.dto.ProductImageUploadResponse;
+import com.wild.corp.adhesion.shop.api.dto.SupplierOrderCreateRequest;
+import com.wild.corp.adhesion.shop.api.dto.SupplierOrderResponse;
+import com.wild.corp.adhesion.shop.catalog.model.SupplierOrder;
 import com.wild.corp.adhesion.shop.catalog.service.CatalogService;
 import com.wild.corp.adhesion.shop.catalog.service.ProductImageStorageService;
+import com.wild.corp.adhesion.shop.catalog.service.SupplierOrderService;
 import com.wild.corp.adhesion.models.User;
 import com.wild.corp.adhesion.repository.UserRepository;
 import com.wild.corp.adhesion.shop.common.money.Money;
 import com.wild.corp.adhesion.shop.order.service.OrderService;
 import com.wild.corp.adhesion.shop.order.service.OrderConversationService;
+import com.wild.corp.adhesion.shop.payment.service.PaymentService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -57,15 +62,62 @@ public class ShopAdminController {
     private final OrderConversationService orderConversationService;
     private final UserRepository userRepository;
     private final ProductImageStorageService productImageStorage;
+    private final PaymentService paymentService;
+    private final SupplierOrderService supplierOrderService;
 
     public ShopAdminController(CatalogService catalogService, OrderService orderService,
                                OrderConversationService orderConversationService, UserRepository userRepository,
-                               ProductImageStorageService productImageStorage) {
+                               ProductImageStorageService productImageStorage, PaymentService paymentService,
+                               SupplierOrderService supplierOrderService) {
         this.catalogService = catalogService;
         this.orderService = orderService;
         this.orderConversationService = orderConversationService;
         this.userRepository = userRepository;
         this.productImageStorage = productImageStorage;
+        this.paymentService = paymentService;
+        this.supplierOrderService = supplierOrderService;
+    }
+
+    @GetMapping("/supplier-orders")
+    public List<SupplierOrderResponse> supplierOrders() {
+        return supplierOrderService.findAll().stream().map(ShopAdminController::supplierOrder).toList();
+    }
+
+    @PostMapping("/supplier-orders")
+    public ResponseEntity<SupplierOrderResponse> createSupplierOrder(@Valid @RequestBody SupplierOrderCreateRequest request) {
+        SupplierOrder order = supplierOrderService.create(request.supplierName(), request.reference(),
+                supplierLines(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(supplierOrder(order));
+    }
+
+    @PostMapping("/supplier-orders/draft")
+    public ResponseEntity<SupplierOrderResponse> createSupplierOrderDraft(@Valid @RequestBody SupplierOrderCreateRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(supplierOrder(supplierOrderService.createDraft(
+                request.supplierName(), request.reference(), supplierLines(request))));
+    }
+
+    @PutMapping("/supplier-orders/{orderId}/draft")
+    public SupplierOrderResponse updateSupplierOrderDraft(@PathVariable Long orderId,
+            @Valid @RequestBody SupplierOrderCreateRequest request) {
+        return supplierOrder(supplierOrderService.updateDraft(orderId, request.supplierName(),
+                request.reference(), supplierLines(request)));
+    }
+
+    @PutMapping("/supplier-orders/{orderId}/place")
+    public SupplierOrderResponse placeSupplierOrderDraft(@PathVariable Long orderId) {
+        return supplierOrder(supplierOrderService.placeDraft(orderId));
+    }
+
+    @PutMapping("/supplier-orders/{orderId}/receive")
+    public SupplierOrderResponse receiveSupplierOrder(@PathVariable Long orderId) {
+        return supplierOrder(supplierOrderService.receive(orderId));
+    }
+
+    @PostMapping("/orders/{orderNumber}/payment/verify")
+    public AdminOrderResponse verifyPayment(@PathVariable String orderNumber) {
+        var order = paymentService.verifyPaymentForManager(orderNumber);
+        return ShopAdminMapper.order(order, userRepository.findAllByIdIn(List.of(order.getCustomerUserId()))
+                .stream().findFirst().orElse(null));
     }
 
     @GetMapping("/orders")
@@ -86,9 +138,11 @@ public class ShopAdminController {
     }
 
     @PutMapping("/orders/{orderNumber}/items/{itemId}/status")
-    public AdminOrderItemResponse updateOrderItemStatus(@PathVariable String orderNumber, @PathVariable Long itemId,
+    public AdminOrderResponse updateOrderItemStatus(@PathVariable String orderNumber, @PathVariable Long itemId,
                                                          @Valid @RequestBody AdminOrderItemStatusRequest request) {
-        return ShopAdminMapper.orderItem(orderService.updateItemStatus(orderNumber, itemId, request.status()));
+        var order = orderService.updateItemStatus(orderNumber, itemId, request.status());
+        return ShopAdminMapper.order(order, userRepository.findAllByIdIn(List.of(order.getCustomerUserId())).stream()
+                .findFirst().orElse(null));
     }
 
     @GetMapping("/orders/{orderNumber}/conversation")
@@ -140,16 +194,16 @@ public class ShopAdminController {
 
     @PostMapping("/products/{productId}/variants")
     public ResponseEntity<AdminVariantResponse> createVariant(@PathVariable Long productId,
-                                                                @Valid @RequestBody AdminVariantRequest request) {
-        var variant = catalogService.createVariant(productId, request.sku(), request.label(), money(request), request.active(),
-                request.displayOrder(), request.stockTracked(), request.stockOnHand());
+                                                                @Valid @RequestBody AdminVariantCreateRequest request) {
+        var variant = catalogService.createVariant(productId, request.sku(), request.label(),
+                new Money(request.priceAmountInCents(), request.currency().toUpperCase()), request.active(), request.displayOrder());
         return ResponseEntity.status(HttpStatus.CREATED).body(ShopAdminMapper.variant(variant));
     }
 
     @PutMapping("/variants/{variantId}")
     public AdminVariantResponse updateVariant(@PathVariable Long variantId, @Valid @RequestBody AdminVariantRequest request) {
         return ShopAdminMapper.variant(catalogService.updateVariant(variantId, request.sku(), request.label(), money(request),
-                request.active(), request.displayOrder(), request.stockTracked(), request.stockOnHand(), request.expectedVersion()));
+                request.active(), request.displayOrder(), request.stockTracked(), request.expectedVersion()));
     }
 
     @PutMapping("/variants/{variantId}/stock")
@@ -191,5 +245,19 @@ public class ShopAdminController {
 
     private static Money money(AdminVariantRequest request) {
         return new Money(request.priceAmountInCents(), request.currency().toUpperCase());
+    }
+
+    private static SupplierOrderResponse supplierOrder(SupplierOrder order) {
+        return new SupplierOrderResponse(order.getId(), order.getSupplierName(), order.getReference(),
+                order.getStatus(), order.getCreatedAt(), order.getReceivedAt(), order.getLines().stream()
+                .map(line -> new SupplierOrderResponse.Line(line.getId(), line.getVariantId(), line.getProductName(),
+                        line.getVariantName(), line.getSku(), line.getQuantity(),
+                        line.getUnitCostAmountInCents(), line.getUnitCostCurrency(),
+                        line.getLineTotalAmountInCents(), line.getExpectedNeed(), line.isExtraApproved())).toList());
+    }
+
+    private static List<SupplierOrderService.Line> supplierLines(SupplierOrderCreateRequest request) {
+        return request.lines().stream().map(line -> new SupplierOrderService.Line(line.variantId(), line.quantity(),
+                line.unitCostAmountInCents(), Boolean.TRUE.equals(line.extraApproved()))).toList();
     }
 }

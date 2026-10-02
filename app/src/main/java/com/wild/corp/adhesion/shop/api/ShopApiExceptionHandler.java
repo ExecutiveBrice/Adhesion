@@ -1,6 +1,5 @@
 package com.wild.corp.adhesion.shop.api;
 
-import com.wild.corp.adhesion.shop.common.exception.InsufficientStockException;
 import com.wild.corp.adhesion.shop.common.exception.InvalidStatusTransitionException;
 import com.wild.corp.adhesion.shop.common.exception.ProductNotOrderableException;
 import com.wild.corp.adhesion.shop.payment.provider.PaymentProviderException;
@@ -20,7 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-@RestControllerAdvice(assignableTypes = {ShopController.class, ShopAdminController.class})
+@RestControllerAdvice(assignableTypes = {ShopController.class, ShopAdminController.class, ShopPaymentWebhookController.class})
 public class ShopApiExceptionHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ShopApiExceptionHandler.class);
@@ -50,7 +49,7 @@ public class ShopApiExceptionHandler {
         return problem(HttpStatus.NOT_FOUND, "Ressource introuvable", exception.getMessage());
     }
 
-    @ExceptionHandler({ProductNotOrderableException.class, InsufficientStockException.class})
+    @ExceptionHandler(ProductNotOrderableException.class)
     ProblemDetail unavailable(IllegalStateException exception) {
         return problem(HttpStatus.UNPROCESSABLE_CONTENT, "Article indisponible", exception.getMessage());
     }

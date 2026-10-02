@@ -6,7 +6,7 @@ import { ShopProductDto } from '../models/shop.models';
 describe('ShopProductCardComponent', () => {
   let fixture: ComponentFixture<ShopProductCardComponent>;
   const product: ShopProductDto = { id: 1, name: 'T-shirt ALOD', slug: 't-shirt', description: 'Coton', imageUrl: null, categories: [], variants: [
-    { id: 4, sku: 'TS-M', label: 'M', price: { amountInCents: 1500, currency: 'EUR' }, available: true, availableQuantity: 3 }
+    { id: 4, sku: 'TS-M', label: 'M', price: { amountInCents: 1500, currency: 'EUR' }, available: true }
   ]};
 
   beforeEach(async () => {
@@ -16,9 +16,10 @@ describe('ShopProductCardComponent', () => {
     fixture.detectChanges();
   });
 
-  it('affiche le prix et la quantité disponible', () => {
+  it('affiche le prix et la disponibilité sans quantité', () => {
     expect(fixture.nativeElement.textContent).toContain('15 €');
-    expect(fixture.nativeElement.textContent).toContain('3 disponibles');
+    expect(fixture.nativeElement.textContent).toContain('Disponible');
+    expect(fixture.nativeElement.textContent).not.toContain('3 disponibles');
   });
 
   it('utilise un unique lien qui recouvre toute la carte', () => {
@@ -32,7 +33,7 @@ describe('ShopProductCardComponent', () => {
   it('affiche les bornes de prix lorsque les variantes ont des prix différents', () => {
     fixture.componentRef.setInput('product', {
       ...product,
-      variants: [...product.variants, { id: 5, sku: 'TS-L', label: 'L', price: { amountInCents: 2000, currency: 'EUR' }, available: true, availableQuantity: 1 }]
+      variants: [...product.variants, { id: 5, sku: 'TS-L', label: 'L', price: { amountInCents: 2000, currency: 'EUR' }, available: true }]
     });
     fixture.detectChanges();
 

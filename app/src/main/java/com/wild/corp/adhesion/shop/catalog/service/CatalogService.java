@@ -76,23 +76,23 @@ public class CatalogService {
     }
 
     public ProductVariant createVariant(Long productId, String sku, String label, Money price, boolean active,
-                                        int displayOrder, boolean stockTracked, Long stockOnHand) {
+                                        int displayOrder) {
         Product product = findProduct(productId);
         ProductVariant variant = new ProductVariant(product, sku, label, price, active, displayOrder);
-        variant.updateDetails(sku, label, price, active, displayOrder, stockTracked, stockOnHand);
+        variant.trackStock(0);
         product.addVariant(variant);
         return variant;
     }
 
     public ProductVariant updateVariant(Long variantId, String sku, String label, Money price, boolean active,
-                                        int displayOrder, boolean stockTracked, Long stockOnHand, Long expectedVersion) {
+                                        int displayOrder, boolean stockTracked, Long expectedVersion) {
         if (expectedVersion == null) {
             throw new IllegalArgumentException("La version de la variante est obligatoire pour sa modification");
         }
         ProductVariant variant = variantRepository.findByIdForUpdate(variantId)
                 .orElseThrow(() -> new NoSuchElementException("Variante introuvable"));
         variant.requireVersion(expectedVersion);
-        variant.updateDetails(sku, label, price, active, displayOrder, stockTracked, stockOnHand);
+        variant.updateDetails(sku, label, price, active, displayOrder, stockTracked);
         variantRepository.flush();
         return variant;
     }

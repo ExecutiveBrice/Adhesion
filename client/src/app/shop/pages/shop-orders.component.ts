@@ -1,20 +1,23 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { EMPTY, catchError, exhaustMap, filter, firstValueFrom, timer } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ShopOrderDto } from '../models/shop.models';
 import { ShopApiService } from '../services/shop-api.service';
 import { formatShopMoney } from '../shop-format';
+import { ShopPaymentCountdownComponent } from '../components/shop-payment-countdown.component';
 
 @Component({
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, RouterLink, ShopPaymentCountdownComponent],
   templateUrl: './shop-orders.component.html',
   styleUrl: './shop-orders.component.css'
 })
 export class ShopOrdersComponent {
   private readonly api = inject(ShopApiService);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
   readonly orders = signal<ShopOrderDto[]>([]);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -24,7 +27,14 @@ export class ShopOrdersComponent {
   readonly actionError = signal<string | null>(null);
   readonly money = formatShopMoney;
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void {
+    this.load();
+    timer(30_000, 30_000).pipe(
+      filter(() => this.orders().some(order => order.status === 'PENDING_PAYMENT')),
+      exhaustMap(() => this.api.orders().pipe(catchError(() => EMPTY))),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(orders => this.orders.set(orders));
+  }
 
   load(): void {
     this.loading.set(true); this.error.set(null); this.actionError.set(null);

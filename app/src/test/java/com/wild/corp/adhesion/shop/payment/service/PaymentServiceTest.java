@@ -101,7 +101,8 @@ class PaymentServiceTest {
         assertThat(provider.createdSessionCount()).isEqualTo(1);
 
         provider.markSucceeded(session.externalPaymentId(), new Money(3_000, "EUR"));
-        when(attemptRepository.findById(9L)).thenReturn(Optional.of(attempt));
+        when(attemptRepository.findPaymentIdByAttemptId(9L)).thenReturn(Optional.of(7L));
+        when(paymentRepository.findByIdForUpdate(7L)).thenReturn(Optional.of(payment));
         paymentService.refreshPaymentStatus(9L);
         paymentService.refreshPaymentStatus(9L);
 

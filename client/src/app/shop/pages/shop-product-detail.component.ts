@@ -36,10 +36,7 @@ export class ShopProductDetailComponent {
   }
 
   availabilityLabel(variant: ShopVariantDto): string {
-    if (variant.availableQuantity !== null) {
-      return `${variant.availableQuantity} produit${variant.availableQuantity > 1 ? 's' : ''} disponible${variant.availableQuantity > 1 ? 's' : ''}`;
-    }
-    return variant.available ? 'Stock illimité' : '0 produit disponible';
+    return variant.available ? 'Disponible' : 'Indisponible';
   }
 
   ngOnInit(): void {

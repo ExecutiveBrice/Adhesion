@@ -30,6 +30,7 @@ import java.net.URI;
 import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Comparator;
+import java.time.Instant;
 
 @Service
 @Transactional
@@ -90,6 +91,9 @@ public class PaymentService {
         if (order.getStatus() != OrderStatus.PENDING_PAYMENT) {
             throw new IllegalStateException("La commande n'est pas en attente de paiement");
         }
+        if (order.getPaymentExpiresAt() != null && !Instant.now().isBefore(order.getPaymentExpiresAt())) {
+            throw new IllegalStateException("Le délai de paiement de 24 heures est écoulé");
+        }
         Payment payment = getOrCreatePayment(orderId);
         PaymentProviderType providerType = paymentGateway.configuredProvider();
         PaymentAttempt attempt = createAttempt(payment, providerType, idempotencyKey);
@@ -140,8 +144,15 @@ public class PaymentService {
     }
 
     public Payment refreshPaymentStatus(Long attemptId) {
-        PaymentAttempt attempt = attemptRepository.findById(attemptId)
+        Long paymentId = attemptRepository.findPaymentIdByAttemptId(attemptId)
                 .orElseThrow(() -> new NoSuchElementException("Tentative de paiement introuvable"));
+        Payment payment = paymentRepository.findByIdForUpdate(paymentId).orElseThrow();
+        PaymentAttempt attempt = payment.getAttempts().stream().filter(candidate -> attemptId.equals(candidate.getId()))
+                .findFirst().orElseThrow();
+        return refreshAttempt(attempt);
+    }
+
+    private Payment refreshAttempt(PaymentAttempt attempt) {
         if (attempt.getExternalPaymentId() == null) {
             throw new IllegalStateException("La tentative ne possède pas encore d'identifiant externe");
         }
@@ -150,21 +161,41 @@ public class PaymentService {
     }
 
     public Payment refreshPaymentStatusForOrder(Long orderId) {
-        Payment payment = paymentRepository.findByOrderId(orderId)
-                .orElseThrow(() -> new NoSuchElementException("Paiement introuvable"));
-        PaymentAttempt attempt = payment.getAttempts().stream()
+        Payment payment = paymentRepository.findByOrderIdForUpdate(orderId)
+                .orElseThrow(() -> new IllegalStateException("Aucun paiement n’a encore été lancé pour cette commande"));
+        if (payment.getStatus() == PaymentStatus.SUCCEEDED || payment.getStatus() == PaymentStatus.REFUNDED) {
+            return payment;
+        }
+        var pendingAttempts = payment.getAttempts().stream()
                 .filter(candidate -> candidate.getExternalPaymentId() != null)
                 .filter(candidate -> candidate.getStatus() == PaymentStatus.PENDING)
-                .max(Comparator.comparing(PaymentAttempt::getId))
-                .orElseThrow(() -> new IllegalStateException("Aucune tentative de paiement en attente"));
-        return refreshPaymentStatus(attempt.getId());
+                .sorted(Comparator.comparing(PaymentAttempt::getId).reversed()).toList();
+        if (pendingAttempts.isEmpty()) {
+            throw new IllegalStateException("Aucune tentative de paiement en attente de confirmation");
+        }
+        for (PaymentAttempt attempt : pendingAttempts) {
+            refreshAttempt(attempt);
+            if (payment.getStatus() == PaymentStatus.SUCCEEDED) break;
+        }
+        return payment;
+    }
+
+    public ShopOrder verifyPaymentForManager(String orderNumber) {
+        Long orderId = orderRepository.findIdByOrderNumber(orderNumber)
+                .orElseThrow(() -> new NoSuchElementException("Commande introuvable"));
+        refreshPaymentStatusForOrder(orderId);
+        return orderRepository.findById(orderId).orElseThrow();
     }
 
     public Payment processNotification(PaymentProviderType providerType, PaymentNotification notification) {
         PaymentResult result = paymentGateway.processNotification(providerType, notification);
-        PaymentAttempt attempt = attemptRepository.findByProviderKeyAndExternalPaymentId(
+        Long attemptId = attemptRepository.findIdByProviderAndExternalId(
                         providerType.name().toLowerCase(Locale.ROOT), result.externalPaymentId())
                 .orElseThrow(() -> new NoSuchElementException("Tentative de paiement introuvable"));
+        Long paymentId = attemptRepository.findPaymentIdByAttemptId(attemptId).orElseThrow();
+        Payment payment = paymentRepository.findByIdForUpdate(paymentId).orElseThrow();
+        PaymentAttempt attempt = payment.getAttempts().stream().filter(candidate -> attemptId.equals(candidate.getId()))
+                .findFirst().orElseThrow();
         requireProvider(attempt, providerType);
         return applyVerifiedResult(attempt, result);
     }
@@ -172,6 +203,12 @@ public class PaymentService {
     private Payment applyVerifiedResult(PaymentAttempt attempt, PaymentResult result) {
         Payment payment = attempt.getPayment();
         validateResult(attempt, payment, result);
+        // Replayed or delayed notifications must never downgrade a confirmed payment.
+        if (payment.getStatus() == PaymentStatus.REFUNDED
+                || (attempt.getStatus() == PaymentStatus.SUCCEEDED
+                && result.status() != PaymentStatus.REFUNDED && result.status() != PaymentStatus.SUCCEEDED)) {
+            return payment;
+        }
         ShopOrder order = orderRepository.findById(payment.getOrderId())
                 .orElseThrow(() -> new NoSuchElementException("Commande introuvable"));
 
@@ -206,6 +243,10 @@ public class PaymentService {
             throw new IllegalStateException("Le montant du paiement ne correspond plus à la commande");
         }
         payment.recordSucceeded(attempt);
+        if (order.getStatus() == OrderStatus.EXPIRED || order.getStatus() == OrderStatus.CANCELLED) {
+            LOGGER.error("Paiement confirmé pour la commande {} après sa clôture ; intervention nécessaire", order.getOrderNumber());
+            throw new IllegalStateException("Paiement confirmé après la clôture de la commande ; intervention nécessaire");
+        }
         if (order.getStatus() != OrderStatus.PAID
                 && order.getStatus() != OrderStatus.PROCESSING
                 && order.getStatus() != OrderStatus.COMPLETED) {

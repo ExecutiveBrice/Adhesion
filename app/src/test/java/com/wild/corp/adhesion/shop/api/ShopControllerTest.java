@@ -73,7 +73,7 @@ class ShopControllerTest {
         ReflectionTestUtils.setField(product, "id", 10L);
         ProductVariant variant = new ProductVariant(product, "TS-M", "M", new Money(1_500, "EUR"), true, 0);
         ReflectionTestUtils.setField(variant, "id", 20L);
-        variant.trackStock(3);
+        variant.trackStock(0);
         product.addVariant(variant);
         given(catalogService.findActiveProducts()).willReturn(List.of(product));
 
@@ -81,7 +81,8 @@ class ShopControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(10))
                 .andExpect(jsonPath("$[0].variants[0].price.amountInCents").value(1500))
-                .andExpect(jsonPath("$[0].variants[0].availableQuantity").value(3));
+                .andExpect(jsonPath("$[0].variants[0].available").value(true))
+                .andExpect(jsonPath("$[0].variants[0].availableQuantity").doesNotExist());
     }
 
     @Test

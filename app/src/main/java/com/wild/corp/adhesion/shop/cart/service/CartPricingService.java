@@ -55,7 +55,7 @@ public class CartPricingService {
             Product product = variant.getProduct();
             lines.add(new CartQuoteLine(product.getId(), product.getName(), variant.getId(), variant.getLabel(),
                     variant.getSku(), variant.getPrice(), requested.getValue(), lineTotal,
-                    !variant.isStockTracked() || variant.availableStock() > 0));
+                    true));
         }
 
         Money subtotal = OrderTotalsCalculator.calculateLineTotals(lineTotals, currency);

@@ -4,6 +4,5 @@ public record ProductVariantResponse(Long id,
                                      String sku,
                                      String label,
                                      MoneyResponse price,
-                                     boolean available,
-                                     Long availableQuantity) {
+                                     boolean available) {
 }

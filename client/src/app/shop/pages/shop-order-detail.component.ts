@@ -1,14 +1,16 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { EMPTY, catchError, exhaustMap, filter, firstValueFrom, timer } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ShopOrderDto } from '../models/shop.models';
 import { ShopApiService } from '../services/shop-api.service';
 import { ShopOrderSummaryComponent } from '../components/shop-order-summary.component';
+import { ShopPaymentCountdownComponent } from '../components/shop-payment-countdown.component';
 
 @Component({
-  imports: [RouterLink, DatePipe, ShopOrderSummaryComponent],
+  imports: [RouterLink, DatePipe, ShopOrderSummaryComponent, ShopPaymentCountdownComponent],
   templateUrl: './shop-order-detail.component.html',
   styleUrl: './shop-order-detail.component.css'
 })
@@ -16,12 +18,21 @@ export class ShopOrderDetailComponent {
   private readonly api = inject(ShopApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
   readonly order = signal<ShopOrderDto | null>(null);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly startingPayment = signal(false);
   private orderNumber = '';
-  ngOnInit(): void { this.orderNumber = this.route.snapshot.paramMap.get('orderNumber') ?? ''; this.load(); }
+  ngOnInit(): void {
+    this.orderNumber = this.route.snapshot.paramMap.get('orderNumber') ?? '';
+    this.load();
+    timer(30_000, 30_000).pipe(
+      filter(() => this.order()?.status === 'PENDING_PAYMENT'),
+      exhaustMap(() => this.api.order(this.orderNumber).pipe(catchError(() => EMPTY))),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(order => this.order.set(order));
+  }
   load(): void { this.loading.set(true); this.api.order(this.orderNumber).subscribe({ next: order => { this.order.set(order); this.loading.set(false); }, error: () => { this.error.set('Cette commande est introuvable ou ne vous appartient pas.'); this.loading.set(false); } }); }
   async pay(): Promise<void> {
     if (this.startingPayment() || !this.order()) return;

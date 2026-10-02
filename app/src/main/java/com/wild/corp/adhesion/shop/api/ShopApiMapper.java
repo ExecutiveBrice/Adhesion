@@ -42,8 +42,7 @@ final class ShopApiMapper {
                         .filter(ProductVariant::isActive)
                         .map(variant -> new ProductVariantResponse(
                                 variant.getId(), variant.getSku(), variant.getLabel(), MoneyResponse.from(variant.getPrice()),
-                                !variant.isStockTracked() || variant.availableStock() > 0,
-                                variant.isStockTracked() ? variant.availableStock() : null))
+                                true))
                         .toList());
     }
 
@@ -63,7 +62,7 @@ final class ShopApiMapper {
                 order.getItems().stream().map(ShopApiMapper::orderItem).toList(),
                 total, MoneyResponse.from(com.wild.corp.adhesion.shop.common.money.Money.zero(total.currency())),
                 MoneyResponse.from(com.wild.corp.adhesion.shop.common.money.Money.zero(total.currency())), total, order.isRefundRequested(),
-                order.getCreatedAt());
+                order.getCreatedAt(), order.getPaymentExpiresAt());
     }
 
     static OrderMessageResponse orderMessage(OrderMessage message) {

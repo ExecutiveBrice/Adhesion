@@ -17,6 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Comparator;
+import java.time.Instant;
 
 @Service
 @Transactional
@@ -119,19 +120,39 @@ public class OrderService {
         return order;
     }
 
-    public OrderItem updateItemStatus(String orderNumber, Long itemId, OrderItemStatus status) {
-        ShopOrder order = orderRepository.findByOrderNumber(orderNumber)
+    public ShopOrder updateItemStatus(String orderNumber, Long itemId, OrderItemStatus status) {
+        ShopOrder order = orderRepository.findByOrderNumberForUpdate(orderNumber)
                 .orElseThrow(() -> new java.util.NoSuchElementException("Commande introuvable"));
         OrderItem item = order.getItems().stream()
                 .filter(candidate -> candidate.getId().equals(itemId))
                 .findFirst()
                 .orElseThrow(() -> new java.util.NoSuchElementException("Ligne de commande introuvable"));
+        if (status == null) {
+            throw new IllegalArgumentException("Le statut de l'article est obligatoire");
+        }
+        if (status == item.getStatus()) return order;
+        if (status == OrderItemStatus.CANCELLED) {
+            if (order.getStatus() != OrderStatus.PENDING_PAYMENT || order.getItems().size() != 1) {
+                throw new IllegalStateException("Une ligne ne peut être annulée seule : annulez la commande avant paiement ou traitez son remboursement après paiement");
+            }
+            order.transitionTo(OrderStatus.CANCELLED);
+            releaseReservedStock(order);
+            return order;
+        }
+        if (order.getStatus() != OrderStatus.PAID && order.getStatus() != OrderStatus.PROCESSING) {
+            throw new IllegalStateException("Les articles ne peuvent être préparés que sur une commande payée en cours");
+        }
+        if (item.getStatus() == OrderItemStatus.COMPLETED || item.getStatus() == OrderItemStatus.CANCELLED
+                || status == OrderItemStatus.PENDING) {
+            throw new IllegalStateException("Le statut de cet article ne peut pas revenir en arrière");
+        }
         item.setStatus(status);
-        return item;
+        order.synchronizeStatusFromItems();
+        return order;
     }
 
     public ShopOrder updateAdminOrderStatus(String orderNumber, OrderStatus status) {
-        ShopOrder order = orderRepository.findByOrderNumber(orderNumber)
+        ShopOrder order = orderRepository.findByOrderNumberForUpdate(orderNumber)
                 .orElseThrow(() -> new java.util.NoSuchElementException("Commande introuvable"));
         if (status != OrderStatus.PROCESSING && status != OrderStatus.COMPLETED && status != OrderStatus.CANCELLED) {
             throw new IllegalArgumentException("Ce statut de commande ne peut pas être défini depuis la gestion boutique");
@@ -154,6 +175,16 @@ public class OrderService {
             releaseReservedStock(order);
         }
         return order;
+    }
+
+    /** Called after payment reconciliation, in the same transaction holding the payment lock. */
+    public boolean expireUnpaidOrder(Long orderId, Instant now) {
+        ShopOrder order = orderRepository.findByIdForUpdate(orderId).orElseThrow();
+        if (order.getStatus() != OrderStatus.PENDING_PAYMENT) return false;
+        if (order.getPaymentExpiresAt() == null || now.isBefore(order.getPaymentExpiresAt())) return false;
+        order.transitionTo(OrderStatus.EXPIRED);
+        releaseReservedStock(order);
+        return true;
     }
 
     public void consumeReservedStock(ShopOrder order) {

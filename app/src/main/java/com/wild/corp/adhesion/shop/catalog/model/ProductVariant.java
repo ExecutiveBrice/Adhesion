@@ -1,6 +1,5 @@
 package com.wild.corp.adhesion.shop.catalog.model;
 
-import com.wild.corp.adhesion.shop.common.exception.InsufficientStockException;
 import com.wild.corp.adhesion.shop.common.exception.ProductNotOrderableException;
 import com.wild.corp.adhesion.shop.common.money.Money;
 import com.wild.corp.adhesion.shop.common.persistence.AuditableEntity;
@@ -107,9 +106,6 @@ public class ProductVariant extends AuditableEntity {
         if (!active || !product.isActive()) {
             throw new ProductNotOrderableException(product.getId());
         }
-        if (stockTracked && availableStock() < requestedQuantity) {
-            throw new InsufficientStockException(id, availableStock(), requestedQuantity);
-        }
     }
 
     public boolean reserveStock(int requestedQuantity) {
@@ -141,10 +137,17 @@ public class ProductVariant extends AuditableEntity {
         if (!stockTracked) {
             throw new IllegalStateException("Le suivi du stock est désactivé pour cette variante");
         }
-        if (quantity < stockReserved) {
-            throw new IllegalArgumentException("Le stock doit couvrir les réservations en cours");
-        }
         stockOnHand = quantity;
+    }
+
+    public void receiveStock(int quantity) {
+        if (!stockTracked || stockOnHand == null) {
+            throw new IllegalStateException("Le suivi du stock est désactivé pour cette variante");
+        }
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("La quantité reçue doit être positive");
+        }
+        stockOnHand = Math.addExact(stockOnHand, quantity);
     }
 
     public void requireVersion(long expectedVersion) {
@@ -168,7 +171,7 @@ public class ProductVariant extends AuditableEntity {
     }
 
     public void updateDetails(String sku, String label, Money price, boolean active, int displayOrder,
-                              boolean stockTracked, Long stockOnHand) {
+                              boolean stockTracked) {
         this.sku = requireText(sku, "Le SKU est obligatoire");
         this.label = normalizeOptionalText(label);
         this.price = Objects.requireNonNull(price, "Le prix est obligatoire");
@@ -178,11 +181,9 @@ public class ProductVariant extends AuditableEntity {
             stopTrackingStock();
             return;
         }
-        if (stockOnHand == null || stockOnHand < stockReserved) {
-            throw new IllegalArgumentException("Le stock doit couvrir les réservations en cours");
+        if (!this.stockTracked) {
+            trackStock(0);
         }
-        this.stockTracked = true;
-        this.stockOnHand = stockOnHand;
     }
 
     public void setDisplayOrder(int displayOrder) {

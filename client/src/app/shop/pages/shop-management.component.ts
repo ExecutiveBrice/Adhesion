@@ -4,14 +4,14 @@ import { RouterLink } from '@angular/router';
 import { forkJoin, map, Observable, of, switchMap, timeout } from 'rxjs';
 import {
   ShopAdminCategoryDto, ShopAdminCategoryRequest, ShopAdminOrderDto, ShopAdminProductDto, ShopAdminProductRequest,
-  ShopAdminVariantDto, ShopAdminVariantRequest
+  ShopAdminVariantCreateRequest, ShopAdminVariantDto, ShopAdminVariantRequest
 } from '../models/shop.models';
 import { ShopAdminApiService } from '../services/shop-admin-api.service';
 import { ShopAdminOrderCardComponent } from '../components/shop-admin-order-card.component';
 import { ShopStockOverviewComponent } from '../components/shop-stock-overview.component';
 import { registerApiViewRefresh } from '../../_services/api-render.service';
 
-type VariantDraft = ShopAdminVariantRequest;
+type VariantDraft = ShopAdminVariantCreateRequest;
 
 @Component({
   selector: 'app-shop-management',
@@ -178,7 +178,7 @@ export class ShopManagementComponent implements OnDestroy {
   draftFor(productId: number): VariantDraft {
     return this.variantDrafts[productId] ??= {
       sku: '', label: null, priceAmountInCents: 0, currency: 'EUR', active: true,
-      displayOrder: 0, stockTracked: false, stockOnHand: null
+      displayOrder: 0
     };
   }
 
@@ -191,7 +191,9 @@ export class ShopManagementComponent implements OnDestroy {
   }
 
   updateVariant(variant: ShopAdminVariantDto): void {
-    const request = { ...this.cleanVariant(variant), expectedVersion: variant.version };
+    const request: ShopAdminVariantRequest = {
+      ...this.cleanVariant(variant), stockTracked: true, expectedVersion: variant.version
+    };
     this.run(this.api.updateVariant(variant.id, request), () => {
       this.message = 'Variante mise à jour.';
       this.load();
@@ -320,7 +322,7 @@ export class ShopManagementComponent implements OnDestroy {
   }
 
   private cleanVariant(variant: VariantDraft): VariantDraft {
-    return { ...variant, sku: variant.sku.trim(), label: this.optional(variant.label), currency: variant.currency.trim().toUpperCase(), priceAmountInCents: Number(variant.priceAmountInCents) || 0, displayOrder: Number(variant.displayOrder) || 0, stockOnHand: variant.stockTracked ? Number(variant.stockOnHand) || 0 : null };
+    return { sku: variant.sku.trim(), label: this.optional(variant.label), currency: variant.currency.trim().toUpperCase(), priceAmountInCents: Number(variant.priceAmountInCents) || 0, displayOrder: Number(variant.displayOrder) || 0, active: variant.active };
   }
 
   private optional(value: string | null): string | null { return value?.trim() || null; }

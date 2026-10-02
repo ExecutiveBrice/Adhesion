@@ -1,7 +1,7 @@
 import { registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { ShopAdminOrderDto } from '../models/shop.models';
 import { ShopAdminApiService } from '../services/shop-admin-api.service';
 import { ShopAdminOrderCardComponent } from './shop-admin-order-card.component';
@@ -18,9 +18,63 @@ describe('ShopAdminOrderCardComponent', () => {
 
   beforeAll(() => registerLocaleData(localeFr));
 
+  it('vérifie le paiement, évite les doubles clics et actualise la commande', () => {
+    const result = new Subject<ShopAdminOrderDto>();
+    const api = jasmine.createSpyObj<ShopAdminApiService>('ShopAdminApiService', ['verifyPayment']);
+    api.verifyPayment.and.returnValue(result);
+    TestBed.configureTestingModule({
+      imports: [ShopAdminOrderCardComponent], providers: [{ provide: ShopAdminApiService, useValue: api }]
+    });
+    const fixture = TestBed.createComponent(ShopAdminOrderCardComponent);
+    fixture.componentInstance.order = { ...structuredClone(order), status: 'PENDING_PAYMENT' };
+    fixture.componentInstance.statusLabel = 'En attente de paiement';
+    fixture.componentInstance.expanded = true;
+    const changed = jasmine.createSpy('changed');
+    fixture.componentInstance.statusChanged.subscribe(changed);
+    fixture.detectChanges();
+    fixture.nativeElement.querySelector('.verify-payment').click();
+    fixture.componentInstance.verifyPayment();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.verify-payment').disabled).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.order-status-control select').disabled).toBeTrue();
+    expect(api.verifyPayment).toHaveBeenCalledOnceWith(order.orderNumber);
+
+    result.next(structuredClone(order));
+    result.complete();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.order.status).toBe('PAID');
+    expect(fixture.nativeElement.querySelector('.verify-payment')).toBeNull();
+    expect(changed).toHaveBeenCalledTimes(1);
+    expect(fixture.nativeElement.textContent).toContain('le statut de la commande est à jour');
+  });
+
+  it('distingue un paiement encore en attente d’une erreur de vérification', () => {
+    const pending = { ...structuredClone(order), status: 'PENDING_PAYMENT' as const };
+    const api = jasmine.createSpyObj<ShopAdminApiService>('ShopAdminApiService', ['verifyPayment']);
+    api.verifyPayment.and.returnValue(of(pending));
+    TestBed.configureTestingModule({
+      imports: [ShopAdminOrderCardComponent], providers: [{ provide: ShopAdminApiService, useValue: api }]
+    });
+    const fixture = TestBed.createComponent(ShopAdminOrderCardComponent);
+    fixture.componentInstance.order = pending;
+    fixture.componentInstance.statusLabel = 'En attente de paiement';
+    fixture.componentInstance.expanded = true;
+    fixture.componentInstance.verifyPayment();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('le paiement n’est pas encore confirmé');
+
+    api.verifyPayment.and.returnValue(throwError(() => ({ error: { detail: 'HelloAsso indisponible' } })));
+    fixture.componentInstance.verifyPayment();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.order.status).toBe('PENDING_PAYMENT');
+    expect(fixture.nativeElement.textContent).toContain('HelloAsso indisponible');
+    expect(fixture.nativeElement.querySelector('.verify-payment').disabled).toBeFalse();
+    expect(fixture.componentInstance.paymentVerificationMessage).toBe('');
+  });
+
   it('déplie les articles et enregistre leur statut', () => {
     const api = jasmine.createSpyObj<ShopAdminApiService>('ShopAdminApiService', ['updateOrderItemStatus']);
-    api.updateOrderItemStatus.and.returnValue(of({ ...order.items[0], status: 'PROCESSING' }));
+    api.updateOrderItemStatus.and.returnValue(of({ ...order, status: 'PROCESSING', items: [{ ...order.items[0], status: 'PROCESSING' }] }));
     TestBed.configureTestingModule({
       imports: [ShopAdminOrderCardComponent],
       providers: [{ provide: ShopAdminApiService, useValue: api }]
@@ -45,6 +99,7 @@ describe('ShopAdminOrderCardComponent', () => {
     select.dispatchEvent(new Event('change'));
     fixture.detectChanges();
     expect(api.updateOrderItemStatus).toHaveBeenCalledWith('CMD-2026-000001', 7, 'PROCESSING');
+    expect(fixture.componentInstance.order.status).toBe('PROCESSING');
     expect(fixture.componentInstance.order.items[0].status).toBe('PROCESSING');
     expect(fixture.nativeElement.textContent).toContain('Statut enregistré');
   });
@@ -71,9 +126,26 @@ describe('ShopAdminOrderCardComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Le statut n’a pas pu être enregistré');
   });
 
-  it('enregistre le statut global sans changer celui des articles', () => {
+  it('ne propose pas l’annulation d’un article payé sans remboursement', () => {
+    const api = jasmine.createSpyObj<ShopAdminApiService>('ShopAdminApiService', ['updateOrderItemStatus']);
+    TestBed.configureTestingModule({
+      imports: [ShopAdminOrderCardComponent],
+      providers: [{ provide: ShopAdminApiService, useValue: api }]
+    });
+    const fixture = TestBed.createComponent(ShopAdminOrderCardComponent);
+    fixture.componentInstance.order = structuredClone(order);
+    fixture.componentInstance.statusLabel = 'Payée';
+    fixture.componentInstance.expanded = true;
+    fixture.detectChanges();
+
+    const select = fixture.nativeElement.querySelector('.item-status-control select') as HTMLSelectElement;
+    expect(Array.from(select.options).map(option => option.value)).toEqual(['PENDING', 'PROCESSING', 'COMPLETED']);
+    expect(fixture.nativeElement.textContent).toContain('traitement du remboursement');
+  });
+
+  it('enregistre le statut global et actualise celui des articles', () => {
     const api = jasmine.createSpyObj<ShopAdminApiService>('ShopAdminApiService', ['updateOrderStatus']);
-    api.updateOrderStatus.and.returnValue(of({ ...order, status: 'PROCESSING' }));
+    api.updateOrderStatus.and.returnValue(of({ ...order, status: 'PROCESSING', items: [{ ...order.items[0], status: 'PROCESSING' }] }));
     TestBed.configureTestingModule({
       imports: [ShopAdminOrderCardComponent],
       providers: [{ provide: ShopAdminApiService, useValue: api }]
@@ -94,14 +166,14 @@ describe('ShopAdminOrderCardComponent', () => {
 
     expect(api.updateOrderStatus).toHaveBeenCalledWith('CMD-2026-000001', 'PROCESSING');
     expect(fixture.componentInstance.order.status).toBe('PROCESSING');
-    expect(fixture.componentInstance.order.items[0].status).toBe('PENDING');
+    expect(fixture.componentInstance.order.items[0].status).toBe('PROCESSING');
     expect(changed).toHaveBeenCalledTimes(1);
   });
 
-  it('annule une commande en attente de paiement sans changer le statut de ses articles', () => {
+  it('annule une commande en attente de paiement et ses articles', () => {
     const pendingOrder: ShopAdminOrderDto = { ...structuredClone(order), status: 'PENDING_PAYMENT' };
     const api = jasmine.createSpyObj<ShopAdminApiService>('ShopAdminApiService', ['updateOrderStatus']);
-    api.updateOrderStatus.and.returnValue(of({ ...pendingOrder, status: 'CANCELLED' }));
+    api.updateOrderStatus.and.returnValue(of({ ...pendingOrder, status: 'CANCELLED', items: [{ ...pendingOrder.items[0], status: 'CANCELLED' }] }));
     TestBed.configureTestingModule({
       imports: [ShopAdminOrderCardComponent],
       providers: [{ provide: ShopAdminApiService, useValue: api }]
@@ -121,7 +193,7 @@ describe('ShopAdminOrderCardComponent', () => {
 
     expect(api.updateOrderStatus).toHaveBeenCalledWith('CMD-2026-000001', 'CANCELLED');
     expect(fixture.componentInstance.order.status).toBe('CANCELLED');
-    expect(fixture.componentInstance.order.items[0].status).toBe('PENDING');
+    expect(fixture.componentInstance.order.items[0].status).toBe('CANCELLED');
   });
 
   it('rétablit le statut global si son enregistrement échoue', () => {

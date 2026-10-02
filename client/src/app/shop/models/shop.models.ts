@@ -15,7 +15,6 @@ export interface ShopVariantDto {
   label: string;
   price: ShopMoneyDto;
   available: boolean;
-  availableQuantity: number | null;
 }
 
 export interface ShopProductDto {
@@ -81,15 +80,17 @@ export interface ShopAdminCategoryRequest {
   displayOrder: number;
 }
 
-export interface ShopAdminVariantRequest {
+export interface ShopAdminVariantCreateRequest {
   sku: string;
   label: string | null;
   priceAmountInCents: number;
   currency: string;
   active: boolean;
   displayOrder: number;
+}
+
+export interface ShopAdminVariantRequest extends ShopAdminVariantCreateRequest {
   stockTracked: boolean;
-  stockOnHand: number | null;
   expectedVersion?: number;
 }
 
@@ -140,6 +141,7 @@ export interface ShopOrderDto {
   total: ShopMoneyDto;
   refundRequested: boolean;
   createdAt: string;
+  paymentExpiresAt?: string | null;
 }
 
 export interface ShopAdminOrderDto {
@@ -147,6 +149,7 @@ export interface ShopAdminOrderDto {
   status: ShopOrderDto['status'];
   total: ShopMoneyDto;
   createdAt: string;
+  paymentExpiresAt?: string | null;
   customerEmail: string | null;
   customerTribeId: number | null;
   refundRequested: boolean;
@@ -174,6 +177,37 @@ export interface ShopAdminOrderItemDto {
   quantity: number;
   lineTotal: ShopMoneyDto;
   status: ShopAdminOrderItemStatus;
+  stockReserved?: boolean;
+}
+
+export interface ShopSupplierOrderDto {
+  id: number;
+  supplierName: string;
+  reference: string | null;
+  status: 'DRAFT' | 'ORDERED' | 'RECEIVED';
+  createdAt: string;
+  receivedAt: string | null;
+  lines: ShopSupplierOrderLineDto[];
+}
+
+export interface ShopSupplierOrderLineDto {
+  id: number;
+  variantId: number;
+  productName: string;
+  variantName: string | null;
+  sku: string;
+  quantity: number;
+  unitCostAmountInCents?: number | null;
+  unitCostCurrency?: string | null;
+  lineTotalAmountInCents?: number | null;
+  expectedNeed?: number | null;
+  extraApproved?: boolean;
+}
+
+export interface ShopSupplierOrderCreateRequest {
+  supplierName: string;
+  reference: string | null;
+  lines: { variantId: number; quantity: number; unitCostAmountInCents: number | null; extraApproved: boolean }[];
 }
 
 /** État local minimal : aucune somme ni prix n'est conservé comme référence de paiement. */

@@ -115,8 +115,7 @@
                   <input class="form-control currency" [name]="'variantCurrency' + variant.id" required maxlength="3" placeholder="EUR" [(ngModel)]="variant.currency">
                   <input class="form-control" [name]="'variantOrder' + variant.id" type="number" min="0" placeholder="Ordre" [(ngModel)]="variant.displayOrder">
                   <label class="form-check"><input class="form-check-input" [name]="'variantActive' + variant.id" type="checkbox" [(ngModel)]="variant.active"> Active</label>
-                  <label class="form-check"><input class="form-check-input" [name]="'variantStock' + variant.id" type="checkbox" [(ngModel)]="variant.stockTracked"> Stock</label>
-                  @if (variant.stockTracked) { <input class="form-control" [name]="'variantStockOnHand' + variant.id" type="number" min="0" placeholder="En stock" [(ngModel)]="variant.stockOnHand"> <small>Réservé : {{ variant.stockReserved }}</small> }
+                  @if (variant.stockTracked) { <small>En stock : {{ variant.stockOnHand }} · Réservé : {{ variant.stockReserved }}</small> }
                   <button class="btn btn-outline-primary btn-sm" [disabled]="saving || variantForm.invalid">Enregistrer</button>
                   <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="saving" (click)="deleteVariant(variant.id)">Retirer</button>
                 </form>
@@ -128,9 +127,8 @@
                 <input class="form-control currency" [name]="'newVariantCurrency' + product.id" required maxlength="3" [(ngModel)]="draftFor(product.id).currency">
                 <input class="form-control" [name]="'newVariantOrder' + product.id" type="number" min="0" placeholder="Ordre" [(ngModel)]="draftFor(product.id).displayOrder">
                 <label class="form-check"><input class="form-check-input" [name]="'newVariantActive' + product.id" type="checkbox" [(ngModel)]="draftFor(product.id).active"> Active</label>
-                <label class="form-check"><input class="form-check-input" [name]="'newVariantStock' + product.id" type="checkbox" [(ngModel)]="draftFor(product.id).stockTracked"> Stock</label>
-                @if (draftFor(product.id).stockTracked) { <input class="form-control" [name]="'newVariantStockOnHand' + product.id" type="number" min="0" placeholder="En stock" [(ngModel)]="draftFor(product.id).stockOnHand"> }
                 <button class="btn btn-primary btn-sm" [disabled]="saving || newVariantForm.invalid">Ajouter une variante</button>
+                <small>Stock initial : 0. Ajoutez du stock dans Gestion du stock.</small>
               </form>
             </section>
           </article>

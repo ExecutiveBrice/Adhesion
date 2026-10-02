@@ -68,6 +68,7 @@ public class WebSecurityConfig{
                                 .requestMatchers(HttpMethod.GET, "/activite/calendrier", "/activite/calendrier/google").permitAll()
                                 // Les fiches produit sont connectées, mais leurs visuels sont chargés par la balise img sans jeton HTTP.
                                 .requestMatchers(HttpMethod.GET, "/shop/product-images/**").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/shop/payments/helloasso/notifications").permitAll()
                                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                                 .requestMatchers(HttpMethod.OPTIONS,"/**").permitAll()
                                 .anyRequest().authenticated()

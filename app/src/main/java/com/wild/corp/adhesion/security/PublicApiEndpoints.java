@@ -16,6 +16,8 @@ public final class PublicApiEndpoints {
     }
 
     public static final List<Endpoint> ENDPOINTS = List.of(
+            new Endpoint(HttpMethod.POST, "/shop/payments/helloasso/notifications",
+                    "Notification HelloAsso : paiement toujours relu via l’API authentifiée avant confirmation"),
             new Endpoint(HttpMethod.POST, "/auth/signin", "Connexion"),
             new Endpoint(HttpMethod.POST, "/auth/refresh", "Renouvellement PWA avec un jeton secret à usage unique"),
             new Endpoint(HttpMethod.POST, "/auth/signout", "Révocation du jeton PWA présenté, même après expiration du JWT"),

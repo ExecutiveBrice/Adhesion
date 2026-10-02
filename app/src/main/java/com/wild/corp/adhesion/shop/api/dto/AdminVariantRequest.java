@@ -13,6 +13,5 @@ public record AdminVariantRequest(
         boolean active,
         @Min(0) int displayOrder,
         boolean stockTracked,
-        @Min(0) Long stockOnHand,
         @Min(0) Long expectedVersion) {
 }
