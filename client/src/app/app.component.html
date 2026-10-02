@@ -65,6 +65,17 @@
                   <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" [routerLink]="['/inscription', '']">{{showSecretaire ? "Inscriptions manuelles" : "Mes adhésions"}}</a>
                 </li>
               }
+              @if (isLoggedIn && showChat) {
+                <li class="nav-item" (click)="isCollapsed = true">
+                  <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="chat">Chat
+                    @if (chat.totalUnread() > 0) {
+                      <span class="chat-alert ms-2" role="img" [attr.aria-label]="chat.totalUnread() + ' messages non lus'" [attr.title]="chat.totalUnread() + ' messages non lus'">
+                        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a6 6 0 0 0-6 6v4l-2 4v2h16v-2l-2-4V8a6 6 0 0 0-6-6Zm-3 18a3 3 0 0 0 6 0H9Z"/></svg>
+                      </span>
+                    }
+                  </a>
+                </li>
+              }
               @if (showAdmin || showSecretaire || showMembreCA || showBureau) {
                 <li class="nav-item" (click)="isCollapsed = true">
                   <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="reporting">Reporting</a>
@@ -131,11 +142,13 @@
 
   @if (isCollapsed && pwaService.canInstall()) {
     <aside class="pwa-install-prompt" role="status" aria-live="polite">
+      <button type="button" class="pwa-install-prompt-close" aria-label="Ne pas afficher l’invite d’installation durant cette session" (click)="pwaService.dismissInstallPrompt()">×</button>
       <span>Installez ALOD pour y accéder rapidement, même avec une connexion limitée.</span>
       <button type="button" class="btn btn-primary btn-sm" (click)="pwaService.install()">Installer</button>
     </aside>
   } @else if (isCollapsed && pwaService.showIosInstallHint()) {
     <aside class="pwa-install-prompt" role="status">
+      <button type="button" class="pwa-install-prompt-close" aria-label="Ne pas afficher l’invite d’installation durant cette session" (click)="pwaService.dismissInstallPrompt()">×</button>
       <span>Pour installer ALOD, ouvrez Partager puis « Sur l’écran d’accueil ».</span>
     </aside>
   }

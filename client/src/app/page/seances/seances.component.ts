@@ -38,7 +38,7 @@ export class SeancesComponent implements OnInit {
       this.router.navigate(['login']);
       return;
     }
-    if (!roles.includes('ROLE_ENCADRANT') && !roles.includes('ROLE_REFERENT')) {
+    if (!roles.includes('ROLE_ENCADRANT') && !roles.includes('ROLE_REFERENT_ACTIVITE')) {
       this.router.navigate(['inscription']);
       return;
     }

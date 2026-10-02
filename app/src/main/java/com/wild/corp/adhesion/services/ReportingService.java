@@ -22,7 +22,7 @@ public class ReportingService {
 
 
     public List<ReportingActivite> getAllActiviteBasket(){
-        return getReportingActivites("ALOD_B");
+        return getReportingActivites("COMPETITION");
     }
 
     public List<ReportingAdhesion> getAllAdhesions(LocalDate debut, LocalDate fin) {
@@ -56,7 +56,7 @@ public class ReportingService {
     }
 
     public List<ReportingActivite> getAllActiviteGeneral(){
-        return getReportingActivites("ALOD_G");
+        return getReportingActivites("NON_COMPETITIVE");
     }
 
     private List<ReportingActivite> getReportingActivites(String groupe) {

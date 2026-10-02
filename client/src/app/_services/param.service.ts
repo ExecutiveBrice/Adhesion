@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient} from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { AgendaGoogleConfiguration, ParamBoolean, ParamNumber, ParamText, SalleConfiguration } from '../models';
+import { AgendaGoogleConfiguration, ParamBoolean, ParamNumber, ParamText, SalleConfiguration, SectionChatConfiguration, SectionConfiguration } from '../models';
 
 const API_URL = environment.server+'/param/';
 
@@ -51,6 +51,34 @@ export class ParamService {
 
   deleteSalle(salleId: number): Observable<void> {
     return this.http.delete<void>(API_URL + 'salles/' + salleId);
+  }
+
+  getSections(): Observable<SectionConfiguration[]> {
+    return this.http.get<SectionConfiguration[]>(API_URL + 'sections', { responseType: 'json' });
+  }
+
+  createSection(section: SectionConfiguration): Observable<SectionConfiguration> {
+    return this.http.post<SectionConfiguration>(API_URL + 'sections', section, { responseType: 'json' });
+  }
+
+  updateSection(section: SectionConfiguration): Observable<SectionConfiguration> {
+    return this.http.put<SectionConfiguration>(API_URL + 'sections/' + section.id, section, { responseType: 'json' });
+  }
+
+  getChats(): Observable<SectionChatConfiguration[]> {
+    return this.http.get<SectionChatConfiguration[]>(API_URL + 'chats', { responseType: 'json' });
+  }
+
+  createChat(chat: SectionChatConfiguration): Observable<SectionChatConfiguration> {
+    return this.http.post<SectionChatConfiguration>(API_URL + 'chats', chat, { responseType: 'json' });
+  }
+
+  updateChat(chat: SectionChatConfiguration): Observable<SectionChatConfiguration> {
+    return this.http.put<SectionChatConfiguration>(API_URL + 'chats/' + chat.id, chat, { responseType: 'json' });
+  }
+
+  deleteChat(chatId: number): Observable<void> {
+    return this.http.delete<void>(API_URL + 'chats/' + chatId);
   }
 
   getAllBoolean(): Observable<ParamBoolean[]> {

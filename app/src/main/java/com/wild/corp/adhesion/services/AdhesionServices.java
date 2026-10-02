@@ -344,7 +344,7 @@ public class AdhesionServices {
         Activite activite = activiteServices.getById(activiteId);
         Adherent adherent = adherentServices.getById(adherentId);
 
-        boolean dejaLicencie =  adherent.getActivitesNm1().stream().anyMatch(activiteNm1 -> "ALOD_B".equals(activiteNm1.getGroupe()) || activite.getGroupeFiltre().equals(activiteNm1.getGroupeFiltre()));
+        boolean dejaLicencie =  adherent.getActivitesNm1().stream().anyMatch(activiteNm1 -> "COMPETITION".equals(activiteNm1.getGroupe()) || activite.getGroupeFiltre().equals(activiteNm1.getGroupeFiltre()));
 
         Adhesion newAdhesion = new Adhesion();
         newAdhesion.setPosition(0);

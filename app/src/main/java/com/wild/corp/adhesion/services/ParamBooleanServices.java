@@ -90,6 +90,11 @@ public class ParamBooleanServices {
                     .paramName("Show_Boutique")
                     .paramValue(false).build());
         }
+        if(!paramBooleanRepository.existsByParamName("Show_Chat")) {
+            paramBooleanRepository.save(ParamBoolean.builder()
+                    .paramName("Show_Chat")
+                    .paramValue(true).build());
+        }
     }
 
 

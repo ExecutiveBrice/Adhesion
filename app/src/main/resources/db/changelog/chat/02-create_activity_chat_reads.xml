@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  <changeSet id="activity-chat-02" author="adhesion">
+    <sql><![CDATA[CREATE TABLE activity_chat_reads (
+      user_id bigint NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      activite_id bigint NOT NULL REFERENCES activites(id) ON DELETE CASCADE,
+      last_message_id bigint NOT NULL,
+      PRIMARY KEY (user_id, activite_id)
+    );]]></sql>
+    <rollback><dropTable tableName="activity_chat_reads"/></rollback>
+  </changeSet>
+</databaseChangeLog>

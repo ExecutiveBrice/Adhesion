@@ -82,6 +82,101 @@
       </ng-template></div></div>
     </section>
 
+    <section ngbAccordionItem="sections">
+      <h2 ngbAccordionHeader>
+        <button ngbAccordionButton>
+          <span class="admin-section-icon" aria-hidden="true"><fa-icon [icon]="faLayerGroup"></fa-icon></span>
+          <span class="admin-section-heading"><span>Sections</span><small>Répertoriez les sections de l’association.</small></span>
+          <span class="badge rounded-pill text-bg-light ms-auto me-2">{{sections.length}}</span>
+        </button>
+      </h2>
+      <div ngbAccordionCollapse><div ngbAccordionBody><ng-template>
+        <div class="admin-section-content">
+          <div class="admin-form-panel"><div class="row g-3 align-items-end">
+            <div class="col-12 col-md"><label class="form-label" for="nouvelleSectionNom">Nom de la section</label><input id="nouvelleSectionNom" type="text" class="form-control" maxlength="100" [(ngModel)]="nouvelleSectionNom" (keydown.enter)="ajouterSection()" placeholder="Ex. Basket, Yoga, Danse"></div>
+            <div class="col-12 col-md-4"><label class="form-label" for="nouveauSectionType">Type</label><select id="nouveauSectionType" class="form-select" [(ngModel)]="nouveauSectionType"><option value="NON_COMPETITIVE">Non compétitive</option><option value="COMPETITION">Competition</option></select></div>
+            <div class="col-12 col-md-auto"><button type="button" class="btn btn-primary w-100" [disabled]="sectionEnregistrement" (click)="ajouterSection()"><fa-icon [icon]="faPlus" class="me-1"></fa-icon>Ajouter</button></div>
+          </div></div>
+          @if (sections.length > 0) {
+            <div class="list-group admin-configuration-list">
+              @for (section of sections; track section.id; let index = $index) {
+                <div class="list-group-item"><div class="row g-3 align-items-end">
+                  @if (sectionEnEdition === index) {
+                    <div class="col-12 col-md"><label class="form-label" [for]="'sectionNom' + index">Nom</label><input [id]="'sectionNom' + index" type="text" class="form-control" maxlength="100" [(ngModel)]="section.nom"></div>
+                    <div class="col-12 col-md-4"><label class="form-label" [for]="'sectionType' + index">Type</label><select [id]="'sectionType' + index" class="form-select" [(ngModel)]="section.type"><option value="NON_COMPETITIVE">Non compétitive</option><option value="COMPETITION">Competition</option></select></div>
+                  } @else {
+                    <div class="col"><span class="fw-semibold">{{section.nom}}</span></div><div class="col-auto"><span class="badge" [ngClass]="section.type === 'COMPETITION' ? 'text-bg-primary' : 'text-bg-secondary'">{{section.type === 'COMPETITION' ? 'Competition' : 'Non compétitive'}}</span></div>
+                  }
+                  <div class="col-12 col-md-auto">
+                    @if (sectionEnEdition === index) {
+                      <button type="button" class="btn btn-primary w-100" [disabled]="sectionEnregistrement" (click)="enregistrerSection(index)">Enregistrer</button>
+                    } @else {
+                      <button type="button" class="btn btn-outline-primary w-100" [disabled]="sectionEnregistrement" (click)="modifierSection(index)"><fa-icon [icon]="faPencilSquare" class="me-1"></fa-icon>Modifier</button>
+                    }
+                  </div>
+                </div>
+                </div>
+              }
+            </div>
+          } @else if (!sectionErreur) {
+            <p class="admin-empty-state mb-0">Aucune section n’est configurée pour le moment.</p>
+          }
+          @if (sectionMessage) { <div class="alert alert-success mb-0" role="status">{{sectionMessage}}</div> }
+          @if (sectionErreur) { <div class="alert alert-danger mb-0" role="alert">{{sectionErreur}}</div> }
+        </div>
+      </ng-template></div></div>
+    </section>
+
+    <section ngbAccordionItem="chats">
+      <h2 ngbAccordionHeader>
+        <button ngbAccordionButton>
+          <span class="admin-section-icon" aria-hidden="true"><fa-icon [icon]="faComments"></fa-icon></span>
+          <span class="admin-section-heading"><span>Chats</span><small>Créez et gérez les discussions de l’association, des sections et des activités.</small></span>
+        </button>
+      </h2>
+      <div ngbAccordionCollapse><div ngbAccordionBody><ng-template>
+        <div class="admin-section-content">
+          <div class="d-flex justify-content-end"><button type="button" class="btn btn-primary" [disabled]="chatEnregistrement" (click)="afficherCreationChat()"><fa-icon [icon]="faPlus" class="me-1"></fa-icon>Créer un chat</button></div>
+
+          @if (chatCreationVisible) {
+            <div class="admin-form-panel"><div class="row g-3 align-items-end">
+              <div class="col-12 col-lg-6"><label class="form-label" for="nouveauChatNom">Nom du chat</label><input id="nouveauChatNom" type="text" class="form-control" maxlength="100" [(ngModel)]="nouveauChatNom" placeholder="Ex. Informations des encadrants"></div>
+              <div class="col-12 col-md-6 col-lg-3"><label class="form-label" for="nouveauChatCible">Rattachement</label><select id="nouveauChatCible" class="form-select" [ngModel]="nouveauChatCible" (ngModelChange)="nouveauChatCible = $event; nouveauChatCibleId = undefined"><option value="ASSOCIATION">Association</option><option value="SECTION">Section</option><option value="ACTIVITE">Activité</option></select></div>
+              @if (nouveauChatCible === 'SECTION') { <div class="col-12 col-md-6 col-lg-3"><label class="form-label" for="nouveauChatSection">Section</label><select id="nouveauChatSection" class="form-select" [(ngModel)]="nouveauChatCibleId"><option [ngValue]="undefined">Choisir une section</option>@for (section of sections; track section.id) { <option [ngValue]="section.id">{{section.nom}}</option> }</select></div> }
+              @if (nouveauChatCible === 'ACTIVITE') { <div class="col-12 col-md-6 col-lg-3"><label class="form-label" for="nouveauChatActivite">Activité</label><select id="nouveauChatActivite" class="form-select" [(ngModel)]="nouveauChatCibleId"><option [ngValue]="undefined">Choisir une activité</option>@for (activite of activites; track activite.id) { <option [ngValue]="activite.id">{{activite.nom}}</option> }</select></div> }
+              <div class="col-12"><span class="form-label d-block mb-2">Visibilités et droits</span><div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th scope="col">Rôle</th><th scope="col" class="text-center">Lecture</th><th scope="col" class="text-center">Écriture</th></tr></thead><tbody>@for (role of rolesChat; track role.code) { <tr><td>{{role.libelle}}</td><td class="text-center"><input type="checkbox" class="form-check-input" [checked]="droitsNouveauChat[role.code]?.lecture" (change)="basculerLectureChat(role.code)"></td><td class="text-center"><input type="checkbox" class="form-check-input" [checked]="droitsNouveauChat[role.code]?.ecriture" [disabled]="!droitsNouveauChat[role.code]?.lecture" (change)="basculerEcritureChat(role.code)"></td></tr> }</tbody></table></div></div>
+              <div class="col-12 d-flex justify-content-end gap-2"><button type="button" class="btn btn-outline-secondary" [disabled]="chatEnregistrement" (click)="annulerCreationChat()">Annuler</button><button type="button" class="btn btn-primary" [disabled]="chatEnregistrement" (click)="creerChat()">{{chatEnregistrement ? 'Création…' : 'Créer le chat'}}</button></div>
+            </div></div>
+          }
+
+          @if (chats.length > 0) {
+            <div class="list-group admin-configuration-list">
+              @for (chat of chats; track chat.id) {
+                <div class="list-group-item">
+                  @if (chatEnEdition === chat.id) {
+                    <div class="row g-3 align-items-end">
+                      <div class="col-12 col-lg-6"><label class="form-label" [for]="'chatNom' + chat.id">Nom du chat</label><input [id]="'chatNom' + chat.id" type="text" class="form-control" maxlength="100" [(ngModel)]="chatEnEditionNom"></div>
+                      <div class="col-12 col-md-6 col-lg-3"><label class="form-label" [for]="'chatCible' + chat.id">Rattachement</label><select [id]="'chatCible' + chat.id" class="form-select" [ngModel]="chatEnEditionCible" (ngModelChange)="chatEnEditionCible = $event; chatEnEditionCibleId = undefined"><option value="ASSOCIATION">Association</option><option value="SECTION">Section</option><option value="ACTIVITE">Activité</option></select></div>
+                      @if (chatEnEditionCible === 'SECTION') { <div class="col-12 col-md-6 col-lg-3"><label class="form-label" [for]="'chatSection' + chat.id">Section</label><select [id]="'chatSection' + chat.id" class="form-select" [(ngModel)]="chatEnEditionCibleId"><option [ngValue]="undefined">Choisir une section</option>@for (section of sections; track section.id) { <option [ngValue]="section.id">{{section.nom}}</option> }</select></div> }
+                      @if (chatEnEditionCible === 'ACTIVITE') { <div class="col-12 col-md-6 col-lg-3"><label class="form-label" [for]="'chatActivite' + chat.id">Activité</label><select [id]="'chatActivite' + chat.id" class="form-select" [(ngModel)]="chatEnEditionCibleId"><option [ngValue]="undefined">Choisir une activité</option>@for (activite of activites; track activite.id) { <option [ngValue]="activite.id">{{activite.nom}}</option> }</select></div> }
+                      <div class="col-12"><span class="form-label d-block mb-2">Visibilités et droits</span><div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th scope="col">Rôle</th><th scope="col" class="text-center">Lecture</th><th scope="col" class="text-center">Écriture</th></tr></thead><tbody>@for (role of rolesChat; track role.code) { <tr><td>{{role.libelle}}</td><td class="text-center"><input type="checkbox" class="form-check-input" [checked]="droitsChatEnEdition[role.code]?.lecture" (change)="basculerLectureChatEnEdition(role.code)"></td><td class="text-center"><input type="checkbox" class="form-check-input" [checked]="droitsChatEnEdition[role.code]?.ecriture" [disabled]="!droitsChatEnEdition[role.code]?.lecture" (change)="basculerEcritureChatEnEdition(role.code)"></td></tr> }</tbody></table></div></div>
+                      <div class="col-12 d-flex flex-wrap justify-content-end gap-2"><button type="button" class="btn btn-outline-secondary" [disabled]="chatEnregistrement" (click)="annulerModificationChat()">Annuler</button><button type="button" class="btn btn-primary" [disabled]="chatEnregistrement" (click)="enregistrerChat(chat)">{{chatEnregistrement ? 'Enregistrement…' : 'Enregistrer'}}</button></div>
+                    </div>
+                  } @else {
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3"><div><span class="fw-semibold">{{chat.nom}}</span><small class="d-block text-body-secondary mt-1">{{cibleChat(chat)}} · {{resumePermissionsChat(chat)}}</small></div><div class="d-flex gap-2"><button type="button" class="btn btn-sm btn-outline-primary" [disabled]="chatEnregistrement" (click)="modifierChat(chat)"><fa-icon [icon]="faPencilSquare" class="me-1"></fa-icon>Modifier</button><button type="button" class="btn btn-sm btn-outline-danger" [disabled]="chatEnregistrement" (click)="supprimerChat(chat)"><fa-icon [icon]="faTrash" class="me-1"></fa-icon>Supprimer</button></div></div>
+                  }
+                </div>
+              }
+            </div>
+          } @else if (!chatErreur) {
+            <p class="admin-empty-state mb-0">Aucun chat n’est configuré pour le moment.</p>
+          }
+          @if (chatMessage) { <div class="alert alert-success mb-0" role="status">{{chatMessage}}</div> }
+          @if (chatErreur) { <div class="alert alert-danger mb-0" role="alert">{{chatErreur}}</div> }
+        </div>
+      </ng-template></div></div>
+    </section>
+
     <section ngbAccordionItem="booleens">
       <h2 ngbAccordionHeader><button ngbAccordionButton><span class="admin-section-icon" aria-hidden="true"><fa-icon [icon]="faSliders"></fa-icon></span><span class="admin-section-heading"><span>Paramètres booléens</span><small>Activez ou désactivez les options de l’application.</small></span></button></h2>
       <div ngbAccordionCollapse><div ngbAccordionBody><ng-template><div class="admin-section-content"><div class="row g-3">

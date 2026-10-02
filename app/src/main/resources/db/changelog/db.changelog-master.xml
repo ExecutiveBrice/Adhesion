@@ -3,6 +3,8 @@
  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
   <include file="baseline/master-changeset.xml" relativeToChangelogFile="true"/>
+  <include file="activity/01-rename-groups.xml" relativeToChangelogFile="true"/>
+  <include file="activity/02-create_sections.xml" relativeToChangelogFile="true"/>
   <include file="shop/01-create_shop_domain.xml" relativeToChangelogFile="true"/>
   <include file="shop/02-add_shop_order_checkout_idempotency.xml" relativeToChangelogFile="true"/>
   <include file="shop/03-shop_product_image.xml" relativeToChangelogFile="true"/>
@@ -15,4 +17,13 @@
   <include file="shop/10-align_currency_types.xml" relativeToChangelogFile="true"/>
   <include file="shop/11-add_supplier_invoice_reference.xml" relativeToChangelogFile="true"/>
 
+  <include file="chat/01-create_activity_chat.xml" relativeToChangelogFile="true"/>
+  <include file="chat/02-create_activity_chat_reads.xml" relativeToChangelogFile="true"/>
+  <include file="chat/03-create_communication_chat.xml" relativeToChangelogFile="true"/>
+  <include file="chat/04-add_sender_role.xml" relativeToChangelogFile="true"/>
+  <include file="chat/05-create_referent_encadrant_chat.xml" relativeToChangelogFile="true"/>
+  <include file="chat/06-create_section_chats.xml" relativeToChangelogFile="true"/>
+  <include file="chat/07-generalize_managed_chats.xml" relativeToChangelogFile="true"/>
+  <include file="chat/08-remove_legacy_chats.xml" relativeToChangelogFile="true"/>
+  <include file="shop/12-rename_referent_and_add_communication_roles.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

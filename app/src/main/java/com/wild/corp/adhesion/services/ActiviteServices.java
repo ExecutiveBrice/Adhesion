@@ -389,14 +389,14 @@ public class ActiviteServices {
 
     private void ajouterRoleReferent(Adherent adherent) {
         if (adherent.getUser() != null && adherent.getUser().getRoles().stream()
-                .noneMatch(role -> role == ERole.ROLE_REFERENT)) {
-            adherent.getUser().getRoles().add(ERole.ROLE_REFERENT);
+                .noneMatch(role -> role == ERole.ROLE_REFERENT_ACTIVITE)) {
+            adherent.getUser().getRoles().add(ERole.ROLE_REFERENT_ACTIVITE);
         }
     }
 
     private void retirerRoleReferent(Adherent adherent) {
         if (adherent.getUser() != null) {
-            adherent.getUser().getRoles().remove(ERole.ROLE_REFERENT);
+            adherent.getUser().getRoles().remove(ERole.ROLE_REFERENT_ACTIVITE);
         }
     }
 

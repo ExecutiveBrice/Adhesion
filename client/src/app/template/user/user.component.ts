@@ -36,7 +36,10 @@ export class UserComponent implements OnInit {
     { code: ERole.ROLE_MEMBRECA, libelle: 'Membre du CA' },
     { code: ERole.ROLE_COMPTABLE, libelle: 'Comptable' },
     { code: ERole.ROLE_ENCADRANT, libelle: 'Encadrant' },
-    { code: ERole.ROLE_REFERENT, libelle: 'Référent' },
+    { code: ERole.ROLE_REFERENT_ACTIVITE, libelle: 'Référent d’activité' },
+    { code: ERole.ROLE_REFERENT_SECTION, libelle: 'Référent de section' },
+    { code: ERole.ROLE_COMMUNICATION_SECTION, libelle: 'Communication de section' },
+    { code: ERole.ROLE_COMMUNICATION_GLOBAL, libelle: 'Communication globale' },
     { code: ERole.ROLE_RESPONSABLE_BOUTIQUE, libelle: 'Responsable boutique' }
   ];
   private readonly apiViewRefresh = registerApiViewRefresh();
@@ -400,7 +403,7 @@ export class UserComponent implements OnInit {
   }
 
   openCertifMed(activite: Activite) {
-    if (activite.groupe == "ALOD_G") {
+    if (activite.groupe == "NON_COMPETITIVE") {
       window.open('https://cd.ufolep.org/vienne/vienne_d/data_1/pdf/ce/certificatmdicalufolep86.pdf', '_blank');
     } else {
       window.open('https://www.alod.fr/wp-content/uploads/2023/05/certif20232024.pdf', '_blank');

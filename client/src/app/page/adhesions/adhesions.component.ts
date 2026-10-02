@@ -269,7 +269,7 @@ export class AdhesionsComponent implements OnInit {
   }
 
   statusesFor(adhesion: AdhesionLite): string[] {
-    return adhesion.activite.groupe === 'ALOD_B' ? this.basketStatuses : this.generalStatuses;
+    return adhesion.activite.groupe === 'COMPETITION' ? this.basketStatuses : this.generalStatuses;
   }
 
   trackByAdhesion(index: number, adhesion: AdhesionLite): number {

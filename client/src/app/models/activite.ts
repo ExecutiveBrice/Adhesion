@@ -53,7 +53,7 @@ export class Activite {
     this.nom = 'nouvelle activité'
     this.groupeFiltre = 'Amicaliste'
     this.horaire = 'dimanche matin'
-    this.groupe = 'ALOD_G'
+    this.groupe = 'NON_COMPETITIVE'
     this.tarif = 200
 
     this.nbPlaces = 10;

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  <changeSet id="remove-legacy-chats-08" author="adhesion">
+    <comment>Only chats explicitly configured from the administration remain available.</comment>
+    <sql><![CDATA[
+      DELETE FROM section_chats;
+      DELETE FROM activity_chat_messages;
+      DELETE FROM activity_chat_reads;
+      DELETE FROM communication_chat_reads;
+      DELETE FROM referent_encadrant_chat_reads;
+    ]]></sql>
+  </changeSet>
+</databaseChangeLog>

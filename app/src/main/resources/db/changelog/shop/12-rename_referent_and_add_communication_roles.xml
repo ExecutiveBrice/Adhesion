@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  <changeSet id="shop-12-rename-referent-and-add-communication-roles" author="adhesion" dbms="postgresql">
+    <sql splitStatements="false"><![CDATA[DO $$
+DECLARE
+    role_check record;
+BEGIN
+    IF to_regclass('user_role_names') IS NULL THEN
+        RETURN;
+    END IF;
+
+    FOR role_check IN
+        SELECT conname
+        FROM pg_constraint
+        WHERE conrelid = 'user_role_names'::regclass
+          AND contype = 'c'
+          AND pg_get_constraintdef(oid) LIKE '%role_name%'
+    LOOP
+        EXECUTE format('ALTER TABLE user_role_names DROP CONSTRAINT %I', role_check.conname);
+    END LOOP;
+
+    UPDATE user_role_names
+    SET role_name = 'ROLE_REFERENT_ACTIVITE'
+    WHERE role_name = 'ROLE_REFERENT';
+
+    ALTER TABLE user_role_names ADD CONSTRAINT user_role_names_role_name_check
+        CHECK (role_name IN (
+            'ROLE_USER', 'ROLE_SECRETAIRE', 'ROLE_BUREAU', 'ROLE_MEMBRECA',
+            'ROLE_ADMIN', 'ROLE_COMPTABLE', 'ROLE_ENCADRANT',
+            'ROLE_REFERENT_ACTIVITE', 'ROLE_REFERENT_SECTION',
+            'ROLE_COMMUNICATION_SECTION', 'ROLE_COMMUNICATION_GLOBAL',
+            'ROLE_RESPONSABLE_BOUTIQUE'
+        ));
+END $$;
+
+UPDATE section_chat_permissions
+SET role = 'ROLE_REFERENT_ACTIVITE'
+WHERE role = 'ROLE_REFERENT';
+
+UPDATE activity_chat_messages
+SET sender_role = 'REFERENT_ACTIVITE'
+WHERE sender_role = 'REFERENT';
+]]></sql>
+  </changeSet>
+</databaseChangeLog>

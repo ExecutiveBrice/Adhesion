@@ -98,7 +98,7 @@ class AdherentServicesTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"USER", "MEMBRECA", "MODERATOR", "BUREAU", "ENCADRANT", "REFERENT", "COMPTABLE"})
+    @ValueSource(strings = {"USER", "MEMBRECA", "MODERATOR", "BUREAU", "ENCADRANT", "REFERENT_ACTIVITE", "COMPTABLE"})
     void refusesEmailChangesByOtherRolesBeforeChangingPersonalData(String role) {
         authenticateAs(role);
         Adherent existing = existingAdherent();

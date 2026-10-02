@@ -16,6 +16,7 @@ export * from './paramNumber';
 export * from './reportingActivite';
 export * from './reportingAdhesion';
 export * from './groupe';
+export * from './section';
 export * from './horaire';
 export * from './activiteLite';
 export * from './adherentLite';

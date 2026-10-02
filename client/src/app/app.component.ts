@@ -11,6 +11,7 @@ import { NgbToast, NgbToastHeader } from '@ng-bootstrap/ng-bootstrap/toast';
 import { PwaService } from './_services/pwa.service';
 import { AuthService } from './_services/auth.service';
 import { LoginPageService } from './_services/login-page.service';
+import { ChatService } from './_services/chat.service';
 import { ShopCartLinkComponent } from './shop/components/shop-cart-link.component';
 import { filter } from 'rxjs';
 
@@ -26,6 +27,7 @@ export class AppComponent {
   readonly toastService = inject(ToastService);
   readonly pwaService = inject(PwaService);
   readonly loginPage = inject(LoginPageService);
+  readonly chat = inject(ChatService);
   private readonly router = inject(Router);
   private readonly currentUrl = signal(this.router.url);
   readonly isLoginPage = computed(() => ['/', '/login'].includes(this.currentUrl().split(/[?#]/)[0]));
@@ -49,6 +51,7 @@ export class AppComponent {
   showComptable=false;
   showShopManager=false;
   showShop = false;
+  showChat = false;
   username?: string;
   maintenance: Boolean = false
 
@@ -83,8 +86,16 @@ export class AppComponent {
       error: () => this.maintenance = true
     });
     this.paramService.getAllBoolean().subscribe({
-      next: params => this.showShop = params.some(param => param.paramName === 'Show_Boutique' && param.paramValue),
-      error: () => this.showShop = false
+      next: params => {
+        this.showShop = params.some(param => param.paramName === 'Show_Boutique' && param.paramValue);
+        this.showChat = params.some(param => param.paramName === 'Show_Chat' && param.paramValue);
+        this.chat.monitorUnread(this.showChat && this.isLoggedIn ? this.tokenStorageService.getUser().id : undefined);
+      },
+      error: () => {
+        this.showShop = false;
+        this.showChat = false;
+        this.chat.monitorUnread();
+      }
     });
   }
 
@@ -110,6 +121,9 @@ export class AppComponent {
   private updateSession(): void {
     this.isLoggedIn = !!this.tokenStorageService.getToken();
     const user = this.isLoggedIn ? this.tokenStorageService.getUser() : {};
+    if (this.showChat) {
+      this.chat.monitorUnread(this.isLoggedIn ? user.id : undefined);
+    }
     this.roles = user.roles ?? [];
 
     this.showAdmin = this.roles.includes('ROLE_ADMIN');
@@ -117,7 +131,7 @@ export class AppComponent {
     this.showMembreCA = this.roles.includes('ROLE_MEMBRECA');
     this.showSecretaire = this.roles.includes('ROLE_SECRETAIRE');
     this.showProf = this.roles.includes('ROLE_ENCADRANT');
-    this.showReferent = this.roles.includes('ROLE_REFERENT');
+    this.showReferent = this.roles.includes('ROLE_REFERENT_ACTIVITE');
     this.showSeances = this.showProf || this.showReferent;
     this.showComptable = this.roles.includes('ROLE_COMPTABLE');
     this.showShopManager = this.roles.includes('ROLE_RESPONSABLE_BOUTIQUE');

@@ -48,4 +48,22 @@ class ParamBooleanServicesTest {
                 .extracting(ParamBoolean::getParamName, ParamBoolean::getParamValue)
                 .containsExactly("Show_Boutique", false);
     }
+
+    @Test
+    void createsChatVisibilityParameterEnabledByDefault() {
+        ParamBooleanRepository repository = mock(ParamBooleanRepository.class);
+        when(repository.existsByParamName(anyString())).thenReturn(true);
+        when(repository.existsByParamName("Show_Chat")).thenReturn(false);
+
+        ParamBooleanServices service = new ParamBooleanServices();
+        service.paramBooleanRepository = repository;
+
+        service.fillParamBoolean();
+
+        ArgumentCaptor<ParamBoolean> parameter = ArgumentCaptor.forClass(ParamBoolean.class);
+        verify(repository).save(parameter.capture());
+        assertThat(parameter.getValue())
+                .extracting(ParamBoolean::getParamName, ParamBoolean::getParamValue)
+                .containsExactly("Show_Chat", true);
+    }
 }

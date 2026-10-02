@@ -22,7 +22,10 @@ export const ROLE_ICONS: Partial<Record<ERole, RoleIcon>> = {
   [ERole.ROLE_MEMBRECA]: { icon: faPeopleRoof, label: 'Membre du CA' },
   [ERole.ROLE_COMPTABLE]: { icon: faCalculator, label: 'Comptable' },
   [ERole.ROLE_ENCADRANT]: { icon: faUserTie, label: 'Encadrant' },
-  [ERole.ROLE_REFERENT]: { icon: faUserCheck, label: 'Référent' },
+  [ERole.ROLE_REFERENT_ACTIVITE]: { icon: faUserCheck, label: 'Référent d’activité' },
+  [ERole.ROLE_REFERENT_SECTION]: { icon: faUserCheck, label: 'Référent de section' },
+  [ERole.ROLE_COMMUNICATION_SECTION]: { icon: faKeyboard, label: 'Communication de section' },
+  [ERole.ROLE_COMMUNICATION_GLOBAL]: { icon: faKeyboard, label: 'Communication globale' },
   [ERole.ROLE_RESPONSABLE_BOUTIQUE]: { icon: faStore, label: 'Responsable boutique' }
 };
 

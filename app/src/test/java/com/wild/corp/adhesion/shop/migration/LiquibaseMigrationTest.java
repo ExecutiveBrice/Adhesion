@@ -100,12 +100,26 @@ class LiquibaseMigrationTest {
         var jdbc = new JdbcTemplate(source);
         jdbc.update("INSERT INTO users (id, username, password) VALUES (42, 'historique', 'hash')");
         jdbc.update("INSERT INTO user_role_names (user_id, role_name) VALUES (42, 'ROLE_ADMIN')");
+        jdbc.update("""
+                INSERT INTO activites (id, groupe, prise_en_charge, autorisation_parentale, certificat_medical,
+                    charte_amicale, complete, vie_club)
+                VALUES (41, 'ALOD_G', FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
+                       (42, 'ALOD_B', FALSE, FALSE, FALSE, FALSE, FALSE, FALSE)
+                """);
+        jdbc.update("""
+                INSERT INTO activites_nm1 (id, groupe)
+                VALUES (41, 'ALOD_G'), (42, 'ALOD_B')
+                """);
         // Simulate a historical Hibernate schema without Liquibase tracking.
         jdbc.execute("DROP TABLE databasechangelog");
         jdbc.execute("DROP TABLE databasechangeloglock");
         migrate(source, MASTER);
         validateMappings(source);
         assertThat(jdbc.queryForObject("SELECT username FROM users WHERE id = 42", String.class)).isEqualTo("historique");
+        assertThat(jdbc.queryForList("SELECT groupe FROM activites ORDER BY id", String.class))
+                .containsExactly("NON_COMPETITIVE", "COMPETITION");
+        assertThat(jdbc.queryForList("SELECT groupe FROM activites_nm1 ORDER BY id", String.class))
+                .containsExactly("NON_COMPETITIVE", "COMPETITION");
         if (System.getenv("MIGRATION_TEST_URL") != null) {
             jdbc.update("INSERT INTO user_role_names (user_id, role_name) VALUES (42, 'ROLE_RESPONSABLE_BOUTIQUE')");
         }

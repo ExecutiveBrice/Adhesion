@@ -1,4 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
+import { ChatService } from './_services/chat.service';
+import { ApiRenderService } from './_services/api-render.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { of, Subject } from 'rxjs';
@@ -37,10 +39,11 @@ describe('Navigation du bandeau', () => {
         ]),
         { provide: TokenStorageService, useValue: storage },
         { provide: AuthService, useValue: { logout: () => of(null) } },
-        { provide: ParamService, useValue: { isClose: () => of(false), getAllBoolean: () => of([{ paramName: 'Show_Boutique', paramValue: true }]) } },
+        { provide: ParamService, useValue: { isClose: () => of(false), getAllBoolean: () => of([{ paramName: 'Show_Boutique', paramValue: true }, { paramName: 'Show_Chat', paramValue: true }]) } },
         { provide: ParamTransmissionService, useValue: {} },
         { provide: PwaService, useValue: { canInstall: () => false, showIosInstallHint: () => false } },
-        { provide: ToastService, useValue: { toasts: [] } }
+        { provide: ToastService, useValue: { toasts: [] } },
+        { provide: ChatService, useValue: { monitorUnread: jasmine.createSpy('monitorUnread'), totalUnread: signal(0) } }
       ]
     });
     router = TestBed.inject(Router);
@@ -60,6 +63,17 @@ describe('Navigation du bandeau', () => {
     expect(fixture.componentInstance.isCollapsed).toBeTrue();
     expect(fixture.nativeElement.querySelector('.navbar-page-title').textContent).toBe('Séances');
     expect(fixture.nativeElement.querySelector('.navbar-backdrop')).toBeNull();
+  });
+
+  it('affiche une alerte Chat seulement en présence de messages non lus', () => {
+    const unread = TestBed.inject(ChatService).totalUnread as ReturnType<typeof signal<number>>;
+    expect(fixture.nativeElement.querySelector('.chat-alert')).toBeNull();
+    unread.set(3);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.chat-alert').getAttribute('aria-label')).toBe('3 messages non lus');
+    unread.set(0);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.chat-alert')).toBeNull();
   });
 
   it('ferme le menu avec Échap et rend le focus au bouton Menu', () => {
@@ -110,8 +124,17 @@ describe('Navigation du bandeau', () => {
   it('masque le lien vers la boutique lorsque son paramètre est désactivé', () => {
     expect(fixture.nativeElement.querySelector('app-shop-cart-link')).not.toBeNull();
     fixture.componentInstance.showShop = false;
+    TestBed.inject(ApiRenderService).notify();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('app-shop-cart-link')).toBeNull();
+  });
+
+  it('masque le lien Chat lorsque son paramètre est désactivé', () => {
+    expect(fixture.nativeElement.querySelector('[routerLink="chat"]')).not.toBeNull();
+    fixture.componentInstance.showChat = false;
+    TestBed.inject(ApiRenderService).notify();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[routerLink="chat"]')).toBeNull();
   });
 });
 
@@ -145,7 +168,8 @@ describe('Déconnexion depuis une page protégée', () => {
         { provide: ParamService, useValue: { isClose: () => of(false), getAllBoolean: () => of([]) } },
         { provide: ParamTransmissionService, useValue: {} },
         { provide: PwaService, useValue: {} },
-        { provide: ToastService, useValue: {} }
+        { provide: ToastService, useValue: {} },
+        { provide: ChatService, useValue: { monitorUnread: jasmine.createSpy('monitorUnread'), totalUnread: signal(0) } }
       ]
     });
     TestBed.overrideComponent(AppComponent, { set: { template: '', imports: [] } });

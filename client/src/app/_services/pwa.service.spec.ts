@@ -6,6 +6,7 @@ describe('Détection de la PWA mobile', () => {
   let standalone = false;
 
   beforeEach(() => {
+    sessionStorage.clear();
     original = new Map(keys.map(key => [key, Object.getOwnPropertyDescriptor(navigator, key)]));
     Object.defineProperty(navigator, 'maxTouchPoints', { configurable: true, value: 0 });
     Object.defineProperty(navigator, 'standalone', { configurable: true, value: false });
@@ -41,5 +42,19 @@ describe('Détection de la PWA mobile', () => {
     Object.defineProperty(navigator, 'userAgent', { configurable: true, value: 'Desktop' });
     standalone = true;
     expect(new PwaService().isMobileStandalone()).toBeFalse();
+  });
+
+  it('masque l’invite d’installation jusqu’à la fin de la session lorsqu’elle est annulée', () => {
+    Object.defineProperty(navigator, 'userAgent', { configurable: true, value: 'Android' });
+    const service = new PwaService();
+    window.dispatchEvent(new Event('beforeinstallprompt', { cancelable: true }));
+    expect(service.canInstall()).toBeTrue();
+
+    service.dismissInstallPrompt();
+    expect(service.canInstall()).toBeFalse();
+
+    const reloadedService = new PwaService();
+    window.dispatchEvent(new Event('beforeinstallprompt', { cancelable: true }));
+    expect(reloadedService.canInstall()).toBeFalse();
   });
 });
