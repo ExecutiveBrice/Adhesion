@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  <!-- The old Flyway schema used CHAR, while JPA maps currencies to VARCHAR.
+       Align both new and adopted schemas before Hibernate validation. -->
+  <changeSet id="shop-10-currency-types" author="adhesion">
+    <modifyDataType tableName="shop_product_variants" columnName="price_currency" newDataType="varchar(3)"/>
+    <modifyDataType tableName="shop_orders" columnName="total_currency" newDataType="varchar(3)"/>
+    <modifyDataType tableName="shop_order_items" columnName="unit_price_currency" newDataType="varchar(3)"/>
+    <modifyDataType tableName="shop_order_items" columnName="line_total_currency" newDataType="varchar(3)"/>
+    <modifyDataType tableName="shop_payments" columnName="expected_currency" newDataType="varchar(3)"/>
+    <modifyDataType tableName="shop_payment_attempts" columnName="currency" newDataType="varchar(3)"/>
+  </changeSet>
+</databaseChangeLog>

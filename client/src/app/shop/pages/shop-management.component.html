@@ -18,13 +18,13 @@
     <div class="orders-heading"><p>Suivez les commandes depuis leur création jusqu’à leur clôture.</p><button type="button" class="btn btn-outline-primary btn-sm" (click)="loadOrders()" [disabled]="ordersLoading">Actualiser</button></div>
     @if (ordersLoading) { <p role="status">Chargement des commandes…</p> }
     @if (ordersError) { <div class="alert alert-danger" role="alert">{{ ordersError }}</div> }
-    @if (ordersLoaded && !ordersLoading) {
+    @if (ordersLoaded) {
       <section class="management-section" aria-labelledby="in-progress-title">
         <h2 id="in-progress-title">Commandes en cours <span class="order-count">{{ ordersInProgress.length }}</span></h2>
         @if (ordersInProgress.length) {
           <div class="order-list">
             @for (order of ordersInProgress; track order.orderNumber) {
-              <app-shop-admin-order-card [order]="order" [statusLabel]="orderStatus(order.status)" (statusChanged)="reclassifyOrders()"></app-shop-admin-order-card>
+              <app-shop-admin-order-card [order]="order" [statusLabel]="orderStatus(order.status)" [availability]="orderAvailability" (statusChanged)="loadOrders()"></app-shop-admin-order-card>
             }
           </div>
         } @else { <p class="text-body-secondary mb-0">Aucune commande en cours.</p> }
@@ -34,7 +34,7 @@
         @if (completedOrders.length) {
           <div class="order-list">
             @for (order of completedOrders; track order.orderNumber) {
-              <app-shop-admin-order-card [order]="order" [statusLabel]="orderStatus(order.status)" (statusChanged)="reclassifyOrders()"></app-shop-admin-order-card>
+              <app-shop-admin-order-card [order]="order" [statusLabel]="orderStatus(order.status)" [availability]="orderAvailability" (statusChanged)="loadOrders()"></app-shop-admin-order-card>
             }
           </div>
         } @else { <p class="text-body-secondary mb-0">Aucune commande terminée.</p> }

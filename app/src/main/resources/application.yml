@@ -1,4 +1,9 @@
 spring:
+  # Le fichier .env est utilisé uniquement par les démarrages locaux de l'IDE.
+  # L'import est optionnel : les environnements distants conservent leurs
+  # variables injectées au démarrage quand ce fichier est absent.
+  config:
+    import: optional:classpath:.env[.properties]
   main:
     allow-circular-references: true
   h2.console.enabled: true
@@ -7,28 +12,49 @@ spring:
   datasource:
     driver-class-name: org.postgresql.Driver
 
-  flyway:
+  liquibase:
     enabled: true
-    baseline-on-migrate: true
-    # Les bases historiques ont deja ete creees par Hibernate jusqu'a V3.
-    # Une base vide execute toujours toutes les migrations depuis V1.
-    baseline-version: 3
-    locations: classpath:db/migration
+    change-log: classpath:db/changelog/db.changelog-master.xml
 
   jpa:
     show_sql: false
-    generate-ddl: true
+    generate-ddl: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
       show_sql: false
       format_sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+  cloud:
+    openfeign:
+      client:
+        config:
+          helloAssoCheckoutClient:
+            connect-timeout: 3000
+            read-timeout: 10000
+            logger-level: basic
+          helloAssoOAuthClient:
+            connect-timeout: 3000
+            read-timeout: 10000
+            logger-level: basic
 #logging.level.org.springframework.web: DEBUG
 logging.level.com.wild.corp: INFO
 logging.level.org.hibernate: ERROR
+logging:
+  level:
+    com:
+      wild:
+        corp:
+          adhesion:
+            shop:
+              payment:
+                helloasso:
+                  client:
+                    HelloAssoCheckoutClient: DEBUG
+                    HelloAssoOAuthClient: DEBUG
+
 
 server:
   name : ${DNS_NAME}
@@ -65,14 +91,6 @@ shop:
       client-secret: ${HELLOASSO_CLIENT_SECRET:}
       organization-slug: ${HELLOASSO_ORGANIZATION_SLUG:}
       webhook-signature-key: ${HELLOASSO_WEBHOOK_SIGNATURE_KEY:}
-
-spring.cloud.openfeign.client.config:
-  helloAssoCheckoutClient:
-    connect-timeout: 3000
-    read-timeout: 10000
-  helloAssoOAuthClient:
-    connect-timeout: 3000
-    read-timeout: 10000
 
 # Zone scolaire utilisée lors de la génération hebdomadaire des séances (A, B ou C).
 adhesion:

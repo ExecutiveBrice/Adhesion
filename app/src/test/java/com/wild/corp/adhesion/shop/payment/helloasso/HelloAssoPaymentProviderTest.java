@@ -85,16 +85,24 @@ class HelloAssoPaymentProviderTest {
     }
 
     @Test
-    void rejectsHttpReturnUrlBeforeCallingHelloAsso() {
+    void forwardsHttpReturnUrlsToHelloAssoAndAcceptsHttpRedirect() {
+        when(checkoutClient.createCheckoutIntent(anyString(), anyString(), any()))
+                .thenReturn(new HelloAssoApiV5CommonModelsCartsInitCheckoutResponse()
+                        .id(741).redirectUrl("http://localhost:4200/return"));
         var request = new PaymentRequest(12L, "CMD-2026-00012", new Money(2_500, "EUR"),
                 "idempotency-key", URI.create("http://localhost:4200/return"),
                 URI.create("http://localhost:4200/cancel"));
 
-        assertThatThrownBy(() -> provider.createPayment(request))
-                .isInstanceOf(PaymentProviderException.class)
-                .extracting(exception -> ((PaymentProviderException) exception).getErrorCode())
-                .isEqualTo("INSECURE_CHECKOUT_URL");
-        verify(checkoutClient, never()).createCheckoutIntent(anyString(), anyString(), any());
+        PaymentSession session = provider.createPayment(request);
+
+        ArgumentCaptor<HelloAssoApiV5CommonModelsCartsInitCheckoutBody> body = ArgumentCaptor.forClass(
+                HelloAssoApiV5CommonModelsCartsInitCheckoutBody.class);
+        verify(checkoutClient).createCheckoutIntent(anyString(), anyString(), body.capture());
+        var json = JsonMapper.builder().findAndAddModules().build().valueToTree(body.getValue());
+        assertThat(json.get("returnUrl").asText()).isEqualTo("http://localhost:4200/return");
+        assertThat(json.get("backUrl").asText()).isEqualTo("http://localhost:4200/cancel");
+        assertThat(json.get("errorUrl").asText()).isEqualTo("http://localhost:4200/cancel");
+        assertThat(session.redirectUrl()).isEqualTo(URI.create("http://localhost:4200/return"));
     }
 
     @Test

@@ -5,7 +5,7 @@ import com.wild.corp.adhesion.shop.catalog.model.SupplierOrderStatus;
 import java.time.Instant;
 import java.util.List;
 
-public record SupplierOrderResponse(Long id, String supplierName, String reference,
+public record SupplierOrderResponse(Long id, String supplierName, String reference, String invoiceReference,
                                     SupplierOrderStatus status, Instant createdAt, Instant receivedAt,
                                     List<Line> lines) {
 

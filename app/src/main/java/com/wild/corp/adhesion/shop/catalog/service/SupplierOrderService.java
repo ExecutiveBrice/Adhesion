@@ -12,6 +12,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
+import java.util.Map;
 import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -56,8 +57,7 @@ public class SupplierOrderService {
             if (!variant.isStockTracked()) {
                 throw new IllegalArgumentException("Le stock de la variante " + line.variantId() + " n’est pas suivi");
             }
-            order.addLine(variant, line.quantity()).setPurchaseDetails(line.unitCostAmountInCents(),
-                    line.unitCostAmountInCents() == null ? null : "EUR", null, false);
+            order.addLine(variant, line.quantity());
         });
         return orderRepository.save(order);
     }
@@ -98,12 +98,6 @@ public class SupplierOrderService {
             if (line.getExpectedNeed() == null || currentNeed != line.getExpectedNeed()) {
                 throw new IllegalStateException("Les besoins ont changé depuis l'enregistrement du brouillon. Actualisez-le avant de passer commande.");
             }
-            if (line.getUnitCostAmountInCents() == null) {
-                throw new IllegalStateException("Renseignez le prix d'achat de chaque article avant de passer commande");
-            }
-            if (line.getQuantity() > currentNeed && !line.isExtraApproved()) {
-                throw new IllegalStateException("Une quantité dépasse le besoin actuel. Confirmez l'achat supplémentaire dans le brouillon.");
-            }
         }
         order.markOrdered();
         return order;
@@ -124,10 +118,9 @@ public class SupplierOrderService {
         var demand = openCustomerDemand();
         lines.stream().sorted(Comparator.comparing(Line::variantId)).forEach(line -> {
             ProductVariant variant = variants.get(line.variantId());
-            order.addLine(variant, line.quantity()).setPurchaseDetails(line.unitCostAmountInCents(),
-                    line.unitCostAmountInCents() == null ? null : "EUR",
+            order.addLine(variant, line.quantity()).setPurchaseDetails(null, null,
                     need(variant, demand.getOrDefault(line.variantId(), 0L),
-                            incoming.getOrDefault(line.variantId(), 0L)), line.extraApproved());
+                            incoming.getOrDefault(line.variantId(), 0L)), false);
         });
     }
 
@@ -173,9 +166,6 @@ public class SupplierOrderService {
             if (line == null || line.variantId() == null || line.quantity() <= 0 || !seen.add(line.variantId())) {
                 throw new IllegalArgumentException("Chaque variante doit figurer une seule fois avec une quantité positive");
             }
-            if (line.unitCostAmountInCents() != null && line.unitCostAmountInCents() < 0) {
-                throw new IllegalArgumentException("Le prix d'achat ne peut pas être négatif");
-            }
         }
     }
 
@@ -184,6 +174,9 @@ public class SupplierOrderService {
                 .orElseThrow(() -> new NoSuchElementException("Commande fournisseur introuvable"));
         if (order.getStatus() != com.wild.corp.adhesion.shop.catalog.model.SupplierOrderStatus.ORDERED) {
             throw new IllegalStateException("Cette commande fournisseur a déjà été réceptionnée");
+        }
+        if (order.getInvoiceReference() == null || order.getLines().stream().anyMatch(line -> line.getUnitCostAmountInCents() == null)) {
+            throw new IllegalStateException("Renseignez la facture et les tarifs avant de valider la livraison");
         }
         order.getLines().stream().sorted(Comparator.comparing(line -> line.getVariantId())).forEach(line -> {
             ProductVariant variant = variantRepository.findByIdForUpdate(line.getVariantId())
@@ -194,7 +187,31 @@ public class SupplierOrderService {
         return order;
     }
 
-    public record Line(Long variantId, int quantity, Long unitCostAmountInCents, boolean extraApproved) {
-        public Line(Long variantId, int quantity) { this(variantId, quantity, null, false); }
+    public SupplierOrder complete(Long orderId, String invoiceReference, List<PricedLine> lines) {
+        SupplierOrder order = orderRepository.findByIdForUpdate(orderId)
+                .orElseThrow(() -> new NoSuchElementException("Commande fournisseur introuvable"));
+        if (order.getStatus() != SupplierOrderStatus.ORDERED) {
+            throw new IllegalStateException("Seule une commande fournisseur en cours peut être complétée");
+        }
+        if (lines == null || lines.size() != order.getLines().size()) {
+            throw new IllegalArgumentException("Chaque ligne commandée doit avoir un tarif");
+        }
+        Map<Long, Long> prices = new java.util.HashMap<>();
+        for (PricedLine line : lines) {
+            if (line == null || line.variantId() == null || line.unitCostAmountInCents() == null
+                    || line.unitCostAmountInCents() < 0 || prices.put(line.variantId(), line.unitCostAmountInCents()) != null) {
+                throw new IllegalArgumentException("Chaque ligne commandée doit avoir un tarif valide");
+            }
+        }
+        for (var line : order.getLines()) {
+            Long unitCost = prices.get(line.getVariantId());
+            if (unitCost == null) throw new IllegalArgumentException("Chaque ligne commandée doit avoir un tarif");
+            line.setPurchaseDetails(unitCost, "EUR", line.getExpectedNeed(), false);
+        }
+        order.recordInvoice(invoiceReference);
+        return order;
     }
+
+    public record Line(Long variantId, int quantity) { }
+    public record PricedLine(Long variantId, Long unitCostAmountInCents) { }
 }

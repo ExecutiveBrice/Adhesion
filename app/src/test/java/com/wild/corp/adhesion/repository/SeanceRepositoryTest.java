@@ -19,7 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest(properties = {
         "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect",
-        "spring.flyway.enabled=false"
+        "spring.liquibase.enabled=false",
+        "spring.jpa.hibernate.ddl-auto=create-drop"
 })
 @ContextConfiguration(classes = SeanceRepositoryTest.JpaTestApplication.class)
 class SeanceRepositoryTest {

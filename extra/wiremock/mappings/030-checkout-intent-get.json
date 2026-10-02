@@ -1,0 +1,25 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/v5/organizations/[^/]+/checkout-intents/[1-9][0-9]*"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "id": 741,
+      "order": {
+        "payments": [
+          {
+            "state": "Authorized"
+          }
+        ],
+        "amount": {
+          "total": 2500
+        }
+      }
+    }
+  }
+}

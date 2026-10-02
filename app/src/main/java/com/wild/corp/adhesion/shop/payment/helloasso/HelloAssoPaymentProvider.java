@@ -70,8 +70,6 @@ public class HelloAssoPaymentProvider implements PaymentProvider {
 
     @Override
     public PaymentSession createPayment(PaymentRequest request) {
-        requireHttpsUrl(request.returnUrl());
-        requireHttpsUrl(request.cancelUrl());
         requireEuro(request.amount());
         int amountInCents;
         try {
@@ -211,8 +209,9 @@ public class HelloAssoPaymentProvider implements PaymentProvider {
         }
         try {
             URI url = URI.create(nullableUrl.get());
-            if (!"https".equalsIgnoreCase(url.getScheme())) {
-                throw new IllegalArgumentException("schéma non HTTPS");
+            if (url.getHost() == null || (!"https".equalsIgnoreCase(url.getScheme())
+                    && !"http".equalsIgnoreCase(url.getScheme()))) {
+                throw new IllegalArgumentException("URL HTTP(S) absolue attendue");
             }
             return url;
         } catch (IllegalArgumentException exception) {
@@ -271,13 +270,6 @@ public class HelloAssoPaymentProvider implements PaymentProvider {
         if (!CURRENCY.equals(amount.getCurrency())) {
             throw new PaymentProviderException(type(), "UNSUPPORTED_CURRENCY",
                     "HelloAsso Checkout accepte uniquement les montants en EUR", false);
-        }
-    }
-
-    private void requireHttpsUrl(URI url) {
-        if (!"https".equalsIgnoreCase(url.getScheme()) || url.getHost() == null) {
-            throw new PaymentProviderException(type(), "INSECURE_CHECKOUT_URL",
-                    "HelloAsso exige des URL de retour HTTPS", false);
         }
     }
 

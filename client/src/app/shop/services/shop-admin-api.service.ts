@@ -6,7 +6,7 @@ import {
   ShopAdminCategoryDto, ShopAdminCategoryRequest, ShopAdminOrderDto,
   ShopAdminOrderItemStatus, ShopAdminProductDto, ShopAdminProductRequest,
   ShopAdminVariantCreateRequest, ShopAdminVariantDto, ShopAdminVariantRequest, ShopOrderMessageDto,
-  ShopSupplierOrderCreateRequest, ShopSupplierOrderDto
+  ShopSupplierOrderCompletionRequest, ShopSupplierOrderCreateRequest, ShopSupplierOrderDto
 } from '../models/shop.models';
 
 @Injectable({ providedIn: 'root' })
@@ -66,6 +66,9 @@ export class ShopAdminApiService {
   }
   placeSupplierOrderDraft(id: number): Observable<ShopSupplierOrderDto> {
     return this.http.put<ShopSupplierOrderDto>(`${this.apiUrl}/supplier-orders/${id}/place`, {});
+  }
+  completeSupplierOrder(id: number, request: ShopSupplierOrderCompletionRequest): Observable<ShopSupplierOrderDto> {
+    return this.http.put<ShopSupplierOrderDto>(`${this.apiUrl}/supplier-orders/${id}/completion`, request);
   }
   receiveSupplierOrder(id: number): Observable<ShopSupplierOrderDto> {
     return this.http.put<ShopSupplierOrderDto>(`${this.apiUrl}/supplier-orders/${id}/receive`, {});

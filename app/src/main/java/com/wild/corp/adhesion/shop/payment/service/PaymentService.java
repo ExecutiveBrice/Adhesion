@@ -261,7 +261,10 @@ public class PaymentService {
         }
         if (result.status() == PaymentStatus.SUCCEEDED || result.status() == PaymentStatus.REFUNDED) {
             payment.getExpectedAmount().requireSameCurrency(result.amount());
-            if (!payment.getExpectedAmount().equals(result.amount())) {
+            // HelloAsso peut inclure une contribution supplémentaire : son total
+            // ne doit pas être comparé au montant de la commande boutique.
+            if (attempt.getProviderType() != PaymentProviderType.HELLOASSO
+                    && !payment.getExpectedAmount().equals(result.amount())) {
                 throw invalidProviderResponse(attempt, "Le montant vérifié ne correspond pas au montant attendu");
             }
         }

@@ -32,6 +32,9 @@ public class SupplierOrder extends AuditableEntity {
     @Column(name = "supplier_reference", length = 100)
     private String reference;
 
+    @Column(name = "invoice_reference", length = 100)
+    private String invoiceReference;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private SupplierOrderStatus status = SupplierOrderStatus.ORDERED;
@@ -103,9 +106,20 @@ public class SupplierOrder extends AuditableEntity {
         receivedAt = Instant.now();
     }
 
+    public void recordInvoice(String invoiceReference) {
+        if (status != SupplierOrderStatus.ORDERED) {
+            throw new IllegalStateException("Seule une commande fournisseur en cours peut être complétée");
+        }
+        if (invoiceReference == null || invoiceReference.isBlank() || invoiceReference.trim().length() > 100) {
+            throw new IllegalArgumentException("La référence de facture est obligatoire (100 caractères maximum)");
+        }
+        this.invoiceReference = invoiceReference.trim();
+    }
+
     public Long getId() { return id; }
     public String getSupplierName() { return supplierName; }
     public String getReference() { return reference; }
+    public String getInvoiceReference() { return invoiceReference; }
     public SupplierOrderStatus getStatus() { return status; }
     public Instant getReceivedAt() { return receivedAt; }
     public List<SupplierOrderLine> getLines() { return Collections.unmodifiableList(lines); }

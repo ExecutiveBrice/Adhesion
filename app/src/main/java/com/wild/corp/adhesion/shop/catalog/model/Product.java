@@ -16,10 +16,8 @@ import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -61,7 +59,7 @@ public class Product extends AuditableEntity {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("displayOrder ASC, id ASC")
-    private List<ProductVariant> variants = new ArrayList<>();
+    private Set<ProductVariant> variants = new LinkedHashSet<>();
 
     protected Product() {
         // Required by JPA.
@@ -153,8 +151,8 @@ public class Product extends AuditableEntity {
         return Collections.unmodifiableSet(categories);
     }
 
-    public List<ProductVariant> getVariants() {
-        return Collections.unmodifiableList(variants);
+    public Set<ProductVariant> getVariants() {
+        return Collections.unmodifiableSet(variants);
     }
 
     private static String requireText(String value, String message) {

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  <include file="baseline/master-changeset.xml" relativeToChangelogFile="true"/>
+  <include file="shop/01-create_shop_domain.xml" relativeToChangelogFile="true"/>
+  <include file="shop/02-add_shop_order_checkout_idempotency.xml" relativeToChangelogFile="true"/>
+  <include file="shop/03-shop_product_image.xml" relativeToChangelogFile="true"/>
+  <include file="shop/04-recreate_user_role_check.xml" relativeToChangelogFile="true"/>
+  <include file="shop/05-add_shop_order_item_status.xml" relativeToChangelogFile="true"/>
+  <include file="shop/06-add_shop_refund_requests_and_order_messages.xml" relativeToChangelogFile="true"/>
+  <include file="shop/07-create_shop_supplier_orders.xml" relativeToChangelogFile="true"/>
+  <include file="shop/08-allow_shop_orders_beyond_stock.xml" relativeToChangelogFile="true"/>
+  <include file="shop/09-shop_supplier_order_drafts_and_amounts.xml" relativeToChangelogFile="true"/>
+  <include file="shop/10-align_currency_types.xml" relativeToChangelogFile="true"/>
+  <include file="shop/11-add_supplier_invoice_reference.xml" relativeToChangelogFile="true"/>
+
+</databaseChangeLog>

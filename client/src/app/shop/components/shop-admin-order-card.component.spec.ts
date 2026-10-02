@@ -18,6 +18,29 @@ describe('ShopAdminOrderCardComponent', () => {
 
   beforeAll(() => registerLocaleData(localeFr));
 
+  it('affiche la disponibilité par article et globalement, et exige le paiement avant la livraison', () => {
+    TestBed.configureTestingModule({ imports: [ShopAdminOrderCardComponent],
+      providers: [{ provide: ShopAdminApiService, useValue: {} }] });
+    const fixture = TestBed.createComponent(ShopAdminOrderCardComponent);
+    const component = fixture.componentInstance;
+    component.order = structuredClone(order);
+    component.statusLabel = 'Payée';
+    component.expanded = true;
+    component.availability = new Map([[7, { state: 'missing', missingQuantity: 1, label: 'Manque 1 sur 2' }]]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.order-toggle .delivery-indicator').textContent).toContain('1 article manquant');
+    expect(fixture.nativeElement.querySelector('.item-availability').textContent).toContain('Manque 1 sur 2');
+    component.availability = new Map([[7, { state: 'ready', missingQuantity: 0, label: 'Disponible : 2 / 2' }]]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.order-toggle .delivery-indicator').textContent).toContain('Peut être livrée');
+    component.order.status = 'PENDING_PAYMENT';
+    expect(component.deliveryAvailability.label).toBe('En attente de paiement');
+    component.order.items[0].status = 'COMPLETED';
+    component.order.status = 'COMPLETED';
+    expect(component.deliveryAvailability.label).toBe('Commande livrée');
+    expect(component.itemAvailability(component.order.items[0]).label).toBe('Article livré');
+  });
+
   it('vérifie le paiement, évite les doubles clics et actualise la commande', () => {
     const result = new Subject<ShopAdminOrderDto>();
     const api = jasmine.createSpyObj<ShopAdminApiService>('ShopAdminApiService', ['verifyPayment']);

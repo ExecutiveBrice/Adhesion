@@ -236,7 +236,7 @@ class ShopAdminControllerTest {
         order.addLine(variant, 5);
         ReflectionTestUtils.setField(order, "id", 30L);
         given(supplierOrderService.create("Fournisseur A", "BC-1",
-                List.of(new SupplierOrderService.Line(20L, 5, null, false)))).willReturn(order);
+                List.of(new SupplierOrderService.Line(20L, 5)))).willReturn(order);
         given(supplierOrderService.receive(30L)).willAnswer(invocation -> {
             order.markReceived();
             return order;
@@ -261,28 +261,26 @@ class ShopAdminControllerTest {
     }
 
     @Test
-    void savesAndPlacesSupplierDraftWithLineAmount() throws Exception {
+    void savesAndPlacesSupplierDraft() throws Exception {
         Product product = new Product("Tee-shirt", "tee-shirt", null, true, 0);
         ProductVariant variant = new ProductVariant(product, "TS-M", "M", new Money(1_500, "EUR"), true, 0);
         ReflectionTestUtils.setField(variant, "id", 20L);
         SupplierOrder draft = new SupplierOrder("Fournisseur A", null, true);
-        draft.addLine(variant, 5).setPurchaseDetails(800L, "EUR", 5, false);
+        draft.addLine(variant, 5);
         ReflectionTestUtils.setField(draft, "id", 30L);
         given(supplierOrderService.createDraft("Fournisseur A", null,
-                List.of(new SupplierOrderService.Line(20L, 5, 800L, false)))).willReturn(draft);
+                List.of(new SupplierOrderService.Line(20L, 5)))).willReturn(draft);
         given(supplierOrderService.placeDraft(30L)).willAnswer(invocation -> {
             draft.markOrdered();
             return draft;
         });
 
-        String body = "{\"supplierName\":\"Fournisseur A\",\"lines\":[{\"variantId\":20,"
-                + "\"quantity\":5,\"unitCostAmountInCents\":800,\"extraApproved\":false}]}";
+        String body = "{\"supplierName\":\"Fournisseur A\",\"lines\":[{\"variantId\":20,\"quantity\":5}]}";
         mockMvc.perform(post("/shop/admin/supplier-orders/draft")
                         .with(user("manager@example.test").roles("RESPONSABLE_BOUTIQUE"))
                         .contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.status").value("DRAFT"))
-                .andExpect(jsonPath("$.lines[0].lineTotalAmountInCents").value(4000));
+                .andExpect(jsonPath("$.status").value("DRAFT"));
         mockMvc.perform(put("/shop/admin/supplier-orders/30/place")
                         .with(user("manager@example.test").roles("RESPONSABLE_BOUTIQUE")))
                 .andExpect(status().isOk())

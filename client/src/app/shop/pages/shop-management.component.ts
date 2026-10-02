@@ -10,6 +10,7 @@ import { ShopAdminApiService } from '../services/shop-admin-api.service';
 import { ShopAdminOrderCardComponent } from '../components/shop-admin-order-card.component';
 import { ShopStockOverviewComponent } from '../components/shop-stock-overview.component';
 import { registerApiViewRefresh } from '../../_services/api-render.service';
+import { buildOrderAvailability, ShopItemAvailability } from '../models/shop-order-availability';
 
 type VariantDraft = ShopAdminVariantCreateRequest;
 
@@ -32,6 +33,7 @@ export class ShopManagementComponent implements OnDestroy {
   ordersLoading = false;
   ordersLoaded = false;
   ordersError = '';
+  orderAvailability: ReadonlyMap<number, ShopItemAvailability> = new Map();
   loading = false;
   catalogLoaded = false;
   saving = false;
@@ -61,15 +63,16 @@ export class ShopManagementComponent implements OnDestroy {
     this.activeTab = tab;
     if (tab === 'stocks' && previous !== 'stocks') this.stockOverview?.load();
     if (tab === 'catalogue' && !this.catalogLoaded && !this.loading) this.load();
-    if (tab === 'orders' && !this.ordersLoaded && !this.ordersLoading) this.loadOrders();
+    if (tab === 'orders' && previous !== 'orders' && !this.ordersLoading) this.loadOrders();
   }
 
   loadOrders(): void {
     this.ordersLoading = true;
     this.ordersError = '';
-    this.api.orders().pipe(timeout({ first: 10_000 })).subscribe({
-      next: response => {
+    forkJoin({ orders: this.api.orders(), products: this.api.products() }).pipe(timeout({ first: 10_000 })).subscribe({
+      next: ({ orders: response, products }) => {
         const orders = this.collection<ShopAdminOrderDto>(response);
+        this.orderAvailability = buildOrderAvailability(this.collection<ShopAdminProductDto>(products), orders);
         this.ordersInProgress = orders.filter(order => !this.isCompletedOrder(order));
         this.completedOrders = orders.filter(order => this.isCompletedOrder(order));
         this.ordersLoaded = true;

@@ -24,7 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest(showSql = false, properties = {
         "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect",
-        "spring.flyway.enabled=false"
+        "spring.liquibase.enabled=false",
+        "spring.jpa.hibernate.ddl-auto=create-drop"
 })
 @ContextConfiguration(classes = SupplierOrderPersistenceTest.JpaApplication.class)
 class SupplierOrderPersistenceTest {
@@ -51,16 +52,16 @@ class SupplierOrderPersistenceTest {
         variants.flush();
 
         Long id = service.createDraft("Fournisseur A", null,
-                List.of(new SupplierOrderService.Line(variant.getId(), 2, 800L, true))).getId();
+                List.of(new SupplierOrderService.Line(variant.getId(), 2))).getId();
         supplierOrders.flush();
         entityManager.clear();
 
         var reloaded = supplierOrders.findAllByOrderByCreatedAtDescIdDesc().getFirst();
         assertThat(reloaded.getStatus()).isEqualTo(SupplierOrderStatus.DRAFT);
-        assertThat(reloaded.getLines().getFirst().getLineTotalAmountInCents()).isEqualTo(1_600L);
+        assertThat(reloaded.getLines().getFirst().getLineTotalAmountInCents()).isNull();
 
         service.updateDraft(id, "Fournisseur A", "BC-1",
-                List.of(new SupplierOrderService.Line(variant.getId(), 2, 900L, true)));
+                List.of(new SupplierOrderService.Line(variant.getId(), 2)));
         supplierOrders.flush();
         entityManager.clear();
 
@@ -70,6 +71,6 @@ class SupplierOrderPersistenceTest {
         var placed = supplierOrders.findAllByOrderByCreatedAtDescIdDesc().getFirst();
         assertThat(placed.getStatus()).isEqualTo(SupplierOrderStatus.ORDERED);
         assertThat(placed.getLines()).hasSize(1);
-        assertThat(placed.getLines().getFirst().getLineTotalAmountInCents()).isEqualTo(1_800L);
+        assertThat(placed.getLines().getFirst().getLineTotalAmountInCents()).isNull();
     }
 }

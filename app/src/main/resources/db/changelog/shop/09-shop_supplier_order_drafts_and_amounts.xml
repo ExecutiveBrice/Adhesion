@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  <changeSet id="shop-09-supplier-status" author="adhesion">
+    <sql splitStatements="false"><![CDATA[ALTER TABLE shop_supplier_orders DROP CONSTRAINT IF EXISTS ck_shop_supplier_order_status;
+ALTER TABLE shop_supplier_orders ADD CONSTRAINT ck_shop_supplier_order_status
+    CHECK (status IN ('DRAFT', 'ORDERED', 'RECEIVED'));]]></sql>
+  </changeSet>
+  <changeSet id="shop-09-1" author="adhesion">
+    <preConditions onFail="MARK_RAN" onError="HALT"><not><columnExists tableName="shop_supplier_order_lines" columnName="unit_cost_amount_cents"/></not></preConditions>
+    <sql splitStatements="false"><![CDATA[ALTER TABLE shop_supplier_order_lines ADD COLUMN unit_cost_amount_cents bigint;]]></sql>
+  </changeSet>
+  <changeSet id="shop-09-2" author="adhesion">
+    <preConditions onFail="MARK_RAN" onError="HALT"><not><columnExists tableName="shop_supplier_order_lines" columnName="unit_cost_currency"/></not></preConditions>
+    <sql splitStatements="false"><![CDATA[ALTER TABLE shop_supplier_order_lines ADD COLUMN unit_cost_currency varchar(3);]]></sql>
+  </changeSet>
+  <changeSet id="shop-09-3" author="adhesion">
+    <preConditions onFail="MARK_RAN" onError="HALT"><not><columnExists tableName="shop_supplier_order_lines" columnName="expected_need"/></not></preConditions>
+    <sql splitStatements="false"><![CDATA[ALTER TABLE shop_supplier_order_lines ADD COLUMN expected_need integer;]]></sql>
+  </changeSet>
+  <changeSet id="shop-09-4" author="adhesion">
+    <preConditions onFail="MARK_RAN" onError="HALT"><not><columnExists tableName="shop_supplier_order_lines" columnName="extra_approved"/></not></preConditions>
+    <sql splitStatements="false"><![CDATA[ALTER TABLE shop_supplier_order_lines ADD COLUMN extra_approved boolean NOT NULL DEFAULT false;]]></sql>
+  </changeSet>
+  <changeSet id="shop-09-5" author="adhesion">
+    <sql splitStatements="false"><![CDATA[ALTER TABLE shop_supplier_order_lines DROP CONSTRAINT IF EXISTS ck_shop_supplier_line_cost;
+ALTER TABLE shop_supplier_order_lines ADD CONSTRAINT ck_shop_supplier_line_cost
+    CHECK ((unit_cost_amount_cents IS NULL AND unit_cost_currency IS NULL)
+        OR (unit_cost_amount_cents >= 0 AND unit_cost_currency IS NOT NULL));]]></sql>
+  </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  <changeSet id="shop-11-supplier-invoice-reference" author="adhesion">
+    <preConditions onFail="MARK_RAN" onError="HALT"><not><columnExists tableName="shop_supplier_orders" columnName="invoice_reference"/></not></preConditions>
+    <addColumn tableName="shop_supplier_orders">
+      <column name="invoice_reference" type="varchar(100)"/>
+    </addColumn>
+  </changeSet>
+</databaseChangeLog>

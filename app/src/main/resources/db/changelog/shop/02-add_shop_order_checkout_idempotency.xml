@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  <changeSet id="shop-02-1" author="adhesion">
+    <preConditions onFail="MARK_RAN" onError="HALT"><not><columnExists tableName="shop_orders" columnName="checkout_key"/></not></preConditions>
+    <sql splitStatements="false"><![CDATA[ALTER TABLE shop_orders ADD COLUMN checkout_key varchar(100);]]></sql>
+  </changeSet>
+  <changeSet id="shop-02-2" author="adhesion">
+    <preConditions onFail="MARK_RAN" onError="HALT"><not><indexExists tableName="shop_orders" indexName="uk_shop_order_customer_checkout_key"/></not></preConditions>
+    <sql splitStatements="false"><![CDATA[CREATE UNIQUE INDEX uk_shop_order_customer_checkout_key
+    ON shop_orders (customer_user_id, checkout_key);]]></sql>
+  </changeSet>
+
+</databaseChangeLog>

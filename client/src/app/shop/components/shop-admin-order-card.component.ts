@@ -8,6 +8,7 @@ import {
 import { ShopAdminApiService } from '../services/shop-admin-api.service';
 import { registerApiViewRefresh } from '../../_services/api-render.service';
 import { ShopPaymentCountdownComponent } from './shop-payment-countdown.component';
+import { ShopItemAvailability } from '../models/shop-order-availability';
 
 @Component({
   selector: 'app-shop-admin-order-card',
@@ -22,9 +23,31 @@ export class ShopAdminOrderCardComponent {
 
   @Input({ required: true }) order!: ShopAdminOrderDto;
   @Input({ required: true }) statusLabel!: string;
+  @Input() availability: ReadonlyMap<number, ShopItemAvailability> = new Map();
   @Output() statusChanged = new EventEmitter<void>();
 
   expanded = false;
+
+  itemAvailability(item: ShopAdminOrderItemDto): ShopItemAvailability {
+    if (item.status === 'COMPLETED') return { state: 'completed', label: 'Article livré', missingQuantity: 0 };
+    if (item.status === 'CANCELLED' || ['CANCELLED', 'EXPIRED', 'REFUNDED'].includes(this.order.status)) {
+      return { state: 'cancelled', label: 'Aucune livraison attendue', missingQuantity: 0 };
+    }
+    return this.availability.get(item.id) ?? { state: 'unknown', label: 'Stock à vérifier', missingQuantity: 0 };
+  }
+
+  get deliveryAvailability(): { state: string; label: string } {
+    if (this.order.status === 'COMPLETED') return { state: 'completed', label: 'Commande livrée' };
+    if (['CANCELLED', 'EXPIRED', 'REFUNDED'].includes(this.order.status)) return { state: 'cancelled', label: 'Aucune livraison attendue' };
+    const items = this.order.items.filter(item => item.status !== 'CANCELLED' && item.status !== 'COMPLETED');
+    const states = items.map(item => this.itemAvailability(item));
+    const missing = states.reduce((sum, item) => sum + item.missingQuantity, 0);
+    if (missing) return { state: 'missing', label: `${missing} article${missing > 1 ? 's' : ''} manquant${missing > 1 ? 's' : ''}` };
+    if (states.some(item => item.state === 'unknown') || !this.order.items.length) return { state: 'unknown', label: 'Stock à vérifier' };
+    if (this.order.status === 'PENDING_PAYMENT' || this.order.status === 'DRAFT') return { state: 'unknown', label: 'En attente de paiement' };
+    if (!items.length) return { state: 'completed', label: 'Aucune livraison restante' };
+    return { state: 'ready', label: 'Peut être livrée' };
+  }
   savingOrderStatus = false;
   orderStatusSaved = false;
   orderStatusError = '';

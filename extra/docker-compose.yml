@@ -1,0 +1,9 @@
+services:
+  helloasso-wiremock:
+    image: wiremock/wiremock:3.13.1
+    container_name: adhesion-helloasso-wiremock
+    ports:
+      - "8089:8080"
+    volumes:
+      - ./wiremock:/home/wiremock
+    command: ["--global-response-templating", "--verbose"]

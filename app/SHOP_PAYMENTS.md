@@ -11,7 +11,9 @@ dépend plus du retour de l’adhérent sur le site :
   commande en attente, via `POST /shop/admin/orders/{orderNumber}/payment/verify`.
 
 Chaque chemin relit le paiement via l’API HelloAsso authentifiée et vérifie son
-identifiant, sa devise et son montant. Le contenu d’une notification, les
+identifiant, sa devise et son état. Le montant HelloAsso n'est pas comparé au
+total de la commande, car il peut inclure une contribution supplémentaire.
+Le contenu d’une notification, les
 métadonnées et les paramètres de retour du navigateur ne constituent jamais une
 preuve de paiement. Un verrou en base sur le paiement sérialise les confirmations
 concurrentes ; une répétition ne déduit pas à nouveau le stock.

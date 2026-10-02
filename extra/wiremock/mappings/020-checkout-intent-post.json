@@ -1,0 +1,18 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPathPattern": "/v5/organizations/[^/]+/checkout-intents",
+    "headers": {
+      "Authorization": {
+        "equalTo": "Bearer local-wiremock-token"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": "{\"id\":741,\"redirectUrl\":\"{{jsonPath request.body '$.returnUrl'}}\"}"
+  }
+}

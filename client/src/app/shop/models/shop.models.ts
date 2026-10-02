@@ -184,6 +184,7 @@ export interface ShopSupplierOrderDto {
   id: number;
   supplierName: string;
   reference: string | null;
+  invoiceReference?: string | null;
   status: 'DRAFT' | 'ORDERED' | 'RECEIVED';
   createdAt: string;
   receivedAt: string | null;
@@ -207,7 +208,12 @@ export interface ShopSupplierOrderLineDto {
 export interface ShopSupplierOrderCreateRequest {
   supplierName: string;
   reference: string | null;
-  lines: { variantId: number; quantity: number; unitCostAmountInCents: number | null; extraApproved: boolean }[];
+  lines: { variantId: number; quantity: number }[];
+}
+
+export interface ShopSupplierOrderCompletionRequest {
+  invoiceReference: string;
+  lines: { variantId: number; unitCostAmountInCents: number }[];
 }
 
 /** État local minimal : aucune somme ni prix n'est conservé comme référence de paiement. */

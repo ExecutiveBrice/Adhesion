@@ -115,6 +115,34 @@ class PaymentServiceTest {
     }
 
     @Test
+    void helloAssoCanConfirmPaymentWithAnAdditionalContribution() {
+        PaymentGateway gateway = mock(PaymentGateway.class);
+        when(gateway.configuredProvider()).thenReturn(PaymentProviderType.HELLOASSO);
+        when(gateway.createPayment(any())).thenReturn(new PaymentSession("741",
+                URI.create("https://checkout.example.test/741"), PaymentStatus.PENDING));
+        when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(attemptRepository.findByPaymentIdAndIdempotencyKey(7L, "helloasso-key"))
+                .thenReturn(Optional.empty());
+        when(gateway.retrievePayment(PaymentProviderType.HELLOASSO, "741"))
+                .thenReturn(new com.wild.corp.adhesion.shop.payment.provider.PaymentResult(
+                        "741", PaymentStatus.SUCCEEDED, new Money(3_500, "EUR"), null, null));
+        when(attemptRepository.findPaymentIdByAttemptId(9L)).thenReturn(Optional.of(7L));
+        when(paymentRepository.findByIdForUpdate(7L)).thenReturn(Optional.of(payment));
+        PaymentService service = new PaymentService(paymentRepository, attemptRepository,
+                orderRepository, userRepository, orderService, gateway);
+
+        service.createPaymentSession(42L, "helloasso-key", URI.create("https://shop.example.test/return"),
+                URI.create("https://shop.example.test/cancel"));
+        ReflectionTestUtils.setField(payment.getAttempts().getFirst(), "id", 9L);
+        service.refreshPaymentStatus(9L);
+
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.SUCCEEDED);
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
+        assertThat(payment.getExpectedAmount()).isEqualTo(new Money(3_000, "EUR"));
+        verify(orderService).consumeReservedStock(order);
+    }
+
+    @Test
     void providerFailureIsRecordedOnTheAttemptOwnerWhenRepositoriesReturnDifferentPaymentInstances() {
         Payment attemptOwner = new Payment(42L, order.getTotal());
         ReflectionTestUtils.setField(attemptOwner, "id", 7L);

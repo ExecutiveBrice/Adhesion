@@ -15,6 +15,7 @@ import com.wild.corp.adhesion.shop.api.dto.OrderMessageRequest;
 import com.wild.corp.adhesion.shop.api.dto.OrderMessageResponse;
 import com.wild.corp.adhesion.shop.api.dto.ProductImageUploadResponse;
 import com.wild.corp.adhesion.shop.api.dto.SupplierOrderCreateRequest;
+import com.wild.corp.adhesion.shop.api.dto.SupplierOrderCompletionRequest;
 import com.wild.corp.adhesion.shop.api.dto.SupplierOrderResponse;
 import com.wild.corp.adhesion.shop.catalog.model.SupplierOrder;
 import com.wild.corp.adhesion.shop.catalog.service.CatalogService;
@@ -111,6 +112,13 @@ public class ShopAdminController {
     @PutMapping("/supplier-orders/{orderId}/receive")
     public SupplierOrderResponse receiveSupplierOrder(@PathVariable Long orderId) {
         return supplierOrder(supplierOrderService.receive(orderId));
+    }
+
+    @PutMapping("/supplier-orders/{orderId}/completion")
+    public SupplierOrderResponse completeSupplierOrder(@PathVariable Long orderId,
+            @Valid @RequestBody SupplierOrderCompletionRequest request) {
+        return supplierOrder(supplierOrderService.complete(orderId, request.invoiceReference(), request.lines().stream()
+                .map(line -> new SupplierOrderService.PricedLine(line.variantId(), line.unitCostAmountInCents())).toList()));
     }
 
     @PostMapping("/orders/{orderNumber}/payment/verify")
@@ -248,7 +256,7 @@ public class ShopAdminController {
     }
 
     private static SupplierOrderResponse supplierOrder(SupplierOrder order) {
-        return new SupplierOrderResponse(order.getId(), order.getSupplierName(), order.getReference(),
+        return new SupplierOrderResponse(order.getId(), order.getSupplierName(), order.getReference(), order.getInvoiceReference(),
                 order.getStatus(), order.getCreatedAt(), order.getReceivedAt(), order.getLines().stream()
                 .map(line -> new SupplierOrderResponse.Line(line.getId(), line.getVariantId(), line.getProductName(),
                         line.getVariantName(), line.getSku(), line.getQuantity(),
@@ -257,7 +265,6 @@ public class ShopAdminController {
     }
 
     private static List<SupplierOrderService.Line> supplierLines(SupplierOrderCreateRequest request) {
-        return request.lines().stream().map(line -> new SupplierOrderService.Line(line.variantId(), line.quantity(),
-                line.unitCostAmountInCents(), Boolean.TRUE.equals(line.extraApproved()))).toList();
+        return request.lines().stream().map(line -> new SupplierOrderService.Line(line.variantId(), line.quantity())).toList();
     }
 }

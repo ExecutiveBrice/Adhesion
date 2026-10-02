@@ -86,8 +86,9 @@ describe('ShopManagementComponent', () => {
       total: { amountInCents: 1000, currency: 'EUR' }, createdAt: '2026-09-25T10:00:00Z',
       customerEmail: 'client@example.test', customerTribeId: 17, refundRequested: false, items: []
     }));
-    const api = jasmine.createSpyObj<ShopAdminApiService>('ShopAdminApiService', ['orders']);
+    const api = jasmine.createSpyObj<ShopAdminApiService>('ShopAdminApiService', ['orders', 'products']);
     api.orders.and.returnValue(of(orders));
+    api.products.and.returnValue(of([]));
 
     TestBed.configureTestingModule({
       imports: [ShopManagementComponent],
@@ -109,7 +110,7 @@ describe('ShopManagementComponent', () => {
     expect(api.orders).toHaveBeenCalledTimes(1);
     fixture.componentInstance.selectTab('stocks');
     fixture.componentInstance.selectTab('orders');
-    expect(api.orders).toHaveBeenCalledTimes(1);
+    expect(api.orders).toHaveBeenCalledTimes(2);
 
     fixture.destroy();
   });

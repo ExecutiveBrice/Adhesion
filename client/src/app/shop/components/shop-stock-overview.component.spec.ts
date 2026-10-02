@@ -125,7 +125,7 @@ describe('buildStockRows', () => {
 describe('ShopStockOverviewComponent', () => {
   beforeAll(() => registerLocaleData(localeFr));
 
-  it('prépare les besoins, enregistre un brouillon et ne passe commande qu’après contrôle du prix', () => {
+  it('prépare les besoins et lance la commande avec le fournisseur et les quantités', () => {
     const product: ShopAdminProductDto = {
       id: 1, name: 'T-shirt', slug: 't-shirt', description: null, imageUrl: null,
       active: true, displayOrder: 0, categories: [], variants: [{
@@ -141,8 +141,8 @@ describe('ShopStockOverviewComponent', () => {
         quantity: 2, unitPrice: { amountInCents: 1200, currency: 'EUR' },
         lineTotal: { amountInCents: 2400, currency: 'EUR' }, status: 'PENDING', stockReserved: false }]
     };
-    const draft: ShopSupplierOrderDto = {
-      id: 9, supplierName: 'Fournisseur A', reference: null, status: 'DRAFT',
+    const supplierOrder: ShopSupplierOrderDto = {
+      id: 9, supplierName: 'Fournisseur A', reference: null, status: 'ORDERED',
       createdAt: '2026-09-30T10:00:00Z', receivedAt: null,
       lines: [{ id: 1, variantId: 42, productName: 'T-shirt', variantName: 'M', sku: 'TS-M',
         quantity: 2, unitCostAmountInCents: 800, lineTotalAmountInCents: 1600 }]
@@ -152,8 +152,8 @@ describe('ShopStockOverviewComponent', () => {
     api.products.and.returnValue(of([product]));
     api.orders.and.returnValue(of([paidOrder]));
     api.supplierOrders.and.returnValue(of([]));
-    api.createSupplierOrderDraft.and.returnValue(of(draft));
-    api.placeSupplierOrderDraft.and.returnValue(of({ ...draft, status: 'ORDERED' }));
+    api.createSupplierOrderDraft.and.returnValue(of({ ...supplierOrder, status: 'DRAFT' }));
+    api.placeSupplierOrderDraft.and.returnValue(of(supplierOrder));
     TestBed.configureTestingModule({
       imports: [ShopStockOverviewComponent],
       providers: [{ provide: ShopAdminApiService, useValue: api }]
@@ -164,19 +164,15 @@ describe('ShopStockOverviewComponent', () => {
 
     component.prepareSupplierOrder();
     expect(component.purchaseDrafts[42]).toBe(2);
-    expect(component.purchaseTotalCents).toBeNull();
     component.supplierName = 'Fournisseur A';
-    component.setPurchaseCost(42, { target: { value: '8', valueAsNumber: 8 } } as unknown as Event);
-    expect(component.purchaseTotalCents).toBe(1600);
     component.createSupplierOrder();
     expect(api.createSupplierOrderDraft).toHaveBeenCalledWith({
       supplierName: 'Fournisseur A', reference: null,
-      lines: [{ variantId: 42, quantity: 2, unitCostAmountInCents: 800, extraApproved: false }]
+      lines: [{ variantId: 42, quantity: 2 }]
     });
-    expect(component.activeDraftId).toBe(9);
-    expect(component.draftDirty).toBeFalse();
-    component.placeSupplierOrder();
     expect(api.placeSupplierOrderDraft).toHaveBeenCalledWith(9);
+    expect(component.activeDraftId).toBeNull();
+    expect(component.draftDirty).toBeFalse();
     fixture.destroy();
   });
 
@@ -207,6 +203,8 @@ describe('ShopStockOverviewComponent', () => {
 
     expect(fixture.nativeElement.querySelector('dialog')?.open).toBeTrue();
     expect(fixture.nativeElement.textContent).toContain('Nouvelle commande fournisseur');
+    expect(fixture.nativeElement.textContent).not.toContain('Prix unitaire');
+    expect(fixture.nativeElement.textContent).not.toContain('Achat supplémentaire validé');
     expect(fixture.componentInstance.purchaseDrafts[42]).toBeUndefined();
     fixture.destroy();
   });
@@ -302,7 +300,7 @@ describe('ShopStockOverviewComponent', () => {
 
     expect(fixture.componentInstance.rows[0].available).toBe(5);
     expect(fixture.nativeElement.querySelector('tbody tr')?.textContent).toContain('TS-M');
-    const headings = [...fixture.nativeElement.querySelectorAll('thead th')].map((element: Element) => element.textContent?.trim());
+    const headings = [...fixture.nativeElement.querySelectorAll('.stock-table thead th')].map((element: Element) => element.textContent?.trim());
     expect(headings).toEqual(['Produit / variante', 'Commandes client', 'À commander chez le fournisseur',
       'Commande fournisseur en cours', 'En stock']);
     expect(fixture.nativeElement.querySelector('#stock-count-42')).toBeNull();

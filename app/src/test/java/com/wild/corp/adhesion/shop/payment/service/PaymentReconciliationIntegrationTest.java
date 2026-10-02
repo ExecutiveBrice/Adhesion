@@ -50,7 +50,8 @@ import static org.mockito.Mockito.*;
 
 @DataJpaTest(showSql = false, properties = {
         "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect",
-        "spring.flyway.enabled=false"
+        "spring.liquibase.enabled=false",
+        "spring.jpa.hibernate.ddl-auto=create-drop"
 })
 @ContextConfiguration(classes = PaymentReconciliationIntegrationTest.JpaApplication.class)
 @Transactional(propagation = Propagation.NOT_SUPPORTED)

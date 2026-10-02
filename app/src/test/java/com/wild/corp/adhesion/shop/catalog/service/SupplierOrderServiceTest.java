@@ -46,6 +46,12 @@ class SupplierOrderServiceTest {
         assertThat(variant.getStockOnHand()).isEqualTo(2);
         assertThat(order.getLines()).hasSize(1);
         assertThat(order.getLines().getFirst().getQuantity()).isEqualTo(5);
+        assertThatThrownBy(() -> service.receive(30L))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("facture");
+
+        service.complete(30L, "FAC-1", List.of(new SupplierOrderService.PricedLine(20L, 800L)));
+        assertThat(order.getInvoiceReference()).isEqualTo("FAC-1");
+        assertThat(order.getLines().getFirst().getUnitCostAmountInCents()).isEqualTo(800L);
 
         service.receive(30L);
 
@@ -67,7 +73,7 @@ class SupplierOrderServiceTest {
     }
 
     @Test
-    void draftDoesNotCountAsIncomingAndPlaceRequiresFreshNeedAndExplicitExtra() {
+    void draftDoesNotCountAsIncomingAndPlaceRequiresFreshNeed() {
         Product product = new Product("Tee-shirt", "tee-shirt", null, true, 0);
         ProductVariant variant = new ProductVariant(product, "TS-M", "M", new Money(1_500, "EUR"), true, 0);
         ReflectionTestUtils.setField(variant, "id", 20L);
@@ -90,12 +96,12 @@ class SupplierOrderServiceTest {
         SupplierOrderService service = new SupplierOrderService(orders, variants, customerOrders);
 
         SupplierOrder draft = service.createDraft("Fournisseur A", null,
-                List.of(new SupplierOrderService.Line(20L, 5, 800L, false)));
+                List.of(new SupplierOrderService.Line(20L, 5)));
         ReflectionTestUtils.setField(draft, "id", 30L);
         when(orders.findByIdForUpdate(30L)).thenReturn(Optional.of(draft));
         assertThat(draft.getStatus()).isEqualTo(SupplierOrderStatus.DRAFT);
         assertThat(draft.getLines().getFirst().getExpectedNeed()).isEqualTo(5);
-        assertThat(draft.getLines().getFirst().getLineTotalAmountInCents()).isEqualTo(4_000L);
+        assertThat(draft.getLines().getFirst().getLineTotalAmountInCents()).isNull();
         assertThat(variant.getStockOnHand()).isEqualTo(-5);
 
         SupplierOrder other = new SupplierOrder("Autre fournisseur", null);
@@ -106,13 +112,8 @@ class SupplierOrderServiceTest {
         assertThat(draft.getStatus()).isEqualTo(SupplierOrderStatus.DRAFT);
 
         service.updateDraft(30L, "Fournisseur A", null,
-                List.of(new SupplierOrderService.Line(20L, 2, 800L, false)));
+                List.of(new SupplierOrderService.Line(20L, 2)));
         assertThat(draft.getLines().getFirst().getExpectedNeed()).isZero();
-        assertThatThrownBy(() -> service.placeDraft(30L)).isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("achat supplémentaire");
-
-        service.updateDraft(30L, "Fournisseur A", null,
-                List.of(new SupplierOrderService.Line(20L, 2, 800L, true)));
         service.placeDraft(30L);
         assertThat(draft.getStatus()).isEqualTo(SupplierOrderStatus.ORDERED);
         assertThat(variant.getStockOnHand()).isEqualTo(-5);

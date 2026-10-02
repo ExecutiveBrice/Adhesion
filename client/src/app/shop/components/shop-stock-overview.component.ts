@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { catchError, forkJoin, of, timeout } from 'rxjs';
+import { catchError, forkJoin, of, switchMap, timeout } from 'rxjs';
 import { ShopAdminOrderDto, ShopAdminOrderItemStatus, ShopAdminProductDto, ShopAdminVariantDto, ShopSupplierOrderDto } from '../models/shop.models';
 import { ShopAdminApiService } from '../services/shop-admin-api.service';
 import { registerApiViewRefresh } from '../../_services/api-render.service';
@@ -150,8 +150,7 @@ export class ShopStockOverviewComponent implements OnInit {
   filter: StockFilter = 'all';
   readonly stockDrafts: Record<number, number | null> = {};
   readonly purchaseDrafts: Record<number, number | null> = {};
-  readonly purchaseCostDrafts: Record<number, number | null> = {};
-  readonly purchaseExtraDrafts: Record<number, boolean> = {};
+  readonly completionCostDrafts: Record<number, number | null> = {};
   readonly rowErrors: Record<number, string> = {};
   readonly savingVariantIds = new Set<number>();
   readonly receivingOrderIds = new Set<number>();
@@ -163,6 +162,9 @@ export class ShopStockOverviewComponent implements OnInit {
   activeDraftId: number | null = null;
   draftDirty = false;
   placingSupplierOrder = false;
+  completionOrder: ShopSupplierOrderDto | null = null;
+  invoiceReference = '';
+  completingSupplierOrder = false;
 
   ngOnInit(): void { this.load(); }
 
@@ -200,7 +202,7 @@ export class ShopStockOverviewComponent implements OnInit {
         this.updatedAt = new Date();
         this.loaded = true;
         this.loading = false;
-        if (this.supplierOrderOpen && !this.draftDirty && this.activeDraftId == null) this.prepareSupplierOrder();
+        if (this.supplierOrderOpen && !this.completionOrder && !this.draftDirty && this.activeDraftId == null) this.prepareSupplierOrder();
       },
       error: () => {
         if (requestId !== this.loadRequestId) return;
@@ -239,30 +241,19 @@ export class ShopStockOverviewComponent implements OnInit {
     return order.lines.reduce((sum, line) => sum + (line.lineTotalAmountInCents ?? 0), 0);
   }
   get invalidPurchaseCount(): number { return this.rows.filter(row => this.isPurchaseInvalid(row.variant.id)).length; }
-  get invalidCostCount(): number { return this.rows.filter(row => this.isCostInvalid(row.variant.id)).length; }
-  get missingCostCount(): number {
-    return this.rows.filter(row => this.validPurchaseQuantity(row.variant.id) > 0
-      && this.purchaseCostDrafts[row.variant.id] == null).length;
-  }
-  get unapprovedExtraCount(): number {
-    return this.rows.filter(row => this.validPurchaseQuantity(row.variant.id) > row.toOrder
-      && !this.purchaseExtraDrafts[row.variant.id]).length;
-  }
-  get purchaseTotalCents(): number | null {
-    if (this.missingCostCount || this.invalidCostCount || this.invalidPurchaseCount) return null;
-    return this.rows.reduce((sum, row) => sum + this.validPurchaseQuantity(row.variant.id)
-      * (this.purchaseCostDrafts[row.variant.id] ?? 0), 0);
-  }
   get purchaseRows(): StockRow[] { return this.rows.filter(row => row.variant.stockTracked); }
 
   openSupplierOrder(): void {
-    if (!this.draftDirty && this.activeDraftId == null && this.loaded && !this.loading) this.prepareSupplierOrder();
+    this.completionOrder = null;
+    this.supplierName = '';
+    this.supplierReference = '';
+    if (this.loaded && !this.loading) this.prepareSupplierOrder();
     this.supplierOrderOpen = true;
     if (!this.supplierOrderDialog.nativeElement.open) this.supplierOrderDialog.nativeElement.showModal();
   }
 
   closeSupplierOrder(): void {
-    if (this.creatingSupplierOrder || this.placingSupplierOrder) return;
+    if (this.creatingSupplierOrder || this.placingSupplierOrder || this.completingSupplierOrder) return;
     if (this.supplierOrderDialog.nativeElement.open) this.supplierOrderDialog.nativeElement.close();
     this.supplierOrderOpen = false;
   }
@@ -270,34 +261,10 @@ export class ShopStockOverviewComponent implements OnInit {
   setPurchaseQuantity(id: number, event: Event): void {
     const input = event.target as HTMLInputElement;
     this.purchaseDrafts[id] = input.value === '' ? null : input.valueAsNumber;
-    const row = this.rows.find(candidate => candidate.variant.id === id);
-    if (row && this.validPurchaseQuantity(id) <= row.toOrder) this.purchaseExtraDrafts[id] = false;
     this.draftDirty = true;
   }
-
-  setExtraApproved(id: number, event: Event): void {
-    this.purchaseExtraDrafts[id] = (event.target as HTMLInputElement).checked;
-    this.draftDirty = true;
-  }
-
-  setPurchaseCost(id: number, event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const euros = input.valueAsNumber;
-    const cents = euros * 100;
-    this.purchaseCostDrafts[id] = input.value === '' ? null
-      : Number.isFinite(cents) && Math.abs(cents - Math.round(cents)) < 0.000001
-        ? Math.round(cents) : NaN;
-    this.draftDirty = true;
-  }
-
-  isCostInvalid(id: number): boolean {
-    const cents = this.purchaseCostDrafts[id];
-    return cents != null && (!Number.isSafeInteger(cents) || cents < 0);
-  }
-
-  purchaseCostEuros(id: number): number | '' {
-    const cents = this.purchaseCostDrafts[id];
-    return cents == null || !Number.isFinite(cents) ? '' : cents / 100;
+  supplierOrderReadyForDelivery(order: ShopSupplierOrderDto): boolean {
+    return !!order.invoiceReference && order.lines.every(line => line.unitCostAmountInCents != null);
   }
 
   prepareSupplierOrder(): void {
@@ -315,15 +282,51 @@ export class ShopStockOverviewComponent implements OnInit {
     this.clearPurchaseList();
     for (const line of order.lines) {
       this.purchaseDrafts[line.variantId] = line.quantity;
-      this.purchaseCostDrafts[line.variantId] = line.unitCostAmountInCents ?? null;
-      this.purchaseExtraDrafts[line.variantId] = line.extraApproved ?? false;
     }
     this.activeDraftId = order.id;
     this.supplierName = order.supplierName;
     this.supplierReference = order.reference ?? '';
     this.supplierOrderError = '';
     this.draftDirty = false;
-    this.openSupplierOrder();
+    this.supplierOrderOpen = true;
+    if (!this.supplierOrderDialog.nativeElement.open) this.supplierOrderDialog.nativeElement.showModal();
+  }
+
+  openSupplierOrderCompletion(order: ShopSupplierOrderDto): void {
+    if (order.status !== 'ORDERED') return;
+    this.completionOrder = order;
+    this.activeDraftId = null;
+    this.invoiceReference = order.invoiceReference ?? '';
+    for (const id of Object.keys(this.completionCostDrafts)) delete this.completionCostDrafts[Number(id)];
+    for (const line of order.lines) this.completionCostDrafts[line.variantId] = line.unitCostAmountInCents ?? null;
+    this.supplierOrderError = '';
+    this.supplierOrderOpen = true;
+    if (!this.supplierOrderDialog.nativeElement.open) this.supplierOrderDialog.nativeElement.showModal();
+  }
+
+  setCompletionCost(id: number, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const cents = input.valueAsNumber * 100;
+    this.completionCostDrafts[id] = input.value === '' ? null
+      : Number.isFinite(cents) && Math.abs(cents - Math.round(cents)) < 0.000001 ? Math.round(cents) : NaN;
+  }
+
+  completionCostEuros(id: number): number | '' {
+    const cents = this.completionCostDrafts[id];
+    return cents == null || !Number.isFinite(cents) ? '' : cents / 100;
+  }
+
+  isCompletionCostInvalid(id: number): boolean {
+    const cents = this.completionCostDrafts[id];
+    return cents != null && (!Number.isSafeInteger(cents) || cents < 0);
+  }
+
+  get missingCompletionCostCount(): number {
+    return (this.completionOrder?.lines ?? []).filter(line => this.completionCostDrafts[line.variantId] == null).length;
+  }
+
+  get invalidCompletionCostCount(): number {
+    return (this.completionOrder?.lines ?? []).filter(line => this.isCompletionCostInvalid(line.variantId)).length;
   }
 
   isPurchaseInvalid(id: number): boolean {
@@ -412,33 +415,34 @@ export class ShopStockOverviewComponent implements OnInit {
 
   clearPurchaseList(): void {
     for (const id of Object.keys(this.purchaseDrafts)) delete this.purchaseDrafts[Number(id)];
-    for (const id of Object.keys(this.purchaseCostDrafts)) delete this.purchaseCostDrafts[Number(id)];
-    for (const id of Object.keys(this.purchaseExtraDrafts)) delete this.purchaseExtraDrafts[Number(id)];
     this.draftDirty = true;
   }
 
   createSupplierOrder(): void {
     this.supplierOrderError = '';
     const lines = this.rows.filter(row => this.validPurchaseQuantity(row.variant.id) > 0)
-      .map(row => ({ variantId: row.variant.id, quantity: this.validPurchaseQuantity(row.variant.id),
-        unitCostAmountInCents: this.purchaseCostDrafts[row.variant.id] ?? null,
-        extraApproved: this.purchaseExtraDrafts[row.variant.id] ?? false }));
-    if (!this.supplierName.trim() || !lines.length || this.invalidPurchaseCount || this.invalidCostCount
+      .map(row => ({ variantId: row.variant.id, quantity: this.validPurchaseQuantity(row.variant.id) }));
+    if (!this.supplierName.trim() || !lines.length || this.invalidPurchaseCount
         || this.creatingSupplierOrder) {
       this.supplierOrderError = 'Indiquez un fournisseur et au moins une quantité entière positive.';
       return;
     }
     this.creatingSupplierOrder = true;
-    const request = { supplierName: this.supplierName.trim(),
-      reference: this.supplierReference.trim() || null, lines };
-    const save = this.activeDraftId == null ? this.api.createSupplierOrderDraft(request)
-      : this.api.updateSupplierOrderDraft(this.activeDraftId, request);
+    const request = { supplierName: this.supplierName.trim(), reference: null, lines };
+    const draftId = this.activeDraftId;
+    const newOrder = draftId == null;
+    const save = newOrder ? this.api.createSupplierOrderDraft(request).pipe(
+      switchMap(order => this.api.placeSupplierOrderDraft(order.id)))
+      : this.api.updateSupplierOrderDraft(draftId!, request);
     save.pipe(timeout({ first: 10_000 })).subscribe({
       next: order => {
         this.creatingSupplierOrder = false;
-        this.activeDraftId = order.id;
+        this.activeDraftId = newOrder ? null : order.id;
         this.draftDirty = false;
-        this.message = `Brouillon fournisseur n°${order.id} enregistré. Il ne compte pas encore dans les quantités attendues.`;
+        if (this.activeDraftId == null) {
+          this.closeSupplierOrder();
+          this.message = `Commande fournisseur n°${order.id} lancée. Les quantités sont désormais attendues.`;
+        } else this.message = `Brouillon fournisseur n°${order.id} enregistré.`;
         this.load();
       },
       error: response => {
@@ -449,8 +453,7 @@ export class ShopStockOverviewComponent implements OnInit {
   }
 
   placeSupplierOrder(): void {
-    if (this.activeDraftId == null || this.purchaseLineCount === 0 || this.draftDirty || this.missingCostCount
-        || this.invalidCostCount || this.unapprovedExtraCount || this.placingSupplierOrder) return;
+    if (this.activeDraftId == null || this.purchaseLineCount === 0 || this.draftDirty || this.placingSupplierOrder) return;
     this.placingSupplierOrder = true;
     this.supplierOrderError = '';
     this.api.placeSupplierOrderDraft(this.activeDraftId).pipe(timeout({ first: 10_000 })).subscribe({
@@ -474,6 +477,31 @@ export class ShopStockOverviewComponent implements OnInit {
     });
   }
 
+  completeSupplierOrder(): void {
+    const order = this.completionOrder;
+    if (!order || !this.invoiceReference.trim() || this.missingCompletionCostCount || this.invalidCompletionCostCount
+        || this.completingSupplierOrder) return;
+    this.completingSupplierOrder = true;
+    this.supplierOrderError = '';
+    this.api.completeSupplierOrder(order.id, {
+      invoiceReference: this.invoiceReference.trim(),
+      lines: order.lines.map(line => ({ variantId: line.variantId,
+        unitCostAmountInCents: this.completionCostDrafts[line.variantId]! }))
+    }).pipe(timeout({ first: 10_000 })).subscribe({
+      next: () => {
+        this.completingSupplierOrder = false;
+        this.completionOrder = null;
+        this.closeSupplierOrder();
+        this.message = `Commande fournisseur n°${order.id} complétée. Vous pouvez maintenant valider la livraison.`;
+        this.load();
+      },
+      error: response => {
+        this.completingSupplierOrder = false;
+        this.supplierOrderError = response?.error?.detail || 'La facture et les tarifs n’ont pas pu être enregistrés.';
+      }
+    });
+  }
+
   receiveSupplierOrder(order: ShopSupplierOrderDto): void {
     if (order.status !== 'ORDERED' || this.receivingOrderIds.has(order.id)) return;
     this.supplierOrderError = '';
@@ -493,17 +521,13 @@ export class ShopStockOverviewComponent implements OnInit {
   }
 
   exportPurchaseList(): void {
-    if (this.invalidPurchaseCount || this.invalidCostCount || this.missingCostCount) return;
+    if (this.invalidPurchaseCount) return;
     const selected = this.rows.filter(row => this.validPurchaseQuantity(row.variant.id) > 0);
     if (!selected.length) return;
-    const columns = ['Produit', 'Variante', 'SKU', 'Quantité achat', 'Prix achat unitaire EUR',
-      'Montant ligne EUR', 'À servir', 'Attendu fournisseur', 'À commander'];
+    const columns = ['Produit', 'Variante', 'SKU', 'Quantité achat', 'À servir', 'Attendu fournisseur', 'À commander'];
     const lines = selected.map(row => [row.product.name, row.variant.label || '', row.variant.sku,
-      this.validPurchaseQuantity(row.variant.id), this.euros(this.purchaseCostDrafts[row.variant.id]!),
-      this.euros(this.validPurchaseQuantity(row.variant.id) * this.purchaseCostDrafts[row.variant.id]!),
-      row.toPrepare, row.awaitingSupplier, row.toOrder]);
-    const total = ['', '', 'Total', '', '', this.euros(this.purchaseTotalCents!), '', '', ''];
-    const csv = '\uFEFF' + [columns, ...lines, total].map(line => line.map(value => this.csvCell(value)).join(';')).join('\r\n');
+      this.validPurchaseQuantity(row.variant.id), row.toPrepare, row.awaitingSupplier, row.toOrder]);
+    const csv = '\uFEFF' + [columns, ...lines].map(line => line.map(value => this.csvCell(value)).join(';')).join('\r\n');
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     const anchor = document.createElement('a');
     anchor.href = url;
