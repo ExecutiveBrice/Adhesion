@@ -20,9 +20,8 @@ import java.util.List;
 public class ChatService {
     public static final long COMMUNICATION_ROOM_ID = 0L;
     public static final long REFERENT_ENCADRANT_ROOM_ID = -1L;
-    private static final List<String> MEMBER_STATUSES = List.of(
-            Status.VALIDEE.label, Status.ATTENTE_CERFTIF.label, Status.LICENCE_T.label,
-            Status.LICENCE_GENEREE.label, Status.VALIDEE_GROUPEMENT_SPORTIF.label);
+    private static final List<String> EXCLUDED_MEMBERSHIP_STATUSES = List.of(
+            Status.LISTE_ATTENTE.label, Status.ANNULEE.label);
     private final UserRepository users;
     private final ActiviteRepository activities;
     private final ChatMessageRepository messages;
@@ -55,22 +54,22 @@ public class ChatService {
     public List<Room> rooms(String username) {
         User user = currentUser(username);
         if (sectionChats == null) return List.of();
-        List<SectionChat> accessibles = sectionChats.findAllByOrderByNomAsc().stream()
-                .filter(chat -> canReadSectionChat(user, chat)).toList();
+        List<Activite> memberActivities = activities.findChatActivities(user.getId(), EXCLUDED_MEMBERSHIP_STATUSES);
+        List<SectionChat> accessibles = readableChats(user, memberActivities);
         var counts = reads.sectionUnreadCounts(user.getId(), accessibles.stream().map(SectionChat::getId).toList());
         return accessibles.stream().map(chat -> new Room(sectionRoomId(chat.getId()), chat.getNom(),
                 cibleNom(chat), List.of(), counts.getOrDefault(chat.getId(), 0L),
-                false, false, canWriteSectionChat(user, chat), chat.getId())).toList();
+                false, false, canWriteSectionChat(user, chat, memberActivities), chat.getId())).toList();
     }
 
     public List<SectionRoom> sectionRooms(String username) {
         if (sectionChats == null) return List.of();
         User user = currentUser(username);
-        List<SectionChat> accessibles = sectionChats.findAllByOrderByNomAsc().stream()
-                .filter(chat -> canReadSectionChat(user, chat)).toList();
+        List<Activite> memberActivities = activities.findChatActivities(user.getId(), EXCLUDED_MEMBERSHIP_STATUSES);
+        List<SectionChat> accessibles = readableChats(user, memberActivities);
         var counts = reads.sectionUnreadCounts(user.getId(), accessibles.stream().map(SectionChat::getId).toList());
         return accessibles.stream().map(chat -> new SectionRoom(chat.getId(), chat.getNom(), cibleNom(chat),
-                counts.getOrDefault(chat.getId(), 0L), canWriteSectionChat(user, chat))).toList();
+                counts.getOrDefault(chat.getId(), 0L), canWriteSectionChat(user, chat, memberActivities))).toList();
     }
 
     public List<Message> sectionHistory(String username, Long sectionChatId, Long beforeId, Long afterId) {
@@ -216,21 +215,52 @@ public class ChatService {
         }
         SectionChat chat = sectionChats.findById(sectionChatId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Salon introuvable"));
-        if (!canReadSectionChat(user, chat) || (ecriture && !canWriteSectionChat(user, chat))) {
+        List<Activite> memberActivities = chat.getCible() == ChatTarget.ASSOCIATION
+                ? List.of() : activities.findChatActivities(user.getId(), EXCLUDED_MEMBERSHIP_STATUSES);
+        if (!canReadSectionChat(user, chat, memberActivities) || (ecriture && !canWriteSectionChat(user, chat, memberActivities))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Vous n’êtes pas autorisé à accéder à ce salon");
         }
         return chat;
     }
 
-    private boolean canReadSectionChat(User user, SectionChat chat) {
-        return user.getRoles().contains(ERole.ROLE_ADMIN) || chat.getPermissions().stream()
-                .anyMatch(permission -> user.getRoles().stream().map(Enum::name).anyMatch(permission.getRole()::equals));
+    private List<SectionChat> readableChats(User user, List<Activite> memberActivities) {
+        List<SectionChat> chats = sectionChats.findAllByOrderByNomAsc();
+        return chats.stream().filter(chat -> canReadSectionChat(user, chat, memberActivities)).toList();
     }
 
-    private boolean canWriteSectionChat(User user, SectionChat chat) {
-        return user.getRoles().contains(ERole.ROLE_ADMIN) || chat.getPermissions().stream()
+    private boolean canReadSectionChat(User user, SectionChat chat, List<Activite> memberActivities) {
+        return chat.getPermissions().stream()
+                .anyMatch(permission -> hasChatPermission(user, chat, permission, memberActivities));
+    }
+
+    private boolean hasChatPermission(User user, SectionChat chat, SectionChatPermission permission,
+                                      List<Activite> memberActivities) {
+        if (user.getRoles().stream().map(Enum::name).noneMatch(permission.getRole()::equals)) {
+            return false;
+        }
+        // Only the member permission depends on the chat's section/activity scope.
+        if (!ERole.ROLE_USER.name().equals(permission.getRole())) {
+            return true;
+        }
+        if (chat.getCible() == ChatTarget.SECTION
+                && (chat.getSection() == null || chat.getSection().getId() == null
+                || memberActivities.stream().map(Activite::getSection)
+                .noneMatch(section -> section != null && chat.getSection().getId().equals(section.getId())))) {
+            return false;
+        }
+        if (chat.getCible() == ChatTarget.ACTIVITE
+                && (chat.getActivite() == null || chat.getActivite().getId() == null
+                || memberActivities.stream()
+                .noneMatch(activity -> chat.getActivite().getId().equals(activity.getId())))) {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean canWriteSectionChat(User user, SectionChat chat, List<Activite> memberActivities) {
+        return chat.getPermissions().stream()
                 .anyMatch(permission -> permission.isEcriture()
-                        && user.getRoles().stream().map(Enum::name).anyMatch(permission.getRole()::equals));
+                        && hasChatPermission(user, chat, permission, memberActivities));
     }
 
     private long sectionRoomId(Long sectionChatId) {

@@ -1,4 +1,5 @@
 import { AdherentLite } from "./adherentLite";
+import { SectionConfiguration } from './section';
 
 export class ActiviteLite {
 
@@ -8,7 +9,7 @@ export class ActiviteLite {
   horaire!: string;
   lien!: string;
   salle!: string;
-  groupe!: string;
+  section?: SectionConfiguration;
   adherents!: AdherentLite[];
 
   constructor(){

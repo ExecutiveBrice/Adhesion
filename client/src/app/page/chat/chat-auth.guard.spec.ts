@@ -29,7 +29,7 @@ describe('chatAuthGuard', () => {
       {} as ActivatedRouteSnapshot, { url: '/chat' } as RouterStateSnapshot));
 
     (result as unknown as Observable<UrlTree>).subscribe(value => {
-      expect(router.serializeUrl(value)).toBe('/inscription');
+      expect(router.serializeUrl(value)).toBe('/profil');
       done();
     });
   });

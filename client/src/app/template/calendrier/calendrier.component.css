@@ -1,0 +1,63 @@
+.evenements-accueil {
+  margin: 2rem 0;
+}
+
+.evenements-entete {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.evenements-entete h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.evenements-entete p {
+  color: var(--bs-secondary-color);
+  margin: 0;
+}
+
+.evenements-liste {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+}
+
+.evenement-card {
+  border-left: 4px solid var(--agenda-color, var(--vert-alod));
+  border-radius: 12px;
+  padding: 1.25rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.evenement-card-entete {
+  align-items: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.evenement-date {
+  font-weight: 700;
+}
+
+.evenement-card h3 {
+  font-size: 1.15rem;
+  margin-bottom: 0.5rem;
+}
+
+.evenement-card .detail-lieu {
+  margin-top: 0.5rem;
+}
+
+.evenements-suite {
+  margin-top: 1.25rem;
+  text-align: center;
+}

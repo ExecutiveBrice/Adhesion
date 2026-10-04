@@ -122,7 +122,7 @@
         <article class="activity-card">
           <header class="activity-card-header">
             <div>
-              <span class="activity-category">{{activite.groupeFiltre}}</span>
+              <span class="activity-category">{{activite.section?.nom}}</span>
               <h3>{{activite.nom}}</h3>
             </div>
             <button type="button" class="icon-action" title="Modifier l'activité" (click)="openActivite(activite)">

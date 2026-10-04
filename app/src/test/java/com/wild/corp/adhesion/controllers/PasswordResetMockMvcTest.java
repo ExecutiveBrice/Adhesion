@@ -271,7 +271,7 @@ class PasswordResetMockMvcTest {
     @EnableJpaRepositories(basePackageClasses = {UserRepository.class, ConfirmationTokenRepository.class})
     @Import({AuthController.class, PasswordResetService.class,
             PasswordResetWorker.class, ConfirmationTokenService.class, PasswordResetRateLimiter.class,
-            PwaSessionService.class})
+            PwaSessionService.class, com.wild.corp.adhesion.services.TribuSessionService.class})
     static class TestConfiguration {
         @Bean
         DataSource dataSource() {

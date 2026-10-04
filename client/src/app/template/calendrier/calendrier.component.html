@@ -1,3 +1,67 @@
+@if (affichage === 'liste') {
+  <section class="evenements-accueil" aria-labelledby="titre-evenements" [attr.aria-busy]="chargementCalendrier">
+    <div class="evenements-entete">
+      <div>
+        <h2 id="titre-evenements">Événements à venir</h2>
+        <p>{{adherentId != null ? 'Les prochaines séances de vos activités' : 'Vos prochaines séances et les événements de l’association'}} {{joursVisibles != null ? 'sur les ' + joursVisibles + ' prochains jours.' : 'sur les 12 prochains mois.'}}</p>
+      </div>
+      <button type="button" class="detail-ajout-google calendrier-export" (click)="telechargerSeancesGoogle()" [disabled]="exportCalendrierEnCours">
+        <fa-icon [icon]="faFileArrowDown"></fa-icon> {{exportCalendrierEnCours ? 'Préparation…' : 'Exporter les séances pour Google Agenda'}}
+      </button>
+    </div>
+    @if (erreurCalendrier) {
+      <div class="alert alert-warning" role="alert">{{erreurCalendrier}}</div>
+    }
+    @if (googleAgendaErreur) {
+      <div class="alert alert-warning" role="alert">{{googleAgendaErreur}}</div>
+    }
+    @if (erreurExportCalendrier) {
+      <div class="alert alert-warning" role="alert">{{erreurExportCalendrier}}</div>
+    }
+    @if (chargementCalendrier) {
+      <p role="status">Chargement des événements…</p>
+    } @else {
+      <div class="evenements-liste">
+        @for (evenement of evenementsAVenir.slice(0, nombreEvenementsAffiches); track evenement.source + ':' + evenement.agendaSource + ':' + evenement.id + ':' + evenement.debut) {
+          <article class="card evenement-card" [style.--agenda-color]="couleurEvenement(evenement)">
+            <div class="evenement-card-entete">
+              <time class="evenement-date" [attr.datetime]="evenement.debut">{{evenement.debut | date:'EEEE d MMMM yyyy':'':'fr-FR'}}</time>
+              <span class="etat-seance" [ngClass]="classeEvenement(evenement)" [style.--agenda-color]="couleurEvenement(evenement)">{{sourceEvenement(evenement)}}</span>
+            </div>
+            <h3>{{evenement.titre}}</h3>
+            <span class="detail-horaire">{{evenement.journeeEntiere ? 'Toute la journée' : heure(evenement.debut) + ' – ' + heure(evenement.fin)}}</span>
+            @if (evenement.fin.substring(0, 10) !== evenement.debut.substring(0, 10) && !evenement.journeeEntiere) {
+              <span>Jusqu’au {{evenement.fin | date:'d MMMM yyyy':'':'fr-FR'}}</span>
+            }
+            @if (evenement.lieu || evenement.adresseSalle) {
+              <span class="detail-lieu">{{evenement.lieu}}
+                @if (lienAdresseSalle(evenement); as lienAdresse) {
+                  <a [href]="lienAdresse" target="_blank" rel="noopener noreferrer">{{evenement.adresseSalle}}</a>
+                }
+              </span>
+            }
+            @if (evenement.commentaire) {
+              <div class="detail-commentaire" [innerHTML]="evenement.commentaire"></div>
+            }
+            @if (lienActivite(evenement); as lien) {
+              <a class="detail-lien" [href]="lien" target="_blank" rel="noopener noreferrer">Voir l’activité</a>
+            }
+            @if (lienGoogleAgenda(evenement); as lienGoogle) {
+              <a class="detail-ajout-google" [href]="lienGoogle" target="_blank" rel="noopener noreferrer"><fa-icon [icon]="faCalendarPlus"></fa-icon> Ajouter à Google Agenda</a>
+            }
+          </article>
+        } @empty {
+          <p class="text-body-secondary" role="status">Aucun événement à venir sur cette période.</p>
+        }
+      </div>
+      @if (nombreEvenementsAffiches < evenementsAVenir.length) {
+        <div class="evenements-suite">
+          <button type="button" class="btn btn-outline-primary" (click)="nombreEvenementsAffiches = nombreEvenementsAffiches + 12">Afficher plus d’événements</button>
+        </div>
+      }
+    }
+  </section>
+} @else {
 <section class="calendriers-accueil" aria-labelledby="titre-calendrier-seances">
   <div class="card calendrier-card">
     <div class="calendrier-entete">
@@ -92,3 +156,4 @@
   }
 </div>
 </section>
+}

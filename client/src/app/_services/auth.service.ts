@@ -37,6 +37,17 @@ export class AuthService {
     },{ responseType: 'json' }).pipe(tap(session => this.storage.saveSession(session)));
   }
 
+  switchMember(adherentId: number): Observable<any> {
+    return this.http.post(AUTH_API + 'switch-member', {
+      adherentId,
+      rememberSession: this.pwa.isMobileStandalone()
+    }).pipe(tap(session => {
+      const previousRefreshToken = this.storage.getRefreshToken();
+      this.storage.saveSession(session);
+      this.revokeRememberedSession(previousRefreshToken).subscribe();
+    }));
+  }
+
   canRefreshSession(): boolean {
     return this.pwa.isMobileStandalone() && !!this.storage.getRefreshToken();
   }

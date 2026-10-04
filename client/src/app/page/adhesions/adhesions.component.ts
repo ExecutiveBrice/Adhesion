@@ -269,7 +269,7 @@ export class AdhesionsComponent implements OnInit {
   }
 
   statusesFor(adhesion: AdhesionLite): string[] {
-    return adhesion.activite.groupe === 'COMPETITION' ? this.basketStatuses : this.generalStatuses;
+    return adhesion.activite.section?.type === 'COMPETITION' ? this.basketStatuses : this.generalStatuses;
   }
 
   trackByAdhesion(index: number, adhesion: AdhesionLite): number {
@@ -312,7 +312,7 @@ export class AdhesionsComponent implements OnInit {
           } else {
             let activiteDropDown = new ActiviteDropDown()
             activiteDropDown.nom = act.nom
-            activiteDropDown.groupeFiltre = act.groupeFiltre
+            activiteDropDown.groupeFiltre = act.section?.nom ?? ''
             let horaireDropDown = new HoraireDropDown
             horaireDropDown.id = act.id
             horaireDropDown.nom = this.libelleCategories(act)

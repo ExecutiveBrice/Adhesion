@@ -5,8 +5,10 @@ import com.wild.corp.adhesion.models.resources.SeanceResponse;
 import com.wild.corp.adhesion.repository.ActiviteNm1Repository;
 import com.wild.corp.adhesion.repository.ActiviteRepository;
 import com.wild.corp.adhesion.repository.SalleRepository;
+import com.wild.corp.adhesion.repository.SectionRepository;
 import com.wild.corp.adhesion.utils.Status;
 import jakarta.transaction.Transactional;
+import jakarta.persistence.criteria.JoinType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
@@ -15,6 +17,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
@@ -31,7 +35,7 @@ import java.util.stream.Collectors;
 @Transactional
 public class ActiviteServices {
 
-    private static final Sort ACTIVITE_SORT = Sort.by(Sort.Direction.ASC, "nom", "horaire");
+    private static final Sort ACTIVITE_SORT = Sort.by(Sort.Direction.ASC, "nom", "id");
 
     @Autowired
     ActiviteRepository activiteRepository;
@@ -44,6 +48,9 @@ public class ActiviteServices {
     SeanceServices seanceServices;
     @Autowired
     SalleRepository salleRepository;
+
+    @Autowired
+    SectionRepository sectionRepository;
 
     public List<Seance> getSeancesDuJour(Long activiteId) {
 
@@ -122,8 +129,7 @@ public class ActiviteServices {
                 String rechercheLike = toLikePattern(recherche);
                 filtre = criteriaBuilder.and(filtre, criteriaBuilder.or(
                         criteriaBuilder.like(criteriaBuilder.lower(root.get("nom")), rechercheLike, '\\'),
-                        criteriaBuilder.like(criteriaBuilder.lower(root.get("groupeFiltre")), rechercheLike, '\\'),
-                        criteriaBuilder.like(criteriaBuilder.lower(root.get("horaire")), rechercheLike, '\\')
+                        criteriaBuilder.like(criteriaBuilder.lower(root.join("section", JoinType.LEFT).get("nom")), rechercheLike, '\\')
                 ));
             }
             if (tarif != null) {
@@ -187,6 +193,13 @@ public class ActiviteServices {
     }
 
     public Activite save(Activite activite) {
+        if (activite.getSection() != null) {
+            if (activite.getSection().getId() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sélectionnez une section existante");
+            }
+            activite.setSection(sectionRepository.findById(activite.getSection().getId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Section introuvable")));
+        }
         List<PlanificationHebdomadaire> planifications = normaliserPlanifications(activite);
         if (planifications.isEmpty()) {
             if (activite.getPlanificationsHebdomadaires() != null && !activite.getPlanificationsHebdomadaires().isEmpty()) {

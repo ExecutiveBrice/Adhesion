@@ -3,6 +3,7 @@ package com.wild.corp.adhesion.services;
 import com.wild.corp.adhesion.models.Accord;
 import com.wild.corp.adhesion.models.Activite;
 import com.wild.corp.adhesion.models.ActiviteNm1;
+import com.wild.corp.adhesion.models.PlanificationHebdomadaire;
 import com.wild.corp.adhesion.models.Adherent;
 import com.wild.corp.adhesion.models.ERole;
 import com.wild.corp.adhesion.models.Adhesion;
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -49,6 +51,12 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.ArgumentMatchers.any;
 
 class AdherentServicesTest {
+
+    private PlanificationHebdomadaire planification(String descriptif) {
+        PlanificationHebdomadaire planification = new PlanificationHebdomadaire();
+        planification.setDescriptif(descriptif);
+        return planification;
+    }
 
     private final AdherentServices adherentServices = new AdherentServices();
 
@@ -249,11 +257,62 @@ class AdherentServicesTest {
                 .hasMessageContaining("Tribu obligatoire");
     }
 
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"   "})
+    void createsDistinctConnectionAccountsWithoutEmail(String email) {
+        AdherentLite input = newAdherentInput(email);
+        prepareNewAdherent(input);
+
+        Adherent first = adherentServices.saveNewAdherent(input);
+        Adherent second = adherentServices.saveNewAdherent(input);
+
+        assertThat(first.getUser()).isNotNull();
+        assertThat(first.getUser().getUsername()).startsWith("adherent-").endsWith("@sans-email.invalid");
+        assertThat(second.getUser().getUsername()).isNotEqualTo(first.getUser().getUsername());
+        assertThat(first.getTribu().getUuid()).isEqualTo(input.getTribuId());
+    }
+
+    @Test
+    void preservesAnEmailProvidedAtCreation() {
+        AdherentLite input = newAdherentInput(" ALICE@EXAMPLE.TEST ");
+        prepareNewAdherent(input);
+
+        Adherent created = adherentServices.saveNewAdherent(input);
+
+        assertThat(created.getUser().getUsername()).isEqualTo("alice@example.test");
+    }
+
+    private AdherentLite newAdherentInput(String email) {
+        AdherentLite input = new AdherentLite();
+        input.setTribuId(UUID.randomUUID());
+        input.setAccords(List.of());
+        if (email != null) {
+            UserLite user = new UserLite();
+            user.setUsername(email);
+            input.setUser(user);
+        }
+        return input;
+    }
+
+    private void prepareNewAdherent(AdherentLite input) {
+        TribuServices tribes = mock(TribuServices.class);
+        when(tribes.getTribuByUuid(input.getTribuId())).thenReturn(new Tribu(input.getTribuId()));
+        ReflectionTestUtils.setField(adherentServices, "tribuServices", tribes);
+        UserServices users = mock(UserServices.class);
+        when(users.addNewUser(any(), any())).thenAnswer(invocation ->
+                new User(invocation.getArgument(0), invocation.getArgument(1)));
+        ReflectionTestUtils.setField(adherentServices, "userServices", users);
+        AdherentRepository repository = mock(AdherentRepository.class);
+        when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        ReflectionTestUtils.setField(adherentServices, "adherentRepository", repository);
+    }
+
     @Test
     void includesPreviousSeasonActivitiesInTheExport() {
         Activite activite = new Activite();
         activite.setNom("Danse");
-        activite.setHoraire("Majeur");
+        activite.getPlanificationsHebdomadaires().add(planification("Majeur"));
 
         Adhesion adhesion = new Adhesion();
         adhesion.setActivite(activite);
@@ -296,7 +355,7 @@ class AdherentServicesTest {
     void includesAdherentsWithCancelledOrNoAdhesionInTheExport() {
         Activite activite = new Activite();
         activite.setNom("Basket");
-        activite.setHoraire("Loisir");
+        activite.getPlanificationsHebdomadaires().add(planification("Loisir"));
 
         Adhesion adhesionAnnulee = new Adhesion();
         adhesionAnnulee.setActivite(activite);

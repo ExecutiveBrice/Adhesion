@@ -223,7 +223,7 @@ export class AdherentsComponent implements OnInit {
           next: (response) => {
             console.log(response)
 
-            this.router.navigate(['inscription', adherent.tribu.uuid]);
+            this.router.navigate(['profil', adherent.tribu.uuid], { queryParams: { adherentId: adherent.id } });
           },
           error: (error) => {
             console.log(error)

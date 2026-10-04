@@ -5,6 +5,8 @@ import com.wild.corp.adhesion.models.Adhesion;
 import com.wild.corp.adhesion.models.ESeance;
 import com.wild.corp.adhesion.models.PlanificationHebdomadaire;
 import com.wild.corp.adhesion.models.Seance;
+import com.wild.corp.adhesion.models.Section;
+import com.wild.corp.adhesion.repository.SectionRepository;
 import com.wild.corp.adhesion.repository.ActiviteRepository;
 import com.wild.corp.adhesion.utils.Status;
 import org.junit.jupiter.api.Test;
@@ -25,6 +27,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -38,10 +41,42 @@ class ActiviteServicesTest {
     private ActiviteRepository activiteRepository;
 
     @Mock
+    private SectionRepository sectionRepository;
+
+    @Mock
     private SeanceServices seanceServices;
 
     @Mock
     private AdherentServices adherentServices;
+
+    @Test
+    void resolvesSectionFromDatabaseWhenSavingActivity() {
+        Activite activite = new Activite();
+        activite.setSection(Section.builder().id(7L).nom("Nom envoyé").type("COMPETITION").build());
+        Section section = Section.builder().id(7L).nom("Yoga").type("NON_COMPETITIVE").build();
+        when(sectionRepository.findById(7L)).thenReturn(Optional.of(section));
+        when(activiteRepository.save(activite)).thenReturn(activite);
+
+        Activite resultat = activiteServices.save(activite);
+
+        assertThat(resultat.getSection()).isSameAs(section);
+        assertThat(resultat.getGroupeFiltre()).isEqualTo("Yoga");
+        assertThat(resultat.getGroupe()).isEqualTo("NON_COMPETITIVE");
+        section.setNom("Yoga adultes");
+        assertThat(resultat.getGroupeFiltre()).isEqualTo("Yoga adultes");
+    }
+
+    @Test
+    void rejectsUnknownSection() {
+        Activite activite = new Activite();
+        activite.setSection(Section.builder().id(99L).build());
+        when(sectionRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> activiteServices.save(activite))
+                .isInstanceOf(org.springframework.web.server.ResponseStatusException.class)
+                .hasMessageContaining("Section introuvable");
+        verify(activiteRepository, never()).save(any());
+    }
 
     @InjectMocks
     private ActiviteServices activiteServices;
@@ -76,7 +111,7 @@ class ActiviteServicesTest {
         assertThat(pageableUtilise.getPageNumber()).isEqualTo(1);
         assertThat(pageableUtilise.getPageSize()).isEqualTo(10);
         assertThat(pageableUtilise.getSort().stream().map(Sort.Order::getProperty))
-                .containsExactly("nom", "horaire");
+                .containsExactly("nom", "id");
         assertThat(pageableUtilise.getSort().stream().map(Sort.Order::getDirection))
                 .containsOnly(Sort.Direction.ASC);
     }
@@ -91,7 +126,7 @@ class ActiviteServicesTest {
 
         verify(activiteRepository)
                 .findAll(any(Specification.class), eq(PageRequest.of(0, 20,
-                        Sort.by(Sort.Direction.ASC, "nom", "horaire"))));
+                        Sort.by(Sort.Direction.ASC, "nom", "id"))));
     }
 
     @Test

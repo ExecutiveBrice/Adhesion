@@ -12,7 +12,7 @@ export const chatAuthGuard: CanActivateFn = (_route, state) => {
   }
   return inject(ParamService).getAllBoolean().pipe(
     map(params => params.some(param => param.paramName === 'Show_Chat' && param.paramValue)
-      ? true : router.createUrlTree(['/inscription'])),
-    catchError(() => of(router.createUrlTree(['/inscription'])))
+      ? true : router.createUrlTree(['/profil'])),
+    catchError(() => of(router.createUrlTree(['/profil'])))
   );
 };

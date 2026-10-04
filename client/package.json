@@ -2,14 +2,14 @@
   "name": "asso",
   "version": "1.0.0",
   "scripts": {
-    "ng": "ng",
-    "start": "ng serve --serve-path /adhesion/",
-    "start:helloasso": "ng serve --serve-path /adhesion/ --configuration=helloasso-local --ssl --proxy-config proxy.helloasso-local.json",
-    "build": "ng build",
-    "build:production": "ng build --base-href /adhesion/ --configuration=production",
-    "build:integration": "ng build --base-href /adhesion/ --configuration=integration",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "ng": "node scripts/angular-cli.cjs",
+    "start": "node scripts/angular-cli.cjs serve --serve-path /adhesion/",
+    "start:helloasso": "node scripts/angular-cli.cjs serve --serve-path /adhesion/ --configuration=helloasso-local --ssl --proxy-config proxy.helloasso-local.json",
+    "build": "node scripts/angular-cli.cjs build",
+    "build:production": "node scripts/angular-cli.cjs build --base-href /adhesion/ --configuration=production",
+    "build:integration": "node scripts/angular-cli.cjs build --base-href /adhesion/ --configuration=integration",
+    "watch": "node scripts/angular-cli.cjs build --watch --configuration development",
+    "test": "node scripts/angular-cli.cjs test"
   },
   "private": true,
   "dependencies": {

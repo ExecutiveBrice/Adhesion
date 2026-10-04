@@ -7,11 +7,14 @@ import lombok.*;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
-import java.time.MonthDay;
+import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 @Getter
@@ -27,11 +30,10 @@ public class Activite {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String groupe;
-
-    private String groupeFiltre;
-
-    private String groupeCompta;
+    @ManyToOne
+    @JoinColumn(name = "section_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Section section;
 
     private String nom;
 
@@ -46,8 +48,6 @@ public class Activite {
     private Integer ageMax;
 
     private String genre;
-
-    private String horaire;
 
     @Column(name = "salle")
     @JsonIgnore
@@ -134,6 +134,40 @@ public class Activite {
 
     public String getNomSalle() {
         return salle != null ? salle.getNom() : salleTexte;
+    }
+
+    /**
+     * Compatibility label derived from the weekly schedules. It is no longer
+     * persisted as a free-text activity field.
+     */
+    public String getHoraire() {
+        if (planificationsHebdomadaires == null) {
+            return "";
+        }
+        return planificationsHebdomadaires.stream()
+                .filter(planification -> planification.getJour() != null || planification.getHoraireDebut() != null
+                        || (planification.getDescriptif() != null && !planification.getDescriptif().isBlank()))
+                .map(planification -> {
+                    String jour = planification.getJour() == null ? "" : planification.getJour()
+                            .getDisplayName(TextStyle.FULL, Locale.FRENCH);
+                    String heure = planification.getHoraireDebut() == null ? "" : planification.getHoraireDebut()
+                            .format(DateTimeFormatter.ofPattern("HH:mm"));
+                    String descriptif = planification.getDescriptif() == null ? "" : planification.getDescriptif().trim();
+                    return List.of(jour, heure, descriptif).stream()
+                            .filter(element -> !element.isBlank())
+                            .collect(Collectors.joining(" · "));
+                })
+                .collect(Collectors.joining(" / "));
+    }
+
+    @JsonIgnore
+    public String getGroupe() {
+        return section != null ? section.getType() : null;
+    }
+
+    @JsonIgnore
+    public String getGroupeFiltre() {
+        return section != null ? section.getNom() : null;
     }
 
 }

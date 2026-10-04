@@ -5,6 +5,7 @@ import com.wild.corp.adhesion.models.Adherent;
 import com.wild.corp.adhesion.models.Adhesion;
 import com.wild.corp.adhesion.models.ESeance;
 import com.wild.corp.adhesion.models.Presence;
+import com.wild.corp.adhesion.models.PlanificationHebdomadaire;
 import com.wild.corp.adhesion.models.Salle;
 import com.wild.corp.adhesion.models.Seance;
 import com.wild.corp.adhesion.models.resources.SeanceResponse;
@@ -40,7 +41,10 @@ class SeanceServicesTest {
         Activite activite = new Activite();
         activite.setId(5L);
         activite.setNom("Pilates");
-        activite.setHoraire("Mardi de 19h30 à 20h30");
+        PlanificationHebdomadaire planification = new PlanificationHebdomadaire();
+        planification.setJour(DayOfWeek.TUESDAY);
+        planification.setHoraireDebut(LocalTime.of(19, 30));
+        activite.getPlanificationsHebdomadaires().add(planification);
         activite.setSalle(Salle.builder().id(4L).nom("Salle des sports").adresse("1 rue des Sports")
                 .couleur("#4285F4").build());
 

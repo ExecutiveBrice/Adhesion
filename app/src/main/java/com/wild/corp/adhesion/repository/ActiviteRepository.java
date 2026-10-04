@@ -21,10 +21,11 @@ public interface ActiviteRepository extends JpaRepository<Activite, Long>, JpaSp
     @Query("""
         select a from Activite a where
         exists (select h.id from Adhesion h where h.adherent.user.id = :userId
-            and h.statutActuel in :statuses and (h.activite = a or h.surClassement = a))
+            and (h.statutActuel is null or h.statutActuel not in :excludedStatuses)
+            and (h.activite = a or h.surClassement = a))
         or exists (select p.id from Adherent p join p.cours c where p.user.id = :userId and c = a)
         or exists (select r.id from Adherent r join r.activitesReferent c where r.user.id = :userId and c = a)
         order by a.nom, a.id
         """)
-    List<Activite> findChatActivities(@Param("userId") Long userId, @Param("statuses") List<String> statuses);
+    List<Activite> findChatActivities(@Param("userId") Long userId, @Param("excludedStatuses") List<String> excludedStatuses);
 }

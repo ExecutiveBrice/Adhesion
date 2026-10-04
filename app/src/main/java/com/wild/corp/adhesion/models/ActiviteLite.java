@@ -20,7 +20,7 @@ public class ActiviteLite {
     private String lien;
     private String horaire;
     private String salle;
-    private String groupe;
+    private Section section;
     private Set<AdherentLite> adherents = new HashSet<>();
 
 }

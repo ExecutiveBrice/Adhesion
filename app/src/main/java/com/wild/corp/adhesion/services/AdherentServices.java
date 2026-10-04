@@ -272,15 +272,12 @@ public class AdherentServices {
         }
         newAdherent.setTribu(tribu);
 
-        if (newAdherentFront.getUser() != null
-                && StringUtils.isNotBlank(newAdherentFront.getUser().getUsername())) {
-            Random random = new Random();
-            String password = random.toString();
-            User newUser = userServices.addNewUser(
-                    newAdherentFront.getUser().getUsername().trim().toLowerCase(), password);
-            newAdherent.setUser(newUser);
-
+        String username = newAdherentFront.getUser() == null ? null : newAdherentFront.getUser().getUsername();
+        if (StringUtils.isBlank(username)) {
+            username = "adherent-" + UUID.randomUUID() + "@sans-email.invalid";
         }
+        User newUser = userServices.addNewUser(username.trim().toLowerCase(Locale.ROOT), UUID.randomUUID().toString());
+        newAdherent.setUser(newUser);
         newAdherentFront.getAccords().stream()
                 .filter(accord -> StringUtils.isNotBlank(accord.getNom()))
                 .forEach(accord -> {
@@ -567,9 +564,10 @@ public class AdherentServices {
                 String pattern = "%" + activite.trim().toLowerCase() + "%";
                 Join<Adherent, Adhesion> adhesions = root.join("adhesions", JoinType.LEFT);
                 Join<Adhesion, Activite> activites = adhesions.join("activite", JoinType.LEFT);
+                Join<Activite, PlanificationHebdomadaire> planifications = activites.join("planificationsHebdomadaires", JoinType.LEFT);
                 predicates.add(criteriaBuilder.or(
                         criteriaBuilder.like(criteriaBuilder.lower(activites.get("nom")), pattern),
-                        criteriaBuilder.like(criteriaBuilder.lower(activites.get("horaire")), pattern)
+                        criteriaBuilder.like(criteriaBuilder.lower(planifications.get("descriptif")), pattern)
                 ));
             }
             if (activiteNm1 != null && !activiteNm1.isBlank()) {
@@ -670,7 +668,7 @@ public class AdherentServices {
                 .accords(adherent.getAccords())
                 .activitesNm1(adherent.getActivitesNm1())
                 .activites(activites.toString())
-                .lien("www.alod.fr/adhesion/#/inscription/" + adherent.getTribu().getUuid())
+                .lien("www.alod.fr/adhesion/#/profil/" + adherent.getTribu().getUuid() + "?adherentId=" + adherent.getId())
                 .build();
         if (adherent.getUser() != null) {
 

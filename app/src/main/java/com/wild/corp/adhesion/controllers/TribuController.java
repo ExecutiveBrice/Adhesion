@@ -48,7 +48,7 @@ public class TribuController {
             ),
     })
     @GetMapping("/getTribuByUuid")
-    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MEMBRECA')")
+    @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MEMBRECA') or hasRole('ADMIN')")
     public ResponseEntity<Tribu> getTribuByUuid(@PathParam("tribuUuid") String tribuUuid) {
 
         Tribu tribu = tribuServices.getTribuByUuid(UUID.fromString(tribuUuid));

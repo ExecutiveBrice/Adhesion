@@ -1,15 +1,16 @@
 import { inject } from '@angular/core';
+import { memberAccessGuard } from './_helpers/member-access.guard';
 import { Routes } from '@angular/router';
-import { TokenStorageService } from './_services/token-storage.service';
 import { shopManagerGuard } from './shop/shop-manager.guard';
 import { shopAuthGuard } from './shop/shop-auth.guard';
 import { chatAuthGuard } from './page/chat/chat-auth.guard';
 
-const inscriptionTitle = () => inject(TokenStorageService).getUser().roles?.includes('ROLE_SECRETAIRE')
-  ? 'Inscriptions manuelles'
-  : 'Mes adhésions';
-
 export const routes: Routes = [
+  { path: 'profil/nouveau', canActivate: [memberAccessGuard], data: { roles: [], nouveau: true }, title: 'Ajouter un adhérent', loadComponent: () => import('./page/profil/profil.component').then((m) => m.ProfilComponent) },
+  { path: 'profil/:tribuUuid', canActivate: [memberAccessGuard], data: { roles: [] }, title: 'Profil adhérent', loadComponent: () => import('./page/profil/profil.component').then((m) => m.ProfilComponent) },
+  { path: 'profil', canActivate: [memberAccessGuard], data: { roles: [] }, title: 'Mon profil', loadComponent: () => import('./page/profil/profil.component').then((m) => m.ProfilComponent) },
+  { path: 'agenda', canActivate: [memberAccessGuard], data: { roles: [] }, title: 'Agenda', loadComponent: () => import('./page/agenda/agenda.component').then((m) => m.AgendaComponent) },
+  { path: 'accueil', canActivate: [memberAccessGuard], data: { roles: [] }, title: 'Accueil', loadComponent: () => import('./page/accueil/accueil.component').then((m) => m.AccueilComponent) },
   { path: 'chat', title: 'Chat', canActivate: [chatAuthGuard], loadComponent: () => import('./page/chat/chat.component').then(m => m.ChatComponent) },
   { path: 'boutique/gestion', title: 'Gestion de la boutique', canActivate: [shopAuthGuard, shopManagerGuard], loadComponent: () => import('./shop/pages/shop-management.component').then((m) => m.ShopManagementComponent) },
   { path: 'boutique', title: 'Boutique', canActivate: [shopAuthGuard], loadComponent: () => import('./shop/pages/shop-catalog.component').then((m) => m.ShopCatalogComponent) },
@@ -24,18 +25,17 @@ export const routes: Routes = [
   { path: 'boutique/commandes/:orderNumber', title: 'Commande', canActivate: [shopAuthGuard], loadComponent: () => import('./shop/pages/shop-order-detail.component').then((m) => m.ShopOrderDetailComponent) },
   { path: 'login', title: 'Connexion', loadComponent: () => import('./page/login/login.component').then((m) => m.LoginComponent) },
   { path: 'resetPassword/:token', title: 'Réinitialisation du mot de passe', loadComponent: () => import('./page/resetPassword/resetpassword.component').then((m) => m.ResetPasswordComponent) },
-  { path: 'inscription/:tribuUuid', title: inscriptionTitle, loadComponent: () => import('./page/board-user/board-user.component').then((m) => m.BoardUserComponent) },
-  { path: 'inscription', title: inscriptionTitle, loadComponent: () => import('./page/board-user/board-user.component').then((m) => m.BoardUserComponent) },
-  { path: 'adhesions', title: 'Adhésions', loadComponent: () => import('./page/adhesions/adhesions.component').then((m) => m.AdhesionsComponent) },
-  { path: 'adherents', title: 'Adhérents', loadComponent: () => import('./page/adherents/adherents.component').then((m) => m.AdherentsComponent) },
-  { path: 'activites', title: 'Activités', loadComponent: () => import('./page/activites/activites.component').then((m) => m.ActivitesComponent) },
-  { path: 'admin', title: 'Administration', loadComponent: () => import('./page/board-admin/board-admin.component').then((m) => m.BoardAdminComponent) },
+  { path: 'inscription/:tribuUuid', redirectTo: 'profil/:tribuUuid', pathMatch: 'full' },
+  { path: 'inscription', redirectTo: 'profil', pathMatch: 'full' },
+  { path: 'adhesions', canActivate: [memberAccessGuard], data: { roles: ['ROLE_ADMIN', 'ROLE_SECRETAIRE'] }, title: 'Adhésions', loadComponent: () => import('./page/adhesions/adhesions.component').then((m) => m.AdhesionsComponent) },
+  { path: 'adherents', canActivate: [memberAccessGuard], data: { roles: ['ROLE_ADMIN', 'ROLE_SECRETAIRE'] }, title: 'Adhérents', loadComponent: () => import('./page/adherents/adherents.component').then((m) => m.AdherentsComponent) },
+  { path: 'activites', canActivate: [memberAccessGuard], data: { roles: ['ROLE_ADMIN', 'ROLE_SECRETAIRE'] }, title: 'Activités', loadComponent: () => import('./page/activites/activites.component').then((m) => m.ActivitesComponent) },
+  { path: 'admin', canActivate: [memberAccessGuard], data: { roles: ['ROLE_ADMIN'] }, title: 'Administration', loadComponent: () => import('./page/board-admin/board-admin.component').then((m) => m.BoardAdminComponent) },
   { path: 'maintenance', title: 'Maintenance', loadComponent: () => import('./page/maintenance/maintenance.component').then((m) => m.MaintenanceComponent) },
-  { path: 'reporting', title: 'Reporting', loadComponent: () => import('./page/reporting/reporting.component').then((m) => m.ReportingComponent) },
-  { path: 'compta', title: 'Compta', loadComponent: () => import('./page/compta/compta.component').then((m) => m.ComptaComponent) },
-  { path: 'profs', title: 'Mes équipes', loadComponent: () => import('./page/profs/profs.component').then((m) => m.ProfsComponent) },
-  { path: 'seances', title: 'Séances', loadComponent: () => import('./page/seances/seances.component').then((m) => m.SeancesComponent) },
-  { path: 'seances-secretariat', title: 'Séances (secrétariat)', loadComponent: () => import('./page/seances-secretariat/seances-secretariat.component').then((m) => m.SeancesSecretariatComponent) },
-  { path: 'mail/:adherentId', title: 'Mailing', loadComponent: () => import('./page/mailling/mailling.component').then((m) => m.MaillingComponent) },
+  { path: 'reporting', canActivate: [memberAccessGuard], data: { roles: ['ROLE_ADMIN', 'ROLE_SECRETAIRE', 'ROLE_MEMBRECA', 'ROLE_BUREAU'] }, title: 'Reporting', loadComponent: () => import('./page/reporting/reporting.component').then((m) => m.ReportingComponent) },
+  { path: 'profs', canActivate: [memberAccessGuard], data: { roles: ['ROLE_ENCADRANT'] }, title: 'Mes équipes', loadComponent: () => import('./page/profs/profs.component').then((m) => m.ProfsComponent) },
+  { path: 'seances', canActivate: [memberAccessGuard], data: { roles: ['ROLE_ENCADRANT', 'ROLE_REFERENT_ACTIVITE'] }, title: 'Séances', loadComponent: () => import('./page/seances/seances.component').then((m) => m.SeancesComponent) },
+  { path: 'seances-secretariat', canActivate: [memberAccessGuard], data: { roles: ['ROLE_SECRETAIRE'] }, title: 'Séances (secrétariat)', loadComponent: () => import('./page/seances-secretariat/seances-secretariat.component').then((m) => m.SeancesSecretariatComponent) },
+  { path: 'mail/:adherentId', canActivate: [memberAccessGuard], data: { roles: ['ROLE_ADMIN', 'ROLE_SECRETAIRE'] }, title: 'Mailing', loadComponent: () => import('./page/mailling/mailling.component').then((m) => m.MaillingComponent) },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 ];

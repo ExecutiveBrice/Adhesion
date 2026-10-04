@@ -14,6 +14,7 @@ import { FormsModule } from '@angular/forms';
 import { CalendrierComponent } from '../../template/calendrier/calendrier.component';
 import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { LoginPageService } from '../../_services/login-page.service';
+import { SessionNavigationService } from '../../_services/session-navigation.service';
 
 interface EvenementCalendrier {
   id: string;
@@ -58,6 +59,7 @@ export class LoginComponent implements OnInit {
   paramService = inject(ParamService);
   private activiteService = inject(ActiviteService);
   private readonly loginPage = inject(LoginPageService);
+  private readonly sessionNavigation = inject(SessionNavigationService);
 
 
   form: any = {
@@ -80,20 +82,11 @@ export class LoginComponent implements OnInit {
     this.loginPage.view.set(value ? 'recuperation' : 'connexion');
   }
 
-  get connexion(): boolean {
-    return this.loginPage.view() !== 'inscription';
-  }
-
-  get newInscription(): boolean {
-    return this.loginPage.view() === 'inscription';
-  }
   errorMessage = '';
   reinitMDPDone = false;
   roles: string[] = [];
   messageConnexion: string = ""
-  messageInscription: string = ""
   textMaintenance: string = ""
-  textRGPD: string = ""
   calendrier: JourCalendrier[] = [];
   jourSelectionne: JourCalendrier | null = null;
   popupJourOuverte = false;
@@ -107,11 +100,6 @@ export class LoginComponent implements OnInit {
   readonly joursSemaine = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
   maintenance: Boolean = false;
-  isSuccessful = false;
-  isSignUpFailed = false;
-  validRgpd = false;
-  testRgpd = false;
-  inscriptionOpen: boolean = false;
   // L'interface ne sonde plus l'existence d'un compte : cette valeur évite
   // d'exposer des panneaux fondés sur une information sensible.
   userExist = true;
@@ -126,19 +114,9 @@ export class LoginComponent implements OnInit {
     this.paramService.getAllText().subscribe({
       next: (data) => {
         this.messageConnexion = data.find(param => param.paramName == "Text_Accueil")?.paramValue || '';
-        this.messageInscription = data.find(param => param.paramName == "Text_Inscription")?.paramValue || '';
         this.textMaintenance = data.find(param => param.paramName == "Text_Maintenance")?.paramValue || '';
-        this.textRGPD = data.find(param => param.paramName == "RGPD")?.paramValue || '';
       },
       error: (error) => {
-      }
-    });
-    this.paramService.getAllBoolean().subscribe({
-      next: (data) => {
-        this.inscriptionOpen = data.filter(param => param.paramName == "Inscription")[0].paramValue;
-      },
-      error: (error) => {
-        this.inscriptionOpen = false;
       }
     });
     this.paramService.isClose()
@@ -149,19 +127,8 @@ export class LoginComponent implements OnInit {
           if (this.tokenStorage.getToken() && !this.tokenStorage.isTokenExpired()) {
             this.isLoggedIn = true;
             this.roles = this.tokenStorage.getUser().roles;
-            const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
-            if (returnUrl && /^\/boutique(?:\/|\?|$)/.test(returnUrl)) {
-              this.router.navigateByUrl(returnUrl);
-            } else if (this.roles.includes('ROLE_ADMIN')) {
-              this.router.navigate(['admin']);
-            } else if (this.roles.includes('ROLE_SECRETAIRE')) {
-              this.router.navigate(['adhesions']);
-            } else if (this.roles.includes('ROLE_ENCADRANT')) {
-              this.router.navigate(['seances']);
-            } else if (this.roles.includes('ROLE_USER')) {
-              if (!this.maintenance) {
-                this.router.navigate(['inscription', '']);
-              }
+            if (!this.maintenance) {
+              this.router.navigate(['accueil']);
             }
           }
 
@@ -380,43 +347,6 @@ export class LoginComponent implements OnInit {
   sourceEvenement(evenement: EvenementCalendrier): string {
     return evenement.source === 'GOOGLE' ? `Google · ${this.nomAgenda(evenement)}` : this.etatLibelle(evenement.etatSeance);
   }
-  onSubmitInscritpion(): void{
-    const { username, password } = this.form;
-    if (this.inscriptionOpen){
-
-      this.authService.register(username, password).subscribe(
-        data => {
-
-          this.isSuccessful = true;
-          this.isSignUpFailed = false;
-
-          this.authService.login(username, password).subscribe(
-            data => {
-              this.isLoginFailed = false;
-              this.isLoggedIn = true;
-              this.roles = this.tokenStorage.getUser().roles;
-              window.location.reload();
-
-            },
-            err => {
-              this.errorMessage = err.error.message;
-              this.showWarning(err.error.message)
-              this.isLoginFailed = true;
-            }
-          );
-        },
-        err => {
-          this.errorMessage = err.error.message;
-          this.showWarning(err.error.message)
-          this.isSignUpFailed = true;
-        }
-      );
-    }else{
-      this.showWarning("Les inscriptions ne sont pas encore ouverte,<br /> veuillez revenir à partir du 01/06/2024")
-    }
-  }
-
-
   onSubmit(): void {
     const { username, password } = this.form;
 
@@ -425,7 +355,7 @@ export class LoginComponent implements OnInit {
           this.isLoginFailed = false;
           this.isLoggedIn = true;
           this.roles = this.tokenStorage.getUser().roles;
-          window.location.reload();
+          this.sessionNavigation.reloadAccueil();
 
         },
         err => {

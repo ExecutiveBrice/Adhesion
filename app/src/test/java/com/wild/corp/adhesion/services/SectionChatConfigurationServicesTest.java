@@ -51,7 +51,7 @@ class SectionChatConfigurationServicesTest {
                 new SectionChatConfiguration.RolePermission("role_encadrant", true),
                 new SectionChatConfiguration.RolePermission("ROLE_REFERENT_ACTIVITE", false))));
 
-        assertThat(created).isEqualTo(new SectionChatConfiguration(8L, "Encadrants", "SECTION", 4L, "Basket", List.of(
+        assertThat(created).isEqualTo(new SectionChatConfiguration(8L, "Encadrants", "SECTION", 4L, "Section · Basket", List.of(
                 new SectionChatConfiguration.RolePermission("ROLE_ENCADRANT", true),
                 new SectionChatConfiguration.RolePermission("ROLE_REFERENT_ACTIVITE", false))));
     }
@@ -101,7 +101,7 @@ class SectionChatConfigurationServicesTest {
                 new SectionChatConfiguration.RolePermission("ROLE_USER", false),
                 new SectionChatConfiguration.RolePermission("ROLE_ADMIN", true))));
 
-        assertThat(updated).isEqualTo(new SectionChatConfiguration(8L, "Informations", "SECTION", 4L, "Basket", List.of(
+        assertThat(updated).isEqualTo(new SectionChatConfiguration(8L, "Informations", "SECTION", 4L, "Section · Basket", List.of(
                 new SectionChatConfiguration.RolePermission("ROLE_USER", false),
                 new SectionChatConfiguration.RolePermission("ROLE_ADMIN", true))));
     }

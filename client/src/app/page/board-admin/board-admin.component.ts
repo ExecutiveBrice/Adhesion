@@ -83,7 +83,7 @@ export class BoardAdminComponent implements OnInit {
   activites: Activite[] = [];
   chatCreationVisible = false;
   nouveauChatNom = '';
-  nouveauChatCible: SectionChatConfiguration['cible'] = 'SECTION';
+  nouveauChatCible: SectionChatConfiguration['cible'] = 'ASSOCIATION';
   nouveauChatCibleId?: number;
   chatEnregistrement = false;
   chatMessage = '';
@@ -500,7 +500,7 @@ export class BoardAdminComponent implements OnInit {
     this.chatEnEdition = undefined;
     this.chatCreationVisible = true;
     this.nouveauChatNom = '';
-    this.nouveauChatCible = 'SECTION';
+    this.nouveauChatCible = 'ASSOCIATION';
     this.nouveauChatCibleId = undefined;
     this.droitsNouveauChat = Object.fromEntries(this.rolesChat.map(role => [role.code, { lecture: false, ecriture: false }]));
     this.chatErreur = '';
@@ -657,7 +657,10 @@ export class BoardAdminComponent implements OnInit {
   }
 
   cibleChat(chat: SectionChatConfiguration): string {
-    return chat.cibleNom || (chat.cible === 'ASSOCIATION' ? 'Association' : chat.cible === 'SECTION' ? 'Section' : 'Activité');
+    if (!chat.permissions.some(permission => permission.role === ERole.ROLE_USER)) {
+      return 'Non visible';
+    }
+    return chat.cible === 'ASSOCIATION' ? 'Globale' : chat.cibleNom || (chat.cible === 'SECTION' ? 'Section' : 'Activité');
   }
   updateParamBoolean(param: ParamBoolean) {
     this.paramService.saveBoolean(param).subscribe(

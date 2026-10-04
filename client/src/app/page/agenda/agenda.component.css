@@ -1,0 +1,48 @@
+:host { display: block; min-width: 0; }
+.agenda { padding: 1.5rem 0; }
+.agenda-entete { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.agenda h1 { font-size: 1.75rem; }
+.agenda-navigation { display: flex; align-items: center; gap: .65rem; flex-wrap: wrap; }
+.agenda-mois { font-size: 1.2rem; margin: 0; min-width: 10rem; text-align: center; text-transform: capitalize; }
+.agenda-legende { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: .6rem 1.5rem; font-size: .9rem; }
+.agenda-legende li, .agenda-detail-categorie { display: flex; align-items: center; gap: .5rem; }
+.categorie-adherent { --couleur: #176b4a; --fond: #e7f4ed; }
+.categorie-autre { --couleur: #2558a2; --fond: #eaf1fc; }
+.categorie-asso { --couleur: #8b4610; --fond: #fff1df; }
+.agenda-couleur { display: inline-block; width: .85rem; height: .85rem; flex-shrink: 0; border-radius: .2rem; background: var(--couleur); }
+.agenda-calendrier { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-top: 1px solid #d9dee3; border-left: 1px solid #d9dee3; border-radius: .5rem; overflow: hidden; }
+.agenda-jour-semaine { text-align: center; background: #f2f5f7; font-weight: 600; padding: .7rem .2rem; border-bottom: 1px solid #d9dee3; border-right: 1px solid #d9dee3; }
+.agenda-jour-semaine abbr { text-decoration: none; }
+.agenda-jour { min-width: 0; min-height: 8rem; padding: .5rem; border-right: 1px solid #d9dee3; border-bottom: 1px solid #d9dee3; background: white; }
+.agenda-numero { display: inline-flex; justify-content: center; align-items: center; width: 1.75rem; height: 1.75rem; font-size: .9rem; margin-bottom: .3rem; }
+.hors-mois { background: #f6f7f8; color: #687079; }
+.aujourdhui .agenda-numero { color: white; background: #176b4a; border-radius: 50%; font-weight: 700; }
+.agenda-evenements { display: flex; flex-direction: column; gap: .3rem; }
+.agenda-evenement { width: 100%; min-width: 0; border: 1px solid var(--couleur); border-left-width: 3px; background: var(--fond); color: var(--couleur); border-radius: .3rem; padding: .4rem; text-align: left; font-size: .85rem; line-height: 1.35; cursor: pointer; }
+.agenda-evenement:hover { filter: brightness(.94); }
+.agenda-evenement:focus-visible { outline: 3px solid #202c39; outline-offset: 2px; }
+.agenda-evenement-titre { display: block; overflow-wrap: anywhere; font-weight: 600; }
+.agenda-evenement-detail { display: none; }
+.annule .agenda-evenement-titre { text-decoration: line-through; }
+.agenda-detail { overflow-wrap: anywhere; }
+.agenda-detail dd { margin-bottom: .8rem; }
+.agenda-commentaire { white-space: pre-wrap; margin-bottom: 1rem; }
+.agenda-commentaire img { max-width: 100%; }
+@media (min-width: 1400px) {
+  .agenda-evenement-detail { display: block; font-size: .8rem; overflow-wrap: anywhere; }
+  .agenda-jour { min-height: 10rem; }
+}
+@media (max-width: 575.98px) {
+  .agenda { padding-top: 1rem; }
+  .agenda-navigation { gap: .4rem; width: 100%; }
+  .agenda-navigation .btn { padding: .35rem .6rem; }
+  .agenda-mois { min-width: 0; flex: 1; font-size: 1rem; }
+  .agenda-aujourdhui { flex-basis: 100%; }
+  .agenda-legende { font-size: .75rem; gap: .5rem .8rem; }
+  .agenda-jour-semaine { font-size: .75rem; }
+  .agenda-jour { padding: .2rem; min-height: 5.5rem; }
+  .agenda-numero { width: 1.5rem; height: 1.5rem; font-size: .8rem; }
+  .agenda-evenements { display: grid; grid-template-columns: repeat(auto-fit, minmax(18px, 1fr)); gap: .2rem; }
+  .agenda-evenement { width: 100%; height: 24px; padding: 0; background: var(--couleur); border: 0; border-radius: .2rem; }
+  .agenda-evenement-titre, .agenda-evenement-detail { display: none; }
+}

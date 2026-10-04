@@ -42,7 +42,7 @@ export class SeancesSecretariatComponent implements OnInit {
       return;
     }
     if (!roles.includes('ROLE_SECRETAIRE')) {
-      this.router.navigate(['inscription']);
+      this.router.navigate(['profil']);
       return;
     }
     this.chargerSeances();

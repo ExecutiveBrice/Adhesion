@@ -1,0 +1,27 @@
+<section class="container-xl py-3" aria-labelledby="profil-title">
+  <h1 id="profil-title" class="h3 mb-3">{{ nouveau ? 'Ajouter un adhérent' : adherent ? adherent.prenom + ' ' + adherent.nom : 'Profil adhérent' }}</h1>
+  @if (chargement) {
+    <p role="status">Chargement de votre profil…</p>
+  } @else if (erreur) {
+    <div class="alert alert-warning" role="alert">{{ erreur }}</div>
+    <button type="button" class="btn btn-outline-primary" (click)="chargerProfil()">Réessayer</button>
+  } @else if (adherent && tribu) {
+    @if (canBrowseTribe && !nouveau) {
+      <nav class="mb-3" aria-label="Membres de la tribu">
+        <h2 class="h6">Membres de la tribu</h2>
+        <div class="d-flex flex-wrap gap-2">
+          @for (member of tribu.adherents; track member.id) {
+            <a class="btn btn-outline-primary" [class.active]="member.id === adherent.id"
+               [attr.aria-current]="member.id === adherent.id ? 'page' : null"
+               [routerLink]="['/profil', tribu.uuid]" [queryParams]="{ adherentId: member.id }">
+              {{ member.prenom }} {{ member.nom }}
+            </a>
+          }
+        </div>
+      </nav>
+    }
+    @for (profil of [adherent]; track profil.id) {
+      <app-user [adherent]="profil" [tribu]="tribu" [isRepresentant]="false" [pageMode]="true"></app-user>
+    }
+  }
+</section>

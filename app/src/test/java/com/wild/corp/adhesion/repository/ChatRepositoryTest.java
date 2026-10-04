@@ -4,6 +4,8 @@ import com.wild.corp.adhesion.models.*;
 import com.wild.corp.adhesion.utils.Status;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.data.domain.PageRequest;
@@ -23,7 +25,7 @@ class ChatRepositoryTest {
     @Autowired private ChatMessageRepository messages;
 
     @Test
-    void onlyIncludesValidMembershipsSurclassementAndOwnTeachingOrReferentGroups() {
+    void excludesCancelledAndWaitingMembershipsAndKeepsOwnTeachingOrReferentGroups() {
         User user = new User("alice@example.test", "password");
         Adherent member = new Adherent(); member.setUser(user); em.persist(member);
         Activite registered = activity("Pilates");
@@ -40,13 +42,35 @@ class ChatRepositoryTest {
         member.getCours().add(teacher);
         member.getActivitesReferent().add(referent);
         em.flush(); em.clear();
-        assertThat(activities.findChatActivities(user.getId(), List.of(Status.VALIDEE.label)))
+        assertThat(activities.findChatActivities(user.getId(), List.of(Status.LISTE_ATTENTE.label, Status.ANNULEE.label)))
                 .extracting(Activite::getId).containsExactlyInAnyOrder(registered.getId(), upper.getId(), teacher.getId(), referent.getId());
         valid = em.find(Adhesion.class, valid.getId());
         valid.setStatutActuel(Status.ANNULEE.label);
         em.flush(); em.clear();
-        assertThat(activities.findChatActivities(user.getId(), List.of(Status.VALIDEE.label)))
+        assertThat(activities.findChatActivities(user.getId(), List.of(Status.LISTE_ATTENTE.label, Status.ANNULEE.label)))
                 .extracting(Activite::getId).containsExactlyInAnyOrder(teacher.getId(), referent.getId());
+    }
+
+    @ParameterizedTest
+    @EnumSource(Status.class)
+    void chatMembershipIncludesEveryStatusExceptWaitingListAndCancelled(Status status) {
+        User user = new User("member@example.test", "password");
+        Adherent member = new Adherent();
+        member.setUser(user);
+        em.persist(member);
+        Activite registered = activity("Activité");
+        Activite upper = activity("Surclassement");
+        Adhesion adhesion = membership(member, registered, status);
+        adhesion.setSurClassement(upper);
+        em.flush();
+        em.clear();
+
+        var accessible = activities.findChatActivities(user.getId(), List.of(Status.LISTE_ATTENTE.label, Status.ANNULEE.label));
+        if (status == Status.LISTE_ATTENTE || status == Status.ANNULEE) {
+            assertThat(accessible).isEmpty();
+        } else {
+            assertThat(accessible).extracting(Activite::getId).containsExactlyInAnyOrder(registered.getId(), upper.getId());
+        }
     }
 
     @Test

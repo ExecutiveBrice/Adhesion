@@ -1,7 +1,7 @@
 import { Component, inject, Input, OnDestroy, OnInit } from '@angular/core'
 import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap'
-import { Activite, AdherentLite, ERole, PlanificationHebdomadaire, SalleConfiguration } from 'src/app/models';
+import { Activite, AdherentLite, ERole, PlanificationHebdomadaire, SalleConfiguration, SectionConfiguration } from 'src/app/models';
 import { Seance } from 'src/app/models/seance';
 import { faExternalLinkSquareAlt } from '@fortawesome/free-solid-svg-icons';
 import { AdherentService } from 'src/app/_services/adherent.service';
@@ -49,6 +49,7 @@ export class ModalActivite implements OnInit, OnDestroy {
   profs: AdherentLite[] = []
   referents: AdherentLite[] = []
   salles: SalleConfiguration[] = [];
+  sections: SectionConfiguration[] = [];
   seances: Seance[] = [];
   nombreSeances = 14;
   dateDebutSeances = '';
@@ -83,6 +84,10 @@ export class ModalActivite implements OnInit, OnDestroy {
       this.getReferents();
     }
     this.getSalles();
+    this.paramService.getSections().subscribe({
+      next: sections => this.sections = sections,
+      error: err => this.showError(err.message)
+    });
     if (this.activite.id) {
       this.getSeances();
     }
@@ -136,6 +141,10 @@ export class ModalActivite implements OnInit, OnDestroy {
 
   comparerSalles(salleA?: SalleConfiguration, salleB?: SalleConfiguration): boolean {
     return salleA?.id === salleB?.id;
+  }
+
+  comparerSections(sectionA?: SectionConfiguration, sectionB?: SectionConfiguration): boolean {
+    return sectionA?.id === sectionB?.id;
   }
 
   libelleJour(valeur: string): string {

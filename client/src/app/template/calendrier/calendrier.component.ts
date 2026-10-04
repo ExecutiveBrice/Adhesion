@@ -38,7 +38,7 @@ interface JourCalendrier {
 @Component({
     selector: 'app-calendrier',
     templateUrl: './calendrier.component.html',
-    styleUrls: ['../../page/login/login.component.css'],
+    styleUrls: ['../../page/login/login.component.css', './calendrier.component.css'],
     imports: [NgClass, FaIconComponent, DatePipe]
 })
 export class CalendrierComponent implements OnInit, OnChanges {
@@ -47,6 +47,12 @@ export class CalendrierComponent implements OnInit, OnChanges {
   private activiteService = inject(ActiviteService);
 
   @Input() tribuUuid?: string;
+  @Input() adherentId?: number;
+  @Input() joursVisibles?: number;
+  @Input() affichage: 'calendrier' | 'liste' = 'calendrier';
+
+  evenementsAVenir: EvenementCalendrier[] = [];
+  nombreEvenementsAffiches = 12;
 
   calendrier: JourCalendrier[] = [];
   jourSelectionne: JourCalendrier | null = null;
@@ -71,10 +77,17 @@ export class CalendrierComponent implements OnInit, OnChanges {
   ngOnInit(): void { this.chargerConfigurationAgendas(); }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['tribuUuid'] && !changes['tribuUuid'].firstChange && this.agendasGoogle) this.chargerCalendrier();
+    if ((changes['tribuUuid'] && !changes['tribuUuid'].firstChange)
+      || (changes['adherentId'] && !changes['adherentId'].firstChange)
+      || (changes['joursVisibles'] && !changes['joursVisibles'].firstChange)
+      || (changes['affichage'] && !changes['affichage'].firstChange)) this.chargerCalendrier();
   }
 
   chargerConfigurationAgendas(): void {
+    if (this.adherentId != null) {
+      this.chargerCalendrier();
+      return;
+    }
     this.paramService.getAgendasGoogle().subscribe({
       next: agendas => {
         this.agendasGoogle = agendas.filter(agenda => agenda.isVisisbleApp);
@@ -109,21 +122,25 @@ export class CalendrierComponent implements OnInit, OnChanges {
   changerPeriode(nombreDeJours: number): void {
     const nouvelleDate = new Date(this.dateAffichee);
     nouvelleDate.setDate(nouvelleDate.getDate() + nombreDeJours);
+    if (this.joursVisibles != null
+      && (nouvelleDate < this.aujourdhui() || nouvelleDate > this.finVisibilite())) return;
     this.dateAffichee = nouvelleDate;
     this.popupJourOuverte = false;
     this.chargerCalendrier();
   }
 
   chargerCalendrier(): void {
-    const debut = this.premierJourSemaineCourante();
-    const fin = new Date(debut); fin.setDate(fin.getDate() + 6);
+    const debut = this.affichage === 'liste' ? this.aujourdhui() : this.premierJourSemaineCourante();
+    const fin = new Date(debut);
+    if (this.affichage === 'liste') fin.setTime(this.finVisibilite().getTime());
+    else fin.setDate(fin.getDate() + 6);
     this.chargementCalendrier = true; this.erreurCalendrier = ''; this.googleAgendaErreur = '';
     const dateDebut = this.dateIso(debut); const dateFin = this.dateIso(fin);
-    const seances$ = this.activiteService.getCalendrier(dateDebut, dateFin, this.tribuUuid).pipe(catchError(() => {
+    const seances$ = this.chargerSeances(dateDebut, dateFin).pipe(catchError(() => {
       this.erreurCalendrier = "Le calendrier des séances n'est pas disponible pour le moment.";
       return of([] as SeanceCalendrier[]);
     }));
-    const google$ = this.googleAgendaIds.length ? this.activiteService.getCalendrierGoogle(dateDebut, dateFin, this.googleAgendaIds).pipe(catchError(() => {
+    const google$ = this.adherentId == null && this.googleAgendaIds.length ? this.activiteService.getCalendrierGoogle(dateDebut, dateFin, this.googleAgendaIds).pipe(catchError(() => {
       this.googleAgendaErreur = "Les agendas Google publics ne sont pas disponibles pour le moment.";
       return of({ evenements: [] as EvenementGoogleAgenda[], erreurs: [] });
     })) : of({ evenements: [] as EvenementGoogleAgenda[], erreurs: [] });
@@ -149,11 +166,11 @@ export class CalendrierComponent implements OnInit, OnChanges {
   telechargerSeancesGoogle(): void {
     const debut = this.aujourdhui();
     const fin = new Date(debut);
-    fin.setFullYear(fin.getFullYear() + 1);
+    fin.setTime(this.finVisibilite().getTime());
     this.exportCalendrierEnCours = true;
     this.erreurExportCalendrier = '';
 
-    this.activiteService.getCalendrier(this.dateIso(debut), this.dateIso(fin), this.tribuUuid).subscribe({
+    this.chargerSeances(this.dateIso(debut), this.dateIso(fin)).subscribe({
       next: seances => {
         const contenu = this.creerFichierIcs(seances.filter(seance => seance.etatSeance !== 'ANNULEE'));
         const fichier = new Blob([contenu], { type: 'text/calendar;charset=utf-8' });
@@ -170,6 +187,26 @@ export class CalendrierComponent implements OnInit, OnChanges {
         this.exportCalendrierEnCours = false;
       }
     });
+  }
+
+  private chargerSeances(dateDebut: string, dateFin: string) {
+    if (this.joursVisibles != null) {
+      const aujourdHui = this.dateIso(this.aujourdhui());
+      const limite = this.dateIso(this.finVisibilite());
+      if (dateDebut < aujourdHui) dateDebut = aujourdHui;
+      if (dateFin > limite) dateFin = limite;
+      if (dateDebut > dateFin) return of([] as SeanceCalendrier[]);
+    }
+    return this.adherentId != null
+      ? this.activiteService.getCalendrierAdherent(dateDebut, dateFin, this.adherentId)
+      : this.activiteService.getCalendrier(dateDebut, dateFin, this.tribuUuid);
+  }
+
+  private finVisibilite(): Date {
+    const fin = this.aujourdhui();
+    if (this.joursVisibles != null) fin.setDate(fin.getDate() + this.joursVisibles - 1);
+    else fin.setFullYear(fin.getFullYear() + 1);
+    return fin;
   }
 
   lienGoogleAgenda(evenement: EvenementCalendrier): string | null {
@@ -268,6 +305,14 @@ export class CalendrierComponent implements OnInit, OnChanges {
   private construireCalendrier(debut: Date, seances: SeanceCalendrier[], google: EvenementGoogleAgenda[]): void {
     const parJour = new Map<string, EvenementCalendrier[]>();
     const evenements: EvenementCalendrier[] = [...seances.map(s => ({ id: `seance-${s.id}`, titre: s.activiteNom, lieu: s.salle, adresseSalle: s.adresseSalle, commentaire: s.commentaire, couleurSalle: s.couleurSalle, lien: s.lien, debut: s.debut, fin: s.fin, source: 'SEANCE' as const, journeeEntiere: false, etatSeance: s.etatSeance })), ...google.map(e => ({ ...e, source: 'GOOGLE' as const }))];
+    const maintenant = new Date();
+    this.evenementsAVenir = evenements
+      .filter(e => e.etatSeance !== 'REALISEE' && (e.journeeEntiere
+        ? e.debut.substring(0, 10) >= this.dateIso(maintenant)
+        : new Date(e.debut).getTime() >= maintenant.getTime()))
+      .sort((a, b) => a.debut.localeCompare(b.debut) || a.titre.localeCompare(b.titre, 'fr'));
+    this.nombreEvenementsAffiches = 12;
+    if (this.affichage === 'liste') return;
     evenements.forEach(e => {
       const date = new Date(`${e.debut.substring(0, 10)}T12:00:00`); const dernier = new Date(`${e.fin.substring(0, 10)}T12:00:00`);
       if (e.journeeEntiere) dernier.setDate(dernier.getDate() - 1);

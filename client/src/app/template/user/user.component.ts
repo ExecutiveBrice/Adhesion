@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, Input } from '@angular/core';
 import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
-import { Accord, Activite, ActiviteDropDown, Adherent, Adhesion, Document, ERole, Tribu } from '../../models';
+import { Accord, Activite, ActiviteDropDown, Adherent, Adhesion, Document, ERole, Tribu, User } from '../../models';
 
 import { ActiviteService } from '../../_services/activite.service';
 import { AdherentService, AdherentUpdate } from 'src/app/_services/adherent.service';
@@ -15,7 +15,7 @@ import { FileService } from 'src/app/_services/file.service';
 import { TokenStorageService } from 'src/app/_services/token-storage.service';
 import { UserService } from 'src/app/_services/user.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgClass, DatePipe } from '@angular/common';
+import { NgClass, DatePipe, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap/dropdown';
 import { OrderByPipe } from '../../_helpers/sort.pipe';
@@ -26,7 +26,7 @@ import { SimpleFilterPipe } from '../../_helpers/simpleFilter.pipe';
     selector: 'app-user',
     templateUrl: './user.component.html',
     styleUrls: ['./user.component.css'],
-    imports: [FaIconComponent, NgClass, FormsModule, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, DatePipe, OrderByPipe, SimpleFilterPipe]
+    imports: [FaIconComponent, NgClass, NgTemplateOutlet, FormsModule, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, DatePipe, OrderByPipe, SimpleFilterPipe]
 })
 export class UserComponent implements OnInit {
   readonly rolesDisponibles = [
@@ -63,7 +63,10 @@ export class UserComponent implements OnInit {
   @Input()
   tribu!: Tribu;
 
-  activeModal = inject(NgbActiveModal);
+  @Input()
+  pageMode = false;
+
+  activeModal = inject(NgbActiveModal, { optional: true });
   faRefresh = faRefresh;
   faClock = faClock;
   faCirclePause = faCirclePause;
@@ -85,10 +88,7 @@ export class UserComponent implements OnInit {
   mobile: boolean = false;
   isOpen: boolean = false;
   isInscriptionOpen: boolean = false;
-  showAdmin: boolean = false;
-  showSecretaire: boolean = false;
   roleEnCours: string | null = null;
-  canChangeEmail: boolean = false;
 
   activites: Activite[] = []
 
@@ -107,6 +107,8 @@ export class UserComponent implements OnInit {
 
   windows_width: number = 0;
   ngOnInit(): void {
+    // Les membres sans compte peuvent être consultés et recevoir une adresse e-mail.
+    this.adherent.user ??= new User();
 
     this.paramService.getAllBoolean().subscribe({
       next: (data) => {
@@ -119,9 +121,6 @@ export class UserComponent implements OnInit {
       }
     });
 
-    this.showAdmin = this.tokenStorageService.getUser().roles.includes('ROLE_ADMIN');
-    this.showSecretaire = this.tokenStorageService.getUser().roles.includes('ROLE_SECRETAIRE');
-    this.canChangeEmail = this.showSecretaire || this.showAdmin;
 
     this.adultes = this.tribu.adherents.filter(adh => adh.mineur == false && adh.representant == null && adh.id != this.adherent.id);
 
@@ -140,6 +139,19 @@ export class UserComponent implements OnInit {
     this.fillFiles();
   }
 
+  // Les droits appartiennent au compte connecté, indépendamment du profil consulté.
+  get showAdmin(): boolean {
+    return this.tokenStorageService.getUser().roles?.includes('ROLE_ADMIN') ?? false;
+  }
+
+  get showSecretaire(): boolean {
+    return this.tokenStorageService.getUser().roles?.includes('ROLE_SECRETAIRE') ?? false;
+  }
+
+  get canChangeEmail(): boolean {
+    return this.showAdmin || this.showSecretaire;
+  }
+
   get canManageRoles(): boolean {
     return this.showSecretaire || this.showAdmin;
   }
@@ -156,7 +168,7 @@ export class UserComponent implements OnInit {
   modifierRole(role: ERole, event: Event): void {
     const checkbox = event.target as HTMLInputElement;
     const previousValue = this.hasRole(role);
-    if (!this.canChangeRole(role) || this.roleEnCours || !this.adherent.user?.id) {
+    if (!this.canChangeRole(role) || this.roleEnCours || !this.adherent.user?.username) {
       checkbox.checked = previousValue;
       return;
     }
@@ -310,7 +322,7 @@ export class UserComponent implements OnInit {
           this.activitesListe = []
           this.activiteService.fillObjects(this.activites, this.activitesListe, this.adherent);
           if (this.isRepresentant) {
-            this.activeModal.close(data)
+            this.activeModal?.close(data)
           }
         },
         error => {
@@ -352,13 +364,14 @@ export class UserComponent implements OnInit {
   }
 
   isAdherentComplet(adherent: Adherent) {
-    if (adherent.representant != null && ((adherent.emailRepresentant || !adherent.emailRepresentant && adherent.user.username && adherent.user.username.length > 0) &&
+    const emailRenseigne = !adherent.id || !!adherent.user?.username?.trim();
+    if (adherent.representant != null && ((adherent.emailRepresentant || emailRenseigne) &&
       (adherent.telephoneRepresentant || !adherent.telephoneRepresentant && adherent.telephone && adherent.telephone.length > 0) &&
       (adherent.adresseRepresentant || !adherent.adresseRepresentant && adherent.adresse && adherent.adresse.length > 0))
     ) {
       return true;
     }
-    else if (adherent.user.username && adherent.user.username.length > 0 && adherent.telephone && adherent.telephone.length > 0 && adherent.adresse && adherent.adresse.length > 0) {
+    else if (emailRenseigne && adherent.telephone && adherent.telephone.length > 0 && adherent.adresse && adherent.adresse.length > 0) {
       return true;
     }
     return false;
@@ -403,7 +416,7 @@ export class UserComponent implements OnInit {
   }
 
   openCertifMed(activite: Activite) {
-    if (activite.groupe == "NON_COMPETITIVE") {
+    if (activite.section?.type == "NON_COMPETITIVE") {
       window.open('https://cd.ufolep.org/vienne/vienne_d/data_1/pdf/ce/certificatmdicalufolep86.pdf', '_blank');
     } else {
       window.open('https://www.alod.fr/wp-content/uploads/2023/05/certif20232024.pdf', '_blank');

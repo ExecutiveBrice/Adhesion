@@ -116,7 +116,7 @@ public class AdhesionServices {
                         .nom(adhesion.getActivite().getNom())
                         .id(adhesion.getActivite().getId())
                         .horaire(adhesion.getActivite().getHoraire())
-                        .groupe(adhesion.getActivite().getGroupe())
+                        .section(adhesion.getActivite().getSection())
                         .build())
                 .accords(adhesion.getAccords())
                 .paiements(adhesion.getPaiements())
@@ -158,8 +158,8 @@ public class AdhesionServices {
                     criteriaBuilder.equal(root.get("activite").get("nom"), sections[1]));
         } else if (sections.length == 2 && sections[0].equals("groupe")) {
             specification = specification.and((root, query, criteriaBuilder) -> StringUtils.hasText(sections[1])
-                    ? criteriaBuilder.equal(root.get("activite").get("groupeFiltre"), sections[1])
-                    : criteriaBuilder.isNull(root.get("activite").get("groupeFiltre")));
+                    ? criteriaBuilder.equal(root.get("activite").get("section").get("nom"), sections[1])
+                    : criteriaBuilder.isNull(root.get("activite").get("section")));
         } else if (sections.length == 2 && sections[0].equals("horaire")) {
             Long activiteId = Long.parseLong(sections[1]);
             specification = specification.and((root, query, criteriaBuilder) ->
@@ -344,7 +344,7 @@ public class AdhesionServices {
         Activite activite = activiteServices.getById(activiteId);
         Adherent adherent = adherentServices.getById(adherentId);
 
-        boolean dejaLicencie =  adherent.getActivitesNm1().stream().anyMatch(activiteNm1 -> "COMPETITION".equals(activiteNm1.getGroupe()) || activite.getGroupeFiltre().equals(activiteNm1.getGroupeFiltre()));
+        boolean dejaLicencie =  adherent.getActivitesNm1().stream().anyMatch(activiteNm1 -> "COMPETITION".equals(activiteNm1.getGroupe()) || (activite.getGroupeFiltre() != null && activite.getGroupeFiltre().equals(activiteNm1.getGroupeFiltre())));
 
         Adhesion newAdhesion = new Adhesion();
         newAdhesion.setPosition(0);

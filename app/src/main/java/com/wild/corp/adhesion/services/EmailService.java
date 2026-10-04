@@ -132,6 +132,8 @@ public class EmailService {
 
 
     public void singleMessage(List<String> destinataires, EmailContent mail, Adhesion adhesion, boolean attachement) {
+        destinataires = destinataires.stream().filter(EmailService::isDeliverableAddress).toList();
+        if (destinataires.isEmpty()) return;
         if (!isMailSendingEnabled()) {
             log.info("L'envoi d'e-mails est désactivé dans les paramètres.");
             return;
@@ -220,9 +222,13 @@ public class EmailService {
     }
 
     public static boolean patternMatches(String emailAddress, String regexPattern) {
-        return Pattern.compile(regexPattern)
+        return isDeliverableAddress(emailAddress) && Pattern.compile(regexPattern)
                 .matcher(emailAddress)
                 .matches();
+    }
+
+    private static boolean isDeliverableAddress(String email) {
+        return email != null && !email.toLowerCase(Locale.ROOT).endsWith("@sans-email.invalid");
     }
 
     public Historique diffusionTemplate(List<Groupe> maillingListe, Long templateId) {
@@ -273,6 +279,7 @@ public class EmailService {
 
 
     public void sendTemplate(String email, Long templateId) {
+        if (!isDeliverableAddress(email)) return;
         if (!isMailSendingEnabled()) {
             log.info("L'envoi d'e-mails est désactivé dans les paramètres.");
             return;

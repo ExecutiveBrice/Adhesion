@@ -9,24 +9,15 @@
 
     <div class="col-12 col-sm-6">
 
-      <div ngbDropdown class="d-inline-block">
-        <button type="button" class="btn btn-primary" id="dropdownBasic1" ngbDropdownToggle>
-          {{activite.groupe?activite.groupe:'Groupe'}}
-        </button>
-        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-          <div ngbDropdownItem (click)="activite.groupe = 'COMPETITION'">COMPETITION</div>
-          <div ngbDropdownItem (click)="activite.groupe = 'NON_COMPETITIVE'">NON_COMPETITIVE</div>
-        </div>
-      </div>
-
       <div class="form-group">
-        <label for="groupeFiltre">Goupe Filtre</label>
-        <input type="text" class="form-control" name="groupeFiltre" [(ngModel)]="activite.groupeFiltre" />
-      </div>
-
-      <div class="form-group">
-        <label for="groupeCompta">Goupe Compta</label>
-        <input type="text" class="form-control" name="groupeCompta" [(ngModel)]="activite.groupeCompta" />
+        <label for="sectionActivite">Section</label>
+        <select id="sectionActivite" class="form-select" name="sectionActivite"
+          [(ngModel)]="activite.section" [compareWith]="comparerSections">
+          <option [ngValue]="undefined">Aucune section</option>
+          @for (section of sections; track section.id) {
+            <option [ngValue]="section">{{section.nom}} — {{section.type === 'COMPETITION' ? 'Compétition' : 'Non compétitive'}}</option>
+          }
+        </select>
       </div>
 
       <div class="form-group">
@@ -37,11 +28,6 @@
       <div class="form-group">
         <label for="tarif">Tarif</label>
         <input type="number" class="form-control" name="tarif" [(ngModel)]="activite.tarif" />
-      </div>
-
-      <div class="form-group">
-        <label for="horaire">Horaire</label>
-        <input type="text" class="form-control" name="horaire" [(ngModel)]="activite.horaire" />
       </div>
 
       <div class="form-group">

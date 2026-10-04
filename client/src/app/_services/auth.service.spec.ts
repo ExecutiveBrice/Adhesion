@@ -34,6 +34,26 @@ describe('Reconnexion PWA', () => {
 
   afterEach(() => http.verify());
 
+  it('remplace la session par celle du membre choisi et révoque l’ancien jeton PWA', () => {
+    auth.switchMember(42).subscribe();
+    const request = http.expectOne(api + 'switch-member');
+    expect(request.request.body).toEqual({ adherentId: 42, rememberSession: true });
+    expect(storage.saveSession).not.toHaveBeenCalled();
+    request.flush(session);
+    expect(storage.saveSession).toHaveBeenCalledOnceWith(session);
+    const revoke = http.expectOne(api + 'signout');
+    expect(revoke.request.body).toEqual({ refreshToken: 'remembered-secret' });
+    revoke.flush(null);
+  });
+
+  it('ne modifie pas la session lorsque le serveur refuse le changement', () => {
+    auth.switchMember(42).subscribe({ error: () => {} });
+    http.expectOne(api + 'switch-member').flush(null, { status: 403, statusText: 'Forbidden' });
+    expect(storage.saveSession).not.toHaveBeenCalled();
+    expect(storage.signOut).not.toHaveBeenCalled();
+    http.expectNone(api + 'signout');
+  });
+
   it('demande une session persistante uniquement en PWA mobile', () => {
     auth.login('member@example.org', 'password').subscribe();
     const first = http.expectOne(api + 'signin');

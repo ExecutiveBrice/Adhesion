@@ -93,6 +93,59 @@ class LiquibaseMigrationTest {
     }
 
     @Test
+    void linksActivitiesToExistingSectionsAndCreatesMissingSections() throws Exception {
+        var source = database();
+        isolatePostgres(source);
+        migrate(source, BASELINE);
+        migrate(source, "db/changelog/activity/02-create_sections.xml");
+        var jdbc = new JdbcTemplate(source);
+        jdbc.update("INSERT INTO sections (nom, type) VALUES ('Yoga', 'NON_COMPETITIVE')");
+        jdbc.update("""
+                INSERT INTO activites (id, groupe_filtre, groupe, prise_en_charge, autorisation_parentale,
+                    certificat_medical, charte_amicale, complete, vie_club)
+                VALUES (1, 'Yoga', 'NON_COMPETITIVE', FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
+                       (2, 'Yoga', 'NON_COMPETITIVE', FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
+                       (3, ' Basket ', 'COMPETITION', FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
+                       (4, NULL, NULL, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE)
+                """);
+
+        migrate(source, "db/changelog/activity/03-link_activity_sections.xml");
+
+        assertThat(jdbc.queryForList("SELECT s.nom FROM activites a LEFT JOIN sections s ON s.id = a.section_id ORDER BY a.id", String.class))
+                .containsExactly("Yoga", "Yoga", "Basket", null);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM sections", Integer.class)).isEqualTo(2);
+        assertThat(jdbc.queryForObject("SELECT type FROM sections WHERE nom = 'Basket'", String.class)).isEqualTo("COMPETITION");
+        assertThatThrownBy(() -> jdbc.update("UPDATE activites SET section_id = 999 WHERE id = 1"))
+                .isInstanceOf(org.springframework.dao.DataAccessException.class);
+    }
+
+    @Test
+    void removesTheObsoleteAccountingGroupAndItsParameters() throws Exception {
+        var source = database();
+        isolatePostgres(source);
+        migrate(source, BASELINE);
+        var jdbc = new JdbcTemplate(source);
+        jdbc.update("INSERT INTO paramnumber (param_name, param_value) VALUES ('Jour_Debut_Plage_Compta', 3), ('Jour_Fin_Plage_Compta', 4)");
+
+        migrate(source, "db/changelog/activity/04-remove-accounting-group.xml");
+
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM information_schema.columns WHERE table_schema = current_schema() AND lower(table_name) = 'activites' AND lower(column_name) = 'groupe_compta'", Integer.class)).isZero();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM paramnumber WHERE param_name IN ('Jour_Debut_Plage_Compta', 'Jour_Fin_Plage_Compta')", Integer.class)).isZero();
+    }
+
+    @Test
+    void removesTheObsoleteFreeTextActivitySchedule() throws Exception {
+        var source = database();
+        isolatePostgres(source);
+        migrate(source, BASELINE);
+
+        migrate(source, "db/changelog/activity/05-remove-activity-schedule.xml");
+
+        var jdbc = new JdbcTemplate(source);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM information_schema.columns WHERE table_schema = current_schema() AND lower(table_name) = 'activites' AND lower(column_name) = 'horaire'", Integer.class)).isZero();
+    }
+
+    @Test
     void adoptsHistoricalSchemaAndPreservesData() throws Exception {
         var source = database();
         isolatePostgres(source);
@@ -117,6 +170,8 @@ class LiquibaseMigrationTest {
         validateMappings(source);
         assertThat(jdbc.queryForObject("SELECT username FROM users WHERE id = 42", String.class)).isEqualTo("historique");
         assertThat(jdbc.queryForList("SELECT groupe FROM activites ORDER BY id", String.class))
+                .containsExactly("NON_COMPETITIVE", "COMPETITION");
+        assertThat(jdbc.queryForList("SELECT s.type FROM activites a JOIN sections s ON s.id = a.section_id ORDER BY a.id", String.class))
                 .containsExactly("NON_COMPETITIVE", "COMPETITION");
         assertThat(jdbc.queryForList("SELECT groupe FROM activites_nm1 ORDER BY id", String.class))
                 .containsExactly("NON_COMPETITIVE", "COMPETITION");

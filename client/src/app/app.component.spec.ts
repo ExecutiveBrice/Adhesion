@@ -1,3 +1,4 @@
+import { TribuService } from './_services/tribu.service';
 import { Component, signal } from '@angular/core';
 import { ChatService } from './_services/chat.service';
 import { ApiRenderService } from './_services/api-render.service';
@@ -41,6 +42,7 @@ describe('Navigation du bandeau', () => {
         { provide: AuthService, useValue: { logout: () => of(null) } },
         { provide: ParamService, useValue: { isClose: () => of(false), getAllBoolean: () => of([{ paramName: 'Show_Boutique', paramValue: true }, { paramName: 'Show_Chat', paramValue: true }]) } },
         { provide: ParamTransmissionService, useValue: {} },
+        { provide: TribuService, useValue: { getConnected: () => of({ adherents: [] }) } },
         { provide: PwaService, useValue: { canInstall: () => false, showIosInstallHint: () => false } },
         { provide: ToastService, useValue: { toasts: [] } },
         { provide: ChatService, useValue: { monitorUnread: jasmine.createSpy('monitorUnread'), totalUnread: signal(0) } }
@@ -53,16 +55,34 @@ describe('Navigation du bandeau', () => {
     await fixture.whenStable();
   });
 
-  it('affiche le titre de la route et ferme le menu à la navigation', async () => {
-    expect(fixture.nativeElement.querySelector('.navbar-page-title').textContent).toBe('Reporting');
-    fixture.nativeElement.querySelector('.navbar-toggler').click();
-    fixture.detectChanges();
-    expect(fixture.componentInstance.isCollapsed).toBeFalse();
+  it('garde la navigation visible après un changement de page', async () => {
+    expect(fixture.nativeElement.querySelector('.navbar-page-title')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.navbar-toggler')).toBeNull();
+    expect(fixture.nativeElement.querySelector('#navbarNavigation')).not.toBeNull();
     await router.navigateByUrl('/seances');
     fixture.detectChanges();
-    expect(fixture.componentInstance.isCollapsed).toBeTrue();
-    expect(fixture.nativeElement.querySelector('.navbar-page-title').textContent).toBe('Séances');
+    expect(fixture.nativeElement.querySelector('.navbar-page-title')).toBeNull();
+    expect(fixture.nativeElement.querySelector('#navbarNavigation')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('.navbar-backdrop')).toBeNull();
+  });
+
+  it('affiche le sélecteur de tribu à côté de la navigation', () => {
+    const active = { id: 1, prenom: 'Paul', nom: 'Martin', genre: 'Masculin', mineur: false, user: { id: 10 } } as any;
+    const child = { id: 2, prenom: 'Alice', nom: 'Martin', genre: 'Féminin', mineur: true, user: undefined } as any;
+    spyOn(TestBed.inject(TribuService), 'getConnected').and.returnValue(of({ adherents: [active, child] } as any));
+    storage.getUser.and.returnValue({ id: 10, username: 'paul@example.org', roles: ['ROLE_USER'] });
+    fixture.componentInstance.loadTribeMembers();
+    fixture.detectChanges();
+    const toggle = fixture.nativeElement.querySelector('#member-selector-toggle');
+    expect(toggle.closest('#navbarNavigation')).toBeNull();
+    expect(toggle.querySelector('img').getAttribute('src')).toBe('assets/homme.png');
+    toggle.click();
+    fixture.detectChanges();
+    const options = fixture.nativeElement.querySelectorAll('.member-option');
+    expect(options.length).toBe(2);
+    expect(options[0].getAttribute('aria-current')).toBe('true');
+    expect(options[1].disabled).toBeTrue();
+    expect(options[1].textContent).toContain('Sans compte de connexion');
   });
 
   it('affiche une alerte Chat seulement en présence de messages non lus', () => {
@@ -76,37 +96,32 @@ describe('Navigation du bandeau', () => {
     expect(fixture.nativeElement.querySelector('.chat-alert')).toBeNull();
   });
 
-  it('ferme le menu avec Échap et rend le focus au bouton Menu', () => {
-    const toggle: HTMLButtonElement = fixture.nativeElement.querySelector('.navbar-toggler');
-    const focus = spyOn(toggle, 'focus');
-    toggle.click();
+  it('propose une icône et un libellé accessible pour chaque lien du menu', () => {
+    fixture.componentInstance.showSecretaire = true;
+    fixture.componentInstance.showShopManager = true;
+    TestBed.inject(ApiRenderService).notify();
     fixture.detectChanges();
+    const links: NodeListOf<HTMLAnchorElement> = fixture.nativeElement.querySelectorAll('.navbar-nav .nav-link');
+    expect(links.length).toBeGreaterThan(4);
+    links.forEach(link => {
+      expect(link.querySelector('fa-icon')).not.toBeNull();
+      expect(link.querySelector('.nav-label')?.textContent?.trim()).toBeTruthy();
+      expect(link.getAttribute('aria-label')).toBeTruthy();
+      expect(link.getAttribute('title')).toBeTruthy();
+    });
     fixture.nativeElement.querySelector('nav').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     fixture.detectChanges();
-    expect(fixture.componentInstance.isCollapsed).toBeTrue();
-    expect(toggle.getAttribute('aria-expanded')).toBe('false');
-    expect(focus).toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('#navbarNavigation')).not.toBeNull();
   });
 
-  it('ferme le menu en cliquant sur le fond', () => {
-    fixture.nativeElement.querySelector('.navbar-toggler').click();
-    fixture.detectChanges();
-    fixture.nativeElement.querySelector('.navbar-backdrop').click();
-    fixture.detectChanges();
-    expect(fixture.componentInstance.isCollapsed).toBeTrue();
-    expect(fixture.nativeElement.querySelector('.navbar-backdrop')).toBeNull();
-  });
-
-  it('partage les boutons connexion et inscription avec la page de connexion', async () => {
+  it('permet de revenir à la connexion depuis la récupération du mot de passe', async () => {
     await router.navigateByUrl('/login?sessionExpiree=1');
+    TestBed.inject(LoginPageService).view.set('recuperation');
     fixture.detectChanges();
     const buttons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('.navbar-login-actions button');
-    expect(buttons.length).toBe(2);
+    expect(buttons.length).toBe(1);
+    expect(buttons[0].textContent).toContain('Connexion');
     expect(fixture.nativeElement.querySelector('.navbar-toggler')).toBeNull();
-    buttons[1].click();
-    fixture.detectChanges();
-    expect(TestBed.inject(LoginPageService).view()).toBe('inscription');
-    expect(buttons[1].getAttribute('aria-pressed')).toBe('true');
     buttons[0].click();
     expect(TestBed.inject(LoginPageService).view()).toBe('connexion');
   });
@@ -167,6 +182,7 @@ describe('Déconnexion depuis une page protégée', () => {
         { provide: AuthService, useValue: { logout } },
         { provide: ParamService, useValue: { isClose: () => of(false), getAllBoolean: () => of([]) } },
         { provide: ParamTransmissionService, useValue: {} },
+        { provide: TribuService, useValue: { getConnected: () => of({ adherents: [] }) } },
         { provide: PwaService, useValue: {} },
         { provide: ToastService, useValue: {} },
         { provide: ChatService, useValue: { monitorUnread: jasmine.createSpy('monitorUnread'), totalUnread: signal(0) } }
@@ -182,7 +198,6 @@ describe('Déconnexion depuis une page protégée', () => {
   });
 
   it('affiche la connexion sans attendre le serveur et efface le menu connecté', () => {
-    component.isCollapsed = false;
     component.logout();
     expect(logout).toHaveBeenCalledTimes(1);
     expect(navigate).toHaveBeenCalledWith(['/login'], { replaceUrl: true });
@@ -191,7 +206,6 @@ describe('Déconnexion depuis une page protégée', () => {
     expect(component.showProf).toBeFalse();
     expect(component.showSeances).toBeFalse();
     expect(component.username).toBeUndefined();
-    expect(component.isCollapsed).toBeTrue();
     revocation.next(null);
     revocation.complete();
     expect(navigate).toHaveBeenCalledTimes(1);
@@ -203,5 +217,78 @@ describe('Déconnexion depuis une page protégée', () => {
     expect(navigate).toHaveBeenCalledWith(['/login'], { replaceUrl: true });
     expect(component.isLoggedIn).toBeFalse();
     expect(component.showAdmin).toBeFalse();
+  });
+});
+
+describe('Changement d’adhérent', () => {
+  let component: AppComponent;
+  let switchRequest: Subject<unknown>;
+  let auth: { switchMember: jasmine.Spy };
+  let toast: { error: jasmine.Spy };
+  const member = { id: 2, prenom: 'Alice', nom: 'Martin', genre: 'Féminin', mineur: true, user: { id: 20 } } as any;
+
+  beforeEach(() => {
+    switchRequest = new Subject();
+    auth = { switchMember: jasmine.createSpy().and.returnValue(switchRequest) };
+    toast = { error: jasmine.createSpy() };
+    TestBed.configureTestingModule({ providers: [
+      provideRouter([]),
+      { provide: TokenStorageService, useValue: { getToken: () => 'jwt', getUser: () => ({ id: 10 }), sessionChanges$: new Subject() } },
+      { provide: AuthService, useValue: auth },
+      { provide: TribuService, useValue: { getConnected: () => of({ adherents: [member] }) } },
+      { provide: ParamService, useValue: { isClose: () => of(false), getAllBoolean: () => of([]) } },
+      { provide: ParamTransmissionService, useValue: {} },
+      { provide: PwaService, useValue: {} },
+      { provide: ToastService, useValue: toast },
+      { provide: ChatService, useValue: { monitorUnread: () => {} } }
+    ] });
+    TestBed.overrideComponent(AppComponent, { set: { template: '', imports: [] } });
+    component = TestBed.createComponent(AppComponent).componentInstance;
+  });
+
+  it('choisit les quatre avatars selon le genre et le statut mineur', () => {
+    expect(component.memberAvatar(member)).toBe('assets/fille.png');
+    expect(component.memberAvatar({ ...member, mineur: false })).toBe('assets/femme.png');
+    expect(component.memberAvatar({ ...member, genre: 'Masculin' })).toBe('assets/garcon.png');
+    expect(component.memberAvatar({ ...member, genre: 'Masculin', mineur: false })).toBe('assets/homme.png');
+  });
+
+  it('attend la nouvelle session et empêche les doubles clics avant le rechargement', () => {
+    const reload = spyOn(component, 'reloadMemberSession');
+    component.switchMember(member);
+    component.switchMember(member);
+    expect(auth.switchMember).toHaveBeenCalledOnceWith(2);
+    expect(reload).not.toHaveBeenCalled();
+    switchRequest.next({ token: 'new-jwt' });
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('conserve la page et permet de réessayer après une erreur', () => {
+    const reload = spyOn(component, 'reloadMemberSession');
+    component.switchMember(member);
+    switchRequest.error(new Error('refus'));
+    expect(component.switchingMember()).toBeFalse();
+    expect(reload).not.toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalled();
+  });
+
+  it('ne change pas vers le compte actif ou un adhérent sans compte', () => {
+    component.activeMember.set(member);
+    component.switchMember(member);
+    component.switchMember({ ...member, id: 3, user: undefined });
+    expect(auth.switchMember).not.toHaveBeenCalled();
+  });
+
+  it('actualise le sélecteur pour proposer un adhérent créé depuis la page de profil', () => {
+    component.isLoggedIn = true;
+    const load = spyOn(TestBed.inject(TribuService), 'getConnected');
+    load.and.returnValue(of({ adherents: [member] } as any));
+    component.loadTribeMembers();
+    const newMember = { ...member, id: 3, user: { id: 30, username: 'adherent-123@sans-email.invalid' } };
+    load.and.returnValue(of({ adherents: [member, newMember] } as any));
+    component.loadTribeMembers();
+    expect(component.tribeMembers().length).toBe(1);
+    component.loadTribeMembers(true);
+    expect(component.tribeMembers()).toContain(newMember);
   });
 });

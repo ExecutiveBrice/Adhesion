@@ -201,7 +201,7 @@ export class ActiviteService {
               } else {
                 activiteDropDown = new ActiviteDropDown()
                 activiteDropDown.nom = act.nom
-                activiteDropDown.groupeFiltre = act.groupeFiltre
+                activiteDropDown.groupeFiltre = act.section?.nom ?? ''
                 activitesListe.push(activiteDropDown)
               }
 
@@ -242,7 +242,7 @@ export class ActiviteService {
     const categories = activite.planificationsHebdomadaires ?? [];
 
     if (categories.length === 0) {
-      return activite.horaire;
+      return '';
     }
 
     return categories

@@ -1,6 +1,6 @@
-<a class="shop-cart-link" [class.shop-link]="link === 'shop'" [routerLink]="route" [attr.aria-label]="ariaLabel()">
+<a class="shop-cart-link" [class.navigation-link]="navigation" [attr.title]="label" [class.shop-link]="link === 'shop'" [routerLink]="route" [attr.aria-label]="ariaLabel()">
   <fa-icon [icon]="icon" aria-hidden="true"></fa-icon>
-  <span>{{ label }}</span>
+  <span class="shop-link-label">{{ label }}</span>
   @if (link !== 'orders' && cart.itemCount() > 0) {
     <span class="shop-cart-badge" aria-label="{{ cart.itemCount() }} article{{ cart.itemCount() > 1 ? 's' : '' }}">{{ cart.itemCount() }}</span>
   }

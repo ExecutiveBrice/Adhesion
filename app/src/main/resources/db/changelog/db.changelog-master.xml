@@ -5,6 +5,9 @@
   <include file="baseline/master-changeset.xml" relativeToChangelogFile="true"/>
   <include file="activity/01-rename-groups.xml" relativeToChangelogFile="true"/>
   <include file="activity/02-create_sections.xml" relativeToChangelogFile="true"/>
+  <include file="activity/03-link_activity_sections.xml" relativeToChangelogFile="true"/>
+  <include file="activity/04-remove-accounting-group.xml" relativeToChangelogFile="true"/>
+  <include file="activity/05-remove-activity-schedule.xml" relativeToChangelogFile="true"/>
   <include file="shop/01-create_shop_domain.xml" relativeToChangelogFile="true"/>
   <include file="shop/02-add_shop_order_checkout_idempotency.xml" relativeToChangelogFile="true"/>
   <include file="shop/03-shop_product_image.xml" relativeToChangelogFile="true"/>

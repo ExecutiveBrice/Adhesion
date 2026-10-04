@@ -38,6 +38,8 @@ class SignupAuthorizationMvcTest {
     @MockitoBean
     private PwaSessionService pwaSessionService;
     @MockitoBean
+    private com.wild.corp.adhesion.services.TribuSessionService tribuSessionService;
+    @MockitoBean
     private SurrogateService surrogateService;
     @MockitoBean
     private JwtUtils jwtUtils;

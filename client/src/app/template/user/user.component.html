@@ -1,49 +1,72 @@
-<div class="modal-header">
-  <div class="adherent-modal-heading">
-    <h4 class="modal-title">{{adherent.prenom}} {{adherent.nom}} @if (adherent.completAdhesion) {
-      <fa-icon
-      class="pointer orange" [icon]="faPencilSquare" (click)="adherentEdit(adherent)" container="body"></fa-icon>
-    }
-    </h4>
-
-  </div>
-<button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss('Cross click')"></button>
-</div>
-<div class="modal-body ">
-
-
-
-  <div class="row">
-
-    @if (canManageRoles && adherent.user && adherent.user.id) {
-      <div class="col-12">
-        <div class="col-12 header">
-          Attribution des roles :
-        </div>
-        <div class="cadrePermanent ">
-          <div class="col-12 attribute">
-      <div class="adherent-role-checkboxes" role="group" aria-label="Rôles de l’adhérent">
-        @for (role of rolesDisponibles; track role.code) {
-          <label class="form-check form-check-inline mb-0">
-            <input class="form-check-input" type="checkbox" [checked]="hasRole(role.code)"
-                   [disabled]="!canChangeRole(role.code) || roleEnCours !== null"
-                   (change)="modifierRole(role.code, $event)">
-            <span class="form-check-label">{{role.libelle}}</span>
-          </label>
+@if (!pageMode) {
+  <div class="modal-header">
+    <div class="adherent-modal-heading">
+      <h4 class="modal-title">{{adherent.prenom}} {{adherent.nom}}
+        @if (adherent.completAdhesion) {
+          <fa-icon class="pointer orange" [icon]="faPencilSquare"
+            (click)="adherentEdit(adherent)" container="body"></fa-icon>
         }
-      </div>
-      </div>
+      </h4>
+    </div>
+    <button type="button" class="btn-close" aria-label="Fermer"
+      (click)="activeModal?.dismiss('Cross click')"></button>
+  </div>
+}
+<div class="modal-body">
+  <div class="row">
+    @if (canManageRoles) {
+      <div class="col-12">
+        <div class="col-12 header">Attribution des rôles :</div>
+        <div class="cadrePermanent">
+          <div class="col-12 attribute">
+            @if (adherent.user && adherent.user.username) {
+              <div class="adherent-role-checkboxes" role="group" aria-label="Rôles de l’adhérent">
+                @for (role of rolesDisponibles; track role.code) {
+                  <label class="form-check form-check-inline mb-0">
+                    <input class="form-check-input" type="checkbox" [checked]="hasRole(role.code)"
+                      [disabled]="!canChangeRole(role.code) || roleEnCours !== null"
+                      (change)="modifierRole(role.code, $event)">
+                    <span class="form-check-label">{{role.libelle}}</span>
+                  </label>
+                }
+              </div>
+            } @else {
+              <p class="mb-0">Aucun compte de connexion associé à cet adhérent. Enregistrez son adresse e-mail pour pouvoir lui attribuer des rôles.</p>
+            }
           </div>
+        </div>
       </div>
     }
 
+    @if (pageMode) {
+      <div class="col-12 col-md-6">
+        <ng-container *ngTemplateOutlet="formTemplate"></ng-container>
+        <div class="cadrePermanent">
+          <ng-container *ngTemplateOutlet="documentsTemplate"></ng-container>
+        </div>
+      </div>
+      <div class="col-12 col-md-6">
+        <ng-container *ngTemplateOutlet="currentActivitiesTemplate"></ng-container>
+        <ng-container *ngTemplateOutlet="previousActivitiesTemplate"></ng-container>
+      </div>
+    } @else {
+      <ng-container *ngTemplateOutlet="readonlyTemplate"></ng-container>
+      <ng-container *ngTemplateOutlet="formTemplate"></ng-container>
+      <ng-container *ngTemplateOutlet="currentActivitiesTemplate"></ng-container>
+    }
+  </div>
+</div>
 
+<ng-template #readonlyTemplate>
     @if (!adherent.edit && adherent.completAdhesion) {
       <div class="col-12 col-sm-6">
+        @if (!pageMode) {
         <div class="col-12 header">
           Informations personnelles :
         </div>
+        }
         <div class="cadrePermanent ">
+          @if (!pageMode) {
           <div class="col-12 attribute">
             <u>Naissance :</u> Le {{adherent.naissance}} dans le {{adherent.lieuNaissance}}
           </div>
@@ -82,68 +105,24 @@
             }
           </div>
         }
-        <div class="col-12 header">
-          Documents :
-          @if (showSecretaire) {
-            <fa-icon
-            class="pointer green" [icon]="faRefresh" (click)="regenerate(adherent)" container="body"></fa-icon>
-          }
-        </div>
-        @for (document of adherent.documents | orderBy:'id':false ; track document) {
-          <div class="col-12 ligne pointer">
-            <div class="row">
-              <div class="col-10 pointer" (click)="downloadPDF(document)">
-                <fa-icon class="green fa-2xl" [icon]="faEye"></fa-icon>
-                {{document}}
-              </div>
-              <div class="col-2 pointer" (click)="deleteDoc(document)">
-                <fa-icon [icon]="faSquareMinus"></fa-icon>
-              </div>
-            </div>
-          </div>
         }
-        <div class="col-12 pointer" (click)="openAddPDFModal(adherent)">
-          Ajouter un document <fa-icon class="orange fa-xl" [icon]="faSquarePlus" container="body"></fa-icon>
-        </div>
+<ng-container *ngTemplateOutlet="documentsTemplate"></ng-container>
       </div>
-      <div class="col-12 header">
-        Activités de l'année dernière:
-      </div>
-      @if (adherent.activitesNm1.length > 0) {
-        <div class="col-12 ">
-          @for (activiteNm1 of adherent.activitesNm1 | simplefilter:'horaire':['Mineur','Majeur'] | orderBy:'id':true; track activiteNm1) {
-            <div
-              class="col-12 ">
-              <div class="cadrePermanent ">
-                <div class="row">
-                  <div class="col-8 ">
-                    <b class="header"> {{activiteNm1.nom}}</b><br>
-                    <i>{{ activiteNm1.horaire }}</i>
-                  </div>
-                  <div class="col-4 ">
-                    <span type='button'
-                    class="btn btn-primary alod btn-independent" (click)="choisir(adherent, activiteNm1.activiteId)">Renouveler</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          }
-        </div>
-      }
+<ng-container *ngTemplateOutlet="previousActivitiesTemplate"></ng-container>
     </div>
   }
-
-
-  @if (adherent.edit || !adherent.completAdhesion) {
+</ng-template>
+<ng-template #formTemplate>
+  @if (pageMode || adherent.edit || !adherent.completAdhesion) {
     <div
-      [ngClass]="!adherent.completAdhesion ? 'col-12' : ' col-12 col-sm-6'">
+      [ngClass]="pageMode || !adherent.completAdhesion ? 'col-12' : ' col-12 col-sm-6'">
       <div class="col-12 header">
         Informations personnelles :
       </div>
       <div class="cadrePermanent ">
         <form name="adherent" (ngSubmit)="f.form.valid && onSubmit(adherent)" #f="ngForm" novalidate>
           <div class="row">
-            <div [ngClass]="adherent.completAdhesion ? 'col-12' : ' col-12 col-sm-6'">
+            <div [ngClass]="pageMode || adherent.completAdhesion ? 'col-12' : ' col-12 col-sm-6'">
               <div class="form-group">
                 <label for="nom">Nom <span class="orange" container="body">*</span></label>
                 <input type="text" class="form-control" name="nom" [(ngModel)]="adherent.nom" required minlength="2"
@@ -273,7 +252,7 @@
             </div>
           }
         </div>
-        <div [ngClass]="adherent.completAdhesion ? 'col-12' : ' col-12 col-sm-6'">
+        <div [ngClass]="!pageMode && adherent.completAdhesion ? 'col-12' : ' col-12 col-sm-6'">
           <div class="col-12 header">
             Contact
           </div>
@@ -321,6 +300,7 @@
           <div class="form-group">
             <div class="form-check form-switch form-switch-md">
               <input class="form-check-input" [(ngModel)]="adherent.emailRepresentant" type="checkbox"
+                [disabled]="!!adherent.id && !canChangeEmail"
                 id="emailRepresentant" name="darkmode" value="yes">
               <label class="form-check-label" for="emailRepresentant">Utiliser le mail du représentant légal ?<br />
                 <i>({{adherent.representant.user.username}})</i></label>
@@ -329,12 +309,15 @@
           }
           @if (!adherent.emailRepresentant ) {
             <div class="form-group">
-              <label for="email">Email <span class="orange">*</span></label>
+              <label for="email">Email @if (adherent.id) { <span class="orange">*</span> }</label>
               <input type="email" class="form-control" name="email" [(ngModel)]="adherent.user.username"
                 (ngModelChange)="adherent.user.username = cleaning(adherent.user.username)"
-                (ngModelBlur)="adherent.user.username = cleaning(adherent.user.username)" required minlength="10"
+                (ngModelBlur)="adherent.user.username = cleaning(adherent.user.username)" [required]="!!adherent.id" minlength="10"
                 #email="ngModel" ngModel email
                 [readonly]="!!adherent.id && !canChangeEmail" />
+              @if (!adherent.id) {
+                <small class="text-body-secondary">Facultatif : sans e-mail, l’adhérent reste accessible depuis le menu de sélection de votre tribu.</small>
+              }
               @if (adherent.id && !canChangeEmail) {
                 <small class="text-body-secondary">Contactez le secrétariat pour modifier votre adresse e-mail.</small>
               }
@@ -495,22 +478,66 @@
       </div>
     </div>
   }
-
-
-
-
-
-
-
-
-
+</ng-template>
+<ng-template #documentsTemplate>
+        <div class="col-12 header">
+          Documents :
+          @if (showAdmin || showSecretaire) {
+            <fa-icon
+            class="pointer green" data-action="regenerate-documents" title="Régénérer les documents" [icon]="faRefresh" (click)="regenerate(adherent)" container="body"></fa-icon>
+          }
+        </div>
+        @for (document of adherent.documents | orderBy:'id':false ; track document) {
+          <div class="col-12 ligne pointer">
+            <div class="row">
+              <div class="col-10 pointer" (click)="downloadPDF(document)">
+                <fa-icon class="green fa-2xl" [icon]="faEye"></fa-icon>
+                {{document}}
+              </div>
+              <div class="col-2 pointer" (click)="deleteDoc(document)">
+                <fa-icon [icon]="faSquareMinus"></fa-icon>
+              </div>
+            </div>
+          </div>
+        }
+        <div class="col-12 pointer" (click)="openAddPDFModal(adherent)">
+          Ajouter un document <fa-icon class="orange fa-xl" [icon]="faSquarePlus" container="body"></fa-icon>
+        </div>
+</ng-template>
+<ng-template #previousActivitiesTemplate>
+      <div class="col-12 header">
+        Activités de l'année dernière:
+      </div>
+      @if (adherent.activitesNm1.length > 0) {
+        <div class="col-12 ">
+          @for (activiteNm1 of adherent.activitesNm1 | simplefilter:'horaire':['Mineur','Majeur'] | orderBy:'id':true; track activiteNm1) {
+            <div
+              class="col-12 ">
+              <div class="cadrePermanent ">
+                <div class="row">
+                  <div class="col-8 ">
+                    <b class="header"> {{activiteNm1.nom}}</b><br>
+                    <i>{{ activiteNm1.horaire }}</i>
+                  </div>
+                  <div class="col-4 ">
+                    <span type='button'
+                    class="btn btn-primary alod btn-independent" (click)="choisir(adherent, activiteNm1.activiteId)">Renouveler</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+</ng-template>
+<ng-template #currentActivitiesTemplate>
   @if (adherent.completAdhesion) {
-    <div class="col-12 col-sm-6">
+    <div [ngClass]="pageMode ? 'col-12' : 'col-12 col-sm-6'">
       <div class="row">
         <div class="col-12 ">
           <div class="row">
             <div class="col-6 header">
-              Activités :
+              {{ pageMode ? 'Activités de cette année :' : 'Activités :' }}
             </div>
             <div class="col-6" (click)="choixActivites(adherent)">
               <div class="col-12 btn-group btn-group-sm" role="group" aria-label="rgpd">
@@ -656,7 +683,7 @@
                         </div>
                       </div>
                     }
-                    @if (adhesion.activite.groupe == 'COMPETITION') {
+                    @if (adhesion.activite.section?.type == 'COMPETITION') {
                       <div>
                         @if (adhesion.statutActuel == 'Attente validation adhérent') {
                           <div class="form-check form-switch">
@@ -762,15 +789,10 @@
 </div>
 </div>
 }
+</ng-template>
 
-
-
-
-</div>
-</div>
-
-
-
-<div class="modal-footer">
-  <button type="button" class="btn btn-outline-dark" (click)="activeModal.close('Close click')">Fermer</button>
-</div>
+@if (!pageMode) {
+  <div class="modal-footer">
+    <button type="button" class="btn btn-outline-dark" (click)="activeModal?.close('Close click')">Fermer</button>
+  </div>
+}

@@ -8,6 +8,8 @@ import com.wild.corp.adhesion.services.SurrogateService;
 import com.wild.corp.adhesion.services.UserServices;
 import com.wild.corp.adhesion.services.PasswordResetService;
 import com.wild.corp.adhesion.services.PwaSessionService;
+import com.wild.corp.adhesion.services.TribuSessionService;
+import com.wild.corp.adhesion.security.payload.request.SwitchMemberRequest;
 import com.wild.corp.adhesion.security.payload.request.RefreshSessionRequest;
 import com.wild.corp.adhesion.security.jwt.JwtUtils;
 import com.wild.corp.adhesion.security.payload.request.LoginRequest;
@@ -55,6 +57,18 @@ public class AuthController {
 	SurrogateService surrogateService;
 	@Autowired
 	PwaSessionService pwaSessionService;
+	@Autowired
+	TribuSessionService tribuSessionService;
+
+	@PostMapping("/switch-member")
+	@PreAuthorize("isAuthenticated()")
+	public ResponseEntity<JwtResponse> switchMember(
+			@Valid @RequestBody SwitchMemberRequest request,
+			Authentication authentication) {
+		return ResponseEntity.ok().cacheControl(org.springframework.http.CacheControl.noStore())
+				.body(tribuSessionService.switchMember((UserDetails) authentication.getPrincipal(),
+						request.adherentId(), request.rememberSession()));
+	}
 
 	@ApiResponses(value = {
 			@ApiResponse(
