@@ -4,7 +4,7 @@ import { UserService } from '../../_services/user.service';
 import { ParamService } from '../../_services/param.service';
 import { ActiviteService } from '../../_services/activite.service';
 
-import { Activite, AgendaGoogleConfiguration, ERole, ParamBoolean, ParamNumber, ParamText, SalleConfiguration, SectionChatConfiguration, SectionConfiguration, UserLite } from 'src/app/models';
+import { Activite, AgendaGoogleConfiguration, ERole, ParamBoolean, ParamNumber, ParamText, SalleConfiguration, ChatConfiguration, SectionConfiguration, UserLite } from 'src/app/models';
 import { forkJoin } from 'rxjs';
 import { faCalendarDays, faCircleCheck, faCircleXmark, faComments, faFont, faHashtag, faLayerGroup, faLocationDot, faPencilSquare, faPlus, faSliders, faTrash, faUserShield, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { AdherentService } from 'src/app/_services/adherent.service';
@@ -79,18 +79,18 @@ export class BoardAdminComponent implements OnInit {
   sectionMessage = '';
   sectionErreur = '';
   sectionEnEdition?: number;
-  chats: SectionChatConfiguration[] = [];
+  chats: ChatConfiguration[] = [];
   activites: Activite[] = [];
   chatCreationVisible = false;
   nouveauChatNom = '';
-  nouveauChatCible: SectionChatConfiguration['cible'] = 'ASSOCIATION';
+  nouveauChatCible: ChatConfiguration['cible'] = 'ASSOCIATION';
   nouveauChatCibleId?: number;
   chatEnregistrement = false;
   chatMessage = '';
   chatErreur = '';
   chatEnEdition?: number;
   chatEnEditionNom = '';
-  chatEnEditionCible: SectionChatConfiguration['cible'] = 'SECTION';
+  chatEnEditionCible: ChatConfiguration['cible'] = 'SECTION';
   chatEnEditionCibleId?: number;
   readonly rolesChat = [
     { code: ERole.ROLE_USER, libelle: 'Adhérents' },
@@ -537,8 +537,8 @@ export class BoardAdminComponent implements OnInit {
     }));
     this.chatErreur = '';
     this.chatMessage = '';
-    if (!nom || permissions.length === 0 || (this.nouveauChatCible !== 'ASSOCIATION' && this.nouveauChatCibleId == null)) {
-      this.chatErreur = 'Saisissez un nom, un rattachement et au moins un rôle pouvant lire le chat.';
+    if (!nom || (this.nouveauChatCible === 'ASSOCIATION' && permissions.length === 0) || (this.nouveauChatCible !== 'ASSOCIATION' && this.nouveauChatCibleId == null)) {
+      this.chatErreur = 'Saisissez un nom et un rattachement. Pour un chat global, sélectionnez au moins un rôle en lecture.';
       return;
     }
     this.chatEnregistrement = true;
@@ -556,7 +556,7 @@ export class BoardAdminComponent implements OnInit {
     });
   }
 
-  modifierChat(chat: SectionChatConfiguration): void {
+  modifierChat(chat: ChatConfiguration): void {
     if (this.chatEnregistrement || chat.id == null) {
       return;
     }
@@ -595,7 +595,7 @@ export class BoardAdminComponent implements OnInit {
     }
   }
 
-  enregistrerChat(chat: SectionChatConfiguration): void {
+  enregistrerChat(chat: ChatConfiguration): void {
     const nom = this.chatEnEditionNom.trim();
     const permissions = this.rolesChat.filter(role => this.droitsChatEnEdition[role.code]?.lecture).map(role => ({
       role: role.code,
@@ -606,8 +606,8 @@ export class BoardAdminComponent implements OnInit {
     }
     this.chatErreur = '';
     this.chatMessage = '';
-    if (!nom || permissions.length === 0 || (this.chatEnEditionCible !== 'ASSOCIATION' && this.chatEnEditionCibleId == null)) {
-      this.chatErreur = 'Saisissez un nom, un rattachement et au moins un rôle pouvant lire le chat.';
+    if (!nom || (this.chatEnEditionCible === 'ASSOCIATION' && permissions.length === 0) || (this.chatEnEditionCible !== 'ASSOCIATION' && this.chatEnEditionCibleId == null)) {
+      this.chatErreur = 'Saisissez un nom et un rattachement. Pour un chat global, sélectionnez au moins un rôle en lecture.';
       return;
     }
     this.chatEnregistrement = true;
@@ -626,7 +626,7 @@ export class BoardAdminComponent implements OnInit {
     });
   }
 
-  supprimerChat(chat: SectionChatConfiguration): void {
+  supprimerChat(chat: ChatConfiguration): void {
     if (this.chatEnregistrement || chat.id == null) {
       return;
     }
@@ -649,17 +649,14 @@ export class BoardAdminComponent implements OnInit {
     });
   }
 
-  resumePermissionsChat(chat: SectionChatConfiguration): string {
+  resumePermissionsChat(chat: ChatConfiguration): string {
     return chat.permissions.map(permission => {
       const role = this.rolesChat.find(item => item.code === permission.role)?.libelle ?? permission.role;
       return `${role} : ${permission.ecriture ? 'lecture et écriture' : 'lecture'}`;
     }).join(' · ');
   }
 
-  cibleChat(chat: SectionChatConfiguration): string {
-    if (!chat.permissions.some(permission => permission.role === ERole.ROLE_USER)) {
-      return 'Non visible';
-    }
+  cibleChat(chat: ChatConfiguration): string {
     return chat.cible === 'ASSOCIATION' ? 'Globale' : chat.cibleNom || (chat.cible === 'SECTION' ? 'Section' : 'Activité');
   }
   updateParamBoolean(param: ParamBoolean) {

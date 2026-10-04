@@ -8,9 +8,9 @@ import { environment } from '../../../environments/environment';
 describe('Chat des activités', () => {
   let component: ChatComponent;
   let http: HttpTestingController;
-  const url = environment.server + '/chat/activities';
-  const pilates = { id: 7, nom: 'Pilates', groupeFiltre: 'Adultes', categories: [{ descriptif: 'Débutants', jour: 'Mardi', horaire: '18:00' }], unreadCount: 3 };
-  const yoga = { id: 8, nom: 'Yoga', groupeFiltre: 'Adultes', categories: [{ descriptif: 'Confirmés', jour: 'Jeudi', horaire: '19:00' }], unreadCount: 1 };
+  const url = environment.server + '/chat';
+  const pilates = { id: 7, nom: 'Pilates', groupeFiltre: 'Adultes', categories: [{ descriptif: 'Débutants', jour: 'Mardi', horaire: '18:00' }], unreadCount: 3, canWrite: true };
+  const yoga = { id: 8, nom: 'Yoga', groupeFiltre: 'Adultes', categories: [{ descriptif: 'Confirmés', jour: 'Jeudi', horaire: '19:00' }], unreadCount: 1, canWrite: true };
   const message = (id: number) => ({ id, senderUserId: 4, senderName: 'Alice', content: 'Bonjour', createdAt: '2026-10-02T10:00:00Z' });
 
   beforeEach(() => {
@@ -50,44 +50,23 @@ describe('Chat des activités', () => {
     expect(component.filteredRooms().map(room => room.id)).toEqual([7]);
   });
 
-  it('place Communication en premier et bloque l’envoi pour un lecteur', () => {
-    const communication = { id: 0, nom: 'Communication', groupeFiltre: '', categories: [], unreadCount: 2, communication: true, canWrite: false };
-    component.ngOnInit();
-    http.expectOne(url).flush([yoga, { ...pilates, nom: 'Badminton' }, communication]);
-    expect(component.rooms().map(room => room.id)).toEqual([0, 7, 8]);
-    component.updateDraft(0, 'Interdit');
-    component.send(communication);
-    http.expectNone(url + '/0/messages');
-  });
-
-  it('place le canal Référents et encadrants après Communication et le rend utilisable', () => {
-    const team = { id: -1, nom: 'Référents et encadrants', groupeFiltre: '', categories: [], unreadCount: 1, referentEncadrant: true, canWrite: true };
-    component.ngOnInit();
-    http.expectOne(url).flush([yoga, team, { ...pilates, nom: 'Badminton' },
-      { id: 0, nom: 'Communication', groupeFiltre: '', categories: [], unreadCount: 0, communication: true, canWrite: false }]);
-    expect(component.rooms().map(room => room.id)).toEqual([0, -1, 7, 8]);
-    component.updateDraft(-1, 'Bonjour l’équipe');
-    component.send(team);
-    http.expectOne(url + '/-1/messages').flush({ ...message(10), content: 'Bonjour l’équipe' });
-  });
-
-  it('affiche Communication en lecture seule et autorise le formulaire des rédacteurs', fakeAsync(() => {
+  it('affiche un chat global en lecture seule et autorise le formulaire des rédacteurs', fakeAsync(() => {
     const fixture = TestBed.createComponent(ChatComponent);
     fixture.detectChanges();
-    const communication = { id: 0, nom: 'Communication', groupeFiltre: '', categories: [], unreadCount: 0, communication: true, canWrite: false };
+    const communication = { id: 10, nom: 'Informations', groupeFiltre: '', categories: [], unreadCount: 0, canWrite: false };
     http.expectOne(url).flush([communication]);
     fixture.componentInstance.open(communication);
     tick(0);
-    http.expectOne(url + '/0/messages').flush([]);
+    http.expectOne(url + '/10/messages').flush([]);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('textarea')).toBeNull();
     expect(fixture.nativeElement.textContent).toContain('Canal en lecture seule');
     fixture.componentInstance.rooms.set([{ ...communication, canWrite: true }]);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('textarea')).not.toBeNull();
-    fixture.componentInstance.updateDraft(0, 'Information');
+    fixture.componentInstance.updateDraft(10, 'Information');
     fixture.componentInstance.send({ ...communication, canWrite: true });
-    http.expectOne(url + '/0/messages').flush(message(10));
+    http.expectOne(url + '/10/messages').flush(message(10));
     fixture.destroy();
   }));
 
@@ -106,7 +85,7 @@ describe('Chat des activités', () => {
     http.expectOne(url + '/7/read').flush({ unreadCount: 0 });
     fixture.detectChanges();
     const roles = fixture.nativeElement.querySelectorAll('.chat-role');
-    expect([...roles].map((item: any) => item.textContent.trim())).toEqual(['Référent', 'Encadrant', 'Membre du CA', 'Secrétariat']);
+    expect([...roles].map((item: any) => item.textContent.trim())).toEqual(['Référent d’activité', 'Encadrant', 'Membre du CA', 'Secrétariat']);
     expect(roles[0].classList).toContain('role-referent_activite');
     expect(roles[1].classList).toContain('role-encadrant');
     expect(roles[2].classList).toContain('role-membreca');

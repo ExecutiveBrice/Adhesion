@@ -1,6 +1,12 @@
 package com.wild.corp.adhesion.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.JoinColumn;
+import java.util.HashSet;
+import java.util.Set;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -30,4 +36,11 @@ public class Section {
 
     @Column(nullable = false, length = 20)
     private String type;
+
+    @Builder.Default
+    @ManyToMany
+    @JoinTable(name = "section_referents", joinColumns = @JoinColumn(name = "section_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id"))
+    @JsonIgnore
+    private Set<User> referents = new HashSet<>();
 }

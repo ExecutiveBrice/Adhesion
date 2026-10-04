@@ -7,7 +7,7 @@ import lombok.Setter;
 import java.time.Instant;
 
 @Entity
-@Table(name = "activity_chat_messages")
+@Table(name = "chat_messages")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -16,18 +16,9 @@ public class ChatMessage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // A null activity identifies a global channel.
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "activite_id")
-    private Activite activite;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "section_chat_id")
-    private SectionChat sectionChat;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 32)
-    private ChatChannel channel;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "chat_id", nullable = false)
+    private Chat chat;
 
     @Column(name = "sender_user_id", nullable = false)
     private Long senderUserId;

@@ -28,3 +28,5 @@ export * from './agendaGoogle';
 export * from './salle';
 export * from './planificationHebdomadaire';
 export * from './utilisateurSelectionnable';
+
+export * from './chat';

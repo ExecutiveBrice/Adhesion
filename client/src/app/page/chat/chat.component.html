@@ -1,6 +1,6 @@
 <section class="chat-page py-3">
   <label for="chat-filter" class="visually-hidden">Filtrer les salons</label>
-  <input id="chat-filter" type="search" class="form-control mb-3" placeholder="Filtrer par activité, catégorie ou horaire"
+  <input id="chat-filter" type="search" class="form-control mb-3" placeholder="Filtrer les chats par nom ou rattachement"
     [ngModel]="filter()" (ngModelChange)="filter.set($event)">
   <p class="text-muted">Consultez les communications de l’association et échangez avec les membres de vos activités.</p>
   @if (loadingRooms()) {
@@ -8,7 +8,7 @@
   } @else if (roomError()) {
     <div class="alert alert-danger" role="alert">{{ roomError() }} <button type="button" class="btn btn-outline-danger btn-sm ms-2" (click)="loadRooms()">Réessayer</button></div>
   } @else if (!rooms().length) {
-    <div class="alert alert-info">Vous n’avez pas encore d’activité avec une adhésion validée. Les salons de discussion apparaîtront ici après validation de votre inscription.</div>
+    <div class="alert alert-info">Aucun chat ne vous est accessible pour le moment.</div>
   } @else {
     @if (!filteredRooms().length) {
       <div class="alert alert-info">Aucun salon ne correspond à votre filtre.</div>
@@ -34,19 +34,17 @@
   <section class="chat-modal" role="dialog" aria-modal="true" [attr.aria-label]="'Discussion ' + room.nom">
     <header class="chat-modal-header"><div><h2>{{ room.nom }}</h2><small>{{ room.groupeFiltre }}</small></div><button type="button" class="btn-close" aria-label="Fermer la discussion" (click)="close()"></button></header>
     <div class="chat-conversation">
-      @if (room.communication) { <p class="chat-subtitle">Informations du bureau, du CA, du secrétariat et de la communication globale, visibles par tous.</p> }
-      @if (room.referentEncadrant) { <p class="chat-subtitle">Échanges réservés aux référents, encadrants, membres du bureau, membres du CA et secrétariat.</p> }
       @if (roomState.error) { <div class="alert alert-warning mx-3 mb-0" role="alert">{{ roomState.error }}</div> }
       <div class="chat-messages" role="log" [attr.aria-label]="'Messages de ' + room.nom" aria-live="polite" aria-relevant="additions">
         @if (roomState.loading) { <p class="text-muted text-center" role="status">Chargement des messages…</p> } @else {
           @if (roomState.hasOlder) { <div class="text-center mb-3"><button type="button" class="btn btn-outline-secondary btn-sm" [disabled]="roomState.loadingOlder" (click)="older(room)">{{ roomState.loadingOlder ? 'Chargement…' : 'Messages précédents' }}</button></div> }
-          @if (!roomState.messages.length && !roomState.error) { <p class="text-muted text-center">{{ room.communication ? 'Aucune communication pour le moment.' : 'La discussion commence ici. Envoyez le premier message !' }}</p> }
+          @if (!roomState.messages.length && !roomState.error) { <p class="text-muted text-center">{{ room.canWrite ? 'La discussion commence ici. Envoyez le premier message !' : 'Aucun message pour le moment.' }}</p> }
           @for (message of roomState.messages; track message.id) { <article class="chat-message" [class.mine]="message.senderUserId === userId"><div class="message-meta"><strong>{{ message.senderUserId === userId ? 'Vous' : message.senderName }}</strong>@if (message.senderRole) { <span class="chat-role" [class]="'chat-role role-' + message.senderRole.toLowerCase()">{{ message.senderRole === 'REFERENT_ACTIVITE' ? 'Référent d’activité' : message.senderRole === 'REFERENT_SECTION' ? 'Référent de section' : message.senderRole === 'COMMUNICATION_SECTION' ? 'Communication de section' : message.senderRole === 'COMMUNICATION_GLOBAL' ? 'Communication globale' : message.senderRole === 'ENCADRANT' ? 'Encadrant' : message.senderRole === 'MEMBRECA' ? 'Membre du CA' : 'Secrétariat' }}</span> }<time [attr.datetime]="message.createdAt">{{ message.createdAt | date:'dd/MM/yyyy HH:mm' }}</time></div><p>{{ message.content }}</p></article> }
         }
       </div>
       @if (room.canWrite !== false) {
         <form class="chat-compose" (ngSubmit)="send(room)">
-          <textarea [id]="'chat-content-' + room.id" [name]="'content-' + room.id" class="form-control" rows="3" maxlength="2000" aria-label="Votre message" [ngModel]="roomState.draft" (ngModelChange)="updateDraft(room.id, $event)" [disabled]="roomState.sending || roomState.loading" [placeholder]="room.communication ? 'Publiez une information pour tous les membres…' : room.referentEncadrant ? 'Écrivez aux référents et encadrants…' : 'Écrivez aux membres de votre activité…'" [attr.aria-describedby]="'chat-help-' + room.id"></textarea>
+          <textarea [id]="'chat-content-' + room.id" [name]="'content-' + room.id" class="form-control" rows="3" maxlength="2000" aria-label="Votre message" [ngModel]="roomState.draft" (ngModelChange)="updateDraft(room.id, $event)" [disabled]="roomState.sending || roomState.loading" placeholder="Écrivez votre message…" [attr.aria-describedby]="'chat-help-' + room.id"></textarea>
           <div class="chat-compose-footer">
             <small [id]="'chat-help-' + room.id" class="text-muted">{{ roomState.draft.length }} / 2000 caractères</small>
             <button type="submit" class="chat-send" [attr.aria-label]="roomState.sending ? 'Envoi en cours' : 'Envoyer'" [disabled]="roomState.sending || roomState.loading || !roomState.draft.trim() || roomState.draft.length > 2000"></button>

@@ -17,12 +17,14 @@ import static org.mockito.Mockito.when;
 class SectionConfigurationServicesTest {
 
     private SectionRepository sectionRepository;
+    private com.wild.corp.adhesion.repository.UserRepository users;
     private SectionConfigurationServices service;
 
     @BeforeEach
     void setUp() {
         sectionRepository = mock(SectionRepository.class);
-        service = new SectionConfigurationServices(sectionRepository);
+        users = mock(com.wild.corp.adhesion.repository.UserRepository.class);
+        service = new SectionConfigurationServices(sectionRepository, users);
     }
 
     @Test
@@ -37,7 +39,7 @@ class SectionConfigurationServicesTest {
         SectionConfiguration section = service.create(new SectionConfiguration(
                 null, "  Basket loisirs ", " non_competitive "));
 
-        assertThat(section).isEqualTo(new SectionConfiguration(12L, "Basket loisirs", "NON_COMPETITIVE"));
+        assertThat(section).isEqualTo(new SectionConfiguration(12L, "Basket loisirs", "NON_COMPETITIVE", java.util.List.of()));
     }
 
     @Test
@@ -57,6 +59,31 @@ class SectionConfigurationServicesTest {
         SectionConfiguration section = service.update(12L, new SectionConfiguration(
                 12L, " Basket compétition ", "competition"));
 
-        assertThat(section).isEqualTo(new SectionConfiguration(12L, "Basket compétition", "COMPETITION"));
+        assertThat(section).isEqualTo(new SectionConfiguration(12L, "Basket compétition", "COMPETITION", java.util.List.of()));
+    }
+
+    @Test
+    void assignsAndRevokesSectionReferentsWhilePreservingAssignmentsForOlderClients() {
+        Section section = Section.builder().id(12L).nom("Basket").type("COMPETITION").build();
+        var referent = new com.wild.corp.adhesion.models.User("referent", "password");
+        referent.setId(4L);
+        when(sectionRepository.findById(12L)).thenReturn(java.util.Optional.of(section));
+        when(sectionRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(users.findAllById(java.util.List.of(4L))).thenReturn(java.util.List.of(referent));
+        assertThat(service.update(12L, new SectionConfiguration(12L, "Basket", "COMPETITION", java.util.List.of(4L)))
+                .referentUserIds()).containsExactly(4L);
+        assertThat(service.update(12L, new SectionConfiguration(12L, "Basket", "COMPETITION"))
+                .referentUserIds()).containsExactly(4L);
+        assertThat(service.update(12L, new SectionConfiguration(12L, "Basket", "COMPETITION", java.util.List.of()))
+                .referentUserIds()).isEmpty();
+    }
+
+    @Test
+    void rejectsMissingOrDuplicateSectionReferents() {
+        when(sectionRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        for (var ids : java.util.List.of(java.util.List.of(4L), java.util.List.of(4L, 4L), java.util.List.of(0L))) {
+            assertThatThrownBy(() -> service.create(new SectionConfiguration(null, "Basket", "COMPETITION", ids)))
+                    .isInstanceOf(ResponseStatusException.class);
+        }
     }
 }

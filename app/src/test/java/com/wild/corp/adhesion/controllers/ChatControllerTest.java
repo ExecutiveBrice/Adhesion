@@ -29,11 +29,11 @@ class ChatControllerTest {
 
     @Test
     void requiresAuthentication() throws Exception {
-        mvc.perform(get("/chat/activities")).andExpect(status().isUnauthorized());
-        mvc.perform(get("/chat/activities/7/messages")).andExpect(status().isUnauthorized());
-        mvc.perform(post("/chat/activities/7/read").contentType("application/json")
+        mvc.perform(get("/chat")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/chat/7/messages")).andExpect(status().isUnauthorized());
+        mvc.perform(post("/chat/7/read").contentType("application/json")
                 .content("{\"lastMessageId\":10}")).andExpect(status().isUnauthorized());
-        mvc.perform(post("/chat/activities/7/messages").contentType("application/json")
+        mvc.perform(post("/chat/7/messages").contentType("application/json")
                 .content("{\"content\":\"Bonjour\"}")).andExpect(status().isUnauthorized());
         verifyNoInteractions(chat);
     }
@@ -42,7 +42,7 @@ class ChatControllerTest {
     void allowsOrdinaryMemberAndUsesAuthenticatedIdentity() throws Exception {
         when(chat.send("alice", 7L, "Bonjour")).thenReturn(
                 new ChatService.Message(1L, 4L, "Alice", null, "Bonjour", Instant.parse("2026-10-02T10:00:00Z")));
-        mvc.perform(post("/chat/activities/7/messages").with(user("alice").roles("USER"))
+        mvc.perform(post("/chat/7/messages").with(user("alice").roles("USER"))
                         .contentType("application/json").content("{\"content\":\"Bonjour\"}"))
                 .andExpect(status().isCreated()).andExpect(jsonPath("$.senderUserId").value(4));
         verify(chat).send("alice", 7L, "Bonjour");
@@ -52,7 +52,7 @@ class ChatControllerTest {
     void rejectsRequestsWhenChatIsDisabled() throws Exception {
         when(paramBooleanServices.findByParamValue("Show_Chat")).thenReturn(false);
 
-        mvc.perform(get("/chat/activities").with(user("alice")))
+        mvc.perform(get("/chat").with(user("alice")))
                 .andExpect(status().isNotFound());
 
         verifyNoInteractions(chat);
@@ -61,7 +61,7 @@ class ChatControllerTest {
     @Test
     void rejectsInvalidBodyBeforeService() throws Exception {
         for (String body : new String[] {"{}", "{\"content\":\"  \"}", "{\"content\":\"" + "x".repeat(2001) + "\"}"}) {
-            mvc.perform(post("/chat/activities/7/messages").with(user("alice"))
+            mvc.perform(post("/chat/7/messages").with(user("alice"))
                     .contentType("application/json").content(body)).andExpect(status().isBadRequest());
         }
         verifyNoInteractions(chat);
@@ -70,12 +70,12 @@ class ChatControllerTest {
     @Test
     void acknowledgesMessagesWithAuthenticatedIdentityAndValidatesCursor() throws Exception {
         when(chat.markRead("alice", 7L, 10L)).thenReturn(new ChatService.Unread(2));
-        mvc.perform(post("/chat/activities/7/read").with(user("alice"))
+        mvc.perform(post("/chat/7/read").with(user("alice"))
                 .contentType("application/json").content("{\"lastMessageId\":10}"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.unreadCount").value(2));
         verify(chat).markRead("alice", 7L, 10L);
         for (String body : new String[] {"{}", "{\"lastMessageId\":0}", "{\"lastMessageId\":-1}"}) {
-            mvc.perform(post("/chat/activities/7/read").with(user("alice"))
+            mvc.perform(post("/chat/7/read").with(user("alice"))
                     .contentType("application/json").content(body)).andExpect(status().isBadRequest());
         }
         verifyNoMoreInteractions(chat);

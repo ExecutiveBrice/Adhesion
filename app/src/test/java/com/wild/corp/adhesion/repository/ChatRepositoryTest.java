@@ -74,51 +74,45 @@ class ChatRepositoryTest {
     }
 
     @Test
-    void boundsHistoryAndKeepsMessagesIsolatedByActivity() {
-        Activite room = activity("Pilates");
-        Activite other = activity("Yoga");
+    void boundsHistoryAndKeepsMessagesIsolatedByChatEvenForTheSameActivity() {
+        Activite activity = activity("Pilates");
+        Chat room = chat("Pilates", activity);
+        Chat other = chat("Informations Pilates", activity);
         for (int i = 0; i < 61; i++) {
             ChatMessage message = new ChatMessage();
-            message.setActivite(i == 60 ? other : room);
-            message.setChannel(ChatChannel.ACTIVITY);
+            message.setChat(i == 60 ? other : room);
             message.setSenderUserId(1L); message.setSenderName("Alice");
             message.setContent("Message " + i); message.setCreatedAt(Instant.now());
             em.persist(message);
         }
         em.flush(); em.clear();
-        var latest = messages.findByActiviteIdOrderByIdDesc(room.getId(), PageRequest.of(0, 50));
+        var latest = messages.findByChatIdOrderByIdDesc(room.getId(), PageRequest.of(0, 50));
         assertThat(latest).hasSize(50).extracting(ChatMessage::getContent).doesNotContain("Message 60");
         var oldest = latest.getLast().getId();
-        assertThat(messages.findByActiviteIdAndIdLessThanOrderByIdDesc(room.getId(), oldest, PageRequest.of(0, 50)))
+        assertThat(messages.findByChatIdAndIdLessThanOrderByIdDesc(room.getId(), oldest, PageRequest.of(0, 50)))
                 .hasSize(10);
-        assertThat(messages.findByActiviteIdAndIdGreaterThanOrderByIdAsc(room.getId(), latest.getFirst().getId(), PageRequest.of(0, 50)))
+        assertThat(messages.findByChatIdAndIdGreaterThanOrderByIdAsc(room.getId(), latest.getFirst().getId(), PageRequest.of(0, 50)))
                 .isEmpty();
     }
 
     @Test
-    void communicationHistoryIsIsolatedAndSupportsBothPaginationDirections() {
-        Activite room = activity("Pilates");
-        ChatMessage first = null;
-        ChatMessage last = null;
-        for (int i = 0; i < 3; i++) {
-            ChatMessage message = new ChatMessage();
-            message.setActivite(i == 1 ? room : null);
-            message.setChannel(i == 1 ? ChatChannel.ACTIVITY : ChatChannel.COMMUNICATION);
-            message.setSenderUserId(1L); message.setSenderName("Alice");
-            message.setContent("Message " + i); message.setCreatedAt(Instant.now());
-            em.persist(message);
-            if (i == 0) first = message;
-            if (i == 2) last = message;
-        }
+    void sectionReferentsAccessOnlyTheirSectionsActivities() {
+        User user = new User("section@example.test", "password"); em.persist(user);
+        Section section = Section.builder().nom("Basket").type("COMPETITION").build();
+        section.getReferents().add(user); em.persist(section);
+        Activite linked = activity("Basket"); linked.setSection(section);
+        activity("Autre section");
         em.flush(); em.clear();
-        var page = PageRequest.of(0, 50);
-        assertThat(messages.findByChannelOrderByIdDesc(ChatChannel.COMMUNICATION, page))
-                .extracting(ChatMessage::getId).containsExactly(last.getId(), first.getId());
-        assertThat(messages.findByChannelAndIdLessThanOrderByIdDesc(ChatChannel.COMMUNICATION, last.getId(), page))
-                .extracting(ChatMessage::getId).containsExactly(first.getId());
-        assertThat(messages.findByChannelAndIdGreaterThanOrderByIdAsc(ChatChannel.COMMUNICATION, first.getId(), page))
-                .extracting(ChatMessage::getId).containsExactly(last.getId());
-        assertThat(messages.findByActiviteIdOrderByIdDesc(room.getId(), page)).hasSize(1);
+        assertThat(activities.findChatActivities(user.getId(), List.of(Status.LISTE_ATTENTE.label, Status.ANNULEE.label)))
+                .extracting(Activite::getId).containsExactly(linked.getId());
+        em.find(Section.class, section.getId()).getReferents().clear();
+        em.flush(); em.clear();
+        assertThat(activities.findChatActivities(user.getId(), List.of(Status.LISTE_ATTENTE.label, Status.ANNULEE.label))).isEmpty();
+    }
+
+    private Chat chat(String name, Activite activity) {
+        Chat chat = new Chat(); chat.setNom(name); chat.setCible(ChatTarget.ACTIVITE); chat.setActivite(activity);
+        em.persist(chat); return chat;
     }
 
     private Activite activity(String name) {

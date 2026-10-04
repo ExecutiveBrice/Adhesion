@@ -7,7 +7,7 @@ import { environment } from '../../environments/environment';
 describe('Compteurs de messages non lus', () => {
   let chat: ChatService;
   let http: HttpTestingController;
-  const url = environment.server + '/chat/activities';
+  const url = environment.server + '/chat';
   const room = (unreadCount: number) => ({ id: 7, nom: 'Pilates', groupe: 'Adultes', horaire: '', unreadCount });
 
   beforeEach(() => {

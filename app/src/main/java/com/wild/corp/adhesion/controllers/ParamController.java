@@ -7,14 +7,14 @@ import com.wild.corp.adhesion.models.resources.AgendaGoogleConfiguration;
 import com.wild.corp.adhesion.models.resources.SalleConfiguration;
 import com.wild.corp.adhesion.models.resources.SeanceResponse;
 import com.wild.corp.adhesion.models.resources.SectionConfiguration;
-import com.wild.corp.adhesion.models.resources.SectionChatConfiguration;
+import com.wild.corp.adhesion.models.resources.ChatConfiguration;
 import com.wild.corp.adhesion.services.GoogleAgendaConfigurationServices;
 import com.wild.corp.adhesion.services.ParamBooleanServices;
 import com.wild.corp.adhesion.services.ParamNumberServices;
 import com.wild.corp.adhesion.services.ParamTextServices;
 import com.wild.corp.adhesion.services.SalleConfigurationServices;
 import com.wild.corp.adhesion.services.SectionConfigurationServices;
-import com.wild.corp.adhesion.services.SectionChatConfigurationServices;
+import com.wild.corp.adhesion.services.ChatConfigurationServices;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -53,7 +53,7 @@ public class ParamController {
 	SectionConfigurationServices sectionConfigurationServices;
 
 	@Autowired
-	SectionChatConfigurationServices sectionChatConfigurationServices;
+	ChatConfigurationServices chatConfigurationServices;
 
 	@ApiResponses(value = {
 			@ApiResponse(
@@ -131,58 +131,58 @@ public class ParamController {
 
 	@GetMapping("/sections/{sectionId}/chats")
 	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<List<SectionChatConfiguration>> getSectionChats(@PathVariable Long sectionId) {
-		return ResponseEntity.ok(sectionChatConfigurationServices.getAll(sectionId));
+	public ResponseEntity<List<ChatConfiguration>> getChats(@PathVariable Long sectionId) {
+		return ResponseEntity.ok(chatConfigurationServices.getAll(sectionId));
 	}
 
 	@PostMapping("/sections/{sectionId}/chats")
 	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<?> createSectionChat(@PathVariable Long sectionId,
-			@RequestBody SectionChatConfiguration chat) {
-		return ResponseEntity.ok(sectionChatConfigurationServices.create(sectionChatFor(sectionId, chat)));
+	public ResponseEntity<?> createChat(@PathVariable Long sectionId,
+			@RequestBody ChatConfiguration chat) {
+		return ResponseEntity.ok(chatConfigurationServices.create(sectionChatFor(sectionId, chat)));
 	}
 
 	@PutMapping("/sections/{sectionId}/chats/{chatId}")
 	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<?> updateSectionChat(@PathVariable Long sectionId, @PathVariable Long chatId,
-			@RequestBody SectionChatConfiguration chat) {
-		return ResponseEntity.ok(sectionChatConfigurationServices.update(sectionId, chatId, sectionChatFor(sectionId, chat)));
+	public ResponseEntity<?> updateChat(@PathVariable Long sectionId, @PathVariable Long chatId,
+			@RequestBody ChatConfiguration chat) {
+		return ResponseEntity.ok(chatConfigurationServices.update(sectionId, chatId, sectionChatFor(sectionId, chat)));
 	}
 
 	@DeleteMapping("/sections/{sectionId}/chats/{chatId}")
 	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<Void> deleteSectionChat(@PathVariable Long sectionId, @PathVariable Long chatId) {
-		sectionChatConfigurationServices.delete(sectionId, chatId);
+	public ResponseEntity<Void> deleteChat(@PathVariable Long sectionId, @PathVariable Long chatId) {
+		chatConfigurationServices.delete(sectionId, chatId);
 		return ResponseEntity.noContent().build();
 	}
 
 	@GetMapping("/chats")
 	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<List<SectionChatConfiguration>> getChats() {
-		return ResponseEntity.ok(sectionChatConfigurationServices.getAll());
+	public ResponseEntity<List<ChatConfiguration>> getChats() {
+		return ResponseEntity.ok(chatConfigurationServices.getAll());
 	}
 
 	@PostMapping("/chats")
 	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<?> createChat(@RequestBody SectionChatConfiguration chat) {
-		return ResponseEntity.ok(sectionChatConfigurationServices.create(chat));
+	public ResponseEntity<?> createChat(@RequestBody ChatConfiguration chat) {
+		return ResponseEntity.ok(chatConfigurationServices.create(chat));
 	}
 
 	@PutMapping("/chats/{chatId}")
 	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<?> updateChat(@PathVariable Long chatId, @RequestBody SectionChatConfiguration chat) {
-		return ResponseEntity.ok(sectionChatConfigurationServices.update(chatId, chat));
+	public ResponseEntity<?> updateChat(@PathVariable Long chatId, @RequestBody ChatConfiguration chat) {
+		return ResponseEntity.ok(chatConfigurationServices.update(chatId, chat));
 	}
 
 	@DeleteMapping("/chats/{chatId}")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<Void> deleteChat(@PathVariable Long chatId) {
-		sectionChatConfigurationServices.delete(chatId);
+		chatConfigurationServices.delete(chatId);
 		return ResponseEntity.noContent().build();
 	}
 
-	private SectionChatConfiguration sectionChatFor(Long sectionId, SectionChatConfiguration chat) {
-		return new SectionChatConfiguration(chat.id(), chat.nom(), "SECTION", sectionId, null, chat.permissions());
+	private ChatConfiguration sectionChatFor(Long sectionId, ChatConfiguration chat) {
+		return new ChatConfiguration(chat.id(), chat.nom(), "SECTION", sectionId, null, chat.permissions());
 	}
 
 	@GetMapping("/allText")

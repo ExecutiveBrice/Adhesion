@@ -26,60 +26,32 @@ public class ChatController {
     public record SendMessage(@NotBlank @Size(max = 2000) String content) {}
     public record ReadMessages(@NotNull @Positive Long lastMessageId) {}
 
-    @PostMapping("/activities/{activityId}/read")
-    public ChatService.Unread markRead(Principal principal, @PathVariable Long activityId,
-            @Valid @RequestBody ReadMessages request) {
-        requireChatEnabled();
-        return chat.markRead(principal.getName(), activityId, request.lastMessageId());
-    }
-
-    @GetMapping("/activities")
+    @GetMapping
     public List<ChatService.Room> rooms(Principal principal) {
         requireChatEnabled();
         return chat.rooms(principal.getName());
     }
 
-    @GetMapping("/section-chats")
-    public List<ChatService.SectionRoom> sectionRooms(Principal principal) {
-        requireChatEnabled();
-        return chat.sectionRooms(principal.getName());
-    }
-
-    @PostMapping("/section-chats/{sectionChatId}/read")
-    public ChatService.Unread markSectionRead(Principal principal, @PathVariable Long sectionChatId,
+    @PostMapping("/{chatId}/read")
+    public ChatService.Unread markRead(Principal principal, @PathVariable Long chatId,
             @Valid @RequestBody ReadMessages request) {
         requireChatEnabled();
-        return chat.markSectionRead(principal.getName(), sectionChatId, request.lastMessageId());
+        return chat.markRead(principal.getName(), chatId, request.lastMessageId());
     }
 
-    @GetMapping("/section-chats/{sectionChatId}/messages")
-    public List<ChatService.Message> sectionHistory(Principal principal, @PathVariable Long sectionChatId,
+    @GetMapping("/{chatId}/messages")
+    public List<ChatService.Message> history(Principal principal, @PathVariable Long chatId,
             @RequestParam(required = false) Long beforeId, @RequestParam(required = false) Long afterId) {
         requireChatEnabled();
-        return chat.sectionHistory(principal.getName(), sectionChatId, beforeId, afterId);
+        return chat.history(principal.getName(), chatId, beforeId, afterId);
     }
 
-    @PostMapping("/section-chats/{sectionChatId}/messages")
+    @PostMapping("/{chatId}/messages")
     @ResponseStatus(HttpStatus.CREATED)
-    public ChatService.Message sendSectionMessage(Principal principal, @PathVariable Long sectionChatId,
+    public ChatService.Message send(Principal principal, @PathVariable Long chatId,
             @Valid @RequestBody SendMessage request) {
         requireChatEnabled();
-        return chat.sendSectionMessage(principal.getName(), sectionChatId, request.content());
-    }
-
-    @GetMapping("/activities/{activityId}/messages")
-    public List<ChatService.Message> history(Principal principal, @PathVariable Long activityId,
-            @RequestParam(required = false) Long beforeId, @RequestParam(required = false) Long afterId) {
-        requireChatEnabled();
-        return chat.history(principal.getName(), activityId, beforeId, afterId);
-    }
-
-    @PostMapping("/activities/{activityId}/messages")
-    @ResponseStatus(HttpStatus.CREATED)
-    public ChatService.Message send(Principal principal, @PathVariable Long activityId,
-            @Valid @RequestBody SendMessage request) {
-        requireChatEnabled();
-        return chat.send(principal.getName(), activityId, request.content());
+        return chat.send(principal.getName(), chatId, request.content());
     }
 
     private void requireChatEnabled() {

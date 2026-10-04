@@ -104,6 +104,7 @@
                   @if (sectionEnEdition === index) {
                     <div class="col-12 col-md"><label class="form-label" [for]="'sectionNom' + index">Nom</label><input [id]="'sectionNom' + index" type="text" class="form-control" maxlength="100" [(ngModel)]="section.nom"></div>
                     <div class="col-12 col-md-4"><label class="form-label" [for]="'sectionType' + index">Type</label><select [id]="'sectionType' + index" class="form-select" [(ngModel)]="section.type"><option value="NON_COMPETITIVE">Non compétitive</option><option value="COMPETITION">Competition</option></select></div>
+                    <div class="col-12"><label class="form-label" [for]="'sectionReferents' + index">Référents de cette section</label><select multiple class="form-select" [id]="'sectionReferents' + index" [ngModel]="section.referentUserIds ?? []" (ngModelChange)="section.referentUserIds = $event">@for (utilisateur of utilisateursSelectionnables; track utilisateur.id) { <option [ngValue]="utilisateur.id">{{utilisateur.prenom}} {{utilisateur.nom}}</option> }</select><small class="text-body-secondary">Ces personnes pourront lire les chats de cette section et de ses activités. Les permissions par rôle restent configurées dans chaque chat.</small></div>
                   } @else {
                     <div class="col"><span class="fw-semibold">{{section.nom}}</span></div><div class="col-auto"><span class="badge" [ngClass]="section.type === 'COMPETITION' ? 'text-bg-primary' : 'text-bg-secondary'">{{section.type === 'COMPETITION' ? 'Competition' : 'Non compétitive'}}</span></div>
                   }
@@ -141,9 +142,14 @@
           @if (chatCreationVisible) {
             <div class="admin-form-panel"><div class="row g-3 align-items-end">
               <div class="col-12 col-lg-6"><label class="form-label" for="nouveauChatNom">Nom du chat</label><input id="nouveauChatNom" type="text" class="form-control" maxlength="100" [(ngModel)]="nouveauChatNom" placeholder="Ex. Informations des encadrants"></div>
+              <div class="col-12"><div class="row g-2 mt-1">
+                                <div class="col-12 col-md-6"><label class="form-label" for="nouveauChatCible">Rattachement du chat</label><select id="nouveauChatCible" class="form-select" [ngModel]="nouveauChatCible" (ngModelChange)="nouveauChatCible = $event; nouveauChatCibleId = undefined"><option value="ASSOCIATION">Global (sans rattachement)</option><option value="SECTION">Section</option><option value="ACTIVITE">Activité</option></select></div>
+                                @if (nouveauChatCible === 'SECTION') { <div class="col-12 col-md-6"><label class="form-label" for="nouveauChatSection">Section</label><select id="nouveauChatSection" class="form-select" [(ngModel)]="nouveauChatCibleId"><option [ngValue]="undefined">Choisir une section</option>@for (section of sections; track section.id) { <option [ngValue]="section.id">{{section.nom}}</option> }</select></div> }
+                                @if (nouveauChatCible === 'ACTIVITE') { <div class="col-12 col-md-6"><label class="form-label" for="nouveauChatActivite">Activité</label><select id="nouveauChatActivite" class="form-select" [(ngModel)]="nouveauChatCibleId"><option [ngValue]="undefined">Choisir une activité</option>@for (activite of activites; track activite.id) { <option [ngValue]="activite.id">{{activite.nom}}</option> }</select></div> }
+                              </div></div>
               <div class="col-12">
-                <span class="form-label d-block mb-2">Visibilités et droits</span>
-                <p class="small text-body-secondary">Le rattachement limite uniquement la visibilité des adhérents. Les autres rôles cochés voient le chat indépendamment de leur section ou activité.</p>
+                <span class="form-label d-block mb-2">Permissions par rôle</span>
+                <p class="small text-body-secondary">Le rattachement donne la lecture aux adhérents, encadrants et référents de l’activité ou de la section. Les permissions par rôle ajoutent des droits indépendamment du rattachement. Un rôle coché donne accès à tous les utilisateurs de ce rôle, même en dehors de la section ou de l’activité. Pour un chat global, la lecture est définie par ces permissions.</p>
                 <div class="table-responsive">
                   <table class="table table-sm align-middle mb-0">
                     <thead><tr><th scope="col">Rôle</th><th scope="col" class="text-center">Visibilité</th><th scope="col" class="text-center">Écriture</th></tr></thead>
@@ -152,13 +158,6 @@
                         <tr>
                           <td>
                             {{role.libelle}}
-                            @if (role.code === 'ROLE_USER') {
-                              <div class="row g-2 mt-1">
-                                <div class="col-12 col-md-6"><label class="form-label" for="nouveauChatCible">Visibilité des adhérents</label><select id="nouveauChatCible" class="form-select" [ngModel]="nouveauChatCible" (ngModelChange)="nouveauChatCible = $event; nouveauChatCibleId = undefined"><option value="ASSOCIATION">Globale (tous les adhérents)</option><option value="SECTION">Section</option><option value="ACTIVITE">Activité</option></select></div>
-                                @if (nouveauChatCible === 'SECTION') { <div class="col-12 col-md-6"><label class="form-label" for="nouveauChatSection">Section</label><select id="nouveauChatSection" class="form-select" [(ngModel)]="nouveauChatCibleId"><option [ngValue]="undefined">Choisir une section</option>@for (section of sections; track section.id) { <option [ngValue]="section.id">{{section.nom}}</option> }</select></div> }
-                                @if (nouveauChatCible === 'ACTIVITE') { <div class="col-12 col-md-6"><label class="form-label" for="nouveauChatActivite">Activité</label><select id="nouveauChatActivite" class="form-select" [(ngModel)]="nouveauChatCibleId"><option [ngValue]="undefined">Choisir une activité</option>@for (activite of activites; track activite.id) { <option [ngValue]="activite.id">{{activite.nom}}</option> }</select></div> }
-                              </div>
-                            }
                           </td>
                           <td class="text-center"><input type="checkbox" class="form-check-input" [attr.aria-label]="'Visibilité pour ' + role.libelle" [checked]="droitsNouveauChat[role.code]?.lecture" (change)="basculerLectureChat(role.code)"></td>
                           <td class="text-center"><input type="checkbox" class="form-check-input" [attr.aria-label]="'Écriture pour ' + role.libelle" [checked]="droitsNouveauChat[role.code]?.ecriture" [disabled]="!droitsNouveauChat[role.code]?.lecture" (change)="basculerEcritureChat(role.code)"></td>
@@ -179,9 +178,14 @@
                   @if (chatEnEdition === chat.id) {
                     <div class="row g-3 align-items-end">
                       <div class="col-12 col-lg-6"><label class="form-label" [for]="'chatNom' + chat.id">Nom du chat</label><input [id]="'chatNom' + chat.id" type="text" class="form-control" maxlength="100" [(ngModel)]="chatEnEditionNom"></div>
+                      <div class="col-12"><div class="row g-2 mt-1">
+                                        <div class="col-12 col-md-6"><label class="form-label" [for]="'chatCible' + chat.id">Rattachement du chat</label><select [id]="'chatCible' + chat.id" class="form-select" [ngModel]="chatEnEditionCible" (ngModelChange)="chatEnEditionCible = $event; chatEnEditionCibleId = undefined"><option value="ASSOCIATION">Global (sans rattachement)</option><option value="SECTION">Section</option><option value="ACTIVITE">Activité</option></select></div>
+                                        @if (chatEnEditionCible === 'SECTION') { <div class="col-12 col-md-6"><label class="form-label" [for]="'chatSection' + chat.id">Section</label><select [id]="'chatSection' + chat.id" class="form-select" [(ngModel)]="chatEnEditionCibleId"><option [ngValue]="undefined">Choisir une section</option>@for (section of sections; track section.id) { <option [ngValue]="section.id">{{section.nom}}</option> }</select></div> }
+                                        @if (chatEnEditionCible === 'ACTIVITE') { <div class="col-12 col-md-6"><label class="form-label" [for]="'chatActivite' + chat.id">Activité</label><select [id]="'chatActivite' + chat.id" class="form-select" [(ngModel)]="chatEnEditionCibleId"><option [ngValue]="undefined">Choisir une activité</option>@for (activite of activites; track activite.id) { <option [ngValue]="activite.id">{{activite.nom}}</option> }</select></div> }
+                                      </div></div>
                       <div class="col-12">
-                        <span class="form-label d-block mb-2">Visibilités et droits</span>
-                        <p class="small text-body-secondary">Le rattachement limite uniquement la visibilité des adhérents. Les autres rôles cochés voient le chat indépendamment de leur section ou activité.</p>
+                        <span class="form-label d-block mb-2">Permissions par rôle</span>
+                        <p class="small text-body-secondary">Le rattachement donne la lecture aux adhérents, encadrants et référents de l’activité ou de la section. Les permissions par rôle ajoutent des droits indépendamment du rattachement. Un rôle coché donne accès à tous les utilisateurs de ce rôle, même en dehors de la section ou de l’activité. Pour un chat global, la lecture est définie par ces permissions.</p>
                         <div class="table-responsive">
                           <table class="table table-sm align-middle mb-0">
                             <thead><tr><th scope="col">Rôle</th><th scope="col" class="text-center">Visibilité</th><th scope="col" class="text-center">Écriture</th></tr></thead>
@@ -190,13 +194,6 @@
                                 <tr>
                                   <td>
                                     {{role.libelle}}
-                                    @if (role.code === 'ROLE_USER') {
-                                      <div class="row g-2 mt-1">
-                                        <div class="col-12 col-md-6"><label class="form-label" [for]="'chatCible' + chat.id">Visibilité des adhérents</label><select [id]="'chatCible' + chat.id" class="form-select" [ngModel]="chatEnEditionCible" (ngModelChange)="chatEnEditionCible = $event; chatEnEditionCibleId = undefined"><option value="ASSOCIATION">Globale (tous les adhérents)</option><option value="SECTION">Section</option><option value="ACTIVITE">Activité</option></select></div>
-                                        @if (chatEnEditionCible === 'SECTION') { <div class="col-12 col-md-6"><label class="form-label" [for]="'chatSection' + chat.id">Section</label><select [id]="'chatSection' + chat.id" class="form-select" [(ngModel)]="chatEnEditionCibleId"><option [ngValue]="undefined">Choisir une section</option>@for (section of sections; track section.id) { <option [ngValue]="section.id">{{section.nom}}</option> }</select></div> }
-                                        @if (chatEnEditionCible === 'ACTIVITE') { <div class="col-12 col-md-6"><label class="form-label" [for]="'chatActivite' + chat.id">Activité</label><select [id]="'chatActivite' + chat.id" class="form-select" [(ngModel)]="chatEnEditionCibleId"><option [ngValue]="undefined">Choisir une activité</option>@for (activite of activites; track activite.id) { <option [ngValue]="activite.id">{{activite.nom}}</option> }</select></div> }
-                                      </div>
-                                    }
                                   </td>
                                   <td class="text-center"><input type="checkbox" class="form-check-input" [attr.aria-label]="'Visibilité pour ' + role.libelle" [checked]="droitsChatEnEdition[role.code]?.lecture" (change)="basculerLectureChatEnEdition(role.code)"></td>
                                   <td class="text-center"><input type="checkbox" class="form-check-input" [attr.aria-label]="'Écriture pour ' + role.libelle" [checked]="droitsChatEnEdition[role.code]?.ecriture" [disabled]="!droitsChatEnEdition[role.code]?.lecture" (change)="basculerEcritureChatEnEdition(role.code)"></td>
@@ -209,7 +206,7 @@
                       <div class="col-12 d-flex flex-wrap justify-content-end gap-2"><button type="button" class="btn btn-outline-secondary" [disabled]="chatEnregistrement" (click)="annulerModificationChat()">Annuler</button><button type="button" class="btn btn-primary" [disabled]="chatEnregistrement" (click)="enregistrerChat(chat)">{{chatEnregistrement ? 'Enregistrement…' : 'Enregistrer'}}</button></div>
                     </div>
                   } @else {
-                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3"><div><span class="fw-semibold">{{chat.nom}}</span><small class="d-block text-body-secondary mt-1">Visibilité des adhérents : {{cibleChat(chat)}} · {{resumePermissionsChat(chat)}}</small></div><div class="d-flex gap-2"><button type="button" class="btn btn-sm btn-outline-primary" [disabled]="chatEnregistrement" (click)="modifierChat(chat)"><fa-icon [icon]="faPencilSquare" class="me-1"></fa-icon>Modifier</button><button type="button" class="btn btn-sm btn-outline-danger" [disabled]="chatEnregistrement" (click)="supprimerChat(chat)"><fa-icon [icon]="faTrash" class="me-1"></fa-icon>Supprimer</button></div></div>
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3"><div><span class="fw-semibold">{{chat.nom}}</span><small class="d-block text-body-secondary mt-1">Rattachement : {{cibleChat(chat)}} · {{resumePermissionsChat(chat)}}</small></div><div class="d-flex gap-2"><button type="button" class="btn btn-sm btn-outline-primary" [disabled]="chatEnregistrement" (click)="modifierChat(chat)"><fa-icon [icon]="faPencilSquare" class="me-1"></fa-icon>Modifier</button><button type="button" class="btn btn-sm btn-outline-danger" [disabled]="chatEnregistrement" (click)="supprimerChat(chat)"><fa-icon [icon]="faTrash" class="me-1"></fa-icon>Supprimer</button></div></div>
                   }
                 </div>
               }

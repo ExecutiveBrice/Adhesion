@@ -28,5 +28,6 @@
   <include file="chat/06-create_section_chats.xml" relativeToChangelogFile="true"/>
   <include file="chat/07-generalize_managed_chats.xml" relativeToChangelogFile="true"/>
   <include file="chat/08-remove_legacy_chats.xml" relativeToChangelogFile="true"/>
+  <include file="chat/09-unify_chats.xml" relativeToChangelogFile="true"/>
   <include file="shop/12-rename_referent_and_add_communication_roles.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

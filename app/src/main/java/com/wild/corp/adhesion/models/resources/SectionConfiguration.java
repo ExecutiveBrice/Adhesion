@@ -1,4 +1,9 @@
 package com.wild.corp.adhesion.models.resources;
 
-public record SectionConfiguration(Long id, String nom, String type) {
+import java.util.List;
+
+public record SectionConfiguration(Long id, String nom, String type, List<Long> referentUserIds) {
+    public SectionConfiguration(Long id, String nom, String type) {
+        this(id, nom, type, null);
+    }
 }

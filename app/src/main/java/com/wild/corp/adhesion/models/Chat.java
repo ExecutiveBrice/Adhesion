@@ -12,8 +12,8 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @Entity
-@Table(name = "section_chats", uniqueConstraints = @UniqueConstraint(columnNames = {"section_id", "nom"}))
-public class SectionChat {
+@Table(name = "chats")
+public class Chat {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,5 +35,13 @@ public class SectionChat {
     private String nom;
 
     @OneToMany(mappedBy = "chat", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    private List<SectionChatPermission> permissions = new ArrayList<>();
+    private List<ChatPermission> permissions = new ArrayList<>();
+
+    public String targetLabel() {
+        return switch (cible) {
+            case SECTION -> "Section · " + section.getNom();
+            case ACTIVITE -> "Activité · " + activite.getNom();
+            case ASSOCIATION -> "Global";
+        };
+    }
 }

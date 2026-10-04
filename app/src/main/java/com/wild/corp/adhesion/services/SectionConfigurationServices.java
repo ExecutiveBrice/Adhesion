@@ -3,6 +3,7 @@ package com.wild.corp.adhesion.services;
 import com.wild.corp.adhesion.models.Section;
 import com.wild.corp.adhesion.models.resources.SectionConfiguration;
 import com.wild.corp.adhesion.repository.SectionRepository;
+import com.wild.corp.adhesion.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -18,9 +19,11 @@ public class SectionConfigurationServices {
     private static final Set<String> TYPES_AUTORISES = Set.of("COMPETITION", "NON_COMPETITIVE");
 
     private final SectionRepository sectionRepository;
+    private final UserRepository users;
 
-    public SectionConfigurationServices(SectionRepository sectionRepository) {
+    public SectionConfigurationServices(SectionRepository sectionRepository, UserRepository users) {
         this.sectionRepository = sectionRepository;
+        this.users = users;
     }
 
     @Transactional
@@ -35,6 +38,7 @@ public class SectionConfigurationServices {
             throw configurationInvalide("Une section portant ce nom existe déjà");
         }
         Section section = Section.builder().nom(normalisee.nom()).type(normalisee.type()).build();
+        appliquerReferents(section, configuration.referentUserIds());
         return toConfiguration(sectionRepository.save(section));
     }
 
@@ -48,6 +52,7 @@ public class SectionConfigurationServices {
         }
         section.setNom(normalisee.nom());
         section.setType(normalisee.type());
+        appliquerReferents(section, configuration.referentUserIds());
         return toConfiguration(sectionRepository.save(section));
     }
 
@@ -71,7 +76,23 @@ public class SectionConfigurationServices {
     }
 
     private SectionConfiguration toConfiguration(Section section) {
-        return new SectionConfiguration(section.getId(), section.getNom(), section.getType());
+        return new SectionConfiguration(section.getId(), section.getNom(), section.getType(),
+                section.getReferents().stream().map(com.wild.corp.adhesion.models.User::getId).sorted().toList());
+    }
+
+    private void appliquerReferents(Section section, List<Long> referentUserIds) {
+        // Older clients that omit this field must preserve existing assignments.
+        if (referentUserIds == null) return;
+        if (referentUserIds.stream().anyMatch(id -> id == null || id <= 0)
+                || new java.util.HashSet<>(referentUserIds).size() != referentUserIds.size()) {
+            throw configurationInvalide("Les référents de section sont invalides");
+        }
+        var referents = users.findAllById(referentUserIds);
+        if (referents.size() != referentUserIds.size()) {
+            throw configurationInvalide("Un référent de section est introuvable");
+        }
+        section.getReferents().clear();
+        section.getReferents().addAll(referents);
     }
 
     private ResponseStatusException configurationInvalide(String message) {

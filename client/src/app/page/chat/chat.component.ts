@@ -43,8 +43,6 @@ export class ChatComponent implements OnInit, OnDestroy {
       .some(value => this.normalized(value).includes(filter)));
     const unreadCounts = this.unreadCounts();
     return [...rooms].sort((a, b) => Number((unreadCounts.get(b.id) ?? 0) > 0) - Number((unreadCounts.get(a.id) ?? 0) > 0)
-      || Number(!!b.communication) - Number(!!a.communication)
-      || Number(!!b.referentEncadrant) - Number(!!a.referentEncadrant)
       || a.nom.localeCompare(b.nom, 'fr'));
   });
   readonly activeRoomId = signal<number | undefined>(undefined);
@@ -65,9 +63,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.roomError.set('');
     this.requests.add(this.chat.rooms().subscribe({
       next: rooms => {
-        this.rooms.set([...rooms].sort((a, b) => Number(!!b.communication) - Number(!!a.communication)
-          || Number(!!b.referentEncadrant) - Number(!!a.referentEncadrant)
-          || a.nom.localeCompare(b.nom, 'fr')));
+        this.rooms.set([...rooms].sort((a, b) => a.nom.localeCompare(b.nom, 'fr')));
         this.loadingRooms.set(false);
       },
       error: () => {
@@ -111,7 +107,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     const oldest = state.messages[0];
     if (!oldest || state.loadingOlder) return;
     this.update(room.id, { loadingOlder: true });
-    this.add(room.id, this.messagesFor(room, { beforeId: oldest.id }).subscribe({
+    this.add(room.id, this.chat.messages(room.id, { beforeId: oldest.id }).subscribe({
       next: messages => {
         this.merge(room.id, messages);
         this.update(room.id, { hasOlder: messages.length === 50, loadingOlder: false, error: '' });
@@ -125,16 +121,14 @@ export class ChatComponent implements OnInit, OnDestroy {
     const content = state.draft.trim();
     if (room.canWrite === false || !content || state.draft.length > 2000 || state.sending || state.loading) return;
     this.update(room.id, { sending: true, error: '' });
-    this.add(room.id, this.sendFor(room, content).subscribe({
+    this.add(room.id, this.chat.send(room.id, content).subscribe({
       next: message => {
         this.merge(room.id, [message]);
         this.update(room.id, { draft: '', sending: false });
       },
       error: err => this.update(room.id, {
         sending: false,
-        error: err.status === 403 ? (room.communication ? 'Vous n’êtes pas autorisé à publier dans Communication.'
-          : room.referentEncadrant ? 'Vous n’êtes plus autorisé à publier dans ce canal.'
-          : 'Vous ne faites plus partie de cette activité.')
+        error: err.status === 403 ? 'Vous n’êtes plus autorisé à publier dans ce chat.'
           : 'Le message n’a pas pu être envoyé. Votre texte est conservé, vous pouvez réessayer.'
       })
     }));
@@ -146,7 +140,7 @@ export class ChatComponent implements OnInit, OnDestroy {
       filter(() => document.visibilityState !== 'hidden'),
       exhaustMap(() => {
         const state = this.state(room.id);
-        return this.messagesFor(room, state.cursor ? { afterId: state.cursor } : undefined).pipe(
+        return this.chat.messages(room.id, state.cursor ? { afterId: state.cursor } : undefined).pipe(
           catchError(err => {
             this.update(room.id, {
               loading: false,
@@ -170,7 +164,7 @@ export class ChatComponent implements OnInit, OnDestroy {
       if (lastMessageId && document.visibilityState !== 'hidden' && !this.reading.has(room.id)
           && this.readThrough.get(room.id) !== lastMessageId) {
         this.reading.add(room.id);
-        this.add(room.id, this.markReadFor(room, lastMessageId).pipe(
+        this.add(room.id, this.chat.markRead(room.id, lastMessageId).pipe(
           finalize(() => this.reading.delete(room.id))
         ).subscribe({
           next: () => this.readThrough.set(room.id, lastMessageId),
@@ -187,24 +181,6 @@ export class ChatComponent implements OnInit, OnDestroy {
     messages.forEach(message => merged.set(message.id, message));
     const allMessages = [...merged.values()].sort((a, b) => a.id - b.id);
     this.update(roomId, { messages: allMessages });
-  }
-
-  private messagesFor(room: ChatRoom, cursor?: { beforeId?: number; afterId?: number }) {
-    return room.sectionChatId !== undefined
-      ? this.chat.sectionMessages(room.sectionChatId, cursor)
-      : this.chat.messages(room.id, cursor);
-  }
-
-  private sendFor(room: ChatRoom, content: string) {
-    return room.sectionChatId !== undefined
-      ? this.chat.sendSectionMessage(room.sectionChatId, content)
-      : this.chat.send(room.id, content);
-  }
-
-  private markReadFor(room: ChatRoom, lastMessageId: number) {
-    return room.sectionChatId !== undefined
-      ? this.chat.markSectionRead(room.sectionChatId, lastMessageId)
-      : this.chat.markRead(room.id, lastMessageId);
   }
 
   private update(roomId: number, changes: Partial<RoomState>): void {

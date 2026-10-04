@@ -17,16 +17,16 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @Entity
-@Table(name = "section_chat_permissions", uniqueConstraints = @UniqueConstraint(columnNames = {"section_chat_id", "role"}))
-public class SectionChatPermission {
+@Table(name = "chat_permissions", uniqueConstraints = @UniqueConstraint(columnNames = {"chat_id", "role"}))
+public class ChatPermission {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "section_chat_id", nullable = false)
-    private SectionChat chat;
+    @JoinColumn(name = "chat_id", nullable = false)
+    private Chat chat;
 
     @Column(nullable = false, length = 32)
     private String role;
