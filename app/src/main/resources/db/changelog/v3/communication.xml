@@ -2,9 +2,11 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
-  <changeSet id="shop-03-1" author="adhesion">
-    <preConditions onFail="MARK_RAN" onError="HALT"><not><columnExists tableName="shop_products" columnName="image_url"/></not></preConditions>
-    <sql splitStatements="false"><![CDATA[ALTER TABLE shop_products ADD COLUMN IF NOT EXISTS image_url VARCHAR(2048);]]></sql>
+  <changeSet id="v3-publicite-links" author="adhesion">
+    <addColumn tableName="publicites">
+      <column name="facebook_url" type="varchar(2048)"/>
+      <column name="snapchat_url" type="varchar(2048)"/>
+      <column name="website_url" type="varchar(2048)"/>
+    </addColumn>
   </changeSet>
-
 </databaseChangeLog>

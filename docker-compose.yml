@@ -5,23 +5,35 @@ services:
     depends_on:
       - app_adhesion
     volumes:
-      - ./client:/usr/share/nginx/html/adhesion
+      - ./client/dist/browser:/usr/share/nginx/html:ro
     networks:
       - traefik_web
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.client_adhesion.priority=1000"
-      - "traefik.http.routers.client_adhesion.rule=(Host(`${DNS_NAME}`) || Host(`www.${DNS_NAME}`)) && PathPrefix(`/adhesion/`)"
+      - "traefik.http.routers.client_adhesion.rule=Host(`adhesion.${DNS_NAME}`)"
+      - "traefik.http.routers.client_adhesion.service=client_adhesion"
 
       - "traefik.http.routers.client_adhesion.entrypoints=websecure"
       - "traefik.http.routers.client_adhesion.tls=true"
       - "traefik.http.routers.client_adhesion.tls.certresolver=myresolver"
+
+      - "traefik.http.routers.client_adhesion_spa.priority=1100"
+      - "traefik.http.routers.client_adhesion_spa.rule=Host(`adhesion.${DNS_NAME}`) && PathRegexp(`^/([0-9]+(/.*)?)$`)"
+      - "traefik.http.routers.client_adhesion_spa.entrypoints=websecure"
+      - "traefik.http.routers.client_adhesion_spa.tls=true"
+      - "traefik.http.routers.client_adhesion_spa.tls.certresolver=myresolver"
+      - "traefik.http.routers.client_adhesion_spa.middlewares=client_adhesion_spa"
+      - "traefik.http.routers.client_adhesion_spa.service=client_adhesion"
+      - "traefik.http.middlewares.client_adhesion_spa.replacepath.path=/index.html"
+      - "traefik.http.services.client_adhesion.loadbalancer.server.port=80"
 
   app_adhesion:
     image: 'docker-spring-boot-adhesion'
     container_name: app_adhesion
     build:
       context: ./app
+    env_file: .env
     depends_on:
       - db_adhesion
     volumes:
@@ -48,10 +60,10 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.app_adhesion.priority=10000"
-      - "traefik.http.routers.app_adhesion.rule=(Host(`${DNS_NAME}`) || Host(`www.${DNS_NAME}`)) && PathPrefix(`/adhesion/api/`)"
+      - "traefik.http.routers.app_adhesion.rule=Host(`adhesion.${DNS_NAME}`) && PathPrefix(`/api`)"
 
       - "traefik.http.routers.app_adhesion.middlewares=app_adhesion-replacepathregex"
-      - "traefik.http.middlewares.app_adhesion-replacepathregex.replacepathregex.regex=^/adhesion/api/(.*)"
+      - "traefik.http.middlewares.app_adhesion-replacepathregex.replacepathregex.regex=^/api/(.*)"
       - "traefik.http.middlewares.app_adhesion-replacepathregex.replacepathregex.replacement=/$$1"
 
       - "traefik.http.routers.app_adhesion.entrypoints=websecure"
@@ -59,12 +71,12 @@ services:
       - "traefik.http.routers.app_adhesion.tls.certresolver=myresolver"
 
   db_adhesion:
-    image: postgres:17.6-alpine
+    image: postgres:18.0-alpine
     container_name: db_adhesion
     environment:
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_DB=${DB_NAME}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_USER=adhesion
+      - POSTGRES_DB=db_adhesion
+      - POSTGRES_PASSWORD=coucou
     ports:          #supprimer en remote
       - "8105:5432" #supprimer en remote
     volumes:

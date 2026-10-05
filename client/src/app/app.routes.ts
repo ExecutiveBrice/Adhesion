@@ -6,6 +6,7 @@ import { shopAuthGuard } from './shop/shop-auth.guard';
 import { chatAuthGuard } from './page/chat/chat-auth.guard';
 
 export const routes: Routes = [
+  { path: 'publicites', canActivate: [memberAccessGuard], data: { roles: ['ROLE_COMMUNICATION_GLOBAL'] }, title: 'Gestion des publicités', loadComponent: () => import('./page/publicites/publicites.component').then(m => m.PublicitesComponent) },
   { path: 'profil/nouveau', canActivate: [memberAccessGuard], data: { roles: [], nouveau: true }, title: 'Ajouter un adhérent', loadComponent: () => import('./page/profil/profil.component').then((m) => m.ProfilComponent) },
   { path: 'profil/:tribuUuid', canActivate: [memberAccessGuard], data: { roles: [] }, title: 'Profil adhérent', loadComponent: () => import('./page/profil/profil.component').then((m) => m.ProfilComponent) },
   { path: 'profil', canActivate: [memberAccessGuard], data: { roles: [] }, title: 'Mon profil', loadComponent: () => import('./page/profil/profil.component').then((m) => m.ProfilComponent) },

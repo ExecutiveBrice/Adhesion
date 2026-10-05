@@ -20,7 +20,15 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.http.HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS;
+import static org.springframework.http.HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS;
+import static org.springframework.http.HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN;
+import static org.springframework.http.HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS;
+import static org.springframework.http.HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD;
+import static org.springframework.http.HttpHeaders.ORIGIN;
 
 @WebMvcTest(controllers = AuthController.class)
 @ContextConfiguration(classes = {AuthController.class, WebSecurityConfig.class, AuthEntryPointJwt.class})
@@ -64,6 +72,35 @@ class SignupAuthorizationMvcTest {
         mockMvc.perform(post("/auth/signout").contentType(APPLICATION_JSON)
                         .content("{\"refreshToken\":\"session-secret\"}"))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void localAngularFrontendCanCallTheApiAcrossOrigins() throws Exception {
+        mockMvc.perform(options("/publicites")
+                        .header(ORIGIN, "http://localhost:4200")
+                        .header(ACCESS_CONTROL_REQUEST_METHOD, "POST")
+                        .header(ACCESS_CONTROL_REQUEST_HEADERS, "authorization,content-type"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(ACCESS_CONTROL_ALLOW_ORIGIN, "http://localhost:4200"))
+                .andExpect(header().string(ACCESS_CONTROL_ALLOW_METHODS, org.hamcrest.Matchers.containsString("POST")))
+                .andExpect(header().string(ACCESS_CONTROL_ALLOW_HEADERS, org.hamcrest.Matchers.containsStringIgnoringCase("authorization")));
+    }
+
+    @Test
+    void actualResponsesContainCorsHeadersAndUnknownOriginsAreRejected() throws Exception {
+        given(userServices.existsByEmail(anyString())).willReturn(false);
+        String body = "{\"username\":\"new.member@example.org\",\"password\":\"secret1\"}";
+
+        mockMvc.perform(post("/auth/signup").header(ORIGIN, "http://localhost:4200")
+                        .contentType(APPLICATION_JSON).content(body))
+                .andExpect(status().isOk())
+                .andExpect(header().string(ACCESS_CONTROL_ALLOW_ORIGIN, "http://localhost:4200"));
+
+        mockMvc.perform(options("/publicites")
+                        .header(ORIGIN, "https://malicious.example")
+                        .header(ACCESS_CONTROL_REQUEST_METHOD, "POST"))
+                .andExpect(status().isForbidden())
+                .andExpect(header().doesNotExist(ACCESS_CONTROL_ALLOW_ORIGIN));
     }
 
 }

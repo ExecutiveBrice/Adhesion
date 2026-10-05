@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  <changeSet id="v4-publicite-sections" author="adhesion">
+    <createTable tableName="publicite_sections">
+      <column name="publicite_id" type="bigint"><constraints nullable="false"/></column>
+      <column name="section_id" type="bigint"><constraints nullable="false"/></column>
+    </createTable>
+    <addPrimaryKey tableName="publicite_sections" columnNames="publicite_id, section_id"
+      constraintName="pk_publicite_sections"/>
+    <addForeignKeyConstraint baseTableName="publicite_sections" baseColumnNames="publicite_id"
+      referencedTableName="publicites" referencedColumnNames="id" constraintName="fk_publicite_sections_publicite"
+      onDelete="CASCADE"/>
+    <addForeignKeyConstraint baseTableName="publicite_sections" baseColumnNames="section_id"
+      referencedTableName="sections" referencedColumnNames="id" constraintName="fk_publicite_sections_section"
+      onDelete="CASCADE"/>
+    <createIndex tableName="publicite_sections" indexName="idx_publicite_sections_section">
+      <column name="section_id"/>
+    </createIndex>
+  </changeSet>
+</databaseChangeLog>

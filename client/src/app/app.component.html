@@ -102,6 +102,14 @@
                   </a>
                 </li>
               }
+              @if (showCommunication) {
+                <li class="nav-item">
+                  <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="publicites" aria-label="Publicités" title="Publicités">
+                    <fa-icon [icon]="faBullhorn" aria-hidden="true"></fa-icon>
+                    <span class="nav-label">Publicités</span>
+                  </a>
+                </li>
+              }
               @if (showProf) {
                 <li class="nav-item">
                   <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="profs" aria-label="Mes groupes" title="Mes groupes">

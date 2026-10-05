@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { Accord, Activite, Adhesion, AdhesionLite, Paiement } from '../models';
 
-const API_URL = environment.server+'/adhesion/';
+const API_URL = environment.server+'/';
 
 export interface Page<T> {
   content: T[];
@@ -32,7 +32,7 @@ export interface AdhesionPageQuery {
 export class AdhesionService {
   private http = inject(HttpClient);
 
-  
+
   deleteAdhesion(adhesionId: number): Observable<any> {
     let params = new HttpParams().set('adhesionId', '' + adhesionId + '');
     return this.http.delete(API_URL+"deleteAdhesion", {params, responseType: 'text' });
@@ -57,7 +57,7 @@ export class AdhesionService {
     let params = new HttpParams().set('adhesionId', '' + adhesionId + '').set('statut', '' + statut + '');
     return this.http.get<Adhesion>(API_URL+"updateDocumentsSecretariat", {params, responseType: 'json' });
   }
-  
+
   updatePaiementSecretariat(adhesionId: number, statut: boolean): Observable<Adhesion> {
     let params = new HttpParams().set('adhesionId', '' + adhesionId + '').set('statut', '' + statut + '');
     return this.http.get<Adhesion>(API_URL+"updatePaiementSecretariat", {params, responseType: 'json' });
@@ -67,34 +67,34 @@ export class AdhesionService {
     let params = new HttpParams().set('adhesionId', '' + adhesionId + '').set('statut', '' + statut + '');
     return this.http.get<Adhesion>(API_URL+"updateFlag", {params, responseType: 'json' });
   }
-  
+
   enregistrerRemarque(adhesionId: number, remarqueSecretariat: String): Observable<Adhesion> {
     let params = new HttpParams().set('adhesionId', '' + adhesionId + '').set('remarqueSecretariat', '' + remarqueSecretariat + '');
     return this.http.get<Adhesion>(API_URL+"enregistrerRemarque", {params, responseType: 'json' });
   }
-  
+
   choisirStatut(adhesionId: number, statutActuel: String): Observable<Adhesion> {
     let params = new HttpParams().set('adhesionId', '' + adhesionId + '').set('statutActuel', '' + statutActuel + '');
     return this.http.get<Adhesion>(API_URL+"choisirStatut", {params, responseType: 'json' });
   }
-  
+
   add(adherentId: number, activiteId: number): Observable<Adhesion> {
     let params = new HttpParams().set('adherentId', '' + adherentId + '').set('activiteId', '' + activiteId + '');
     return this.http.post<Adhesion>(API_URL+"save", null,{params, responseType: 'json' });
   }
-  
+
   getAll(): Observable<Adhesion[]> {
     return this.http.get<Adhesion[]>(API_URL+"all", {responseType: 'json' });
   }
 
-  
+
   getById(adhesionId:number): Observable<Adhesion> {
     let params = new HttpParams().set('adhesionId', '' + adhesionId + '');
     return this.http.get<Adhesion>(API_URL, {params, responseType: 'json' });
   }
 
-  
-  
+
+
   getAllIdBysection(sections:string): Observable<number[]> {
     let params = new HttpParams().set('sections', '' + sections + '');
     return this.http.get<number[]>(API_URL+"idBysection", {params, responseType: 'json' });

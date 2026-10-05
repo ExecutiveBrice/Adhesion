@@ -195,3 +195,21 @@ tr:hover {
 .alert-danger{
   color: red;
 }
+
+/* Keep the carousel controls readable over both light and dark advertisements. */
+app-publicite-carousel .carousel-control-prev-icon,
+app-publicite-carousel .carousel-control-next-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  background-color: rgba(0, 0, 0, .7);
+  background-size: 65%;
+  border-radius: 50%;
+}
+
+app-publicite-carousel .carousel-indicators {
+  width: fit-content;
+  margin-inline: auto;
+  padding-inline: .5rem;
+  background: rgba(0, 0, 0, .7);
+  border-radius: 1rem;
+}

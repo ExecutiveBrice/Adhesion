@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  <changeSet id="v2-chat" author="adhesion">
+    <preConditions onFail="HALT" onError="HALT">
+      <tableExists tableName="sections"/>
+      <not><tableExists tableName="chats"/></not>
+    </preConditions>
+    <comment>Chat module after production commit 8a2cb143.</comment>
+    <createTable tableName="chats">
+      <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="section_id" type="bigint"/>
+      <column name="activite_id" type="bigint"/>
+      <column name="cible" type="varchar(20)"><constraints nullable="false" checkConstraint="(cible = 'SECTION' AND section_id IS NOT NULL AND activite_id IS NULL) OR (cible = 'ACTIVITE' AND section_id IS NULL AND activite_id IS NOT NULL) OR (cible = 'ASSOCIATION' AND section_id IS NULL AND activite_id IS NULL)"/></column>
+      <column name="nom" type="varchar(100)"><constraints nullable="false"/></column>
+    </createTable>
+    <addForeignKeyConstraint baseTableName="chats" baseColumnNames="section_id" referencedTableName="sections" referencedColumnNames="id" constraintName="fk_chat_section" onDelete="CASCADE"/>
+    <addForeignKeyConstraint baseTableName="chats" baseColumnNames="activite_id" referencedTableName="activites" referencedColumnNames="id" constraintName="fk_chat_activite" onDelete="CASCADE"/>
+    <addUniqueConstraint tableName="chats" columnNames="section_id, nom" constraintName="uq_section_chat_name"/>
+    
+    <createTable tableName="chat_permissions">
+      <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="chat_id" type="bigint"><constraints nullable="false"/></column>
+      <column name="role" type="varchar(32)"><constraints nullable="false"/></column>
+      <column name="ecriture" type="boolean"><constraints nullable="false"/></column>
+    </createTable>
+    <addForeignKeyConstraint baseTableName="chat_permissions" baseColumnNames="chat_id" referencedTableName="chats" referencedColumnNames="id" constraintName="fk_chat_permission_chat" onDelete="CASCADE"/>
+    <addUniqueConstraint tableName="chat_permissions" columnNames="chat_id, role" constraintName="uq_chat_permission_role"/>
+    
+    <createTable tableName="chat_reads">
+      <column name="user_id" type="bigint"><constraints nullable="false" primaryKey="true"/></column>
+      <column name="chat_id" type="bigint"><constraints nullable="false" primaryKey="true"/></column>
+      <column name="last_message_id" type="bigint"><constraints nullable="false"/></column>
+    </createTable>
+    <addForeignKeyConstraint baseTableName="chat_reads" baseColumnNames="user_id" referencedTableName="users" referencedColumnNames="id" constraintName="fk_chat_read_user" onDelete="CASCADE"/>
+    <addForeignKeyConstraint baseTableName="chat_reads" baseColumnNames="chat_id" referencedTableName="chats" referencedColumnNames="id" constraintName="fk_chat_read_chat" onDelete="CASCADE"/>
+    
+    <createTable tableName="chat_messages">
+      <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="chat_id" type="bigint"><constraints nullable="false"/></column>
+      <column name="sender_user_id" type="bigint"><constraints nullable="false"/></column>
+      <column name="sender_name" type="varchar(255)"><constraints nullable="false"/></column>
+      <column name="sender_role" type="varchar(20)"/>
+      <column name="content" type="varchar(2000)"><constraints nullable="false" checkConstraint="char_length(trim(content)) &gt; 0"/></column>
+      <column name="created_at" type="timestamp with time zone"><constraints nullable="false"/></column>
+    </createTable>
+    <addForeignKeyConstraint baseTableName="chat_messages" baseColumnNames="chat_id" referencedTableName="chats" referencedColumnNames="id" constraintName="fk_chat_message_chat" onDelete="CASCADE"/>
+    <createIndex tableName="chat_messages" indexName="idx_chat_message_chat_id"><column name="chat_id"/><column name="id"/></createIndex>
+    
+    <createTable tableName="section_referents">
+      <column name="section_id" type="bigint"><constraints nullable="false" primaryKey="true"/></column>
+      <column name="user_id" type="bigint"><constraints nullable="false" primaryKey="true"/></column>
+    </createTable>
+    <addForeignKeyConstraint baseTableName="section_referents" baseColumnNames="section_id" referencedTableName="sections" referencedColumnNames="id" constraintName="fk_section_referent_section" onDelete="CASCADE"/>
+    <addForeignKeyConstraint baseTableName="section_referents" baseColumnNames="user_id" referencedTableName="users" referencedColumnNames="id" constraintName="fk_section_referent_user" onDelete="CASCADE"/>
+    
+  </changeSet>
+</databaseChangeLog>

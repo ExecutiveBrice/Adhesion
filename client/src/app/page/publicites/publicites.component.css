@@ -1,0 +1,8 @@
+.publicites-page { max-width: 1100px; margin: auto; }
+.publicite-preview { width: 100%; max-width: 570px; height: auto; aspect-ratio: 19 / 9; object-fit: contain; border-radius: .5rem; }
+.publicites-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 1.5rem; }
+.crop-editor { max-width: 760px; }
+.crop-editor image-cropper { max-height: 520px; background: #f0f2f5; border-radius: .5rem; }
+.publicite-description { overflow-wrap: anywhere; }
+.section-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .5rem 1rem; }
+.current-image { max-width: 570px; }

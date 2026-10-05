@@ -39,22 +39,6 @@ spring:
             connect-timeout: 3000
             read-timeout: 10000
             logger-level: basic
-#logging.level.org.springframework.web: DEBUG
-logging.level.com.wild.corp: INFO
-logging.level.org.hibernate: ERROR
-logging:
-  level:
-    com:
-      wild:
-        corp:
-          adhesion:
-            shop:
-              payment:
-                helloasso:
-                  client:
-                    HelloAssoCheckoutClient: DEBUG
-                    HelloAssoOAuthClient: DEBUG
-
 
 server:
   name : ${DNS_NAME}
@@ -95,6 +79,10 @@ shop:
 # Zone scolaire utilisée lors de la génération hebdomadaire des séances (A, B ou C).
 adhesion:
   security:
+    cors:
+      # Liste séparée par des virgules. À surcharger avec ADHESION_SECURITY_CORS_ALLOWED_ORIGINS
+      # lorsqu'un frontend distant appelle directement l'API.
+      allowed-origins: ${ADHESION_SECURITY_CORS_ALLOWED_ORIGINS:http://localhost:4200}
     password-reset:
       token-lifetime-minutes: 30
       rate-limit:

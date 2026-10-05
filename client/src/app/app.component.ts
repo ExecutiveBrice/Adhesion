@@ -18,7 +18,7 @@ import { TribuService } from './_services/tribu.service';
 import { Adherent } from './models';
 import { SessionNavigationService } from './_services/session-navigation.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faHouse, faCalendarDays, faUser, faComments, faStore, faGear, faPersonRunning, faUsers, faIdCard, faEnvelope, faChartColumn, faPeopleGroup, faCalendarCheck, faClipboardList, faRightToBracket } from '@fortawesome/free-solid-svg-icons';
+import { faHouse, faCalendarDays, faUser, faComments, faStore, faGear, faPersonRunning, faUsers, faIdCard, faEnvelope, faChartColumn, faPeopleGroup, faCalendarCheck, faClipboardList, faRightToBracket, faBullhorn } from '@fortawesome/free-solid-svg-icons';
 
 
 @Component({
@@ -28,6 +28,7 @@ import { faHouse, faCalendarDays, faUser, faComments, faStore, faGear, faPersonR
     imports: [ RouterLinkActive, RouterLink, RouterOutlet, NgbToast, NgbToastHeader, ShopCartLinkComponent, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, NgbDropdownButtonItem, FontAwesomeModule]
 })
 export class AppComponent {
+  readonly faBullhorn = faBullhorn;
   readonly faHouse = faHouse;
   readonly faCalendarDays = faCalendarDays;
   readonly faUser = faUser;
@@ -126,6 +127,7 @@ export class AppComponent {
   showProf=false;
   showReferent=false;
   showSeances=false;
+  showCommunication = false;
   showShopManager=false;
   showShop = false;
   showChat = false;
@@ -202,6 +204,7 @@ export class AppComponent {
     this.showProf = this.roles.includes('ROLE_ENCADRANT');
     this.showReferent = this.roles.includes('ROLE_REFERENT_ACTIVITE');
     this.showSeances = this.showProf || this.showReferent;
+    this.showCommunication = this.roles.includes('ROLE_COMMUNICATION_GLOBAL');
     this.showShopManager = this.roles.includes('ROLE_RESPONSABLE_BOUTIQUE');
     this.username = user.username;
     if (!this.isLoggedIn) {

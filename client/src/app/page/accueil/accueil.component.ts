@@ -6,11 +6,12 @@ import { ToastService } from '../../_services/toast.service';
 import { TribuService } from '../../_services/tribu.service';
 import { TokenStorageService } from '../../_services/token-storage.service';
 import { CalendrierComponent } from '../../template/calendrier/calendrier.component';
+import { PubliciteCarouselComponent } from '../publicites/publicite-carousel.component';
 
 @Component({
   selector: 'app-accueil',
   templateUrl: './accueil.component.html',
-  imports: [CalendrierComponent]
+  imports: [CalendrierComponent, PubliciteCarouselComponent]
 })
 export class AccueilComponent implements OnInit {
   private readonly apiViewRefresh = registerApiViewRefresh();

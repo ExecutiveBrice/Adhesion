@@ -278,7 +278,7 @@ export class CalendrierComponent implements OnInit, OnChanges {
     return [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//Adhesion//Séances//FR',
+      'PRODID:-//Séances//FR',
       'CALSCALE:GREGORIAN',
       'X-WR-CALNAME:Séances',
       'X-WR-TIMEZONE:Europe/Paris',

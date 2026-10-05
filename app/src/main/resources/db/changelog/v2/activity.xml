@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  <changeSet id="v2-activity-and-roles" author="adhesion">
+    <preConditions onFail="HALT" onError="HALT">
+      <tableExists tableName="activites"/>
+      <tableExists tableName="users"/>
+      <not><tableExists tableName="sections"/></not>
+    </preConditions>
+    <comment>Activity, section and role evolutions after production commit 8a2cb143.</comment>
+    <update tableName="activites">
+      <column name="groupe" value="NON_COMPETITIVE"/>
+      <where>groupe = 'ALOD_G'</where>
+    </update>
+    <update tableName="activites">
+      <column name="groupe" value="COMPETITION"/>
+      <where>groupe = 'ALOD_B'</where>
+    </update>
+    <update tableName="activites_nm1">
+      <column name="groupe" value="NON_COMPETITIVE"/>
+      <where>groupe = 'ALOD_G'</where>
+    </update>
+    <update tableName="activites_nm1">
+      <column name="groupe" value="COMPETITION"/>
+      <where>groupe = 'ALOD_B'</where>
+    </update>
+    
+    <createTable tableName="sections">
+      <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="nom" type="varchar(100)"><constraints nullable="false" unique="true"/></column>
+      <column name="type" type="varchar(20)"><constraints nullable="false" checkConstraint="type IN ('COMPETITION', 'NON_COMPETITIVE')"/></column>
+    </createTable>
+    <addColumn tableName="activites">
+      <column name="section_id" type="bigint"/>
+    </addColumn>
+    <customChange class="com.wild.corp.adhesion.migration.ActivitySectionDataMigration"/>
+    <addForeignKeyConstraint baseTableName="activites" baseColumnNames="section_id"
+      referencedTableName="sections" referencedColumnNames="id" constraintName="fk_activites_section"/>
+    <createIndex tableName="activites" indexName="idx_activites_section">
+      <column name="section_id"/>
+    </createIndex>
+    <dropColumn tableName="activites" columnName="groupe_compta"/>
+    <dropColumn tableName="activites" columnName="horaire"/>
+    <delete tableName="paramnumber">
+      <where>param_name IN ('Jour_Debut_Plage_Compta', 'Jour_Fin_Plage_Compta')</where>
+    </delete>
+    
+    <customChange class="com.wild.corp.adhesion.migration.RoleDataMigration"/>
+    
+  </changeSet>
+</databaseChangeLog>

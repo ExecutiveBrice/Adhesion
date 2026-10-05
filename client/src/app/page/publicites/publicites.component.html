@@ -1,0 +1,171 @@
+<main class="publicites-page py-4">
+  <h1>Gestion des publicités</h1>
+  <p class="text-muted">Publiez les visuels du carrousel de l’accueil. Ils défilent par numéro d’ordre croissant.</p>
+
+  @if (error()) { <div class="alert alert-danger" role="alert">{{ error() }}</div> }
+  @if (success()) { <div class="alert alert-success" role="status">{{ success() }}</div> }
+
+  <form class="card card-body mb-4" (ngSubmit)="publish(fileInput)">
+    <h2 class="h5">{{ editingId() === null ? 'Ajouter une publicité' : 'Modifier la publicité' }}</h2>
+    <label for="publicite-description" class="form-label">Description de l’image (obligatoire)</label>
+    <input id="publicite-description" name="description" class="form-control mb-2" [(ngModel)]="description"
+      maxlength="200" [disabled]="saving()" aria-required="true" aria-describedby="description-help">
+    <p id="description-help" class="form-text">Décrivez le contenu et les informations essentielles pour les personnes qui ne peuvent pas voir l’image.</p>
+    <fieldset class="mb-3" [disabled]="saving()">
+      <legend class="h6">Liens affichés sur le carrousel</legend>
+      <div class="row g-3">
+        <div class="col-12 col-md-4">
+          <label for="publicite-facebook" class="form-label">Facebook</label>
+          <input id="publicite-facebook" name="facebookUrl" type="url" class="form-control" [(ngModel)]="facebookUrl"
+            maxlength="2048" placeholder="https://www.facebook.com/…">
+        </div>
+        <div class="col-12 col-md-4">
+          <label for="publicite-snapchat" class="form-label">Snapchat</label>
+          <input id="publicite-snapchat" name="snapchatUrl" type="url" class="form-control" [(ngModel)]="snapchatUrl"
+            maxlength="2048" placeholder="https://www.snapchat.com/…">
+        </div>
+        <div class="col-12 col-md-4">
+          <label for="publicite-website" class="form-label">Site internet</label>
+          <input id="publicite-website" name="websiteUrl" type="url" class="form-control" [(ngModel)]="websiteUrl"
+            maxlength="2048" placeholder="https://www.exemple.fr/…">
+        </div>
+      </div>
+      <p class="form-text mb-0">Les icônes correspondant aux liens renseignés seront affichées sur la publicité.</p>
+    </fieldset>
+    <div class="row g-3 mb-3 align-items-end">
+      <div class="col-12 col-sm-4">
+        <label for="publicite-order" class="form-label">Numéro d’ordre</label>
+        <input id="publicite-order" name="displayOrder" type="number" class="form-control"
+          min="0" max="10000" step="1" [(ngModel)]="displayOrder" [disabled]="saving()">
+      </div>
+      <div class="col-12 col-sm-8">
+        <div class="form-check mb-2">
+          <input id="publicite-disabled" name="disabled" type="checkbox" class="form-check-input"
+            [(ngModel)]="disabled" [disabled]="saving()">
+          <label for="publicite-disabled" class="form-check-label">Désactiver cette publicité dès sa publication</label>
+        </div>
+      </div>
+    </div>
+    <fieldset class="mb-3" [disabled]="saving() || sectionsLoading() || sectionsLoadError()">
+      <legend class="h6">Visibilité par section</legend>
+      <p class="form-text">Sans sélection, la publicité est visible par tous les adhérents. Sinon, seuls les adhérents inscrits dans au moins une des sections choisies la verront.</p>
+      @if (sectionsLoading()) {
+        <p role="status">Chargement des sections…</p>
+      } @else if (sectionsLoadError()) {
+        <p class="text-danger">La liste des sections est indisponible.</p>
+      } @else {
+        <div class="section-list">
+          @for (section of sections(); track section.id) {
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" [id]="'publicite-section-' + section.id"
+                [checked]="selectedSectionIds.includes(section.id!)"
+                (change)="toggleSection(section.id!, $any($event.target).checked)">
+              <label class="form-check-label" [for]="'publicite-section-' + section.id">{{ section.nom }}</label>
+            </div>
+          } @empty {
+            <p class="text-muted mb-0">Aucune section disponible.</p>
+          }
+        </div>
+      }
+    </fieldset>
+    <label for="publicite-file" class="form-label">
+      {{ editingId() === null ? 'Image à recadrer' : 'Remplacer l’image (facultatif)' }}
+    </label>
+    <input #fileInput id="publicite-file" type="file" class="form-control" accept="image/png,image/jpeg"
+      [disabled]="saving()" (change)="selectFile($event)" aria-describedby="image-help">
+    <p id="image-help" class="form-text">Source PNG ou JPEG de 10 Mo maximum. Déplacez et redimensionnez la zone pour obtenir le format 19/9 ; l’image publiée ne doit pas dépasser 1 Mo.</p>
+    @if (editingId() !== null && !sourceFile()) {
+      <div class="mb-3 current-image">
+        <p class="mb-2">Image actuelle conservée</p>
+        <app-publicite-image [id]="editingId()!" [description]="description" />
+      </div>
+    }
+    @if (sourceFile()) {
+      <div class="crop-editor mb-3">
+        <p class="mb-2">Déplacez le cadre sur l’image et ajustez sa taille. Vous pouvez aussi déplacer l’image et utiliser le zoom.</p>
+        <image-cropper [imageFile]="sourceFile()" [maintainAspectRatio]="true" [aspectRatio]="19 / 9"
+          [allowMoveImage]="true" [(transform)]="transform" [resizeToWidth]="1900"
+          format="jpeg" output="blob" [imageQuality]="86"
+          cropperFrameAriaLabel="Zone de découpage de la publicité"
+          [imageAltText]="description || 'Image à recadrer'"
+          (imageCropped)="imageCropped($event)" (loadImageFailed)="loadImageFailed(fileInput)" />
+        <label for="publicite-zoom" class="form-label mt-2">Zoom : {{ zoom.toFixed(1) }}×</label>
+        <input id="publicite-zoom" type="range" class="form-range" min="1" max="3" step="0.1"
+          [value]="zoom" (input)="setZoom($any($event.target).value)" [disabled]="saving()">
+      </div>
+    }
+    @if (validating()) { <p role="status">Préparation de l’image…</p> }
+    @if (preview()) {
+      <div class="mb-3">
+        <p class="mb-2">Aperçu de l’image publiée (1900 × 900 pixels)</p>
+        <img class="publicite-preview" [src]="preview()" [alt]="description || 'Aperçu de la publicité'" width="1900" height="900">
+      </div>
+    }
+    <div class="d-flex gap-2 align-self-start">
+      <button type="submit" class="btn btn-primary"
+        [disabled]="(!sourceFile() && editingId() === null) || saving() || sectionsLoading() || sectionsLoadError()">
+        {{ saving() ? 'Enregistrement…' : editingId() === null ? 'Publier sur l’accueil' : 'Enregistrer les modifications' }}
+      </button>
+      @if (editingId() !== null) {
+        <button type="button" class="btn btn-outline-secondary" [disabled]="saving()" (click)="cancelEdit(fileInput)">Annuler</button>
+      }
+    </div>
+  </form>
+
+  <h2 class="h4">Publicités publiées</h2>
+  @if (loading()) {
+    <p role="status">Chargement des publicités…</p>
+  } @else if (loadError()) {
+    <div class="alert alert-warning" role="alert">Impossible de charger les publicités.
+      <button type="button" class="btn btn-outline-dark btn-sm ms-2" (click)="load()">Réessayer</button>
+    </div>
+  } @else {
+    <div class="publicites-grid">
+      @for (item of publicites(); track item.id) {
+        <article class="card overflow-hidden">
+          <app-publicite-image [id]="item.id" [description]="item.description" [refresh]="item.imageVersion ?? 0" />
+          <div class="card-body">
+            <div class="d-flex justify-content-between gap-2 align-items-start">
+              <p class="publicite-description">{{ item.description }}</p>
+              @if (!item.active) { <span class="badge text-bg-secondary">Désactivée</span> }
+            </div>
+            @if (item.facebookUrl || item.snapchatUrl || item.websiteUrl) {
+              <p class="small text-muted">
+                Liens :
+                @if (item.facebookUrl) { Facebook }
+                @if (item.snapchatUrl) { Snapchat }
+                @if (item.websiteUrl) { Site internet }
+              </p>
+            }
+            <p class="small text-muted">
+              Visibilité :
+              @if (item.sectionIds.length) {
+                @for (sectionId of item.sectionIds; track sectionId; let last = $last) {
+                  {{ sectionName(sectionId) }}@if (!last) {, }
+                }
+              } @else {
+                Tous les adhérents
+              }
+            </p>
+            <p class="small text-muted">Ordre : {{ item.displayOrder }}</p>
+            @if (pendingDelete()?.id === item.id) {
+              <p>Supprimer cette publicité de l’accueil ?</p>
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-danger" [disabled]="deletingId() !== null" (click)="remove(item)">{{ deletingId() === item.id ? 'Suppression…' : 'Confirmer la suppression' }}</button>
+                <button type="button" class="btn btn-outline-secondary" [disabled]="deletingId() !== null" (click)="pendingDelete.set(null)">Annuler</button>
+              </div>
+            } @else {
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-primary" [disabled]="saving()"
+                  (click)="startEdit(item, fileInput)">Modifier</button>
+                <button type="button" class="btn btn-outline-danger" [disabled]="deletingId() !== null" (click)="pendingDelete.set(item)" [attr.aria-label]="'Supprimer : ' + item.description">Supprimer</button>
+              </div>
+            }
+          </div>
+        </article>
+      } @empty {
+        <p class="text-muted">Aucune publicité publiée. Ajoutez une image pour afficher le carrousel sur l’accueil.</p>
+      }
+    </div>
+  }
+</main>

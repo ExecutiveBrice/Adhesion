@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  <changeSet id="v5-publicite-order-active" author="adhesion">
+    <addColumn tableName="publicites">
+      <column name="display_order" type="integer" defaultValueNumeric="0">
+        <constraints nullable="false"/>
+      </column>
+      <column name="active" type="boolean" defaultValueBoolean="true">
+        <constraints nullable="false"/>
+      </column>
+    </addColumn>
+    <createIndex tableName="publicites" indexName="idx_publicites_active_order">
+      <column name="active"/>
+      <column name="display_order"/>
+      <column name="id"/>
+    </createIndex>
+  </changeSet>
+</databaseChangeLog>

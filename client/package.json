@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "scripts": {
     "ng": "node scripts/angular-cli.cjs",
-    "start": "node scripts/angular-cli.cjs serve --serve-path /adhesion/",
-    "start:helloasso": "node scripts/angular-cli.cjs serve --serve-path /adhesion/ --configuration=helloasso-local --ssl --proxy-config proxy.helloasso-local.json",
+    "start": "node scripts/angular-cli.cjs serve --serve-path /",
+    "start:helloasso": "node scripts/angular-cli.cjs serve --serve-path / --configuration=helloasso-local --ssl --proxy-config proxy.helloasso-local.json",
     "build": "node scripts/angular-cli.cjs build",
-    "build:production": "node scripts/angular-cli.cjs build --base-href /adhesion/ --configuration=production",
-    "build:integration": "node scripts/angular-cli.cjs build --base-href /adhesion/ --configuration=integration",
+    "build:production": "node scripts/angular-cli.cjs build --base-href / --configuration=production",
+    "build:integration": "node scripts/angular-cli.cjs build --base-href / --configuration=integration",
     "watch": "node scripts/angular-cli.cjs build --watch --configuration development",
     "test": "node scripts/angular-cli.cjs test"
   },
@@ -34,6 +34,7 @@
     "bootstrap": "^5.3.8",
     "chart.js": "^4.3.0",
     "ngx-extended-pdf-viewer": "^29.0.1",
+    "ngx-image-cropper": "9.1.7",
     "rxjs": "^7.8.0",
     "tslib": "^2.1.0",
     "xlsx": "^0.18.5",

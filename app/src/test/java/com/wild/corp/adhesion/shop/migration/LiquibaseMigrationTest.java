@@ -28,7 +28,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class LiquibaseMigrationTest {
     private static final String MASTER = "db/changelog/db.changelog-master.xml";
-    private static final String BASELINE = "db/changelog/baseline/master-changeset.xml";
+    private static final String V1 = "db/changelog/changeset-v1.xml";
+    private static final String V2 = "db/changelog/changeset-v2.xml";
     private final List<SingleConnectionDataSource> embeddedDatabases = new ArrayList<>();
 
     @AfterEach
@@ -96,10 +97,8 @@ class LiquibaseMigrationTest {
     void linksActivitiesToExistingSectionsAndCreatesMissingSections() throws Exception {
         var source = database();
         isolatePostgres(source);
-        migrate(source, BASELINE);
-        migrate(source, "db/changelog/activity/02-create_sections.xml");
+        migrate(source, V1);
         var jdbc = new JdbcTemplate(source);
-        jdbc.update("INSERT INTO sections (nom, type) VALUES ('Yoga', 'NON_COMPETITIVE')");
         jdbc.update("""
                 INSERT INTO activites (id, groupe_filtre, groupe, prise_en_charge, autorisation_parentale,
                     certificat_medical, charte_amicale, complete, vie_club)
@@ -109,7 +108,7 @@ class LiquibaseMigrationTest {
                        (4, NULL, NULL, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE)
                 """);
 
-        migrate(source, "db/changelog/activity/03-link_activity_sections.xml");
+        migrate(source, V2);
 
         assertThat(jdbc.queryForList("SELECT s.nom FROM activites a LEFT JOIN sections s ON s.id = a.section_id ORDER BY a.id", String.class))
                 .containsExactly("Yoga", "Yoga", "Basket", null);
@@ -120,14 +119,37 @@ class LiquibaseMigrationTest {
     }
 
     @Test
+    void v2ContainsOneXmlOnlyChangesetPerModule() throws Exception {
+        String[] modules = {"activity", "shop", "chat", "communication"};
+        for (String module : modules) {
+            try (var resource = getClass().getClassLoader()
+                    .getResourceAsStream("db/changelog/v2/" + module + ".xml")) {
+                assertThat(resource).isNotNull();
+                String changelog = new String(resource.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                assertThat(changelog).doesNotContain("<sql", "<sqlFile");
+                assertThat(changelog.split("<changeSet ", -1)).hasSize(2);
+            }
+        }
+
+        var source = database();
+        isolatePostgres(source);
+        migrate(source, V1);
+        var jdbc = new JdbcTemplate(source);
+        int v1Count = jdbc.queryForObject("SELECT count(*) FROM databasechangelog", Integer.class);
+        migrate(source, V2);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM databasechangelog", Integer.class))
+                .isEqualTo(v1Count + modules.length);
+    }
+
+    @Test
     void removesTheObsoleteAccountingGroupAndItsParameters() throws Exception {
         var source = database();
         isolatePostgres(source);
-        migrate(source, BASELINE);
+        migrate(source, V1);
         var jdbc = new JdbcTemplate(source);
         jdbc.update("INSERT INTO paramnumber (param_name, param_value) VALUES ('Jour_Debut_Plage_Compta', 3), ('Jour_Fin_Plage_Compta', 4)");
 
-        migrate(source, "db/changelog/activity/04-remove-accounting-group.xml");
+        migrate(source, V2);
 
         assertThat(jdbc.queryForObject("SELECT count(*) FROM information_schema.columns WHERE table_schema = current_schema() AND lower(table_name) = 'activites' AND lower(column_name) = 'groupe_compta'", Integer.class)).isZero();
         assertThat(jdbc.queryForObject("SELECT count(*) FROM paramnumber WHERE param_name IN ('Jour_Debut_Plage_Compta', 'Jour_Fin_Plage_Compta')", Integer.class)).isZero();
@@ -137,9 +159,9 @@ class LiquibaseMigrationTest {
     void removesTheObsoleteFreeTextActivitySchedule() throws Exception {
         var source = database();
         isolatePostgres(source);
-        migrate(source, BASELINE);
+        migrate(source, V1);
 
-        migrate(source, "db/changelog/activity/05-remove-activity-schedule.xml");
+        migrate(source, V2);
 
         var jdbc = new JdbcTemplate(source);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM information_schema.columns WHERE table_schema = current_schema() AND lower(table_name) = 'activites' AND lower(column_name) = 'horaire'", Integer.class)).isZero();
@@ -149,10 +171,11 @@ class LiquibaseMigrationTest {
     void adoptsHistoricalSchemaAndPreservesData() throws Exception {
         var source = database();
         isolatePostgres(source);
-        migrate(source, BASELINE);
+        migrate(source, V1);
         var jdbc = new JdbcTemplate(source);
         jdbc.update("INSERT INTO users (id, username, password) VALUES (42, 'historique', 'hash')");
         jdbc.update("INSERT INTO user_role_names (user_id, role_name) VALUES (42, 'ROLE_ADMIN')");
+        dropPrimaryKey(jdbc, "user_role_names");
         jdbc.update("""
                 INSERT INTO activites (id, groupe, prise_en_charge, autorisation_parentale, certificat_medical,
                     charte_amicale, complete, vie_club)
@@ -175,19 +198,18 @@ class LiquibaseMigrationTest {
                 .containsExactly("NON_COMPETITIVE", "COMPETITION");
         assertThat(jdbc.queryForList("SELECT groupe FROM activites_nm1 ORDER BY id", String.class))
                 .containsExactly("NON_COMPETITIVE", "COMPETITION");
-        if (System.getenv("MIGRATION_TEST_URL") != null) {
-            jdbc.update("INSERT INTO user_role_names (user_id, role_name) VALUES (42, 'ROLE_RESPONSABLE_BOUTIQUE')");
-        }
+        jdbc.update("INSERT INTO user_role_names (user_id, role_name) VALUES (42, 'ROLE_RESPONSABLE_BOUTIQUE')");
+        assertThat(jdbc.queryForList("SELECT role_name FROM user_role_names WHERE user_id = 42 ORDER BY role_name", String.class))
+                .containsExactly("ROLE_ADMIN", "ROLE_RESPONSABLE_BOUTIQUE");
         assertThatThrownBy(() -> jdbc.update("INSERT INTO user_role_names (user_id, role_name) VALUES (42, 'INVALID')"))
                 .isInstanceOf(org.springframework.dao.DataAccessException.class);
     }
 
     @Test
-    void upgradesShopDataAndAdoptsAnAlreadyMigratedShop() throws Exception {
+    void createsV2ShopSchemaAndPreservesDataOnRestart() throws Exception {
         var source = database();
         isolatePostgres(source);
-        migrate(source, BASELINE);
-        migrate(source, "db/changelog/shop/01-create_shop_domain.xml");
+        migrate(source, MASTER);
         var jdbc = new JdbcTemplate(source);
         jdbc.update("""
                 INSERT INTO shop_products (name, slug, created_at, updated_at)
@@ -197,7 +219,7 @@ class LiquibaseMigrationTest {
                 INSERT INTO shop_product_variants (product_id, sku, price_amount_cents, price_currency,
                     created_at, updated_at) VALUES (1, 'TS-M', 1500, 'EUR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                 """);
-        String[] statuses = {"COMPLETED", "CANCELLED", "PROCESSING", "PAID"};
+        String[] statuses = {"COMPLETED", "CANCELLED", "PROCESSING", "PENDING"};
         for (int index = 0; index < statuses.length; index++) {
             int id = index + 1;
             jdbc.update("""
@@ -207,9 +229,9 @@ class LiquibaseMigrationTest {
                     """, id, "CMD-" + id, statuses[index]);
             jdbc.update("""
                     INSERT INTO shop_order_items (id, order_id, product_id, product_name, unit_price_amount_cents,
-                        unit_price_currency, quantity, line_total_amount_cents, line_total_currency, created_at, updated_at)
-                    VALUES (?, ?, 1, 'Tee-shirt', 100, 'EUR', 1, 100, 'EUR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                    """, id, id);
+                        unit_price_currency, quantity, line_total_amount_cents, line_total_currency, status, created_at, updated_at)
+                    VALUES (?, ?, 1, 'Tee-shirt', 100, 'EUR', 1, 100, 'EUR', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                    """, id, id, statuses[index]);
         }
         migrate(source, MASTER);
         assertThat(jdbc.queryForList("SELECT status FROM shop_order_items ORDER BY id", String.class))
@@ -225,11 +247,6 @@ class LiquibaseMigrationTest {
                     unit_cost_amount_cents, unit_cost_currency, expected_need)
                 VALUES (1, 1, 'Tee-shirt', 'TS-M', 5, 800, 'EUR', 5)
                 """);
-        jdbc.execute("DROP TABLE databasechangelog");
-        jdbc.execute("DROP TABLE databasechangeloglock");
-        // Existing Flyway metadata is retained and does not interfere with Liquibase.
-        jdbc.execute("CREATE TABLE flyway_schema_history (installed_rank integer primary key)");
-        jdbc.update("INSERT INTO flyway_schema_history VALUES (1)");
         migrate(source, MASTER);
         validateMappings(source);
         assertThat(jdbc.queryForObject("SELECT status FROM shop_order_items WHERE id = 4", String.class)).isEqualTo("PROCESSING");
@@ -244,5 +261,17 @@ class LiquibaseMigrationTest {
             new JdbcTemplate(source).execute("CREATE SCHEMA " + schema);
             source.setUrl(source.getUrl() + "?currentSchema=" + schema);
         }
+    }
+
+    private void dropPrimaryKey(JdbcTemplate jdbc, String tableName) {
+        String constraintName = jdbc.queryForObject("""
+                SELECT constraint_name
+                FROM information_schema.table_constraints
+                WHERE lower(table_schema) = lower(current_schema())
+                  AND lower(table_name) = lower(?)
+                  AND constraint_type = 'PRIMARY KEY'
+                """, String.class, tableName);
+        jdbc.execute("ALTER TABLE " + tableName + " DROP CONSTRAINT \""
+                + constraintName.replace("\"", "\"\"") + "\"");
     }
 }

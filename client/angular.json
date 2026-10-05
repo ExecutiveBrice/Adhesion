@@ -96,7 +96,7 @@
           "builder": "@angular/build:karma",
           "options": {
             "main": "src/test.ts",
-            "polyfills": ["zone.js", "zone.js/testing"],
+            "polyfills": ["zone.js", "zone.js/testing", "@angular/localize/init"],
             "tsConfig": "tsconfig.spec.json",
             "karmaConfig": "karma.conf.js",
             "assets": ["src/favicon.ico", "src/assets"],
