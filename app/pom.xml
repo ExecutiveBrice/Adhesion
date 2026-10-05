@@ -21,7 +21,7 @@
         <jackson-databind-nullable.version>0.2.11</jackson-databind-nullable.version>
         <jjwt.version>0.13.0</jjwt.version>
         <openapi-generator.version>7.25.0</openapi-generator.version>
-        <ical4j.version>4.3.0</ical4j.version>
+        <ical4j.version>4.4.0</ical4j.version>
     </properties>
 
     <dependencyManagement>
