@@ -3,6 +3,7 @@ package com.wild.corp.adhesion.models.resources;
 import com.wild.corp.adhesion.models.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record SeanceResponse(
         Long id,
@@ -13,8 +14,14 @@ public record SeanceResponse(
         String commentaire,
         Salle salle,
         Presence presence,
-        Activite activite
+        Activite activite,
+        List<ResponsabiliteSeance> responsabilites
 ) {
+    public SeanceResponse(Long id, ESeance etatSeance, String causeAnnulation, LocalDateTime debut,
+                          LocalDateTime fin, String commentaire, Salle salle, Presence presence, Activite activite) {
+        this(id, etatSeance, causeAnnulation, debut, fin, commentaire, salle, presence, activite, List.of());
+    }
+
     public static SeanceResponse from(Seance seance) {
         return new SeanceResponse(
                 seance.getId(),
@@ -25,7 +32,8 @@ public record SeanceResponse(
                 seance.getCommentaire(),
                 seance.getSalle(),
                 null,
-                seance.getActivite()
+                seance.getActivite(),
+                List.copyOf(seance.getResponsabilites())
         );
     }
 
@@ -49,7 +57,8 @@ public record SeanceResponse(
                 seance.getCommentaire(),
                 seance.getSalle(),
                 presence,
-                seance.getActivite()
+                seance.getActivite(),
+                List.copyOf(seance.getResponsabilites())
         );
     }
 }

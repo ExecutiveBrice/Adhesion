@@ -119,6 +119,21 @@ class LiquibaseMigrationTest {
     }
 
     @Test
+    void addsDefaultColorsToExistingSectionsAndPreservesChosenColorsOnRestart() throws Exception {
+        var source = database();
+        isolatePostgres(source);
+        migrate(source, V1);
+        migrate(source, V2);
+        var jdbc = new JdbcTemplate(source);
+        jdbc.update("INSERT INTO sections (nom, type) VALUES ('Yoga', 'NON_COMPETITIVE')");
+        migrate(source, MASTER);
+        assertThat(jdbc.queryForObject("SELECT couleur FROM sections WHERE nom = 'Yoga'", String.class)).isEqualTo("#5CBBAF");
+        jdbc.update("UPDATE sections SET couleur = '#AB47BC' WHERE nom = 'Yoga'");
+        migrate(source, MASTER);
+        assertThat(jdbc.queryForObject("SELECT couleur FROM sections WHERE nom = 'Yoga'", String.class)).isEqualTo("#AB47BC");
+    }
+
+    @Test
     void v2ContainsOneXmlOnlyChangesetPerModule() throws Exception {
         String[] modules = {"activity", "shop", "chat", "communication"};
         for (String module : modules) {
@@ -139,6 +154,25 @@ class LiquibaseMigrationTest {
         migrate(source, V2);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM databasechangelog", Integer.class))
                 .isEqualTo(v1Count + modules.length);
+    }
+
+    @Test
+    void addsDefaultTaskIconsAndColorsAndPreservesSelectedPresentationOnRestart() throws Exception {
+        var source = database();
+        isolatePostgres(source);
+        migrate(source, V1);
+        migrate(source, "db/changelog/changeset-v8.xml");
+        var jdbc = new JdbcTemplate(source);
+        jdbc.update("INSERT INTO taches_seance (nom) VALUES ('Matériel')");
+        migrate(source, MASTER);
+        assertThat(jdbc.queryForObject("SELECT icone FROM taches_seance WHERE nom = 'Matériel'", String.class))
+                .isEqualTo("clipboard-check");
+        assertThat(jdbc.queryForObject("SELECT couleur FROM taches_seance WHERE nom = 'Matériel'", String.class))
+                .isEqualTo("#176B4A");
+        jdbc.update("UPDATE taches_seance SET icone = 'box-open', couleur = '#AB47BC' WHERE nom = 'Matériel'");
+        migrate(source, MASTER);
+        assertThat(jdbc.queryForObject("SELECT icone FROM taches_seance WHERE nom = 'Matériel'", String.class)).isEqualTo("box-open");
+        assertThat(jdbc.queryForObject("SELECT couleur FROM taches_seance WHERE nom = 'Matériel'", String.class)).isEqualTo("#AB47BC");
     }
 
     @Test

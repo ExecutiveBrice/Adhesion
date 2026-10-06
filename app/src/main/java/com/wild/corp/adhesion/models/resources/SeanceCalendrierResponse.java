@@ -2,8 +2,10 @@ package com.wild.corp.adhesion.models.resources;
 
 import com.wild.corp.adhesion.models.ESeance;
 import com.wild.corp.adhesion.models.Seance;
+import com.wild.corp.adhesion.models.ResponsabiliteSeance;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record SeanceCalendrierResponse(
         Long id,
@@ -17,7 +19,15 @@ public record SeanceCalendrierResponse(
         String lien,
         LocalDateTime debut,
         LocalDateTime fin,
-        ESeance etatSeance
+        ESeance etatSeance,
+        String sectionType,
+        Long sectionId,
+        String sectionNom,
+        String couleurSection,
+        List<ResponsabiliteSeance> responsabilites,
+        String activiteNomCourt,
+        String descriptif,
+        String causeAnnulation
 ) {
     public static SeanceCalendrierResponse from(Seance seance) {
         var activite = seance.getActivite();
@@ -34,11 +44,25 @@ public record SeanceCalendrierResponse(
                 activite.getLien(),
                 seance.getDebut(),
                 seance.getFin(),
-                seance.getEtatSeance()
+                seance.getEtatSeance(),
+                activite.getGroupe(),
+                activite.getSection() != null ? activite.getSection().getId() : null,
+                activite.getGroupeFiltre(),
+                activite.getSection() != null ? activite.getSection().getCouleur() : null,
+                List.copyOf(seance.getResponsabilites()),
+                activite.getNom(),
+                descriptifSeance(seance),
+                seance.getCauseAnnulation()
         );
     }
 
     private static String nomActivite(Seance seance) {
+        String descriptif = descriptifSeance(seance);
+        return descriptif == null ? seance.getActivite().getNom()
+                : seance.getActivite().getNom() + " – " + descriptif;
+    }
+
+    private static String descriptifSeance(Seance seance) {
         String descriptif = seance.getActivite().getPlanificationsHebdomadaires().stream()
                 .filter(planification -> planification.getJour() != null && planification.getHoraireDebut() != null)
                 .filter(planification -> seance.getDebut() != null
@@ -48,8 +72,6 @@ public record SeanceCalendrierResponse(
                 .filter(valeur -> valeur != null && !valeur.isBlank())
                 .findFirst()
                 .orElse(seance.getDescriptif());
-        return descriptif == null || descriptif.isBlank()
-                ? seance.getActivite().getNom()
-                : seance.getActivite().getNom() + " – " + descriptif.trim();
+        return descriptif == null || descriptif.isBlank() ? null : descriptif.trim();
     }
 }

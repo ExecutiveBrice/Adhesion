@@ -10,14 +10,17 @@
     <div class="col-12 col-sm-6">
 
       <div class="form-group">
-        <label for="sectionActivite">Section</label>
+        <label for="sectionActivite">Section (obligatoire)</label>
         <select id="sectionActivite" class="form-select" name="sectionActivite"
-          [(ngModel)]="activite.section" [compareWith]="comparerSections">
-          <option [ngValue]="undefined">Aucune section</option>
+          [(ngModel)]="activite.section" [compareWith]="comparerSections" required [attr.aria-describedby]="!sectionSelectionnee ? 'sectionActiviteAide' : null">
+          <option [ngValue]="undefined" disabled>Sélectionnez une section</option>
           @for (section of sections; track section.id) {
             <option [ngValue]="section">{{section.nom}} — {{section.type === 'COMPETITION' ? 'Compétition' : 'Non compétitive'}}</option>
           }
         </select>
+        @if (!sectionSelectionnee) {
+          <p id="sectionActiviteAide" class="form-text">Choisissez une section pour enregistrer l’activité.</p>
+        }
       </div>
 
       <div class="form-group">
@@ -369,6 +372,50 @@
                     </button>
                   </td>
                 </tr>
+                <tr>
+                  <td colspan="6">
+                    <details class="p-2">
+                      <summary>Responsabilités ({{seance.responsabilites?.length || 0}}) <small class="text-muted">— facultatif</small></summary>
+                      @for (responsabilite of seance.responsabilites; track $index) {
+                        <div class="small mt-1">{{responsabilite.tache.nom}} : {{responsabilite.adherent.prenom}} {{responsabilite.adherent.nom}}</div>
+                      }
+                      @if (chargementResponsabilitesErreur) {
+                        <div class="alert alert-danger mt-2" role="alert">{{chargementResponsabilitesErreur}}</div>
+                      }
+                      @for (responsabilite of responsabilitesEdition[seance.id]; track $index; let index = $index) {
+                        <div class="row g-2 mt-1 align-items-center">
+                          <div class="col-12 col-md">
+                            <select class="form-select form-select-sm" [(ngModel)]="responsabilite.tacheId"
+                              [name]="'responsabiliteTache-' + seance.id + '-' + index" aria-label="Tâche"
+                              [disabled]="enregistrementSeances.has(seance.id) || suppressionSeances.has(seance.id)">
+                              <option [ngValue]="undefined">Choisir une tâche</option>
+                              @for (tache of tachesSeance; track tache.id) { <option [ngValue]="tache.id">{{tache.nom}}</option> }
+                            </select>
+                          </div>
+                          <div class="col">
+                            <select class="form-select form-select-sm" [(ngModel)]="responsabilite.adherentId"
+                              [name]="'responsabiliteAdherent-' + seance.id + '-' + index" aria-label="Adhérent de la section"
+                              [disabled]="enregistrementSeances.has(seance.id) || suppressionSeances.has(seance.id)">
+                              <option [ngValue]="undefined">Choisir un adhérent de la section</option>
+                              @for (adherent of adherentsResponsabilite; track adherent.id) { <option [ngValue]="adherent.id">{{adherent.prenom}} {{adherent.nom}}</option> }
+                            </select>
+                          </div>
+                          <div class="col-auto"><button type="button" class="btn btn-sm btn-outline-danger" aria-label="Retirer la responsabilité"
+                            (click)="retirerResponsabilite(seance, index)" [disabled]="enregistrementSeances.has(seance.id) || suppressionSeances.has(seance.id)"><fa-icon [icon]="faTrash"></fa-icon></button></div>
+                        </div>
+                      }
+                      @if (!tachesSeance.length) { <p class="small text-muted mt-2">L’administrateur doit définir les tâches dans le paramétrage.</p> }
+                      @if (!adherentsResponsabilite.length) { <p class="small text-muted mt-2">Aucun adhérent disponible dans cette section.</p> }
+                      <div class="d-flex flex-wrap gap-2 mt-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary" (click)="ajouterResponsabilite(seance)"
+                          [disabled]="!tachesSeance.length || !adherentsResponsabilite.length || enregistrementSeances.has(seance.id) || suppressionSeances.has(seance.id)">Ajouter une responsabilité</button>
+                        <button type="button" class="btn btn-sm btn-primary" (click)="enregistrerResponsabilites(seance)"
+                          [disabled]="!!chargementResponsabilitesErreur || enregistrementSeances.has(seance.id) || suppressionSeances.has(seance.id)">Enregistrer les responsabilités</button>
+                      </div>
+                      @if (responsabilitesErreur[seance.id]) { <div class="alert alert-danger mt-2 mb-0" role="alert">{{responsabilitesErreur[seance.id]}}</div> }
+                    </details>
+                  </td>
+                </tr>
               }
             </tbody>
           </table>
@@ -504,7 +551,7 @@
 
 <div class="modal-footer">
   <button type="button" class="btn btn-success"
-  (click)="enregistrer()">Enregistrer</button>
+  (click)="enregistrer()" [disabled]="!sectionSelectionnee">Enregistrer</button>
 
   <button type="button" class="btn btn-outline-dark" (click)="activeModal.dismiss('Annuler')">Annuler</button>
 

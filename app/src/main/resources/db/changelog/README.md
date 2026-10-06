@@ -37,6 +37,23 @@ globale (`changelogSync`) n'est nécessaire. Le premier lancement crée
 
 ## Évolutions suivantes
 
+La V6 ajoute les sélections personnelles de la page Agenda dans deux tables
+liées à l'adhérent. Seuls les agendas et sections masqués sont enregistrés :
+les agendas nouvellement créés sont donc affichés par défaut. Les préférences utilisent les
+identifiants stables des sections et Google Agendas, et résistent aux changements
+de nom ou de source Google.
+
+La V7 ajoute la couleur des sections utilisée pour les événements de la page
+Agenda. Les sections existantes reçoivent la couleur par défaut `#5CBBAF`.
+
+La V8 ajoute le catalogue administrable `taches_seance` et la liste facultative
+`responsabilites_seance` associant une tâche à un adhérent pour une séance.
+Les séances existantes conservent une liste vide. Une tâche utilisée ne peut
+être supprimée tant que ses affectations existent.
+
+La V9 ajoute l'icône Font Awesome et la couleur des tâches. Les tâches déjà
+enregistrées reçoivent l'icône `clipboard-check` et la couleur `#176B4A`.
+
 Ajouter les prochaines évolutions dans un nouveau changeset de version et des
 fichiers par module, puis l'inclure à la fin du master. Ne pas modifier un
 changeset déjà déployé : Liquibase vérifie son checksum. Ajouter un changeset

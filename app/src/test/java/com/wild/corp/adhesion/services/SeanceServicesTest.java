@@ -8,6 +8,7 @@ import com.wild.corp.adhesion.models.Presence;
 import com.wild.corp.adhesion.models.PlanificationHebdomadaire;
 import com.wild.corp.adhesion.models.Salle;
 import com.wild.corp.adhesion.models.Seance;
+import com.wild.corp.adhesion.models.Section;
 import com.wild.corp.adhesion.models.resources.SeanceResponse;
 import com.wild.corp.adhesion.repository.SeanceRepository;
 import com.wild.corp.adhesion.utils.Status;
@@ -41,6 +42,12 @@ class SeanceServicesTest {
         Activite activite = new Activite();
         activite.setId(5L);
         activite.setNom("Pilates");
+        var section = new Section();
+        section.setId(12L);
+        section.setNom("Bien-être");
+        section.setType("NON_COMPETITIVE");
+        section.setCouleur("#AB47BC");
+        activite.setSection(section);
         PlanificationHebdomadaire planification = new PlanificationHebdomadaire();
         planification.setJour(DayOfWeek.TUESDAY);
         planification.setHoraireDebut(LocalTime.of(19, 30));
@@ -56,6 +63,16 @@ class SeanceServicesTest {
         seance.setFin(LocalDateTime.of(2026, 9, 1, 20, 30));
         seance.setEtatSeance(ESeance.PROGRAMMEE);
         seance.setCommentaire("Information interne");
+        var tache = new com.wild.corp.adhesion.models.TacheSeance();
+        tache.setId(3L);
+        tache.setNom("Accueil");
+        tache.setIcone("handshake");
+        tache.setCouleur("#AB47BC");
+        var responsable = new Adherent();
+        responsable.setId(9L);
+        responsable.setNom("Dupont");
+        responsable.setPrenom("Alice");
+        seance.getResponsabilites().add(new com.wild.corp.adhesion.models.ResponsabiliteSeance(tache, responsable));
 
         when(repository.findAllByDebutGreaterThanEqualAndDebutLessThanOrderByDebut(
                 LocalDateTime.of(2026, 8, 31, 0, 0),
@@ -68,6 +85,16 @@ class SeanceServicesTest {
 
         assertThat(calendrier).singleElement().satisfies(evenement -> {
             assertThat(evenement.activiteNom()).isEqualTo("Pilates");
+            assertThat(evenement.activiteNomCourt()).isEqualTo("Pilates");
+            assertThat(evenement.descriptif()).isNull();
+            assertThat(evenement.responsabilites()).singleElement().satisfies(responsabilite -> {
+                assertThat(responsabilite.getTache().getIcone()).isEqualTo("handshake");
+                assertThat(responsabilite.getTache().getCouleur()).isEqualTo("#AB47BC");
+                assertThat(responsabilite.getAdherentResponse().prenom()).isEqualTo("Alice");
+            });
+            assertThat(evenement.sectionId()).isEqualTo(12L);
+            assertThat(evenement.sectionNom()).isEqualTo("Bien-être");
+            assertThat(evenement.couleurSection()).isEqualTo("#AB47BC");
             assertThat(evenement.salle()).isEqualTo("Salle des sports");
             assertThat(evenement.adresseSalle()).isEqualTo("1 rue des Sports");
             assertThat(evenement.couleurSalle()).isEqualTo("#4285F4");
@@ -144,6 +171,7 @@ class SeanceServicesTest {
                 LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30), 9L);
 
         assertThat(calendrier).extracting(evenement -> evenement.id()).containsExactly(15L);
+        assertThat(calendrier.getFirst().couleurSection()).isNull();
         verify(repository).findAllByAdherentAndStatutNonExcluAndDebutBetweenOrderByDebut(
                 9L, statutsExclus, debut, fin);
         verify(repository, never()).findAllByTribuAndStatutNonExcluAndDebutBetweenOrderByDebut(

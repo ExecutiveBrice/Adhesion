@@ -7,4 +7,8 @@
   <include file="changeset-v3.xml" relativeToChangelogFile="true"/>
   <include file="changeset-v4.xml" relativeToChangelogFile="true"/>
   <include file="changeset-v5.xml" relativeToChangelogFile="true"/>
+  <include file="changeset-v6.xml" relativeToChangelogFile="true"/>
+  <include file="changeset-v7.xml" relativeToChangelogFile="true"/>
+  <include file="changeset-v8.xml" relativeToChangelogFile="true"/>
+  <include file="changeset-v9.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  <changeSet id="v6-agenda-preferences" author="codex">
+    <createTable tableName="adherent_agenda_sections_masquees">
+      <column name="adherent_id" type="BIGINT"><constraints nullable="false"/></column>
+      <column name="section_id" type="BIGINT"><constraints nullable="false"/></column>
+    </createTable>
+    <addPrimaryKey tableName="adherent_agenda_sections_masquees" columnNames="adherent_id,section_id" constraintName="pk_adherent_agenda_sections"/>
+    <addForeignKeyConstraint baseTableName="adherent_agenda_sections_masquees" baseColumnNames="adherent_id" referencedTableName="adherents" referencedColumnNames="id" constraintName="fk_agenda_sections_adherent" onDelete="CASCADE"/>
+    <createTable tableName="adherent_agenda_google_masques">
+      <column name="adherent_id" type="BIGINT"><constraints nullable="false"/></column>
+      <column name="agenda_id" type="BIGINT"><constraints nullable="false"/></column>
+    </createTable>
+    <addPrimaryKey tableName="adherent_agenda_google_masques" columnNames="adherent_id,agenda_id" constraintName="pk_adherent_agenda_google"/>
+    <addForeignKeyConstraint baseTableName="adherent_agenda_google_masques" baseColumnNames="adherent_id" referencedTableName="adherents" referencedColumnNames="id" constraintName="fk_agenda_google_adherent" onDelete="CASCADE"/>
+  </changeSet>
+</databaseChangeLog>

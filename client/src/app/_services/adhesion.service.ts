@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { Accord, Activite, Adhesion, AdhesionLite, Paiement } from '../models';
 
-const API_URL = environment.server+'/';
+const API_URL = environment.server + '/adhesion/';
 
 export interface Page<T> {
   content: T[];

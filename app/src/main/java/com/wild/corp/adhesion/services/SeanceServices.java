@@ -3,6 +3,7 @@ package com.wild.corp.adhesion.services;
 import com.wild.corp.adhesion.models.*;
 import com.wild.corp.adhesion.models.resources.SeanceCalendrierResponse;
 import com.wild.corp.adhesion.models.resources.SeanceResponse;
+import com.wild.corp.adhesion.models.resources.ResponsabiliteSeanceRequest;
 import com.wild.corp.adhesion.repository.SeanceRepository;
 import com.wild.corp.adhesion.repository.SalleRepository;
 import jakarta.transaction.Transactional;
@@ -43,6 +44,9 @@ public class SeanceServices {
 
     @Autowired
     PresenceServices presenceServices;
+
+    @Autowired
+    ResponsabiliteSeanceServices responsabiliteSeanceServices;
 
     private final DatasetApi vacancesApi;
     private final DatasetApi joursFeriesApi;
@@ -357,7 +361,16 @@ public class SeanceServices {
                                String commentaire, boolean commentairePresent,
                                LocalDate date, LocalTime heureDebut, boolean horairePresent,
                                Long salleId, boolean sallePresente) {
-        if (etatSeance == null && !commentairePresent && !horairePresent && !sallePresente) {
+        return updateSeance(activiteId, seanceId, etatSeance, commentaire, commentairePresent,
+                date, heureDebut, horairePresent, salleId, sallePresente, null);
+    }
+
+    public Seance updateSeance(Long activiteId, Long seanceId, ESeance etatSeance,
+                               String commentaire, boolean commentairePresent,
+                               LocalDate date, LocalTime heureDebut, boolean horairePresent,
+                               Long salleId, boolean sallePresente,
+                               List<ResponsabiliteSeanceRequest> responsabilites) {
+        if (etatSeance == null && !commentairePresent && !horairePresent && !sallePresente && responsabilites == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Aucune modification demandée");
         }
         if (etatSeance != null) {
@@ -372,6 +385,9 @@ public class SeanceServices {
         }
         if (sallePresente) {
             getSeance(activiteId, seanceId).setSalle(trouverSalle(salleId));
+        }
+        if (responsabilites != null) {
+            responsabiliteSeanceServices.remplacer(getSeance(activiteId, seanceId), responsabilites);
         }
         return getSeance(activiteId, seanceId);
     }

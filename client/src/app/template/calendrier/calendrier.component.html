@@ -3,10 +3,9 @@
     <div class="evenements-entete">
       <div>
         <h2 id="titre-evenements">Événements à venir</h2>
-        <p>{{adherentId != null ? 'Les prochaines séances de vos activités' : 'Vos prochaines séances et les événements de l’association'}} {{joursVisibles != null ? 'sur les ' + joursVisibles + ' prochains jours.' : 'sur les 12 prochains mois.'}}</p>
       </div>
-      <button type="button" class="detail-ajout-google calendrier-export" (click)="telechargerSeancesGoogle()" [disabled]="exportCalendrierEnCours">
-        <fa-icon [icon]="faFileArrowDown"></fa-icon> {{exportCalendrierEnCours ? 'Préparation…' : 'Exporter les séances pour Google Agenda'}}
+      <button type="button" class="btn btn-outline-primary btn-sm" (click)="telechargerSeancesGoogle()" [disabled]="exportCalendrierEnCours">
+        <fa-icon [icon]="faFileArrowDown"></fa-icon> {{exportCalendrierEnCours ? 'Préparation…' : 'Exporter mes séances'}}
       </button>
     </div>
     @if (erreurCalendrier) {
@@ -15,39 +14,48 @@
     @if (googleAgendaErreur) {
       <div class="alert alert-warning" role="alert">{{googleAgendaErreur}}</div>
     }
-    @if (erreurExportCalendrier) {
-      <div class="alert alert-warning" role="alert">{{erreurExportCalendrier}}</div>
-    }
+    @if (erreurExportCalendrier) { <div class="alert alert-warning" role="alert">{{erreurExportCalendrier}}</div> }
     @if (chargementCalendrier) {
       <p role="status">Chargement des événements…</p>
     } @else {
       <div class="evenements-liste">
         @for (evenement of evenementsAVenir.slice(0, nombreEvenementsAffiches); track evenement.source + ':' + evenement.agendaSource + ':' + evenement.id + ':' + evenement.debut) {
-          <article class="card evenement-card" [style.--agenda-color]="couleurEvenement(evenement)">
-            <div class="evenement-card-entete">
-              <time class="evenement-date" [attr.datetime]="evenement.debut">{{evenement.debut | date:'EEEE d MMMM yyyy':'':'fr-FR'}}</time>
-              <span class="etat-seance" [ngClass]="classeEvenement(evenement)" [style.--agenda-color]="couleurEvenement(evenement)">{{sourceEvenement(evenement)}}</span>
-            </div>
-            <h3>{{evenement.titre}}</h3>
-            <span class="detail-horaire">{{evenement.journeeEntiere ? 'Toute la journée' : heure(evenement.debut) + ' – ' + heure(evenement.fin)}}</span>
-            @if (evenement.fin.substring(0, 10) !== evenement.debut.substring(0, 10) && !evenement.journeeEntiere) {
-              <span>Jusqu’au {{evenement.fin | date:'d MMMM yyyy':'':'fr-FR'}}</span>
-            }
-            @if (evenement.lieu || evenement.adresseSalle) {
-              <span class="detail-lieu">{{evenement.lieu}}
-                @if (lienAdresseSalle(evenement); as lienAdresse) {
-                  <a [href]="lienAdresse" target="_blank" rel="noopener noreferrer">{{evenement.adresseSalle}}</a>
-                }
+          <article class="card evenement-card" [style.--agenda-color]="couleurEvenement(evenement)" (click)="ouvrirEvenement(evenement)">
+            <button type="button" class="evenement-ouvrir" [attr.aria-label]="'Détails de ' + evenement.titre">
+              <span class="evenement-libelle">
+                <strong class="evenement-titre">{{evenement.activiteNom || evenement.titre}}</strong>
+                @if (evenement.descriptif) { <span class="evenement-descriptif">{{evenement.descriptif}}</span> }
               </span>
+              <span class="evenement-date-heure">
+                <time class="evenement-date" [attr.datetime]="evenement.debut">{{evenement.debut | date:'dd/MM':'':'fr-FR'}}</time>
+                <span aria-hidden="true">·</span>
+                <span class="evenement-heure">{{evenement.journeeEntiere ? 'Toute la journée' : heure(evenement.debut)}}</span>
+              </span>
+            </button>
+            @if (mesResponsabilites(evenement); as responsabilites) {
+              @if (responsabilites.length) {
+                <app-responsabilites-seance class="evenement-responsabilites" [responsabilites]="responsabilites"></app-responsabilites-seance>
+              }
             }
-            @if (evenement.commentaire) {
-              <div class="detail-commentaire" [innerHTML]="evenement.commentaire"></div>
-            }
-            @if (lienActivite(evenement); as lien) {
-              <a class="detail-lien" [href]="lien" target="_blank" rel="noopener noreferrer">Voir l’activité</a>
-            }
-            @if (lienGoogleAgenda(evenement); as lienGoogle) {
-              <a class="detail-ajout-google" [href]="lienGoogle" target="_blank" rel="noopener noreferrer"><fa-icon [icon]="faCalendarPlus"></fa-icon> Ajouter à Google Agenda</a>
+            @if (peutRenseignerPresence(evenement)) {
+              <div class="seance-presences" [attr.aria-busy]="evenement.chargementPresences || evenement.enregistrementPresence">
+                <div class="btn-group btn-group-sm" role="group" [attr.aria-label]="'Ma présence prévue à ' + evenement.titre">
+                  <button type="button" class="btn" [class.btn-success]="maPresence(evenement)?.presencePrevue === true"
+                    [class.btn-outline-success]="maPresence(evenement)?.presencePrevue !== true"
+                    (click)="$event.stopPropagation(); definirPresencePrevue(evenement, true)" [attr.aria-pressed]="maPresence(evenement)?.presencePrevue === true"
+                    [disabled]="evenement.chargementPresences || evenement.enregistrementPresence || !maPresence(evenement)">Présent</button>
+                  <button type="button" class="btn" [class.btn-secondary]="maPresence(evenement)?.presencePrevue === false"
+                    [class.btn-outline-secondary]="maPresence(evenement)?.presencePrevue !== false"
+                    (click)="$event.stopPropagation(); definirPresencePrevue(evenement, false)" [attr.aria-pressed]="maPresence(evenement)?.presencePrevue === false"
+                    [disabled]="evenement.chargementPresences || evenement.enregistrementPresence || !maPresence(evenement)">Absent</button>
+                </div>
+                @if (evenement.enregistrementPresence) {
+                  <span class="visually-hidden" role="status">Enregistrement…</span>
+                }
+                @if (evenement.erreurPresence) {
+                  <span class="text-danger" [title]="evenement.erreurPresence"><fa-icon [icon]="faTriangleExclamation" aria-hidden="true"></fa-icon><span class="visually-hidden" role="alert">{{evenement.erreurPresence}}</span></span>
+                }
+              </div>
             }
           </article>
         } @empty {
@@ -107,7 +115,7 @@
               @for (evenement of jour.evenements; track evenement) {
                 <div class="seance-resume" [ngClass]="classeEvenement(evenement)" [style.--agenda-color]="couleurEvenement(evenement)" [title]="heureEvenement(evenement) + ' · ' + evenement.titre"><span>{{heureEvenement(evenement)}}</span><strong>{{evenement.titre}}</strong>@if (evenement.source === 'SEANCE' && evenement.etatSeance !== 'PROGRAMMEE') {
                 <fa-icon class="icone-etat-calendrier" [ngClass]="classeEtat(evenement.etatSeance)" [icon]="iconeEtat(evenement.etatSeance)" [title]="etatLibelle(evenement.etatSeance)" [attr.aria-label]="etatLibelle(evenement.etatSeance)"></fa-icon>
-              }</div>
+              }<app-responsabilites-seance [responsabilites]="evenement.responsabilites"></app-responsabilites-seance></div>
             }
           </div>
         </div>
@@ -138,13 +146,15 @@
           }@if (evenement.journeeEntiere) {
           <span class="detail-horaire">Toute la journée</span>
           }<div class="detail-contenu"><strong>{{evenement.titre}}</strong>@if (evenement.lieu) {
-          <span class="detail-lieu">{{evenement.lieu}}@if (lienAdresseSalle(evenement)) {
+          <span class="detail-lieu"><span [class.detail-salle]="evenement.couleurSalle" [style.--couleur-salle]="evenement.couleurSalle">{{evenement.lieu}}</span>@if (lienAdresseSalle(evenement)) {
             <span> — </span>
             }@if (lienAdresseSalle(evenement)) {
             <a [href]="lienAdresseSalle(evenement)" target="_blank" rel="noopener noreferrer">{{evenement.adresseSalle}}</a>
           }</span>
           }@if (evenement.commentaire) {
           <div class="detail-commentaire" [innerHTML]="evenement.commentaire"></div>
+          }@if (evenement.responsabilites?.length) {
+          <app-responsabilites-seance class="mt-2 mb-2" [responsabilites]="evenement.responsabilites" [details]="true"></app-responsabilites-seance>
           }@if (lienActivite(evenement)) {
           <a class="detail-lien" [href]="lienActivite(evenement)" target="_blank" rel="noopener noreferrer">Voir l'activité</a>
           }@if (lienGoogleAgenda(evenement); as lienGoogle) {

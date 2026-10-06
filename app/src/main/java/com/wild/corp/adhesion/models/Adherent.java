@@ -54,6 +54,18 @@ public class Adherent {
 
     private Boolean completAdhesion;
 
+    @JsonIgnore
+    @ElementCollection
+    @CollectionTable(name = "adherent_agenda_sections_masquees", joinColumns = @JoinColumn(name = "adherent_id"))
+    @Column(name = "section_id", nullable = false)
+    private Set<Long> agendaSectionsMasquees = new HashSet<>();
+
+    @JsonIgnore
+    @ElementCollection
+    @CollectionTable(name = "adherent_agenda_google_masques", joinColumns = @JoinColumn(name = "adherent_id"))
+    @Column(name = "agenda_id", nullable = false)
+    private Set<Long> agendaGoogleMasques = new HashSet<>();
+
     @OneToMany(mappedBy = "adherent", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Accord> accords = new ArrayList<>();
 

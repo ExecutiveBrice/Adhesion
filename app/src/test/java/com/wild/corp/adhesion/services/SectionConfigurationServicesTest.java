@@ -39,7 +39,7 @@ class SectionConfigurationServicesTest {
         SectionConfiguration section = service.create(new SectionConfiguration(
                 null, "  Basket loisirs ", " non_competitive "));
 
-        assertThat(section).isEqualTo(new SectionConfiguration(12L, "Basket loisirs", "NON_COMPETITIVE", java.util.List.of()));
+        assertThat(section).isEqualTo(new SectionConfiguration(12L, "Basket loisirs", "NON_COMPETITIVE", java.util.List.of(), Section.COULEUR_PAR_DEFAUT));
     }
 
     @Test
@@ -59,7 +59,36 @@ class SectionConfigurationServicesTest {
         SectionConfiguration section = service.update(12L, new SectionConfiguration(
                 12L, " Basket compétition ", "competition"));
 
-        assertThat(section).isEqualTo(new SectionConfiguration(12L, "Basket compétition", "COMPETITION", java.util.List.of()));
+        assertThat(section).isEqualTo(new SectionConfiguration(12L, "Basket compétition", "COMPETITION", java.util.List.of(), Section.COULEUR_PAR_DEFAUT));
+    }
+
+    @Test
+    void savesNormalizesAndReturnsTheSectionColor() {
+        when(sectionRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        var configuration = service.create(new SectionConfiguration(null, "Yoga", "NON_COMPETITIVE", null, " #ab47bc "));
+        assertThat(configuration.couleur()).isEqualTo("#AB47BC");
+
+        var section = Section.builder().id(12L).nom("Yoga").type("NON_COMPETITIVE").couleur(configuration.couleur()).build();
+        when(sectionRepository.findById(12L)).thenReturn(java.util.Optional.of(section));
+        assertThat(service.update(12L, new SectionConfiguration(12L, "Yoga", "NON_COMPETITIVE")).couleur())
+                .isEqualTo("#AB47BC");
+        assertThat(service.update(12L, new SectionConfiguration(12L, "Yoga", "NON_COMPETITIVE", null, "#123456")).couleur())
+                .isEqualTo("#123456");
+        when(sectionRepository.findAllByOrderByNomAsc()).thenReturn(java.util.List.of(section));
+        assertThat(service.getAll()).singleElement().satisfies(value -> assertThat(value.couleur()).isEqualTo("#123456"));
+    }
+
+    @Test
+    void rejectsInvalidColorsOnCreationAndUpdate() {
+        when(sectionRepository.findById(12L)).thenReturn(java.util.Optional.of(
+                Section.builder().id(12L).nom("Yoga").type("NON_COMPETITIVE").build()));
+        for (String couleur : java.util.List.of("", "red", "#ABC", "#GG1234", "#1234567")) {
+            var configuration = new SectionConfiguration(null, "Yoga", "NON_COMPETITIVE", null, couleur);
+            assertThatThrownBy(() -> service.create(configuration)).isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("couleur");
+            assertThatThrownBy(() -> service.update(12L, configuration)).isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("couleur");
+        }
     }
 
     @Test

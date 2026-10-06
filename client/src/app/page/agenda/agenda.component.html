@@ -1,8 +1,18 @@
 <section class="agenda" aria-labelledby="agenda-titre" [attr.aria-busy]="chargement">
   <header class="agenda-entete">
     <div>
-      <h1 id="agenda-titre">Agenda</h1>
-      <p class="text-body-secondary mb-0">Toutes les activités et les évènements de l’association.</p>
+
+
+      @if (chargementPreferences || enregistrementPreferences) {
+        <p role="status" class="small mb-0">{{ chargementPreferences ? 'Chargement de votre sélection…' : 'Enregistrement de votre sélection…' }}</p>
+      } @else if (messagePreferences) {
+        <p role="status" class="text-success small mb-0">{{ messagePreferences }}</p>
+      }
+      @if (erreurPreferences) {
+        <div class="alert alert-warning mt-2 mb-0" role="alert">{{ erreurPreferences }}
+          <button type="button" class="btn btn-link btn-sm" [disabled]="chargementPreferences || enregistrementPreferences" (click)="preferencesChargees ? enregistrerSelection() : rechargerSelection()">Réessayer</button>
+        </div>
+      }
     </div>
     <div class="agenda-navigation">
       <button type="button" class="btn btn-outline-secondary" aria-label="Mois précédent" (click)="changerMois(-1)" [disabled]="chargement">‹</button>
@@ -12,10 +22,11 @@
     </div>
   </header>
 
+
   <ul class="agenda-legende" aria-label="Légende des évènements">
-    @for (categorie of categories; track categorie.id) {
-      <li><span [class]="'agenda-couleur categorie-' + categorie.id" aria-hidden="true"></span>{{ categorie.nom }}</li>
-    }
+    <li><fa-icon class="agenda-picto agenda-picto-personnel" [icon]="faUser" aria-hidden="true"></fa-icon>Mes activités</li>
+    <li><fa-icon class="agenda-picto agenda-picto-modifie" [icon]="faTriangleExclamation" aria-hidden="true"></fa-icon>Séance modifiée</li>
+    <li><fa-icon class="agenda-picto agenda-picto-annule" [icon]="faXmark" aria-hidden="true"></fa-icon>Séance annulée</li>
   </ul>
   @for (erreur of erreurs; track $index) {
     <div class="alert alert-warning" role="alert">{{ erreur }}</div>
@@ -24,7 +35,7 @@
     <p role="status">Chargement des évènements…</p>
   } @else {
     @if (!nombreEvenements && !erreurs.length) {
-      <p role="status" class="text-body-secondary">Aucun évènement ce mois-ci.</p>
+      <p role="status" class="text-body-secondary">Aucun évènement ce mois-ci dans les agendas sélectionnés.</p>
     }
     <div class="agenda-calendrier">
       @for (jour of joursSemaine; track jour) {
@@ -35,13 +46,23 @@
           <time class="agenda-numero" [attr.datetime]="jour.iso" [attr.aria-current]="jour.aujourdhui ? 'date' : null">{{ jour.numero }}</time>
           <div class="agenda-evenements">
             @for (evenement of jour.evenements; track evenement.id) {
-              <button type="button" [class]="'agenda-evenement categorie-' + evenement.categorie" [class.annule]="evenement.etat === 'ANNULEE'"
-                [attr.aria-label]="libelleAccessible(evenement)" [title]="libelleAccessible(evenement)" (click)="ouvrirEvenement(evenement, detailEvenement)">
+              <button type="button" class="agenda-evenement" [style.--couleur]="evenement.couleur" [class.annule]="evenement.etat === 'ANNULEE'"
+                [attr.aria-label]="libelleAccessible(evenement)" [title]="libelleAccessible(evenement)" (click)="ouvrirEvenement(evenement)">
                 <span class="agenda-evenement-titre">{{ evenement.titre }}</span>
                 <span class="agenda-evenement-detail">{{ horaire(evenement) }}</span>
                 @if (evenement.lieu) { <span class="agenda-evenement-detail">{{ evenement.lieu }}</span> }
+                @if (mesResponsabilites(evenement); as responsabilites) {
+                  @if (responsabilites.length) {
+                    <app-responsabilites-seance class="agenda-responsabilites" [responsabilites]="responsabilites"></app-responsabilites-seance>
+                  }
+                }
                 @if (evenement.etat === 'ANNULEE' || evenement.etat === 'MODIFIEE') {
-                  <span class="agenda-evenement-detail">{{ etatLibelle(evenement.etat) }}</span>
+                  <fa-icon class="agenda-picto agenda-evenement-etat" [class.agenda-picto-annule]="evenement.etat === 'ANNULEE'"
+                    [class.agenda-picto-modifie]="evenement.etat === 'MODIFIEE'"
+                    [icon]="evenement.etat === 'ANNULEE' ? faXmark : faTriangleExclamation" [title]="etatLibelle(evenement.etat)" aria-hidden="true"></fa-icon>
+                }
+                @if (evenement.categorie === 'adherent') {
+                  <fa-icon class="agenda-picto agenda-picto-personnel agenda-evenement-personnel" [icon]="faUser" title="Mes activités" aria-hidden="true"></fa-icon>
                 }
               </button>
             }
@@ -52,30 +73,21 @@
   }
 </section>
 
-<ng-template #detailEvenement let-modal>
-  @if (evenementSelectionne; as evenement) {
-    <div class="modal-header">
-      <h2 class="modal-title fs-5" id="agenda-detail-titre">{{ evenement.titre }}</h2>
-      <button type="button" class="btn-close" aria-label="Fermer" (click)="modal.dismiss()"></button>
-    </div>
-    <div class="modal-body agenda-detail">
-      <p class="agenda-detail-categorie"><span [class]="'agenda-couleur categorie-' + evenement.categorie" aria-hidden="true"></span>{{ categorieLibelle(evenement.categorie) }}</p>
-      <dl>
-        <dt>Date</dt>
-        <dd>{{ evenement.debut | date:'EEEE d MMMM yyyy':'':'fr-FR' }}
-          @if (dernierJour(evenement).substring(0, 10) !== evenement.debut.substring(0, 10)) {
-            <span> au {{ dernierJour(evenement) | date:'EEEE d MMMM yyyy':'':'fr-FR' }}</span>
+<fieldset [disabled]="filtresDesactives">
+  <div class="agenda-filtres-groupes">
+    <div class="agenda-filtres-choix">
+      @if (agendas.length) {
+        @for (agenda of agendas; track agenda.id) {
+          @if (agenda.id != null) {
+            <label class="agenda-filtre"><span class="agenda-couleur" [style.background-color]="agenda.couleur" aria-hidden="true"></span>{{ agenda.nom }}</label>
           }
-        </dd>
-        <dt>Horaire</dt><dd>{{ horaire(evenement) }}</dd>
-        @if (evenement.etat) { <dt>État</dt><dd>{{ etatLibelle(evenement.etat) }}</dd> }
-        @if (evenement.lieu) { <dt>Lieu</dt><dd>{{ evenement.lieu }}</dd> }
-        @if (evenement.adresse) { <dt>Adresse</dt><dd>{{ evenement.adresse }}</dd> }
-        @if (evenement.agenda) { <dt>Agenda</dt><dd>{{ evenement.agenda }}</dd> }
-      </dl>
-      @if (evenement.commentaire) { <div class="agenda-commentaire" [innerHTML]="evenement.commentaire"></div> }
-      @if (lienActivite(evenement); as lien) { <a [href]="lien" target="_blank" rel="noopener noreferrer">Voir l’activité</a> }
+        }
+      }
+      @for (section of sections; track section.id) {
+        @if (section.id != null) {
+          <label class="agenda-filtre"><input type="checkbox" [checked]="sectionVisible(section.id)" (change)="selectionnerSection(section.id, $any($event.target).checked)"><span class="agenda-couleur" [style.background-color]="section.couleur || '#5CBBAF'" aria-hidden="true"></span>{{ section.nom }}</label>
+        }
+      }
     </div>
-    <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="modal.close()">Fermer</button></div>
-  }
-</ng-template>
+  </div>
+</fieldset>

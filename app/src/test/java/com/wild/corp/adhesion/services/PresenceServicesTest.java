@@ -5,11 +5,16 @@ import com.wild.corp.adhesion.models.Adhesion;
 import com.wild.corp.adhesion.models.ESeance;
 import com.wild.corp.adhesion.models.Seance;
 import com.wild.corp.adhesion.models.Presence;
+import com.wild.corp.adhesion.models.Adherent;
+import com.wild.corp.adhesion.models.Section;
+import com.wild.corp.adhesion.models.User;
 import com.wild.corp.adhesion.repository.PresenceRepository;
 import com.wild.corp.adhesion.utils.Status;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.springframework.web.server.ResponseStatusException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -17,6 +22,111 @@ import static org.mockito.Mockito.when;
 class PresenceServicesTest {
 
     private final PresenceServices presenceServices = new PresenceServices();
+
+    @Test
+    void updatesOnlyTheConnectedMembersPlannedPresenceWithoutChangingActualAttendance() {
+        Presence own = plannedPresence(22L, 9L, "COMPETITION", Status.VALIDEE.label);
+        own.setPresence(false);
+        PresenceRepository repository = mock(PresenceRepository.class);
+        presenceServices.presenceRepository = repository;
+        when(repository.findBySeance_IdAndAdhesion_Adherent_User_Username(1L, "member@example.org"))
+                .thenReturn(java.util.Optional.of(own));
+
+        assertThat(presenceServices.updatePresencePrevue(1L, true, "member@example.org").presencePrevue()).isTrue();
+        assertThat(own.getPresencePrevue()).isTrue();
+        assertThat(own.getPresence()).isFalse();
+        assertThat(own.getDateModification()).isEqualTo(java.time.LocalDate.now());
+        assertThat(presenceServices.updatePresencePrevue(1L, false, "member@example.org").presencePrevue()).isFalse();
+    }
+
+    @Test
+    void listsMembersPlannedPresenceIncludingUnansweredButExcludingInactiveRegistrations() {
+        Presence own = plannedPresence(22L, 9L, "COMPETITION", Status.VALIDEE.label);
+        Presence other = plannedPresence(23L, 10L, "COMPETITION", Status.VALIDEE.label);
+        other.setPresencePrevue(false);
+        Presence cancelled = plannedPresence(24L, 11L, "COMPETITION", Status.ANNULEE.label);
+        Presence waiting = plannedPresence(25L, 12L, "COMPETITION", Status.LISTE_ATTENTE.label);
+        PresenceRepository repository = mock(PresenceRepository.class);
+        presenceServices.presenceRepository = repository;
+        when(repository.findBySeance_IdAndAdhesion_Adherent_User_Username(1L, "member@example.org"))
+                .thenReturn(java.util.Optional.of(own));
+        when(repository.findBySeance_IdOrderByAdhesion_Adherent_NomAscAdhesion_Adherent_PrenomAsc(1L))
+                .thenReturn(java.util.List.of(own, other, cancelled, waiting));
+
+        var responses = presenceServices.getPresencesPrevues(1L, "member@example.org");
+        assertThat(responses).hasSize(2);
+        assertThat(responses.get(0).presencePrevue()).isNull();
+        assertThat(responses.get(1).presencePrevue()).isFalse();
+        assertThat(responses.get(1).adherentId()).isEqualTo(10L);
+    }
+
+    @Test
+    void rejectsNonParticipantsAndInactiveMembersForBothListingAndUpdating() {
+        PresenceRepository repository = mock(PresenceRepository.class);
+        presenceServices.presenceRepository = repository;
+        for (var status : java.util.List.of(Status.ANNULEE.label, Status.LISTE_ATTENTE.label)) {
+            when(repository.findBySeance_IdAndAdhesion_Adherent_User_Username(1L, "member@example.org"))
+                    .thenReturn(java.util.Optional.of(plannedPresence(22L, 9L, "COMPETITION", status)));
+            assertForbiddenPlannedPresenceAccess();
+        }
+        when(repository.findBySeance_IdAndAdhesion_Adherent_User_Username(1L, "member@example.org"))
+                .thenReturn(java.util.Optional.empty());
+        assertForbiddenPlannedPresenceAccess();
+    }
+
+    @Test
+    void rejectsNonCompetitiveSectionsForBothListingAndUpdating() {
+        PresenceRepository repository = mock(PresenceRepository.class);
+        presenceServices.presenceRepository = repository;
+        when(repository.findBySeance_IdAndAdhesion_Adherent_User_Username(1L, "member@example.org"))
+                .thenReturn(java.util.Optional.of(plannedPresence(22L, 9L, "NON_COMPETITIVE", Status.VALIDEE.label)));
+        assertForbiddenPlannedPresenceAccess();
+    }
+
+    @Test
+    void rejectsUpdatingCancelledCompletedOrPastSessions() {
+        Presence own = plannedPresence(22L, 9L, "COMPETITION", Status.VALIDEE.label);
+        PresenceRepository repository = mock(PresenceRepository.class);
+        presenceServices.presenceRepository = repository;
+        when(repository.findBySeance_IdAndAdhesion_Adherent_User_Username(1L, "member@example.org"))
+                .thenReturn(java.util.Optional.of(own));
+        for (var state : java.util.List.of(ESeance.ANNULEE, ESeance.REALISEE)) {
+            own.getSeance().setEtatSeance(state);
+            assertThatThrownBy(() -> presenceServices.updatePresencePrevue(1L, true, "member@example.org"))
+                    .isInstanceOf(ResponseStatusException.class);
+        }
+        own.getSeance().setEtatSeance(ESeance.MODIFIEE);
+        own.getSeance().setDebut(java.time.LocalDateTime.now().minusHours(1));
+        assertThatThrownBy(() -> presenceServices.updatePresencePrevue(1L, true, "member@example.org"))
+                .isInstanceOf(ResponseStatusException.class);
+        assertThat(own.getPresencePrevue()).isNull();
+    }
+
+    private void assertForbiddenPlannedPresenceAccess() {
+        assertThatThrownBy(() -> presenceServices.getPresencesPrevues(1L, "member@example.org"))
+                .isInstanceOf(ResponseStatusException.class);
+        assertThatThrownBy(() -> presenceServices.updatePresencePrevue(1L, true, "member@example.org"))
+                .isInstanceOf(ResponseStatusException.class);
+    }
+
+    private Presence plannedPresence(Long id, Long adherentId, String sectionType, String status) {
+        Activite activite = new Activite();
+        activite.setSection(Section.builder().type(sectionType).build());
+        Adhesion adhesion = adhesion(activite, status);
+        Adherent adherent = new Adherent();
+        adherent.setId(adherentId);
+        adherent.setNom("Nom");
+        adherent.setPrenom("Prénom");
+        adherent.setUser(new User());
+        adhesion.setAdherent(adherent);
+        Seance seance = session(activite, 1L);
+        seance.setDebut(java.time.LocalDateTime.now().plusDays(1));
+        Presence presence = new Presence();
+        presence.setId(id);
+        presence.setAdhesion(adhesion);
+        presence.setSeance(seance);
+        return presence;
+    }
 
     @Test
     void createsAPresenceForEachExistingSessionWhenAnAdhesionIsValidated() {

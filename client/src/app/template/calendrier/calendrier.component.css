@@ -2,6 +2,14 @@
   margin: 2rem 0;
 }
 
+.detail-salle {
+  display: inline-block;
+  padding: .25rem .5rem;
+  border-left: 3px solid var(--couleur-salle);
+  border-radius: .25rem;
+  background: color-mix(in srgb, var(--couleur-salle) 15%, white);
+}
+
 .evenements-entete {
   align-items: center;
   display: flex;
@@ -23,17 +31,44 @@
 
 .evenements-liste {
   display: grid;
-  gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: .5rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
 }
 
 .evenement-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  gap: .25rem .5rem;
   border-left: 4px solid var(--agenda-color, var(--vert-alod));
-  border-radius: 12px;
-  padding: 1.25rem;
+  border-radius: 8px;
+  padding: .65rem .75rem;
   min-width: 0;
   overflow-wrap: anywhere;
+  cursor: pointer;
 }
+
+.evenement-ouvrir {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: .35rem;
+  width: 100%;
+  background: none;
+  color: inherit;
+  border: 0;
+  padding: 0;
+  text-align: left;
+}
+
+.evenement-ouvrir:focus-visible { outline: 3px solid var(--agenda-color, #176B4A); outline-offset: .2rem; border-radius: .25rem; }
+.evenement-libelle { display: flex; flex-wrap: wrap; align-items: baseline; gap: .1rem .45rem; }
+.evenement-titre { font-size: 1rem; }
+.evenement-descriptif { color: var(--bs-secondary-color); font-size: .85rem; }
+.evenement-date-heure { display: flex; align-items: center; gap: .4rem; font-size: .8rem; color: var(--bs-secondary-color); white-space: nowrap; }
+.evenement-responsabilites { grid-column: 2; grid-row: 1; align-self: start; justify-self: end; justify-content: flex-end; max-width: 8rem; }
 
 .evenement-card-entete {
   align-items: flex-start;
@@ -45,7 +80,7 @@
 }
 
 .evenement-date {
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .evenement-card h3 {
@@ -61,3 +96,15 @@
   margin-top: 1.25rem;
   text-align: center;
 }
+.seance-presences {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: end;
+  align-self: end;
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+  margin: 0;
+}
+
+.seance-presences .btn-group { flex: none; }

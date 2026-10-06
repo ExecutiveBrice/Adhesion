@@ -37,7 +37,8 @@ public class SectionConfigurationServices {
         if (sectionRepository.existsByNomIgnoreCase(normalisee.nom())) {
             throw configurationInvalide("Une section portant ce nom existe déjà");
         }
-        Section section = Section.builder().nom(normalisee.nom()).type(normalisee.type()).build();
+        Section section = Section.builder().nom(normalisee.nom()).type(normalisee.type())
+                .couleur(normalisee.couleur() != null ? normalisee.couleur() : Section.COULEUR_PAR_DEFAUT).build();
         appliquerReferents(section, configuration.referentUserIds());
         return toConfiguration(sectionRepository.save(section));
     }
@@ -52,6 +53,8 @@ public class SectionConfigurationServices {
         }
         section.setNom(normalisee.nom());
         section.setType(normalisee.type());
+        // Preserve the selected color when an older client omits it.
+        if (normalisee.couleur() != null) section.setCouleur(normalisee.couleur());
         appliquerReferents(section, configuration.referentUserIds());
         return toConfiguration(sectionRepository.save(section));
     }
@@ -68,7 +71,11 @@ public class SectionConfigurationServices {
         if (!TYPES_AUTORISES.contains(type)) {
             throw configurationInvalide("Le type de section doit être COMPETITION ou NON_COMPETITIVE");
         }
-        return new SectionConfiguration(null, nom, type);
+        String couleur = configuration.couleur() == null ? null : nettoyer(configuration.couleur()).toUpperCase(Locale.ROOT);
+        if (couleur != null && !couleur.matches("#[0-9A-F]{6}")) {
+            throw configurationInvalide("La couleur de la section doit être au format #RRGGBB");
+        }
+        return new SectionConfiguration(null, nom, type, null, couleur);
     }
 
     private String nettoyer(String valeur) {
@@ -77,7 +84,8 @@ public class SectionConfigurationServices {
 
     private SectionConfiguration toConfiguration(Section section) {
         return new SectionConfiguration(section.getId(), section.getNom(), section.getType(),
-                section.getReferents().stream().map(com.wild.corp.adhesion.models.User::getId).sorted().toList());
+                section.getReferents().stream().map(com.wild.corp.adhesion.models.User::getId).sorted().toList(),
+                section.getCouleur());
     }
 
     private void appliquerReferents(Section section, List<Long> referentUserIds) {

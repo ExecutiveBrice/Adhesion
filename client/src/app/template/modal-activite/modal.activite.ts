@@ -3,6 +3,7 @@ import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap'
 import { Activite, AdherentLite, ERole, PlanificationHebdomadaire, SalleConfiguration, SectionConfiguration } from 'src/app/models';
 import { Seance } from 'src/app/models/seance';
+import { AdherentResponsabilite, ResponsabiliteSeanceEdition, TacheSeanceConfiguration } from '../../models/responsabiliteSeance';
 import { faExternalLinkSquareAlt } from '@fortawesome/free-solid-svg-icons';
 import { AdherentService } from 'src/app/_services/adherent.service';
 import { ActiviteService } from 'src/app/_services/activite.service';
@@ -51,6 +52,11 @@ export class ModalActivite implements OnInit, OnDestroy {
   salles: SalleConfiguration[] = [];
   sections: SectionConfiguration[] = [];
   seances: Seance[] = [];
+  tachesSeance: TacheSeanceConfiguration[] = [];
+  adherentsResponsabilite: AdherentResponsabilite[] = [];
+  responsabilitesEdition: Record<number, ResponsabiliteSeanceEdition[]> = {};
+  responsabilitesErreur: Record<number, string> = {};
+  chargementResponsabilitesErreur = '';
   nombreSeances = 14;
   dateDebutSeances = '';
   planificationAjout?: PlanificationHebdomadaire;
@@ -90,6 +96,14 @@ export class ModalActivite implements OnInit, OnDestroy {
     });
     if (this.activite.id) {
       this.getSeances();
+      this.paramService.getTachesSeance().subscribe({
+        next: taches => this.tachesSeance = taches,
+        error: () => this.chargementResponsabilitesErreur = 'Les tâches n’ont pas pu être chargées.'
+      });
+      this.activiteService.getResponsabiliteCandidates(this.activite.id).subscribe({
+        next: adherents => this.adherentsResponsabilite = adherents,
+        error: () => this.chargementResponsabilitesErreur = 'Les adhérents de la section n’ont pas pu être chargés.'
+      });
     }
   }
 
@@ -99,7 +113,15 @@ export class ModalActivite implements OnInit, OnDestroy {
   }
 
 
+  get sectionSelectionnee(): boolean {
+    return (this.activite.section?.id ?? 0) > 0;
+  }
+
   enregistrer() {
+    if (!this.sectionSelectionnee) {
+      this.toastr.warning('Sélectionnez une section avant d’enregistrer l’activité.', 'Section obligatoire');
+      return;
+    }
     this.retirerPlanificationHistoriqueSiVide();
     this.activiteService.save(this.activite).subscribe(
       data => {
@@ -218,6 +240,7 @@ export class ModalActivite implements OnInit, OnDestroy {
     this.activiteService.getSeances(this.activite.id).subscribe({
       next: data => {
         this.seances = this.preparerSeances(data);
+        this.initialiserResponsabilites();
         this.chargementSeances = false;
       },
       error: err => {
@@ -242,6 +265,7 @@ export class ModalActivite implements OnInit, OnDestroy {
       next: data => {
         this.seances = this.preparerSeances(data);
         this.ajoutSeancesEnCours = false;
+        this.initialiserResponsabilites();
         this.toastr.success(
           `${data.length} séance(s) ajoutée(s)`,
           'Séances enregistrées'
@@ -344,6 +368,46 @@ export class ModalActivite implements OnInit, OnDestroy {
         this.enregistrementSeances.delete(seance.id);
         this.getSeances();
         this.showError(err.message);
+      }
+    });
+  }
+
+  private initialiserResponsabilites(): void {
+    this.responsabilitesEdition = Object.fromEntries(this.seances.map(seance => [seance.id,
+      (seance.responsabilites ?? []).map(item => ({ tacheId: item.tache.id, adherentId: item.adherent.id }))]));
+  }
+
+  ajouterResponsabilite(seance: Seance): void {
+    (this.responsabilitesEdition[seance.id] ??= []).push({});
+  }
+
+  retirerResponsabilite(seance: Seance, index: number): void {
+    this.responsabilitesEdition[seance.id].splice(index, 1);
+  }
+
+  enregistrerResponsabilites(seance: Seance): void {
+    if (!this.activite.id || this.enregistrementSeances.has(seance.id)) return;
+    const responsabilites = this.responsabilitesEdition[seance.id] ?? [];
+    this.responsabilitesErreur[seance.id] = '';
+    if (responsabilites.some(item => !item.tacheId || !item.adherentId)) {
+      this.responsabilitesErreur[seance.id] = 'Sélectionnez une tâche et un adhérent pour chaque responsabilité.';
+      return;
+    }
+    if (new Set(responsabilites.map(item => `${item.tacheId}:${item.adherentId}`)).size !== responsabilites.length) {
+      this.responsabilitesErreur[seance.id] = 'Une même tâche ne peut pas être attribuée deux fois au même adhérent.';
+      return;
+    }
+    this.enregistrementSeances.add(seance.id);
+    this.activiteService.modifierResponsabilitesSeance(this.activite.id, seance.id, responsabilites).subscribe({
+      next: resultat => {
+        seance.responsabilites = resultat.responsabilites ?? [];
+        this.enregistrementSeances.delete(seance.id);
+        this.toastr.success('Responsabilités enregistrées.');
+      },
+      error: response => {
+        this.enregistrementSeances.delete(seance.id);
+        this.responsabilitesErreur[seance.id] = response?.error?.message || response?.error?.detail
+          || 'Les responsabilités n’ont pas pu être enregistrées.';
       }
     });
   }

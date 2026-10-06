@@ -1,6 +1,9 @@
-import { Component, DestroyRef, OnInit, TemplateRef, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faTriangleExclamation, faUser, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { EvenementModalService } from '../../_services/evenement-modal.service';
+import { Evenement, evenementSeance, evenementGoogle } from '../../models/evenement';
 import { catchError, forkJoin, of, Subscription } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActiviteService } from '../../_services/activite.service';
@@ -8,24 +11,19 @@ import { ParamService } from '../../_services/param.service';
 import { TribuService } from '../../_services/tribu.service';
 import { TokenStorageService } from '../../_services/token-storage.service';
 import { registerApiViewRefresh } from '../../_services/api-render.service';
-import { AgendaGoogleConfiguration } from '../../models';
+import { AgendaPreferences, AgendaPreferencesService } from '../../_services/agenda-preferences.service';
+import { AgendaGoogleConfiguration, SectionConfiguration } from '../../models';
 import { CalendrierGoogle, SeanceCalendrier } from '../../models/seance';
+import { ResponsabiliteSeance } from '../../models/responsabiliteSeance';
+import { ResponsabilitesSeanceComponent } from '../../template/responsabilites-seance/responsabilites-seance.component';
 
 type Categorie = 'adherent' | 'autre' | 'asso';
 
-interface EvenementAgenda {
-  id: string;
-  titre: string;
+interface EvenementAgenda extends Evenement {
   categorie: Categorie;
-  debut: string;
-  fin: string;
-  journeeEntiere: boolean;
-  lieu?: string | null;
-  adresse?: string | null;
-  commentaire?: string | null;
-  lien?: string | null;
-  agenda?: string;
+  agendaGoogleId?: number;
   etat?: SeanceCalendrier['etatSeance'];
+  couleur: string;
 }
 
 interface JourAgenda {
@@ -38,7 +36,7 @@ interface JourAgenda {
 
 @Component({
   selector: 'app-agenda',
-  imports: [DatePipe],
+  imports: [DatePipe, FaIconComponent, ResponsabilitesSeanceComponent],
   templateUrl: './agenda.component.html',
   styleUrl: './agenda.component.css'
 })
@@ -48,11 +46,21 @@ export class AgendaComponent implements OnInit {
   private readonly params = inject(ParamService);
   private readonly tribus = inject(TribuService);
   private readonly storage = inject(TokenStorageService);
-  private readonly modales = inject(NgbModal);
+  private readonly modales = inject(EvenementModalService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly preferencesService = inject(AgendaPreferencesService);
+  private readonly changeDetectorRef = inject(ChangeDetectorRef);
   private requete?: Subscription;
   private adherentId?: number;
-  private agendas: AgendaGoogleConfiguration[] = [];
+  agendas: AgendaGoogleConfiguration[] = [];
+  sections: SectionConfiguration[] = [];
+  private evenements: EvenementAgenda[] = [];
+  preferences: AgendaPreferences = { sectionsMasquees: [], agendasGoogleMasques: [] };
+  preferencesChargees = false;
+  chargementPreferences = false;
+  enregistrementPreferences = false;
+  erreurPreferences = '';
+  messagePreferences = '';
   private erreursConfiguration: string[] = [];
 
   mois = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
@@ -61,14 +69,18 @@ export class AgendaComponent implements OnInit {
   erreurs: string[] = [];
   nombreEvenements = 0;
   evenementSelectionne: EvenementAgenda | null = null;
+  readonly faTriangleExclamation = faTriangleExclamation;
+  readonly faXmark = faXmark;
+  readonly faUser = faUser;
   readonly joursSemaine = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
   readonly categories: { id: Categorie; nom: string }[] = [
     { id: 'adherent', nom: 'Mes activités' },
     { id: 'autre', nom: 'Autres activités' },
-    { id: 'asso', nom: 'Association' }
+    { id: 'asso', nom: 'ALOD' }
   ];
 
   ngOnInit(): void {
+    this.chargementPreferences = true;
     forkJoin({
       tribu: this.tribus.getConnected().pipe(catchError(() => {
         this.erreursConfiguration.push('Impossible d’identifier vos activités.');
@@ -77,13 +89,95 @@ export class AgendaComponent implements OnInit {
       agendas: this.params.getAgendasGoogle().pipe(catchError(() => {
         this.erreursConfiguration.push('Impossible de charger les agendas de l’association.');
         return of([] as AgendaGoogleConfiguration[]);
+      })),
+      sections: this.params.getSections().pipe(catchError(() => {
+        this.erreursConfiguration.push('Impossible de charger la liste des sections.');
+        return of([] as SectionConfiguration[]);
+      })),
+      preferences: this.preferencesService.get().pipe(catchError(() => {
+        this.erreurPreferences = 'Impossible de charger votre sélection d’agendas.';
+        return of(null);
       }))
-    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ tribu, agendas }) => {
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ tribu, agendas, sections, preferences }) => {
       this.adherentId = tribu?.adherents.find(a => a.user?.id === this.storage.getUser().id)?.id;
       if (tribu && this.adherentId == null) this.erreursConfiguration.push('Impossible d’identifier vos activités.');
       this.agendas = agendas.filter(a => a.isVisisbleApp);
+      this.sections = sections;
+      this.chargementPreferences = false;
+      this.preferencesChargees = preferences != null && this.adherentId != null;
+      if (preferences) this.preferences = preferences;
       this.chargerMois();
     });
+  }
+
+  get filtresDesactives(): boolean {
+    return !this.preferencesChargees || this.enregistrementPreferences;
+  }
+
+  sectionVisible(id: number): boolean { return !this.preferences.sectionsMasquees.includes(id); }
+  agendaVisible(id: number): boolean { return !this.preferences.agendasGoogleMasques.includes(id); }
+
+  selectionnerSection(id: number, visible: boolean): void {
+    this.modifierSelection('sectionsMasquees', id, visible);
+  }
+
+  selectionnerAgenda(id: number, visible: boolean): void {
+    this.modifierSelection('agendasGoogleMasques', id, visible);
+  }
+
+  private modifierSelection(cle: keyof AgendaPreferences, id: number, visible: boolean): void {
+    if (this.filtresDesactives) return;
+    const ids = this.preferences[cle].filter(valeur => valeur !== id);
+    this.preferences = { ...this.preferences, [cle]: visible ? ids : [...ids, id] };
+    this.appliquerSelection();
+    this.enregistrerSelection();
+  }
+
+  enregistrerSelection(): void {
+    if (this.filtresDesactives) return;
+    this.enregistrementPreferences = true;
+    this.changeDetectorRef.markForCheck();
+    this.erreurPreferences = '';
+    this.messagePreferences = '';
+    this.preferencesService.update(this.preferences).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: preferences => {
+        this.preferences = preferences;
+        this.enregistrementPreferences = false;
+        this.messagePreferences = 'Sélection enregistrée dans votre profil.';
+        this.appliquerSelection();
+      },
+      error: () => {
+        this.enregistrementPreferences = false;
+        this.erreurPreferences = 'Votre sélection n’a pas pu être enregistrée. Réessayez pour la conserver dans votre profil.';
+        this.changeDetectorRef.markForCheck();
+      }
+    });
+  }
+
+  rechargerSelection(): void {
+    if (this.chargementPreferences || this.adherentId == null) return;
+    this.chargementPreferences = true;
+    this.changeDetectorRef.markForCheck();
+    this.preferencesService.get().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: preferences => {
+        this.preferences = preferences;
+        this.preferencesChargees = true;
+        this.chargementPreferences = false;
+        this.erreurPreferences = '';
+        this.appliquerSelection();
+      },
+      error: () => {
+        this.chargementPreferences = false;
+        this.changeDetectorRef.markForCheck();
+      }
+    });
+  }
+
+  private appliquerSelection(): void {
+    this.construireMois(this.evenements.filter(e => e.categorie === 'asso'
+      ? e.agendaGoogleId == null || this.agendaVisible(e.agendaGoogleId)
+      : e.sectionId == null || this.sectionVisible(e.sectionId)));
+    this.changeDetectorRef.markForCheck();
   }
 
   get titreMois(): string {
@@ -129,26 +223,35 @@ export class AgendaComponent implements OnInit {
         const ids = new Set(personnelles?.map(s => s.id));
         // Keep personal sessions even if the general calendar failed to load.
         const toutes = new Map([...seances, ...(personnelles ?? [])].map(s => [s.id, s]));
-        const evenements: EvenementAgenda[] = [
+        this.evenements = [
           ...Array.from(toutes.values(), s => ({
-            id: `seance-${s.id}`, titre: s.activiteNom,
+            ...evenementSeance(s, ids.has(s.id)),
             categorie: ids.has(s.id) ? 'adherent' as const : 'autre' as const,
-            debut: s.debut, fin: s.fin, journeeEntiere: false, lieu: s.salle,
-            adresse: s.adresseSalle, commentaire: s.commentaire, lien: s.lien, etat: s.etatSeance
+            etat: s.etatSeance,
+            couleur: s.couleurSection || this.sections.find(section => section.id === s.sectionId)?.couleur || '#5CBBAF',
           })),
           ...google.evenements.map(e => ({
-            ...e, id: `google-${e.agendaSource}-${e.id}-${e.debut}`, categorie: 'asso' as const,
-            agenda: this.agendas.find(a => a.source === e.agendaSource)?.nom || e.agenda
+            ...evenementGoogle(e, this.agendas), categorie: 'asso' as const,
+            couleur: this.agendas.find(a => a.source === e.agendaSource)?.couleur || '#D29438',
+            agendaGoogleId: this.agendas.find(a => a.source === e.agendaSource)?.id
           }))
         ];
-        this.construireMois(evenements);
+        // Also offer sections returned by the calendar if the configuration request failed.
+        toutes.forEach(s => {
+          if (s.sectionId != null && !this.sections.some(section => section.id === s.sectionId)) {
+            this.sections = [...this.sections, { id: s.sectionId, nom: s.sectionNom || 'Section',
+              type: s.sectionType === 'COMPETITION' ? 'COMPETITION' : 'NON_COMPETITIVE', couleur: s.couleurSection || undefined }];
+          }
+        });
+        this.sections.sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
+        this.appliquerSelection();
         this.chargement = false;
       });
   }
 
-  ouvrirEvenement(evenement: EvenementAgenda, contenu: TemplateRef<unknown>): void {
+  ouvrirEvenement(evenement: EvenementAgenda): void {
     this.evenementSelectionne = evenement;
-    this.modales.open(contenu, { centered: true, scrollable: true, ariaLabelledBy: 'agenda-detail-titre' });
+    this.modales.ouvrir(evenement, this.adherentId);
   }
 
   categorieLibelle(categorie: Categorie): string {
@@ -163,22 +266,15 @@ export class AgendaComponent implements OnInit {
     return e.journeeEntiere ? 'Toute la journée' : `${e.debut.substring(11, 16)} – ${e.fin.substring(11, 16)}`;
   }
 
+  mesResponsabilites(e: EvenementAgenda): ResponsabiliteSeance[] {
+    return this.adherentId == null ? [] : (e.responsabilites ?? [])
+      .filter(responsabilite => responsabilite.adherent.id === this.adherentId);
+  }
+
   libelleAccessible(e: EvenementAgenda): string {
-    return `${e.titre}, ${this.categorieLibelle(e.categorie)}, ${this.horaire(e)}${e.etat ? ', ' + this.etatLibelle(e.etat) : ''}`;
-  }
-
-  dernierJour(e: EvenementAgenda): string {
-    if (!e.journeeEntiere) return e.fin;
-    const date = new Date(`${e.fin.substring(0, 10)}T12:00:00`);
-    date.setDate(date.getDate() - 1);
-    return this.dateIso(date);
-  }
-
-  lienActivite(e: EvenementAgenda): string | null {
-    const lien = e.lien?.trim();
-    if (!lien) return null;
-    if (/^https?:\/\//i.test(lien)) return lien;
-    return /^[\w.-]+\.[a-z]{2,}(?:[/:?#]|$)/i.test(lien) ? `https://${lien}` : null;
+    const responsabilites = this.mesResponsabilites(e).map(r =>
+      `${r.tache.nom} : ${r.adherent.prenom} ${r.adherent.nom}`).join(', ');
+    return `${e.titre}, ${this.categorieLibelle(e.categorie)}, ${this.horaire(e)}${e.etat ? ', ' + this.etatLibelle(e.etat) : ''}${responsabilites ? ', ' + responsabilites : ''}`;
   }
 
   private construireMois(evenements: EvenementAgenda[]): void {

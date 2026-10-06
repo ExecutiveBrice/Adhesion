@@ -8,6 +8,7 @@ import com.wild.corp.adhesion.models.resources.SalleConfiguration;
 import com.wild.corp.adhesion.models.resources.SeanceResponse;
 import com.wild.corp.adhesion.models.resources.SectionConfiguration;
 import com.wild.corp.adhesion.models.resources.ChatConfiguration;
+import com.wild.corp.adhesion.models.resources.TacheSeanceConfiguration;
 import com.wild.corp.adhesion.services.GoogleAgendaConfigurationServices;
 import com.wild.corp.adhesion.services.ParamBooleanServices;
 import com.wild.corp.adhesion.services.ParamNumberServices;
@@ -15,6 +16,7 @@ import com.wild.corp.adhesion.services.ParamTextServices;
 import com.wild.corp.adhesion.services.SalleConfigurationServices;
 import com.wild.corp.adhesion.services.SectionConfigurationServices;
 import com.wild.corp.adhesion.services.ChatConfigurationServices;
+import com.wild.corp.adhesion.services.TacheSeanceConfigurationServices;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -54,6 +56,35 @@ public class ParamController {
 
 	@Autowired
 	ChatConfigurationServices chatConfigurationServices;
+
+	@Autowired
+	TacheSeanceConfigurationServices tacheSeanceConfigurationServices;
+
+	@GetMapping("/taches-seance")
+	@PreAuthorize("isAuthenticated()")
+	public ResponseEntity<?> getTachesSeance() {
+		return ResponseEntity.ok(tacheSeanceConfigurationServices.getAll());
+	}
+
+	@PostMapping("/taches-seance")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<?> createTacheSeance(@RequestBody TacheSeanceConfiguration tache) {
+		return ResponseEntity.ok(tacheSeanceConfigurationServices.create(tache));
+	}
+
+	@PutMapping("/taches-seance/{tacheId}")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<?> updateTacheSeance(@PathVariable Long tacheId,
+			@RequestBody TacheSeanceConfiguration tache) {
+		return ResponseEntity.ok(tacheSeanceConfigurationServices.update(tacheId, tache));
+	}
+
+	@DeleteMapping("/taches-seance/{tacheId}")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<Void> deleteTacheSeance(@PathVariable Long tacheId) {
+		tacheSeanceConfigurationServices.delete(tacheId);
+		return ResponseEntity.noContent().build();
+	}
 
 	@ApiResponses(value = {
 			@ApiResponse(

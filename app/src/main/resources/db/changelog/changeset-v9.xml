@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  <changeSet id="v9-taches-seance-presentation" author="codex">
+    <addColumn tableName="taches_seance">
+      <column name="icone" type="VARCHAR(50)" defaultValue="clipboard-check"><constraints nullable="false"/></column>
+      <column name="couleur" type="VARCHAR(7)" defaultValue="#176B4A"><constraints nullable="false"/></column>
+    </addColumn>
+  </changeSet>
+</databaseChangeLog>

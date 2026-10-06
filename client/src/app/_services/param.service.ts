@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient} from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { TacheSeanceConfiguration } from '../models/responsabiliteSeance';
 import { AgendaGoogleConfiguration, ParamBoolean, ParamNumber, ParamText, SalleConfiguration, ChatConfiguration, SectionConfiguration } from '../models';
 
 const API_URL = environment.server+'/param/';
@@ -39,6 +40,22 @@ export class ParamService {
 
   getSalles(): Observable<SalleConfiguration[]> {
     return this.http.get<SalleConfiguration[]>(API_URL + 'salles', { responseType: 'json' });
+  }
+
+  getTachesSeance(): Observable<TacheSeanceConfiguration[]> {
+    return this.http.get<TacheSeanceConfiguration[]>(API_URL + 'taches-seance');
+  }
+
+  createTacheSeance(tache: TacheSeanceConfiguration): Observable<TacheSeanceConfiguration> {
+    return this.http.post<TacheSeanceConfiguration>(API_URL + 'taches-seance', tache);
+  }
+
+  updateTacheSeance(tache: TacheSeanceConfiguration): Observable<TacheSeanceConfiguration> {
+    return this.http.put<TacheSeanceConfiguration>(API_URL + 'taches-seance/' + tache.id, tache);
+  }
+
+  deleteTacheSeance(id: number): Observable<void> {
+    return this.http.delete<void>(API_URL + 'taches-seance/' + id);
   }
 
   createSalle(salle: SalleConfiguration): Observable<SalleConfiguration> {

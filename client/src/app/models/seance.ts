@@ -1,4 +1,5 @@
 import { SalleConfiguration } from './salle';
+import { ResponsabiliteSeance } from './responsabiliteSeance';
 
 export class Seance {
   id!: number;
@@ -8,6 +9,7 @@ export class Seance {
   fin!: string;
   commentaire!: string;
   salle?: SalleConfiguration;
+  responsabilites?: ResponsabiliteSeance[];
   dateEdition!: string;
   heureEdition!: string;
 }
@@ -38,8 +40,16 @@ export interface PresenceSeance {
 
 export interface SeanceCalendrier {
   id: number;
+  responsabilites?: ResponsabiliteSeance[];
   activiteId: number;
+  sectionType?: string | null;
+  sectionId?: number | null;
+  sectionNom?: string | null;
+  couleurSection?: string | null;
   activiteNom: string;
+  activiteNomCourt?: string;
+  descriptif?: string | null;
+  causeAnnulation?: string | null;
   horaireActivite: string;
   salle: string;
   adresseSalle: string | null;
@@ -49,6 +59,14 @@ export interface SeanceCalendrier {
   debut: string;
   fin: string;
   etatSeance: 'PROGRAMMEE' | 'REALISEE' | 'ANNULEE' | 'MODIFIEE';
+}
+
+export interface PresencePrevue {
+  id: number;
+  adherentId: number;
+  nom: string;
+  prenom: string;
+  presencePrevue: boolean | null;
 }
 
 export interface EvenementGoogleAgenda {

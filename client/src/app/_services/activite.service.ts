@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { Activite, Adherent, AdherentLite, ActiviteNm1, ActiviteDropDown, HoraireDropDown } from '../models';
 import { CalendrierGoogle, Seance, SeanceCalendrier } from '../models/seance';
+import { AdherentResponsabilite, ResponsabiliteSeanceEdition } from '../models/responsabiliteSeance';
 
 const API_URL = environment.server + '/activite/';
 
@@ -53,6 +54,15 @@ export class ActiviteService {
 
   getReferentsCandidates(activiteId: number): Observable<AdherentLite[]> {
     return this.http.get<AdherentLite[]>(API_URL + activiteId + '/referents/candidats', { responseType: 'json' });
+  }
+
+  getResponsabiliteCandidates(activiteId: number): Observable<AdherentResponsabilite[]> {
+    return this.http.get<AdherentResponsabilite[]>(API_URL + activiteId + '/responsabilites/candidats');
+  }
+
+  modifierResponsabilitesSeance(activiteId: number, seanceId: number,
+                               responsabilites: ResponsabiliteSeanceEdition[]): Observable<Seance> {
+    return this.http.patch<Seance>(API_URL + activiteId + '/seances/' + seanceId, { responsabilites });
   }
 
   getCalendrier(dateDebut: string, dateFin: string, tribuUuid?: string): Observable<SeanceCalendrier[]> {

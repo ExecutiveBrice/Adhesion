@@ -2,6 +2,45 @@
 
 
   <div ngbAccordion class="admin-accordion">
+    <section ngbAccordionItem="taches-seance">
+      <h2 ngbAccordionHeader>
+        <button ngbAccordionButton>
+          <span class="admin-section-icon" aria-hidden="true"><fa-icon [icon]="faSliders"></fa-icon></span>
+          <span class="admin-section-heading"><span>Tâches des séances</span><small>Définissez les tâches à attribuer aux adhérents dans les séances.</small></span>
+          <span class="badge rounded-pill text-bg-light ms-auto me-2">{{tachesSeance.length}}</span>
+        </button>
+      </h2>
+      <div ngbAccordionCollapse><div ngbAccordionBody><ng-template>
+        <div class="admin-section-content">
+          <div class="admin-form-panel"><div class="row g-3 align-items-end">
+            <div class="col"><label class="form-label" for="nouvelleTacheSeanceNom">Nom de la tâche</label>
+              <input id="nouvelleTacheSeanceNom" class="form-control" maxlength="100" [(ngModel)]="nouvelleTacheSeanceNom" (keydown.enter)="ajouterTacheSeance()" placeholder="Ex. Installation du matériel" [disabled]="tacheSeanceEnregistrement"></div>
+            <div class="col-12 col-sm-auto"><span class="form-label d-block">Icône</span>
+              <app-icone-tache-select [(icone)]="nouvelleTacheSeanceIcone" [couleur]="nouvelleTacheSeanceCouleur" [disabled]="tacheSeanceEnregistrement" libelle="Icône de la nouvelle tâche"></app-icone-tache-select></div>
+            <div class="col-auto"><label class="form-label" for="nouvelleTacheSeanceCouleur">Couleur</label>
+              <input id="nouvelleTacheSeanceCouleur" type="color" class="form-control form-control-color" [(ngModel)]="nouvelleTacheSeanceCouleur" [disabled]="tacheSeanceEnregistrement"></div>
+            <div class="col-auto"><button type="button" class="btn btn-primary" (click)="ajouterTacheSeance()" [disabled]="tacheSeanceEnregistrement"><fa-icon [icon]="faPlus" class="me-1"></fa-icon>Ajouter</button></div>
+          </div></div>
+          <div class="list-group admin-configuration-list">
+            @for (tache of tachesSeance; track tache.id) {
+              <div class="list-group-item"><div class="row g-2 align-items-center">
+                <div class="col-12 col-md"><input class="form-control" maxlength="100" [(ngModel)]="tache.nom" [attr.aria-label]="'Nom de la tâche ' + tache.id" [disabled]="tacheSeanceEnregistrement"></div>
+                <div class="col-12 col-sm-auto"><app-icone-tache-select [(icone)]="tache.icone" [couleur]="tache.couleur" [disabled]="tacheSeanceEnregistrement" [libelle]="'Icône de la tâche ' + tache.nom"></app-icone-tache-select></div>
+                <div class="col-auto"><input type="color" class="form-control form-control-color" [(ngModel)]="tache.couleur" [attr.aria-label]="'Couleur de la tâche ' + tache.nom" [disabled]="tacheSeanceEnregistrement"></div>
+                <div class="col-auto d-flex gap-2">
+                  <button type="button" class="btn btn-outline-primary" (click)="enregistrerTacheSeance(tache)" [disabled]="tacheSeanceEnregistrement" [attr.aria-label]="'Enregistrer la tâche ' + tache.nom"><fa-icon [icon]="faCircleCheck"></fa-icon></button>
+                  <button type="button" class="btn btn-outline-danger" (click)="supprimerTacheSeance(tache)" [disabled]="tacheSeanceEnregistrement" [attr.aria-label]="'Supprimer la tâche ' + tache.nom"><fa-icon [icon]="faTrash"></fa-icon></button>
+                </div>
+              </div></div>
+            } @empty {
+              <p class="text-muted mb-0">Aucune tâche définie.</p>
+            }
+          </div>
+          @if (tacheSeanceMessage) { <div class="alert alert-success mt-3 mb-0" role="status">{{tacheSeanceMessage}}</div> }
+          @if (tacheSeanceErreur) { <div class="alert alert-danger mt-3 mb-0" role="alert">{{tacheSeanceErreur}}</div> }
+        </div>
+      </ng-template></div></div>
+    </section>
     <section ngbAccordionItem="agendas">
       <h2 ngbAccordionHeader>
         <button ngbAccordionButton>
@@ -95,6 +134,7 @@
           <div class="admin-form-panel"><div class="row g-3 align-items-end">
             <div class="col-12 col-md"><label class="form-label" for="nouvelleSectionNom">Nom de la section</label><input id="nouvelleSectionNom" type="text" class="form-control" maxlength="100" [(ngModel)]="nouvelleSectionNom" (keydown.enter)="ajouterSection()" placeholder="Ex. Basket, Yoga, Danse"></div>
             <div class="col-12 col-md-4"><label class="form-label" for="nouveauSectionType">Type</label><select id="nouveauSectionType" class="form-select" [(ngModel)]="nouveauSectionType"><option value="NON_COMPETITIVE">Non compétitive</option><option value="COMPETITION">Competition</option></select></div>
+            <div class="col-6 col-md-2"><label class="form-label" for="nouvelleSectionCouleur">Couleur agenda</label><input id="nouvelleSectionCouleur" type="color" class="form-control form-control-color w-100" [(ngModel)]="nouvelleSectionCouleur" title="Couleur des événements de la section dans l’agenda"></div>
             <div class="col-12 col-md-auto"><button type="button" class="btn btn-primary w-100" [disabled]="sectionEnregistrement" (click)="ajouterSection()"><fa-icon [icon]="faPlus" class="me-1"></fa-icon>Ajouter</button></div>
           </div></div>
           @if (sections.length > 0) {
@@ -104,9 +144,10 @@
                   @if (sectionEnEdition === index) {
                     <div class="col-12 col-md"><label class="form-label" [for]="'sectionNom' + index">Nom</label><input [id]="'sectionNom' + index" type="text" class="form-control" maxlength="100" [(ngModel)]="section.nom"></div>
                     <div class="col-12 col-md-4"><label class="form-label" [for]="'sectionType' + index">Type</label><select [id]="'sectionType' + index" class="form-select" [(ngModel)]="section.type"><option value="NON_COMPETITIVE">Non compétitive</option><option value="COMPETITION">Competition</option></select></div>
+                    <div class="col-6 col-md-2"><label class="form-label" [for]="'sectionCouleur' + index">Couleur agenda</label><input [id]="'sectionCouleur' + index" type="color" class="form-control form-control-color w-100" [(ngModel)]="section.couleur" [title]="'Couleur des événements de ' + section.nom"></div>
                     <div class="col-12"><label class="form-label" [for]="'sectionReferents' + index">Référents de cette section</label><select multiple class="form-select" [id]="'sectionReferents' + index" [ngModel]="section.referentUserIds ?? []" (ngModelChange)="section.referentUserIds = $event">@for (utilisateur of utilisateursSelectionnables; track utilisateur.id) { <option [ngValue]="utilisateur.id">{{utilisateur.prenom}} {{utilisateur.nom}}</option> }</select><small class="text-body-secondary">Ces personnes pourront lire les chats de cette section et de ses activités. Les permissions par rôle restent configurées dans chaque chat.</small></div>
                   } @else {
-                    <div class="col"><span class="fw-semibold">{{section.nom}}</span></div><div class="col-auto"><span class="badge" [ngClass]="section.type === 'COMPETITION' ? 'text-bg-primary' : 'text-bg-secondary'">{{section.type === 'COMPETITION' ? 'Competition' : 'Non compétitive'}}</span></div>
+                    <div class="col"><span class="d-inline-block rounded-circle me-2" style="width: 1rem; height: 1rem" [style.background-color]="section.couleur" aria-hidden="true"></span><span class="fw-semibold">{{section.nom}}</span></div><div class="col-auto"><span class="badge" [ngClass]="section.type === 'COMPETITION' ? 'text-bg-primary' : 'text-bg-secondary'">{{section.type === 'COMPETITION' ? 'Competition' : 'Non compétitive'}}</span></div>
                   }
                   <div class="col-12 col-md-auto">
                     @if (sectionEnEdition === index) {

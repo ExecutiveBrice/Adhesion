@@ -6,6 +6,7 @@ import com.wild.corp.adhesion.models.resources.*;
 import com.wild.corp.adhesion.services.ActiviteServices;
 import com.wild.corp.adhesion.services.GoogleAgendaServices;
 import com.wild.corp.adhesion.services.SeanceServices;
+import com.wild.corp.adhesion.services.ResponsabiliteSeanceServices;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -39,6 +40,8 @@ ActiviteServices activiteServices;
 	SeanceServices seanceServices;
 	@Autowired
 	GoogleAgendaServices googleAgendaServices;
+	@Autowired
+	ResponsabiliteSeanceServices responsabiliteSeanceServices;
 	@GetMapping("/all")
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<?> getAll() {
@@ -123,6 +126,13 @@ ActiviteServices activiteServices;
 		return ResponseEntity.ok(activiteServices.getReferentsCandidates(activiteId));
 	}
 
+	// Candidates can be registered in any activity belonging to the session's section.
+	@GetMapping("/{activiteId}/responsabilites/candidats")
+	@PreAuthorize("hasRole('USER')")
+	public ResponseEntity<List<AdherentResponsabiliteResponse>> getResponsabiliteCandidates(@PathVariable Long activiteId) {
+		return ResponseEntity.ok(responsabiliteSeanceServices.getCandidats(activiteId));
+	}
+
 	@PostMapping("/{activiteId}/seances")
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<?> addSeances(@PathVariable Long activiteId,
@@ -147,7 +157,7 @@ ActiviteServices activiteServices;
 		return ResponseEntity.ok(SeanceResponse.from(seanceServices.updateSeance(
 				activiteId, seanceId, request.etatSeance(), request.commentaire(), Boolean.TRUE.equals(request.commentairePresent()),
 				request.date(), request.heureDebut(), Boolean.TRUE.equals(request.horairePresent()),
-				request.salleId(), Boolean.TRUE.equals(request.sallePresente()))));
+				request.salleId(), Boolean.TRUE.equals(request.sallePresente()), request.responsabilites())));
 	}
 
 	@DeleteMapping("/{activiteId}/seances/{seanceId}")

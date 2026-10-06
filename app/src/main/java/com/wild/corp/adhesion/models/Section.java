@@ -27,6 +27,8 @@ import lombok.Setter;
 @Table(name = "sections")
 public class Section {
 
+    public static final String COULEUR_PAR_DEFAUT = "#5CBBAF";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -36,6 +38,10 @@ public class Section {
 
     @Column(nullable = false, length = 20)
     private String type;
+
+    @Builder.Default
+    @Column(nullable = false, length = 7)
+    private String couleur = COULEUR_PAR_DEFAUT;
 
     @Builder.Default
     @ManyToMany

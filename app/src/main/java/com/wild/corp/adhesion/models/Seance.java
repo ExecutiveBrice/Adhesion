@@ -1,6 +1,7 @@
 package com.wild.corp.adhesion.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -62,5 +63,11 @@ public class Seance {
 
     @OneToMany(mappedBy = "seance", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Presence> presences = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "responsabilites_seance", joinColumns = @JoinColumn(name = "seance_id"))
+    @OrderColumn(name = "position")
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private List<ResponsabiliteSeance> responsabilites = new ArrayList<>();
 
 }

@@ -6,6 +6,9 @@ import { ActiviteService } from '../../_services/activite.service';
 
 import { Activite, AgendaGoogleConfiguration, ERole, ParamBoolean, ParamNumber, ParamText, SalleConfiguration, ChatConfiguration, SectionConfiguration, UserLite } from 'src/app/models';
 import { forkJoin } from 'rxjs';
+import { TacheSeanceConfiguration } from '../../models/responsabiliteSeance';
+import { ICONE_TACHE_PAR_DEFAUT, COULEUR_TACHE_PAR_DEFAUT } from '../../_helpers/tache-icons';
+import { IconeTacheSelectComponent } from '../../template/icone-tache-select/icone-tache-select.component';
 import { faCalendarDays, faCircleCheck, faCircleXmark, faComments, faFont, faHashtag, faLayerGroup, faLocationDot, faPencilSquare, faPlus, faSliders, faTrash, faUserShield, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { AdherentService } from 'src/app/_services/adherent.service';
 import {AuthService} from "../../_services/auth.service";
@@ -30,7 +33,7 @@ type RoleUtilisateur = ERole.ROLE_ADMIN | ERole.ROLE_MEMBRECA | ERole.ROLE_BUREA
     selector: 'app-board-admin',
     templateUrl: './board-admin.component.html',
     styleUrls: ['./board-admin.component.css'],
-    imports: [FaIconComponent, FormsModule, NgClass, NgbAccordionBody, NgbAccordionButton, NgbAccordionCollapse, NgbAccordionDirective, NgbAccordionHeader, NgbAccordionItem, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, NgbTooltip, OrderByPipe, UserCheckboxDropdownComponent]
+    imports: [FaIconComponent, FormsModule, NgClass, NgbAccordionBody, NgbAccordionButton, NgbAccordionCollapse, NgbAccordionDirective, NgbAccordionHeader, NgbAccordionItem, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, NgbTooltip, OrderByPipe, UserCheckboxDropdownComponent, IconeTacheSelectComponent]
 })
 export class BoardAdminComponent implements OnInit {
   private readonly apiViewRefresh = registerApiViewRefresh();
@@ -66,6 +69,13 @@ export class BoardAdminComponent implements OnInit {
   agendaMessage = '';
   agendaErreur = '';
   salles: SalleConfiguration[] = [];
+  tachesSeance: TacheSeanceConfiguration[] = [];
+  nouvelleTacheSeanceNom = '';
+  nouvelleTacheSeanceIcone = ICONE_TACHE_PAR_DEFAUT;
+  nouvelleTacheSeanceCouleur = COULEUR_TACHE_PAR_DEFAUT;
+  tacheSeanceEnregistrement = false;
+  tacheSeanceMessage = '';
+  tacheSeanceErreur = '';
   nouvelleSalleNom = '';
   nouvelleSalleAdresse = '';
   nouvelleSalleCouleur = '#0F9D58';
@@ -75,6 +85,7 @@ export class BoardAdminComponent implements OnInit {
   sections: SectionConfiguration[] = [];
   nouvelleSectionNom = '';
   nouveauSectionType: SectionConfiguration['type'] = 'NON_COMPETITIVE';
+  nouvelleSectionCouleur = '#5CBBAF';
   sectionEnregistrement = false;
   sectionMessage = '';
   sectionErreur = '';
@@ -145,6 +156,7 @@ export class BoardAdminComponent implements OnInit {
     this.getAllNumber()
     this.getAgendasGoogle()
     this.getSalles()
+    this.getTachesSeance();
     this.getSections()
     this.getChats()
     this.getActivites()
@@ -334,6 +346,79 @@ export class BoardAdminComponent implements OnInit {
     });
   }
 
+  getTachesSeance(): void {
+    this.paramService.getTachesSeance().subscribe({
+      next: taches => this.tachesSeance = taches.map(tache => ({ ...tache,
+        icone: tache.icone || ICONE_TACHE_PAR_DEFAUT, couleur: tache.couleur || COULEUR_TACHE_PAR_DEFAUT })),
+      error: response => this.afficherErreurTacheSeance(response)
+    });
+  }
+
+  ajouterTacheSeance(): void {
+    if (this.tacheSeanceEnregistrement) return;
+    this.tacheSeanceErreur = '';
+    this.tacheSeanceMessage = '';
+    const nom = this.nouvelleTacheSeanceNom.trim();
+    if (!nom) {
+      this.tacheSeanceErreur = 'Saisissez le nom de la tâche.';
+      return;
+    }
+    this.tacheSeanceEnregistrement = true;
+    this.paramService.createTacheSeance({ nom, icone: this.nouvelleTacheSeanceIcone,
+      couleur: this.nouvelleTacheSeanceCouleur }).subscribe({
+      next: tache => {
+        this.tachesSeance = [...this.tachesSeance, tache].sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
+        this.nouvelleTacheSeanceNom = '';
+        this.nouvelleTacheSeanceIcone = ICONE_TACHE_PAR_DEFAUT;
+        this.nouvelleTacheSeanceCouleur = COULEUR_TACHE_PAR_DEFAUT;
+        this.tacheSeanceEnregistrement = false;
+        this.tacheSeanceMessage = 'Tâche ajoutée.';
+      },
+      error: response => this.afficherErreurTacheSeance(response)
+    });
+  }
+
+  enregistrerTacheSeance(tache: TacheSeanceConfiguration): void {
+    if (this.tacheSeanceEnregistrement || tache.id == null) return;
+    this.tacheSeanceErreur = '';
+    this.tacheSeanceMessage = '';
+    if (!tache.nom.trim()) {
+      this.tacheSeanceErreur = 'Le nom de la tâche est obligatoire.';
+      return;
+    }
+    this.tacheSeanceEnregistrement = true;
+    this.paramService.updateTacheSeance(tache).subscribe({
+      next: resultat => {
+        this.tachesSeance = this.tachesSeance.map(item => item.id === resultat.id ? resultat : item)
+          .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
+        this.tacheSeanceEnregistrement = false;
+        this.tacheSeanceMessage = 'Tâche enregistrée.';
+      },
+      error: response => this.afficherErreurTacheSeance(response)
+    });
+  }
+
+  supprimerTacheSeance(tache: TacheSeanceConfiguration): void {
+    if (this.tacheSeanceEnregistrement || tache.id == null) return;
+    this.tacheSeanceErreur = '';
+    this.tacheSeanceMessage = '';
+    this.tacheSeanceEnregistrement = true;
+    this.paramService.deleteTacheSeance(tache.id).subscribe({
+      next: () => {
+        this.tachesSeance = this.tachesSeance.filter(item => item.id !== tache.id);
+        this.tacheSeanceEnregistrement = false;
+        this.tacheSeanceMessage = 'Tâche supprimée.';
+      },
+      error: response => this.afficherErreurTacheSeance(response)
+    });
+  }
+
+  private afficherErreurTacheSeance(response: any): void {
+    this.tacheSeanceEnregistrement = false;
+    this.tacheSeanceErreur = response?.error?.message || response?.error?.detail
+      || 'Les tâches des séances n’ont pas pu être enregistrées ou chargées.';
+  }
+
   ajouterSalle(): void {
     const nom = this.nouvelleSalleNom.trim();
     const adresse = this.nouvelleSalleAdresse.trim();
@@ -413,7 +498,7 @@ export class BoardAdminComponent implements OnInit {
 
   getSections(): void {
     this.paramService.getSections().subscribe({
-      next: sections => this.sections = sections,
+      next: sections => this.sections = sections.map(section => ({ ...section, couleur: section.couleur || '#5CBBAF' })),
       error: () => this.sectionErreur = 'La liste des sections n’a pas pu être chargée.'
     });
   }
@@ -427,11 +512,12 @@ export class BoardAdminComponent implements OnInit {
       return;
     }
     this.sectionEnregistrement = true;
-    this.paramService.createSection({ nom, type: this.nouveauSectionType }).subscribe({
+    this.paramService.createSection({ nom, type: this.nouveauSectionType, couleur: this.nouvelleSectionCouleur }).subscribe({
       next: section => {
         this.sections = [...this.sections, section].sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
         this.nouvelleSectionNom = '';
         this.nouveauSectionType = 'NON_COMPETITIVE';
+        this.nouvelleSectionCouleur = '#5CBBAF';
         this.sectionEnregistrement = false;
         this.sectionMessage = 'Section ajoutée.';
       },

@@ -1,30 +1,21 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
+import { EvenementModalService } from '../../_services/evenement-modal.service';
+import { Evenement, evenementSeance, evenementGoogle } from '../../models/evenement';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, forkJoin, of } from 'rxjs';
 import { ActiviteService } from 'src/app/_services/activite.service';
 import { ParamService } from 'src/app/_services/param.service';
 import { AgendaGoogleConfiguration } from 'src/app/models';
-import { EvenementGoogleAgenda, SeanceCalendrier } from 'src/app/models/seance';
+import { EvenementGoogleAgenda, PresencePrevue, SeanceCalendrier } from 'src/app/models/seance';
 import { faCalendarPlus, faCheck, faChevronLeft, faChevronRight, faFileArrowDown, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { NgClass, DatePipe } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
+import { PresencePrevueService } from '../../_services/presence-prevue.service';
+import { ResponsabiliteSeance } from '../../models/responsabiliteSeance';
+import { ResponsabilitesSeanceComponent } from '../responsabilites-seance/responsabilites-seance.component';
 
-interface EvenementCalendrier {
-  id: string;
-  titre: string;
-  lieu: string | null;
-  adresseSalle?: string | null;
-  commentaire?: string | null;
-  debut: string;
-  fin: string;
-  source: 'SEANCE' | 'GOOGLE';
-  journeeEntiere: boolean;
-  agenda?: string;
-  agendaSource?: string;
-  couleurSalle?: string | null;
-  lien?: string | null;
-  etatSeance?: SeanceCalendrier['etatSeance'];
-}
+type EvenementCalendrier = Evenement;
 
 interface JourCalendrier {
   date: Date;
@@ -39,19 +30,25 @@ interface JourCalendrier {
     selector: 'app-calendrier',
     templateUrl: './calendrier.component.html',
     styleUrls: ['../../page/login/login.component.css', './calendrier.component.css'],
-    imports: [NgClass, FaIconComponent, DatePipe]
+    imports: [NgClass, FaIconComponent, DatePipe, ResponsabilitesSeanceComponent]
 })
 export class CalendrierComponent implements OnInit, OnChanges {
   private readonly apiViewRefresh = registerApiViewRefresh();
   private paramService = inject(ParamService);
   private activiteService = inject(ActiviteService);
+  private readonly presencePrevueService = inject(PresencePrevueService);
+  private readonly changeDetectorRef = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly modales = inject(EvenementModalService);
 
   @Input() tribuUuid?: string;
   @Input() adherentId?: number;
   @Input() joursVisibles?: number;
   @Input() affichage: 'calendrier' | 'liste' = 'calendrier';
+  @Input() presencesPrevues = false;
 
   evenementsAVenir: EvenementCalendrier[] = [];
+  evenementSelectionne: EvenementCalendrier | null = null;
   nombreEvenementsAffiches = 12;
 
   calendrier: JourCalendrier[] = [];
@@ -80,14 +77,11 @@ export class CalendrierComponent implements OnInit, OnChanges {
     if ((changes['tribuUuid'] && !changes['tribuUuid'].firstChange)
       || (changes['adherentId'] && !changes['adherentId'].firstChange)
       || (changes['joursVisibles'] && !changes['joursVisibles'].firstChange)
-      || (changes['affichage'] && !changes['affichage'].firstChange)) this.chargerCalendrier();
+      || (changes['affichage'] && !changes['affichage'].firstChange)
+      || (changes['presencesPrevues'] && !changes['presencesPrevues'].firstChange)) this.chargerCalendrier();
   }
 
   chargerConfigurationAgendas(): void {
-    if (this.adherentId != null) {
-      this.chargerCalendrier();
-      return;
-    }
     this.paramService.getAgendasGoogle().subscribe({
       next: agendas => {
         this.agendasGoogle = agendas.filter(agenda => agenda.isVisisbleApp);
@@ -97,8 +91,8 @@ export class CalendrierComponent implements OnInit, OnChanges {
       error: () => {
         this.agendasGoogle = [];
         this.googleAgendaIds = [];
-        this.googleAgendaErreur = "La configuration des agendas Google n'est pas disponible pour le moment.";
         this.chargerCalendrier();
+        this.googleAgendaErreur = "La configuration des agendas Google n'est pas disponible pour le moment.";
       }
     });
   }
@@ -118,6 +112,83 @@ export class CalendrierComponent implements OnInit, OnChanges {
   }
   selectionnerJour(jour: JourCalendrier): void { this.jourSelectionne = jour; this.popupJourOuverte = true; }
   fermerPopupJour(): void { this.popupJourOuverte = false; }
+
+  ouvrirEvenement(evenement: EvenementCalendrier): void {
+    this.evenementSelectionne = evenement;
+    const modale = this.modales.ouvrir(evenement, this.adherentId);
+    modale.componentInstance.presenceChange.subscribe(() => this.changeDetectorRef.markForCheck());
+    const fermer = () => {
+      if (this.destroyRef.destroyed) return;
+      if (!evenement.presences && !evenement.chargementPresences && !evenement.erreurPresence) this.chargerPresencesPrevues(evenement);
+      this.changeDetectorRef.markForCheck();
+    };
+    modale.result.then(fermer, fermer);
+  }
+
+  mesResponsabilites(evenement: EvenementCalendrier): ResponsabiliteSeance[] {
+    return this.adherentId == null ? [] : (evenement.responsabilites ?? [])
+      .filter(responsabilite => responsabilite.adherent.id === this.adherentId);
+  }
+
+  peutRenseignerPresence(evenement: EvenementCalendrier): boolean {
+    return this.presencesPrevues && this.adherentId != null && evenement.source === 'SEANCE'
+      && evenement.sectionType === 'COMPETITION'
+      && (evenement.etatSeance === 'PROGRAMMEE' || evenement.etatSeance === 'MODIFIEE')
+      && new Date(evenement.debut).getTime() > Date.now();
+  }
+
+  chargerPresencesPrevues(evenement: EvenementCalendrier): void {
+    if (!this.peutRenseignerPresence(evenement) || evenement.seanceId == null || evenement.chargementPresences) return;
+    evenement.chargementPresences = true;
+    evenement.erreurPresence = '';
+    this.modales.actualiser(evenement);
+    this.presencePrevueService.getPresences(evenement.seanceId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: presences => {
+        evenement.presences = presences;
+        evenement.chargementPresences = false;
+        this.modales.actualiser(evenement);
+        this.changeDetectorRef.detectChanges();
+      },
+      error: error => {
+        evenement.erreurPresence = error.error?.detail || 'Impossible de charger les présences prévues.';
+        evenement.chargementPresences = false;
+        this.modales.actualiser(evenement);
+        this.changeDetectorRef.detectChanges();
+      }
+    });
+  }
+
+  maPresence(evenement: EvenementCalendrier): PresencePrevue | undefined {
+    return evenement.presences?.find(presence => presence.adherentId === this.adherentId);
+  }
+
+  nombrePresences(evenement: EvenementCalendrier, valeur: boolean): number {
+    // Compte les réponses de tous les inscrits à cette séance, quel que soit l'adhérent connecté.
+    return evenement.presences?.filter(presence => presence.presencePrevue === valeur).length || 0;
+  }
+
+  definirPresencePrevue(evenement: EvenementCalendrier, valeur: boolean): void {
+    const presence = this.maPresence(evenement);
+    if (!this.peutRenseignerPresence(evenement) || evenement.seanceId == null || evenement.chargementPresences
+      || evenement.enregistrementPresence || !presence || presence.presencePrevue === valeur) return;
+    evenement.enregistrementPresence = true;
+    evenement.erreurPresence = '';
+    this.modales.actualiser(evenement);
+    this.presencePrevueService.updatePresence(evenement.seanceId, valeur).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: miseAJour => {
+        evenement.presences = evenement.presences?.map(element => element.id === miseAJour.id ? miseAJour : element);
+        evenement.enregistrementPresence = false;
+        this.chargerPresencesPrevues(evenement);
+        this.changeDetectorRef.detectChanges();
+      },
+      error: error => {
+        evenement.erreurPresence = error.error?.detail || 'Impossible d’enregistrer votre présence prévue.';
+        evenement.enregistrementPresence = false;
+        this.modales.actualiser(evenement);
+        this.changeDetectorRef.detectChanges();
+      }
+    });
+  }
 
   changerPeriode(nombreDeJours: number): void {
     const nouvelleDate = new Date(this.dateAffichee);
@@ -140,7 +211,7 @@ export class CalendrierComponent implements OnInit, OnChanges {
       this.erreurCalendrier = "Le calendrier des séances n'est pas disponible pour le moment.";
       return of([] as SeanceCalendrier[]);
     }));
-    const google$ = this.adherentId == null && this.googleAgendaIds.length ? this.activiteService.getCalendrierGoogle(dateDebut, dateFin, this.googleAgendaIds).pipe(catchError(() => {
+    const google$ = this.googleAgendaIds.length ? this.activiteService.getCalendrierGoogle(dateDebut, dateFin, this.googleAgendaIds).pipe(catchError(() => {
       this.googleAgendaErreur = "Les agendas Google publics ne sont pas disponibles pour le moment.";
       return of({ evenements: [] as EvenementGoogleAgenda[], erreurs: [] });
     })) : of({ evenements: [] as EvenementGoogleAgenda[], erreurs: [] });
@@ -148,6 +219,10 @@ export class CalendrierComponent implements OnInit, OnChanges {
       this.googleAgendaErreur ||= google.erreurs.join(' ');
       this.construireCalendrier(debut, seances, google.evenements);
       this.chargementCalendrier = false;
+      if (this.affichage === 'liste' && this.presencesPrevues) {
+        this.evenementsAVenir.filter(evenement => this.peutRenseignerPresence(evenement))
+          .forEach(evenement => this.chargerPresencesPrevues(evenement));
+      }
     });
   }
 
@@ -157,7 +232,7 @@ export class CalendrierComponent implements OnInit, OnChanges {
   classeEtat(etat?: SeanceCalendrier['etatSeance']): string { return `etat-${(etat || 'PROGRAMMEE').toLowerCase()}`; }
   heureEvenement(evenement: EvenementCalendrier): string { return evenement.journeeEntiere ? 'Journée' : this.heure(evenement.debut); }
   classeEvenement(evenement: EvenementCalendrier): string { return evenement.source === 'GOOGLE' ? 'source-google' : this.classeEtat(evenement.etatSeance); }
-  couleurEvenement(evenement: EvenementCalendrier): string { return evenement.source === 'SEANCE' ? evenement.couleurSalle || '#5CBBaf' : this.agendasGoogle.find(a => a.source === evenement.agendaSource)?.couleur || '#D29438'; }
+  couleurEvenement(evenement: EvenementCalendrier): string { return evenement.source === 'SEANCE' ? evenement.couleurSection || '#5CBBAF' : this.agendasGoogle.find(a => a.source === evenement.agendaSource)?.couleur || '#D29438'; }
   nomAgenda(evenement: EvenementCalendrier): string { return this.agendasGoogle.find(a => a.source === evenement.agendaSource)?.nom || evenement.agenda || 'Agenda Google'; }
   sourceEvenement(evenement: EvenementCalendrier): string { return evenement.source === 'GOOGLE' ? `Google · ${this.nomAgenda(evenement)}` : this.etatLibelle(evenement.etatSeance); }
   lienActivite(evenement: EvenementCalendrier): string | null { return evenement.source === 'SEANCE' ? this.lienUrl(evenement.lien) : null; }
@@ -304,7 +379,7 @@ export class CalendrierComponent implements OnInit, OnChanges {
   }
   private construireCalendrier(debut: Date, seances: SeanceCalendrier[], google: EvenementGoogleAgenda[]): void {
     const parJour = new Map<string, EvenementCalendrier[]>();
-    const evenements: EvenementCalendrier[] = [...seances.map(s => ({ id: `seance-${s.id}`, titre: s.activiteNom, lieu: s.salle, adresseSalle: s.adresseSalle, commentaire: s.commentaire, couleurSalle: s.couleurSalle, lien: s.lien, debut: s.debut, fin: s.fin, source: 'SEANCE' as const, journeeEntiere: false, etatSeance: s.etatSeance })), ...google.map(e => ({ ...e, source: 'GOOGLE' as const }))];
+    const evenements: EvenementCalendrier[] = [...seances.map(s => evenementSeance(s, this.adherentId != null)), ...google.map(e => evenementGoogle(e, this.agendasGoogle))];
     const maintenant = new Date();
     this.evenementsAVenir = evenements
       .filter(e => e.etatSeance !== 'REALISEE' && (e.journeeEntiere

@@ -78,6 +78,23 @@ class ActiviteServicesTest {
         verify(activiteRepository, never()).save(any());
     }
 
+    @Test
+    void requiresASectionBeforeCreatingOrUpdatingAnActivity() {
+        for (Long id : new Long[]{null, 12L}) {
+            for (Section section : new Section[]{null, new Section(), Section.builder().id(0L).build()}) {
+                Activite activite = new Activite();
+                activite.setId(id);
+                activite.setSection(section);
+                assertThatThrownBy(() -> activiteServices.save(activite))
+                        .isInstanceOf(org.springframework.web.server.ResponseStatusException.class)
+                        .hasMessageContaining("Sélectionnez une section existante")
+                        .satisfies(exception -> assertThat(((org.springframework.web.server.ResponseStatusException) exception)
+                                .getStatusCode().value()).isEqualTo(400));
+            }
+        }
+        org.mockito.Mockito.verifyNoInteractions(activiteRepository, sectionRepository, seanceServices);
+    }
+
     @InjectMocks
     private ActiviteServices activiteServices;
 
@@ -169,6 +186,9 @@ class ActiviteServicesTest {
         modification.setId(12L);
         modification.setNom("Nouveau nom");
         modification.setJour(DayOfWeek.WEDNESDAY);
+        Section section = Section.builder().id(7L).nom("Yoga").type("NON_COMPETITIVE").build();
+        modification.setSection(section);
+        when(sectionRepository.findById(7L)).thenReturn(Optional.of(section));
 
         when(activiteRepository.findById(12L)).thenReturn(Optional.of(activiteInDB));
         when(activiteRepository.save(activiteInDB)).thenReturn(activiteInDB);

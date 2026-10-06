@@ -29,6 +29,7 @@ interface EvenementCalendrier {
   agenda?: string;
   agendaSource?: string;
   couleurSalle?: string | null;
+  couleurSection?: string | null;
   lien?: string | null;
   etatSeance?: SeanceCalendrier['etatSeance'];
 }
@@ -259,6 +260,7 @@ export class LoginComponent implements OnInit {
         adresseSalle: seance.adresseSalle,
         commentaire: seance.commentaire,
         couleurSalle: seance.couleurSalle,
+        couleurSection: seance.couleurSection,
         lien: seance.lien,
         debut: seance.debut,
         fin: seance.fin,
@@ -318,7 +320,7 @@ export class LoginComponent implements OnInit {
 
   couleurEvenement(evenement: EvenementCalendrier): string {
     if (evenement.source === 'SEANCE') {
-      return evenement.couleurSalle || '#5CBBaf';
+      return evenement.couleurSection || '#5CBBAF';
     }
     return this.agendasGoogle.find(agenda => agenda.source === evenement.agendaSource)?.couleur || '#D29438';
   }

@@ -1,0 +1,10 @@
+:host { display: block; }
+.evenement-detail { overflow-wrap: anywhere; }
+.evenement-detail dd { margin-bottom: .8rem; }
+.agenda-lieu-salle { display: inline-flex; align-items: center; gap: .5rem; padding: .35rem .6rem; border-left: 3px solid var(--couleur-salle); border-radius: .25rem; background: color-mix(in srgb, var(--couleur-salle) 15%, white); }
+.agenda-couleur { display: inline-block; width: .85rem; height: .85rem; flex-shrink: 0; border-radius: .2rem; }
+.evenement-liens { display: flex; flex-wrap: wrap; gap: .5rem 1rem; }
+.evenement-commentaire { white-space: pre-wrap; margin-bottom: 1rem; }
+:host ::ng-deep .evenement-commentaire :is(img, video, iframe) { max-width: 100%; }
+.seance-presences-totaux { display: flex; flex-wrap: wrap; gap: .5rem; }
+.evenement-participants { padding-left: 1.25rem; font-size: .9rem; }

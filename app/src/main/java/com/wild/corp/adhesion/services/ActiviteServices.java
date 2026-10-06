@@ -193,13 +193,12 @@ public class ActiviteServices {
     }
 
     public Activite save(Activite activite) {
-        if (activite.getSection() != null) {
-            if (activite.getSection().getId() == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sélectionnez une section existante");
-            }
-            activite.setSection(sectionRepository.findById(activite.getSection().getId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Section introuvable")));
+        if (activite.getSection() == null || activite.getSection().getId() == null
+                || activite.getSection().getId() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sélectionnez une section existante");
         }
+        activite.setSection(sectionRepository.findById(activite.getSection().getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Section introuvable")));
         List<PlanificationHebdomadaire> planifications = normaliserPlanifications(activite);
         if (planifications.isEmpty()) {
             if (activite.getPlanificationsHebdomadaires() != null && !activite.getPlanificationsHebdomadaires().isEmpty()) {
