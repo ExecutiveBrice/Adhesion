@@ -44,13 +44,15 @@ class ControllerAuthorizationArchitectureTest {
         if (!AnnotatedElementUtils.hasAnnotation(controller, RestController.class)) {
             return;
         }
+        boolean protectedAtClassLevel = AnnotatedElementUtils.hasAnnotation(controller, PreAuthorize.class);
         List<String> classPaths = paths(AnnotatedElementUtils.findMergedAnnotation(controller, RequestMapping.class));
         for (Method method : controller.getDeclaredMethods()) {
             RequestMapping mapping = AnnotatedElementUtils.findMergedAnnotation(method, RequestMapping.class);
             if (mapping == null) {
                 continue;
             }
-            boolean protectedByMethodSecurity = AnnotatedElementUtils.hasAnnotation(method, PreAuthorize.class);
+            boolean protectedByMethodSecurity = protectedAtClassLevel
+                    || AnnotatedElementUtils.hasAnnotation(method, PreAuthorize.class);
             for (HttpMethod httpMethod : httpMethods(mapping)) {
                 for (String classPath : classPaths) {
                     for (String methodPath : paths(mapping)) {

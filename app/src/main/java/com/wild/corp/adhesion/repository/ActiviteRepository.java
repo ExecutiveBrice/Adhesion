@@ -16,6 +16,8 @@ public interface ActiviteRepository extends JpaRepository<Activite, Long>, JpaSp
 
     List<Activite> findByNom(String nom);
 
+    List<Activite> findBySectionIdOrderByNomAsc(Long sectionId);
+
     boolean existsByNom(String nom);
 
     @Query("""

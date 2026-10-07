@@ -13,6 +13,7 @@ export const routes: Routes = [
   { path: 'agenda', canActivate: [memberAccessGuard], data: { roles: [] }, title: 'Agenda', loadComponent: () => import('./page/agenda/agenda.component').then((m) => m.AgendaComponent) },
   { path: 'accueil', canActivate: [memberAccessGuard], data: { roles: [] }, title: 'Accueil', loadComponent: () => import('./page/accueil/accueil.component').then((m) => m.AccueilComponent) },
   { path: 'chat', title: 'Chat', canActivate: [chatAuthGuard], loadComponent: () => import('./page/chat/chat.component').then(m => m.ChatComponent) },
+  { path: 'mes-sections', title: 'Mes sections', canActivate: [memberAccessGuard], data: { roles: [] }, loadComponent: () => import('./page/mes-sections/mes-sections.component').then(m => m.MesSectionsComponent) },
   { path: 'boutique/gestion', title: 'Gestion de la boutique', canActivate: [shopAuthGuard, shopManagerGuard], loadComponent: () => import('./shop/pages/shop-management.component').then((m) => m.ShopManagementComponent) },
   { path: 'boutique', title: 'Boutique', canActivate: [shopAuthGuard], loadComponent: () => import('./shop/pages/shop-catalog.component').then((m) => m.ShopCatalogComponent) },
   { path: 'boutique/panier', title: 'Panier', canActivate: [shopAuthGuard], loadComponent: () => import('./shop/pages/shop-cart.component').then((m) => m.ShopCartComponent) },

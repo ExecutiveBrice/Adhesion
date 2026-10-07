@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  <changeSet id="v10-chat-check-constraints" author="adhesion">
+    <sql>ALTER TABLE chats ADD CONSTRAINT ck_chat_target CHECK (
+      (cible = 'SECTION' AND section_id IS NOT NULL AND activite_id IS NULL)
+      OR (cible = 'ACTIVITE' AND section_id IS NULL AND activite_id IS NOT NULL)
+      OR (cible = 'ASSOCIATION' AND section_id IS NULL AND activite_id IS NULL)
+    )</sql>
+    <sql>ALTER TABLE chat_messages ADD CONSTRAINT ck_chat_message_content CHECK (char_length(trim(content)) &gt; 0)</sql>
+  </changeSet>
+</databaseChangeLog>

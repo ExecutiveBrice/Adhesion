@@ -74,9 +74,9 @@ services:
     image: postgres:18.0-alpine
     container_name: db_adhesion
     environment:
-      - POSTGRES_USER=adhesion
-      - POSTGRES_DB=db_adhesion
-      - POSTGRES_PASSWORD=coucou
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
     ports:          #supprimer en remote
       - "8105:5432" #supprimer en remote
     volumes:

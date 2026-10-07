@@ -9,13 +9,14 @@ crée ni ne modifie les tables.
 - `changeset-v1.xml` décrit la version actuellement en production, arrêtée au
   commit `8a2cb14325940a31d9144dd50b5a20c9795725f0`. Il inclut le schéma historique
   complet de `baseline/master-changeset.xml`.
-- `changeset-v2.xml` est le point d'entrée unique des évolutions postérieures.
-  Il les ordonne par module dans `v2/activity.xml`, `v2/shop.xml`,
-  `v2/chat.xml` et `v2/communication.xml`.
+- `v2/changeset-v2.xml` est le point d'entrée unique de toutes les évolutions
+  postérieures à V1. Il inclut d'abord les modules `activity.xml`, `shop.xml`,
+  `chat.xml` et `communication.xml`, puis les changesets V3 à V10 dans leur
+  ordre d'origine. Tous ces fichiers sont rangés dans `v2/`.
 - Chaque fichier de module V2 contient un seul changeset et uniquement des
   opérations Liquibase XML, sans balise `sql` ni fichier SQL externe.
 
-La V2 part exclusivement du schéma V1 de production. Les états intermédiaires
+Le dossier V2 part exclusivement du schéma V1 de production. Les états intermédiaires
 des branches de développement ne sont donc pas rejoués. La reprise des données
 existantes des activités vers les sections est effectuée pendant la migration,
 puis le schéma final des modules est créé directement.
@@ -23,7 +24,7 @@ puis le schéma final des modules est créé directement.
 ## Bases existantes
 
 La V1 adopte les tables historiques déjà présentes grâce à ses préconditions.
-Les changesets V2 exigent ensuite une base au niveau V1 et s'arrêtent si une
+Les premiers changesets du dossier V2 exigent ensuite une base au niveau V1 et s'arrêtent si une
 table propre à la V2 existe déjà sans avoir été enregistrée par Liquibase.
 Hibernate vérifie enfin la compatibilité des mappings et arrête le démarrage en
 cas d'écart.
@@ -54,8 +55,8 @@ Les séances existantes conservent une liste vide. Une tâche utilisée ne peut
 La V9 ajoute l'icône Font Awesome et la couleur des tâches. Les tâches déjà
 enregistrées reçoivent l'icône `clipboard-check` et la couleur `#176B4A`.
 
-Ajouter les prochaines évolutions dans un nouveau changeset de version et des
-fichiers par module, puis l'inclure à la fin du master. Ne pas modifier un
+Ajouter les prochaines évolutions dans un nouveau changeset sous `v2/`, puis
+l'inclure à la fin de `v2/changeset-v2.xml`. Ne pas modifier un
 changeset déjà déployé : Liquibase vérifie son checksum. Ajouter un changeset
 correctif.
 

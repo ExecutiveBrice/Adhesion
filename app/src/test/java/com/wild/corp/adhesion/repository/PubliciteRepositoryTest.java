@@ -19,11 +19,11 @@ class PubliciteRepositoryTest {
             migration.afterPropertiesSet();
             var jdbc = new JdbcTemplate(source);
             jdbc.execute("CREATE TABLE sections (id bigint PRIMARY KEY, nom varchar(100), type varchar(20))");
-            migration.setChangeLog("classpath:db/changelog/changeset-v3.xml");
+            migration.setChangeLog("classpath:db/changelog/v2/changeset-v3.xml");
             migration.afterPropertiesSet();
-            migration.setChangeLog("classpath:db/changelog/changeset-v4.xml");
+            migration.setChangeLog("classpath:db/changelog/v2/changeset-v4.xml");
             migration.afterPropertiesSet();
-            migration.setChangeLog("classpath:db/changelog/changeset-v5.xml");
+            migration.setChangeLog("classpath:db/changelog/v2/changeset-v5.xml");
             migration.afterPropertiesSet();
             jdbc.execute("CREATE TABLE users (id bigint PRIMARY KEY, username varchar(255))");
             jdbc.execute("CREATE TABLE adherents (id bigint PRIMARY KEY, user_id bigint)");

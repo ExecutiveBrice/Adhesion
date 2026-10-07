@@ -49,6 +49,14 @@
                   </a>
                 </li>
               }
+              @if (showManagedSections) {
+                <li class="nav-item">
+                  <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="mes-sections" aria-label="Mes sections" title="Mes sections">
+                    <fa-icon [icon]="faPeopleGroup" aria-hidden="true"></fa-icon>
+                    <span class="nav-label">Mes sections</span>
+                  </a>
+                </li>
+              }
               @if (showAdmin || showSecretaire) {
                 <li class="nav-item">
                   <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="activites" aria-label="Activités" title="Activités">

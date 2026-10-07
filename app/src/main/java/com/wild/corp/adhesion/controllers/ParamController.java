@@ -143,6 +143,7 @@ public class ParamController {
 	}
 
 	@GetMapping("/sections")
+	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<List<SectionConfiguration>> getSections() {
 		return ResponseEntity.ok(sectionConfigurationServices.getAll());
 	}

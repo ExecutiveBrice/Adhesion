@@ -169,7 +169,7 @@ ActiviteServices activiteServices;
 
 
 	@PostMapping("/save")
-	@PreAuthorize("hasRole('USER')")
+	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('ADMIN')")
 	public ResponseEntity<?> save(@RequestBody Activite activite) {
 		return ResponseEntity.ok(activiteServices.save(activite));
 	}
@@ -184,7 +184,7 @@ ActiviteServices activiteServices;
 
 
 	@PostMapping("/addReferent")
-	@PreAuthorize("hasRole('USER')")
+	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('ADMIN')")
 	public ResponseEntity<?> save( @RequestParam(value="activiteId") Long activiteId, @RequestParam(value="adherentId") Long adherentId ) {
 		return ResponseEntity.ok(activiteServices.addReferent(activiteId, adherentId));
 	}

@@ -11,6 +11,7 @@ import { PwaService } from './_services/pwa.service';
 import { AuthService } from './_services/auth.service';
 import { LoginPageService } from './_services/login-page.service';
 import { ChatService } from './_services/chat.service';
+import { SectionManagementService } from './_services/section-management.service';
 import { ShopCartLinkComponent } from './shop/components/shop-cart-link.component';
 import { filter } from 'rxjs';
 import { NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, NgbDropdownButtonItem } from '@ng-bootstrap/ng-bootstrap/dropdown';
@@ -49,6 +50,7 @@ export class AppComponent {
   readonly pwaService = inject(PwaService);
   readonly loginPage = inject(LoginPageService);
   readonly chat = inject(ChatService);
+  private readonly sectionManagement = inject(SectionManagementService);
   private readonly router = inject(Router);
   private readonly currentUrl = signal(this.router.url);
   readonly isLoginPage = computed(() => ['/', '/login'].includes(this.currentUrl().split(/[?#]/)[0]));
@@ -131,6 +133,8 @@ export class AppComponent {
   showShopManager=false;
   showShop = false;
   showChat = false;
+  showManagedSections = false;
+  private loadedManagedSectionsUserId?: number;
   username?: string;
   maintenance: Boolean = false
 
@@ -196,6 +200,17 @@ export class AppComponent {
       this.chat.monitorUnread(this.isLoggedIn ? user.id : undefined);
     }
     this.roles = user.roles ?? [];
+    if (this.isLoggedIn && user.id && this.loadedManagedSectionsUserId !== user.id) {
+      this.loadedManagedSectionsUserId = user.id;
+      this.sectionManagement.sections().subscribe({
+        next: sections => {
+          if (this.isLoggedIn && this.tokenStorageService.getUser().id === user.id) {
+            this.showManagedSections = sections.length > 0;
+          }
+        },
+        error: () => this.showManagedSections = false
+      });
+    }
 
     this.showAdmin = this.roles.includes('ROLE_ADMIN');
     this.showBureau = this.roles.includes('ROLE_BUREAU');
@@ -208,6 +223,8 @@ export class AppComponent {
     this.showShopManager = this.roles.includes('ROLE_RESPONSABLE_BOUTIQUE');
     this.username = user.username;
     if (!this.isLoggedIn) {
+      this.showManagedSections = false;
+      this.loadedManagedSectionsUserId = undefined;
       this.loadedUserId = undefined;
       this.tribeMembers.set([]);
       this.activeMember.set(undefined);

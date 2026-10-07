@@ -31,6 +31,6 @@ Les messages sont affichés comme texte, sans interprétation HTML. L’actualis
 
 ## Migration
 
-La migration `09-unify_chats.xml` renomme les tables en `chats`, `chat_permissions`, `chat_messages` et `chat_reads`, en conservant les identifiants, messages, permissions et repères des chats gérés. Elle supprime les colonnes et tables des anciens canaux automatiques, déjà retirés par la migration 08. Elle crée `section_referents` pour les affectations explicites des référents de section. Les anciens changelogs restent inchangés.
+Le changelog `v2/chat.xml` crée les tables unifiées `chats`, `chat_permissions`, `chat_messages`, `chat_reads` et `section_referents`. Le changelog `v2/changeset-v10.xml` ajoute les contraintes de cohérence des rattachements et du contenu des messages aux bases déjà créées ; les données valides existantes sont conservées.
 
 Les permissions déjà enregistrées deviennent toutes indépendantes du rattachement, y compris `ROLE_USER` : un tel droit explicite donne donc désormais accès à tous les adhérents. Retirer cette permission pour limiter la lecture aux seules personnes liées au rattachement. La suppression d’un chat supprime ses messages, permissions et repères. La suppression d’une section ou activité supprime les chats directement rattachés ; les chats globaux restent conservés.

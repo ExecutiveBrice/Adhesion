@@ -101,7 +101,7 @@ AdhesionServices adhesionServices;
 	}
 
 	@GetMapping("/choisirStatut")
-	@PreAuthorize("hasRole('USER')")
+	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('ADMIN')")
 	public ResponseEntity<?> choisirStatut(Authentication principal,@PathParam("inscriptionId") Long adhesionId, @PathParam("statutActuel") String statutActuel) {
 		log.info("choisirStatut by " + principal.getName() + " for adhesion id "+adhesionId);
 		adhesionServices.addModification(principal.getName(), adhesionId, "Mise a jour du statut de l'adhesion : "+ statutActuel);

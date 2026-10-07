@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class LiquibaseMigrationTest {
     private static final String MASTER = "db/changelog/db.changelog-master.xml";
     private static final String V1 = "db/changelog/changeset-v1.xml";
-    private static final String V2 = "db/changelog/changeset-v2.xml";
+    private static final String V2 = "db/changelog/v2/changeset-v2.xml";
     private final List<SingleConnectionDataSource> embeddedDatabases = new ArrayList<>();
 
     @AfterEach
@@ -134,7 +134,7 @@ class LiquibaseMigrationTest {
     }
 
     @Test
-    void v2ContainsOneXmlOnlyChangesetPerModule() throws Exception {
+    void v2GroupsModuleAndFollowupChangesets() throws Exception {
         String[] modules = {"activity", "shop", "chat", "communication"};
         for (String module : modules) {
             try (var resource = getClass().getClassLoader()
@@ -153,7 +153,7 @@ class LiquibaseMigrationTest {
         int v1Count = jdbc.queryForObject("SELECT count(*) FROM databasechangelog", Integer.class);
         migrate(source, V2);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM databasechangelog", Integer.class))
-                .isEqualTo(v1Count + modules.length);
+                .isEqualTo(v1Count + 12);
     }
 
     @Test
@@ -161,7 +161,7 @@ class LiquibaseMigrationTest {
         var source = database();
         isolatePostgres(source);
         migrate(source, V1);
-        migrate(source, "db/changelog/changeset-v8.xml");
+        migrate(source, "db/changelog/v2/changeset-v8.xml");
         var jdbc = new JdbcTemplate(source);
         jdbc.update("INSERT INTO taches_seance (nom) VALUES ('Matériel')");
         migrate(source, MASTER);
