@@ -159,7 +159,7 @@
               <div class="member-name">
                 <strong>{{adhesion.adherent.nom}} {{adhesion.adherent.prenom}}</strong>
                 <button type="button" class="icon-action" title="Ouvrir la fiche adhérent"
-                  (click)="opennewTab('#/profil/' + adhesion.adherent.tribuId + '?adherentId=' + adhesion.adherent.id)"><fa-icon [icon]="faPen"></fa-icon></button>
+                  (click)="opennewTab('/profil/' + adhesion.adherent.tribuId + '?adherentId=' + adhesion.adherent.id)"><fa-icon [icon]="faPen"></fa-icon></button>
                 </div>
                 <a [href]="'mailto:' + adhesion.adherent.email">{{adhesion.adherent.email}}</a>
                 @if (adhesion.adherent.adresse) {

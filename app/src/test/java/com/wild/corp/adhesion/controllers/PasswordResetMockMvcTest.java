@@ -70,7 +70,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ContextConfiguration(classes = PasswordResetMockMvcTest.TestConfiguration.class)
 @WebAppConfiguration
 @TestPropertySource(properties = {
-        "server.name=example.test",
+        "adhesion.frontend.base-url=https://adhesion.example.test/",
         "adhesion.security.password-reset.token-lifetime-minutes=30",
         "adhesion.security.password-reset.rate-limit.ip=1000",
         "adhesion.security.password-reset.rate-limit.address=1000"
@@ -131,6 +131,9 @@ class PasswordResetMockMvcTest {
         assertThat(sentEmails).hasSize(1);
 
         String rawToken = lastEmailedToken();
+        assertThat(sentEmails.getFirst().getText())
+                .contains("href=\"https://adhesion.example.test/resetPassword/" + rawToken + "\"")
+                .doesNotContain("/#/", "/adhesion/");
         assertThat(Base64.getUrlDecoder().decode(rawToken)).hasSize(32);
         ConfirmationToken stored = tokenRepository.findAll().getFirst();
         assertThat(stored.getTokenHash()).hasSize(64).isNotEqualTo(rawToken);

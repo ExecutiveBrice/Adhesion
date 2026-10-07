@@ -17,18 +17,18 @@ public class PasswordResetWorker {
     private final UserRepository userRepository;
     private final ConfirmationTokenService tokenService;
     private final EmailService emailService;
-    private final String serverName;
+    private final String frontendBaseUrl;
     private final Duration tokenLifetime;
 
     public PasswordResetWorker(UserRepository userRepository,
                                ConfirmationTokenService tokenService,
                                EmailService emailService,
-                               @Value("${server.name:localhost:8002}") String serverName,
+                               @Value("${adhesion.frontend.base-url:http://localhost:4200}") String frontendBaseUrl,
                                @Value("${adhesion.security.password-reset.token-lifetime-minutes:30}") long lifetimeMinutes) {
         this.userRepository = userRepository;
         this.tokenService = tokenService;
         this.emailService = emailService;
-        this.serverName = serverName;
+        this.frontendBaseUrl = frontendBaseUrl.replaceAll("/+$", "");
         this.tokenLifetime = Duration.ofMinutes(lifetimeMinutes);
     }
 
@@ -49,8 +49,8 @@ public class PasswordResetWorker {
         message.getDestinataires().add(user.getUsername());
         message.setSubject("Réinitialisation du mot de passe");
         message.setText("Bonjour,<br>" +
-                "Ceci est le <a href=https://" + serverName + "/adhesion/#/resetPassword/" + rawToken +
-                ">lien de renouvellement de votre mot de passe</a><br>" +
+                "Ceci est le <a href=\"" + frontendBaseUrl + "/resetPassword/" + rawToken +
+                "\">lien de renouvellement de votre mot de passe</a><br>" +
                 "Cordialement,<br>" +
                 "l'équipe de l'ALOD");
         emailService.sendMessage(message);

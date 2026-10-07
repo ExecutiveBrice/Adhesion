@@ -3,7 +3,7 @@ import { DatePipe, registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
 import { provideHttpClient, withInterceptors, withInterceptorsFromDi } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { provideRouter, withHashLocation } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
 import { NgbModal, NgbModalConfig, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
@@ -25,7 +25,7 @@ export const appConfig: ApplicationConfig = {
       withInterceptorsFromDi()
     ),
     provideAnimations(),
-    provideRouter(routes, withHashLocation()),
+    provideRouter(routes),
     provideServiceWorker('ngsw-worker.js', {
       enabled: environment.production && isMobileDevice(),
       registrationStrategy: 'registerWhenStable:30000',

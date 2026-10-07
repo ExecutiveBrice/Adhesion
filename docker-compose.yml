@@ -10,6 +10,7 @@ services:
       - traefik_web
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik_web"
       - "traefik.http.routers.client_adhesion.priority=1000"
       - "traefik.http.routers.client_adhesion.rule=Host(`adhesion.${DNS_NAME}`)"
       - "traefik.http.routers.client_adhesion.service=client_adhesion"
@@ -18,8 +19,10 @@ services:
       - "traefik.http.routers.client_adhesion.tls=true"
       - "traefik.http.routers.client_adhesion.tls.certresolver=myresolver"
 
+      # Keep these Angular route prefixes aligned with client/src/app/app.routes.ts.
+      # Static files continue through the default router without path rewriting.
       - "traefik.http.routers.client_adhesion_spa.priority=1100"
-      - "traefik.http.routers.client_adhesion_spa.rule=Host(`adhesion.${DNS_NAME}`) && PathRegexp(`^/([0-9]+(/.*)?)$`)"
+      - "traefik.http.routers.client_adhesion_spa.rule=Host(`adhesion.${DNS_NAME}`) && PathRegexp(`^/(publicites|profil|agenda|accueil|chat|mes-sections|boutique|login|resetPassword|inscription|adhesions|adherents|activites|admin|maintenance|reporting|profs|seances|seances-secretariat|mail)(/.*)?$`)"
       - "traefik.http.routers.client_adhesion_spa.entrypoints=websecure"
       - "traefik.http.routers.client_adhesion_spa.tls=true"
       - "traefik.http.routers.client_adhesion_spa.tls.certresolver=myresolver"
@@ -59,6 +62,7 @@ services:
       - traefik_web
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik_web"
       - "traefik.http.routers.app_adhesion.priority=10000"
       - "traefik.http.routers.app_adhesion.rule=Host(`adhesion.${DNS_NAME}`) && PathPrefix(`/api`)"
 
@@ -85,6 +89,7 @@ services:
       - traefik_web
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik_web"
       - "traefik.tcp.routers.db_adhesion.rule=HostSNI(`*`)"
       - "traefik.tcp.routers.db_adhesion.entrypoints=adhesion_db"
       - "traefik.tcp.services.db_adhesion.loadbalancer.server.port=5432"
@@ -94,3 +99,5 @@ volumes:
 
 networks:
   traefik_web:
+    external: true
+    name: traefik_web

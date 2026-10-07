@@ -33,7 +33,7 @@
           },
           "configurations": {
             "production": {
-              "baseHref": "/adhesion/",
+              "baseHref": "/",
               "serviceWorker": "ngsw-config.json",
               "fileReplacements": [
                 {

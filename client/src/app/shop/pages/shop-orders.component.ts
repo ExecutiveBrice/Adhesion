@@ -1,6 +1,6 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { DatePipe } from '@angular/common';
+import { DatePipe, DOCUMENT } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { EMPTY, catchError, exhaustMap, filter, firstValueFrom, timer } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -15,6 +15,7 @@ import { ShopPaymentCountdownComponent } from '../components/shop-payment-countd
   styleUrl: './shop-orders.component.css'
 })
 export class ShopOrdersComponent {
+  private readonly document = inject(DOCUMENT);
   private readonly api = inject(ShopApiService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -68,9 +69,9 @@ export class ShopOrdersComponent {
     this.payingOrderNumber.set(order.orderNumber);
     this.actionError.set(null);
     try {
-      const base = `${window.location.origin}${window.location.pathname}`;
-      const pending = `${base}#/boutique/commandes/${encodeURIComponent(order.orderNumber)}/paiement`;
-      const failed = `${base}#/boutique/commandes/${encodeURIComponent(order.orderNumber)}/paiement-echoue`;
+      const path = `boutique/commandes/${encodeURIComponent(order.orderNumber)}`;
+      const pending = new URL(`${path}/paiement`, this.document.baseURI).href;
+      const failed = new URL(`${path}/paiement-echoue`, this.document.baseURI).href;
       const session = await firstValueFrom(this.api.createPaymentSession(order.orderNumber, this.idempotencyKey(), pending, failed));
       if (!session.redirectUrl) throw new Error('URL de paiement absente');
       window.location.assign(session.redirectUrl);

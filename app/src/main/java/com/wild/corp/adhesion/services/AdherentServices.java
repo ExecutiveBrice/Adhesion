@@ -51,6 +51,9 @@ import static com.wild.corp.adhesion.utils.Accords.RGPD;
 @Transactional
 public class AdherentServices {
 
+    @Value("${adhesion.frontend.base-url:http://localhost:4200}")
+    private String frontendBaseUrl = "http://localhost:4200";
+
     @Autowired
     NotificationRepository notificationRepository;
     @Autowired
@@ -668,7 +671,7 @@ public class AdherentServices {
                 .accords(adherent.getAccords())
                 .activitesNm1(adherent.getActivitesNm1())
                 .activites(activites.toString())
-                .lien("www.alod.fr/adhesion/#/profil/" + adherent.getTribu().getUuid() + "?adherentId=" + adherent.getId())
+                .lien(frontendBaseUrl.replaceAll("/+$", "") + "/profil/" + adherent.getTribu().getUuid() + "?adherentId=" + adherent.getId())
                 .build();
         if (adherent.getUser() != null) {
 
