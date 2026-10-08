@@ -98,12 +98,45 @@ class SectionManagementControllerTest {
         ChatConfiguration moved = new ChatConfiguration(20L, "Informations", "ACTIVITE", 30L, null, List.of());
         assertThatThrownBy(() -> controller.updateChat(referent, 4L, 20L, moved))
                 .isInstanceOf(ResponseStatusException.class).hasMessageContaining("400");
-        verify(chatConfigurations, never()).update(anyLong(), any());
+        verify(chatConfigurations, never()).update(anyLong(), anyLong(), any());
 
         chat.setSection(Section.builder().id(5L).build());
         assertThatThrownBy(() -> controller.deleteChat(referent, 4L, 20L))
                 .isInstanceOf(ResponseStatusException.class).hasMessageContaining("404");
-        verify(chatConfigurations, never()).delete(anyLong());
+        verify(chatConfigurations, never()).delete(anyLong(), anyLong());
+    }
+
+    @Test
+    void listsOnlySectionChatsForAnAssignedReferent() {
+        when(sections.findById(4L)).thenReturn(Optional.of(managedSection()));
+        ChatConfiguration sectionChat = new ChatConfiguration(20L, "Informations", "SECTION", 4L, "Basket", List.of());
+        when(chatConfigurations.getAll(4L)).thenReturn(List.of(sectionChat));
+
+        assertThat(controller.chats(referent, 4L)).containsExactly(sectionChat);
+        verify(chatConfigurations).getAll(4L);
+        verify(chatConfigurations, never()).getAll();
+    }
+
+    @Test
+    void cannotListChatsOfAnUnassignedSection() {
+        when(sections.findById(5L)).thenReturn(Optional.of(Section.builder().id(5L).nom("Autre").build()));
+
+        assertThatThrownBy(() -> controller.chats(referent, 5L))
+                .isInstanceOf(ResponseStatusException.class).hasMessageContaining("403");
+        verifyNoInteractions(chatConfigurations);
+    }
+
+    @Test
+    void cannotCreateAChatForAnotherTarget() {
+        when(sections.findById(4L)).thenReturn(Optional.of(managedSection()));
+
+        ChatConfiguration global = new ChatConfiguration(null, "Informations", "ASSOCIATION", null, null, List.of());
+        ChatConfiguration outside = new ChatConfiguration(null, "Informations", "SECTION", 5L, null, List.of());
+        assertThatThrownBy(() -> controller.createChat(referent, 4L, global))
+                .isInstanceOf(ResponseStatusException.class).hasMessageContaining("400");
+        assertThatThrownBy(() -> controller.createChat(referent, 4L, outside))
+                .isInstanceOf(ResponseStatusException.class).hasMessageContaining("400");
+        verify(chatConfigurations, never()).create(any());
     }
 
     @Test

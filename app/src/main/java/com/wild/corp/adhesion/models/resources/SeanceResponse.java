@@ -32,7 +32,9 @@ public record SeanceResponse(
                 seance.getCommentaire(),
                 seance.getSalle(),
                 null,
-                seance.getActivite(),
+                // Activity management already knows the activity. Repeating its full entity for every
+                // session serializes all schedules and participants once per row.
+                null,
                 List.copyOf(seance.getResponsabilites())
         );
     }

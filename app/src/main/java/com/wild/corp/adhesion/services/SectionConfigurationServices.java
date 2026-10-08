@@ -3,7 +3,9 @@ package com.wild.corp.adhesion.services;
 import com.wild.corp.adhesion.models.Section;
 import com.wild.corp.adhesion.models.resources.SectionConfiguration;
 import com.wild.corp.adhesion.repository.SectionRepository;
+import com.wild.corp.adhesion.repository.AdherentRepository;
 import com.wild.corp.adhesion.repository.UserRepository;
+import com.wild.corp.adhesion.utils.Status;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -20,10 +22,28 @@ public class SectionConfigurationServices {
 
     private final SectionRepository sectionRepository;
     private final UserRepository users;
+    private final AdherentRepository adherents;
+    private static final List<String> STATUTS_EXCLUS = List.of(Status.ANNULEE.label, Status.LISTE_ATTENTE.label);
 
-    public SectionConfigurationServices(SectionRepository sectionRepository, UserRepository users) {
+    public SectionConfigurationServices(SectionRepository sectionRepository, UserRepository users,
+                                        AdherentRepository adherents) {
         this.sectionRepository = sectionRepository;
         this.users = users;
+        this.adherents = adherents;
+    }
+
+    public record ReferentCandidate(Long id, String nom) {}
+
+    @Transactional
+    public List<ReferentCandidate> getReferentCandidates(Long sectionId) {
+        if (!sectionRepository.existsById(sectionId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Section introuvable");
+        }
+        return adherents.findReferentCandidates(sectionId, STATUTS_EXCLUS).stream()
+                .filter(adherent -> adherent.getUser() != null)
+                .map(adherent -> new ReferentCandidate(adherent.getUser().getId(),
+                        (adherent.getPrenom() + " " + adherent.getNom()).trim()))
+                .distinct().toList();
     }
 
     @Transactional
@@ -98,6 +118,13 @@ public class SectionConfigurationServices {
         var referents = users.findAllById(referentUserIds);
         if (referents.size() != referentUserIds.size()) {
             throw configurationInvalide("Un référent de section est introuvable");
+        }
+        Set<Long> candidats = adherents.findReferentCandidates(section.getId(), STATUTS_EXCLUS).stream()
+                .filter(adherent -> adherent.getUser() != null)
+                .map(adherent -> adherent.getUser().getId())
+                .collect(java.util.stream.Collectors.toSet());
+        if (referents.stream().anyMatch(referent -> !candidats.contains(referent.getId()))) {
+            throw configurationInvalide("Un référent doit appartenir à une tribu inscrite dans cette section");
         }
         section.getReferents().clear();
         section.getReferents().addAll(referents);

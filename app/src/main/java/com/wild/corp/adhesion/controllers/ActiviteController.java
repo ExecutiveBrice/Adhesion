@@ -60,6 +60,26 @@ ActiviteServices activiteServices;
 		return ResponseEntity.ok(activiteServices.getPage(search, tarif, complete, reinscription, age, genre, pageable));
 	}
 
+	@GetMapping("/managed/page")
+	@PreAuthorize("isAuthenticated()")
+	public ResponseEntity<?> getManagedPage(Authentication principal,
+			@RequestParam(defaultValue = "") String search,
+			@RequestParam(required = false) Integer tarif,
+			@RequestParam(required = false) Boolean complete,
+			@RequestParam(required = false) Boolean reinscription,
+			@RequestParam(required = false) Integer age,
+			@RequestParam(defaultValue = "") String genre,
+			@PageableDefault(size = 20) Pageable pageable) {
+		return ResponseEntity.ok(activiteServices.getManagedPage(principal.getName(), search, tarif, complete,
+				reinscription, age, genre, pageable));
+	}
+
+	@GetMapping("/managed/encadrants")
+	@PreAuthorize("isAuthenticated()")
+	public ResponseEntity<?> getManagedEncadrants(Authentication principal) {
+		return ResponseEntity.ok(activiteServices.getManagedEncadrants(principal.getName()));
+	}
+
 	@GetMapping("/allNm1")
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<?> getAllNm1() {
@@ -115,9 +135,15 @@ ActiviteServices activiteServices;
 			),
 	})
 	@GetMapping("/{activiteId}/seances")
-	@PreAuthorize("hasRole('USER')")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('SECRETAIRE')")
 	public ResponseEntity<List<SeanceResponse>> getSeances(@PathVariable Long activiteId) {
 		return ResponseEntity.ok(activiteServices.getSeances(activiteId));
+	}
+
+	@GetMapping("/managed/{activiteId}/seances")
+	@PreAuthorize("isAuthenticated()")
+	public ResponseEntity<List<SeanceResponse>> getManagedSeances(Authentication principal, @PathVariable Long activiteId) {
+		return ResponseEntity.ok(activiteServices.getManagedSeances(principal.getName(), activiteId));
 	}
 
 	@GetMapping("/{activiteId}/referents/candidats")
@@ -128,13 +154,20 @@ ActiviteServices activiteServices;
 
 	// Candidates can be registered in any activity belonging to the session's section.
 	@GetMapping("/{activiteId}/responsabilites/candidats")
-	@PreAuthorize("hasRole('USER')")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('SECRETAIRE')")
 	public ResponseEntity<List<AdherentResponsabiliteResponse>> getResponsabiliteCandidates(@PathVariable Long activiteId) {
 		return ResponseEntity.ok(responsabiliteSeanceServices.getCandidats(activiteId));
 	}
 
+	@GetMapping("/managed/{activiteId}/responsabilites/candidats")
+	@PreAuthorize("isAuthenticated()")
+	public ResponseEntity<List<AdherentResponsabiliteResponse>> getManagedResponsabiliteCandidates(
+			Authentication principal, @PathVariable Long activiteId) {
+		return ResponseEntity.ok(activiteServices.getManagedResponsabiliteCandidates(principal.getName(), activiteId));
+	}
+
 	@PostMapping("/{activiteId}/seances")
-	@PreAuthorize("hasRole('USER')")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('SECRETAIRE')")
 	public ResponseEntity<?> addSeances(@PathVariable Long activiteId,
 			@RequestBody @Valid AjoutSeancesRequest request) {
 		return ResponseEntity.ok(activiteServices.addSeances(
@@ -142,15 +175,23 @@ ActiviteServices activiteServices;
 	}
 
 	@PostMapping("/{activiteId}/planifications/{planificationId}/seances")
-	@PreAuthorize("hasRole('USER')")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('SECRETAIRE')")
 	public ResponseEntity<?> addSeancesPlanifiees(@PathVariable Long activiteId,
 			@PathVariable Long planificationId, @RequestBody @Valid AjoutSeancesRequest request) {
 		return ResponseEntity.ok(activiteServices.addSeances(
 				activiteId, planificationId, request.nombreSeances(), request.dateDebut()));
 	}
 
+	@PostMapping("/managed/{activiteId}/planifications/{planificationId}/seances")
+	@PreAuthorize("isAuthenticated()")
+	public ResponseEntity<?> addManagedSeancesPlanifiees(Authentication principal, @PathVariable Long activiteId,
+			@PathVariable Long planificationId, @RequestBody @Valid AjoutSeancesRequest request) {
+		return ResponseEntity.ok(activiteServices.addSeancesManaged(principal.getName(), activiteId,
+				planificationId, request.nombreSeances(), request.dateDebut()));
+	}
+
 	@PatchMapping("/{activiteId}/seances/{seanceId}")
-	@PreAuthorize("hasRole('USER')")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('SECRETAIRE')")
 	public ResponseEntity<?> updateSeance(@PathVariable Long activiteId,
 			@PathVariable Long seanceId,
 			@RequestBody @Valid MiseAJourSeanceRequest request) {
@@ -160,10 +201,25 @@ ActiviteServices activiteServices;
 				request.salleId(), Boolean.TRUE.equals(request.sallePresente()), request.responsabilites())));
 	}
 
+	@PatchMapping("/managed/{activiteId}/seances/{seanceId}")
+	@PreAuthorize("isAuthenticated()")
+	public ResponseEntity<SeanceResponse> updateManagedSeance(Authentication principal, @PathVariable Long activiteId,
+			@PathVariable Long seanceId, @RequestBody @Valid MiseAJourSeanceRequest request) {
+		return ResponseEntity.ok(activiteServices.updateManagedSeance(principal.getName(), activiteId, seanceId, request));
+	}
+
 	@DeleteMapping("/{activiteId}/seances/{seanceId}")
-	@PreAuthorize("hasRole('USER')")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('SECRETAIRE')")
 	public ResponseEntity<Void> deleteSeance(@PathVariable Long activiteId, @PathVariable Long seanceId) {
 		seanceServices.deleteSeance(activiteId, seanceId);
+		return ResponseEntity.noContent().build();
+	}
+
+	@DeleteMapping("/managed/{activiteId}/seances/{seanceId}")
+	@PreAuthorize("isAuthenticated()")
+	public ResponseEntity<Void> deleteManagedSeance(Authentication principal, @PathVariable Long activiteId,
+			@PathVariable Long seanceId) {
+		activiteServices.deleteManagedSeance(principal.getName(), activiteId, seanceId);
 		return ResponseEntity.noContent().build();
 	}
 
@@ -172,6 +228,12 @@ ActiviteServices activiteServices;
 	@PreAuthorize("hasRole('SECRETAIRE') or hasRole('ADMIN')")
 	public ResponseEntity<?> save(@RequestBody Activite activite) {
 		return ResponseEntity.ok(activiteServices.save(activite));
+	}
+
+	@PostMapping("/managed/save")
+	@PreAuthorize("isAuthenticated()")
+	public ResponseEntity<?> saveManaged(Authentication principal, @RequestBody Activite activite) {
+		return ResponseEntity.ok(activiteServices.saveManaged(principal.getName(), activite));
 	}
 
 	@GetMapping("/refillSeance")

@@ -2,10 +2,15 @@ package com.wild.corp.adhesion.services;
 
 import com.wild.corp.adhesion.models.*;
 import com.wild.corp.adhesion.models.resources.SeanceResponse;
+import com.wild.corp.adhesion.models.resources.AdherentResponsabiliteResponse;
+import com.wild.corp.adhesion.models.resources.MiseAJourSeanceRequest;
 import com.wild.corp.adhesion.repository.ActiviteNm1Repository;
 import com.wild.corp.adhesion.repository.ActiviteRepository;
+import com.wild.corp.adhesion.repository.AdherentRepository;
 import com.wild.corp.adhesion.repository.SalleRepository;
+import com.wild.corp.adhesion.repository.SeanceRepository;
 import com.wild.corp.adhesion.repository.SectionRepository;
+import com.wild.corp.adhesion.repository.SectionListingSpecifications;
 import com.wild.corp.adhesion.utils.Status;
 import jakarta.transaction.Transactional;
 import jakarta.persistence.criteria.JoinType;
@@ -24,6 +29,7 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -36,6 +42,8 @@ import java.util.stream.Collectors;
 public class ActiviteServices {
 
     private static final Sort ACTIVITE_SORT = Sort.by(Sort.Direction.ASC, "nom", "id");
+    private static final List<String> STATUTS_REFERENTS_EXCLUS = List.of(
+            Status.ANNULEE.label, Status.LISTE_ATTENTE.label);
 
     @Autowired
     ActiviteRepository activiteRepository;
@@ -43,9 +51,15 @@ public class ActiviteServices {
     @Autowired
     AdherentServices adherentServices;
     @Autowired
+    AdherentRepository adherentRepository;
+    @Autowired
     ActiviteNm1Repository activiteNm1Repository;
     @Autowired
     SeanceServices seanceServices;
+    @Autowired
+    SeanceRepository seanceRepository;
+    @Autowired
+    ResponsabiliteSeanceServices responsabiliteSeanceServices;
     @Autowired
     SalleRepository salleRepository;
 
@@ -60,16 +74,16 @@ public class ActiviteServices {
     }
 
     public List<SeanceResponse> getSeances(Long activiteId) {
-        return getById(activiteId).getSeances().stream()
-                .sorted(Comparator.comparing(Seance::getDebut, Comparator.nullsLast(Comparator.naturalOrder())))
+        getById(activiteId);
+        return seanceRepository.findByActivite_IdOrderByDebutAsc(activiteId).stream()
                 .map(SeanceResponse::from)
                 .toList();
     }
 
     public List<SeanceResponse> addSeances(Long activiteId, int nombreSeances, LocalDate dateDebut) {
         Activite activite = getById(activiteId);
-        seanceServices.addSeances(activite, nombreSeances, dateDebut);
-        activiteRepository.save(activite);
+        List<Seance> created = seanceServices.addSeances(activite, nombreSeances, dateDebut);
+        seanceRepository.saveAllAndFlush(created);
         return getSeances(activiteId);
     }
 
@@ -80,8 +94,8 @@ public class ActiviteServices {
                 .filter(element -> planificationId.equals(element.getId()))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("La planification sélectionnée est introuvable"));
-        seanceServices.addSeances(activite, planification, nombreSemaines, dateDebut);
-        activiteRepository.save(activite);
+        List<Seance> created = seanceServices.addSeances(activite, planification, nombreSemaines, dateDebut);
+        seanceRepository.saveAllAndFlush(created);
         return getSeances(activiteId);
     }
     public List<ActiviteNm1> getAllNm1() {
@@ -109,16 +123,108 @@ public class ActiviteServices {
 
     public Page<Activite> getPage(String search, Integer tarif, Boolean complete, Boolean reinscription,
                                   Integer age, String genre, Pageable pageable) {
+        return getPage(search, tarif, complete, reinscription, age, genre, pageable, null);
+    }
+
+    public Page<Activite> getManagedPage(String username, String search, Integer tarif, Boolean complete,
+                                         Boolean reinscription, Integer age, String genre, Pageable pageable) {
+        return getPage(search, tarif, complete, reinscription, age, genre, pageable, managedSectionIds(username));
+    }
+
+    private Page<Activite> getPage(String search, Integer tarif, Boolean complete, Boolean reinscription,
+                                  Integer age, String genre, Pageable pageable, Set<Long> allowedSectionIds) {
         Pageable activitePageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), ACTIVITE_SORT);
+        Specification<Activite> filters = specificationFiltre(search, tarif, complete, reinscription, age, genre);
+        if (allowedSectionIds != null) {
+            filters = filters.and(SectionListingSpecifications.activites(allowedSectionIds));
+        }
         Page<Activite> activites;
-        if (StringUtils.hasText(search) || tarif != null || complete != null || reinscription != null || age != null
-                || StringUtils.hasText(genre)) {
-            activites = activiteRepository.findAll(specificationFiltre(search, tarif, complete, reinscription, age,
-                    genre), activitePageable);
+        if (allowedSectionIds != null || StringUtils.hasText(search) || tarif != null || complete != null
+                || reinscription != null || age != null || StringUtils.hasText(genre)) {
+            activites = activiteRepository.findAll(filters, activitePageable);
         } else {
             activites = activiteRepository.findAll(activitePageable);
         }
         return activites.map(this::completerCompteurs);
+    }
+
+    public Activite saveManaged(String username, Activite activite) {
+        Set<Long> allowedSectionIds = managedSectionIds(username);
+        if (activite == null || activite.getSection() == null || activite.getSection().getId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sélectionnez une section existante");
+        }
+        Long sectionId = activite.getSection().getId();
+        if (!allowedSectionIds.contains(sectionId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cette section ne vous est pas confiée");
+        }
+        if (activite.getId() != null) {
+            Activite existing = activiteRepository.findById(activite.getId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Activité introuvable"));
+            if (existing.getSection() == null || !sectionId.equals(existing.getSection().getId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "L’activité n’appartient pas à cette section");
+            }
+        }
+        return save(activite);
+    }
+
+    public record EncadrantOption(Long id, String prenom, String nom) { }
+
+    public List<EncadrantOption> getManagedEncadrants(String username) {
+        managedSectionIds(username);
+        return adherentRepository.findByUserRole(ERole.ROLE_ENCADRANT).stream()
+                .map(adherent -> new EncadrantOption(adherent.getId(), adherent.getPrenom(), adherent.getNom()))
+                .sorted(Comparator.comparing(EncadrantOption::nom, String.CASE_INSENSITIVE_ORDER)
+                        .thenComparing(EncadrantOption::prenom, String.CASE_INSENSITIVE_ORDER))
+                .toList();
+    }
+
+    public List<SeanceResponse> addSeancesManaged(String username, Long activiteId, Long planificationId,
+                                                   int nombreSemaines, LocalDate dateDebut) {
+        requireManagedActivity(username, activiteId);
+        return addSeances(activiteId, planificationId, nombreSemaines, dateDebut);
+    }
+
+    public List<SeanceResponse> getManagedSeances(String username, Long activiteId) {
+        requireManagedActivity(username, activiteId);
+        return getSeances(activiteId);
+    }
+
+    public List<AdherentResponsabiliteResponse> getManagedResponsabiliteCandidates(String username, Long activiteId) {
+        requireManagedActivity(username, activiteId);
+        return responsabiliteSeanceServices.getCandidats(activiteId);
+    }
+
+    public SeanceResponse updateManagedSeance(String username, Long activiteId, Long seanceId,
+                                              MiseAJourSeanceRequest request) {
+        requireManagedActivity(username, activiteId);
+        return SeanceResponse.from(seanceServices.updateSeance(
+                activiteId, seanceId, request.etatSeance(), request.commentaire(),
+                Boolean.TRUE.equals(request.commentairePresent()), request.date(), request.heureDebut(),
+                Boolean.TRUE.equals(request.horairePresent()), request.salleId(),
+                Boolean.TRUE.equals(request.sallePresente()), request.responsabilites()));
+    }
+
+    public void deleteManagedSeance(String username, Long activiteId, Long seanceId) {
+        requireManagedActivity(username, activiteId);
+        seanceServices.deleteSeance(activiteId, seanceId);
+    }
+
+    private void requireManagedActivity(String username, Long activiteId) {
+        Set<Long> allowedSectionIds = managedSectionIds(username);
+        Activite activite = activiteRepository.findById(activiteId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Activité introuvable"));
+        if (activite.getSection() == null || !allowedSectionIds.contains(activite.getSection().getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cette activité ne vous est pas confiée");
+        }
+    }
+
+    private Set<Long> managedSectionIds(String username) {
+        Set<Long> sectionIds = sectionRepository.findManagedByUsername(username).stream()
+                .map(Section::getId).collect(Collectors.toSet());
+        if (sectionIds.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Aucune section ne vous est confiée");
+        }
+        return sectionIds;
     }
 
     private Specification<Activite> specificationFiltre(String recherche, Integer tarif, Boolean complete,
@@ -213,7 +319,6 @@ public class ActiviteServices {
         synchroniserChampsHistoriques(activite, planifications);
         if (activite.getId() != null) {
             Activite activiteInDB = activiteRepository.findById(activite.getId()).orElseThrow();
-            Set<Adherent> anciensReferents = new HashSet<>(activiteInDB.getReferents());
             activiteInDB.getProfs().forEach(adherent -> adherent.getCours().remove(activiteInDB));
             activiteInDB.getReferents().forEach(adherent -> adherent.getActivitesReferent().remove(activiteInDB));
 
@@ -224,13 +329,13 @@ public class ActiviteServices {
             activiteInDB.setSalle(activite.getSalle());
             remplacerPlanifications(activiteInDB, planifications);
             associerSeancesHistoriquesAuxPlanifications(activiteInDB);
-            synchroniserIntervenantsPlanifications(activiteInDB, anciensReferents);
+            synchroniserIntervenantsPlanifications(activiteInDB);
 
             return activiteRepository.save(activiteInDB);
         }
 
         remplacerPlanifications(activite, planifications);
-        synchroniserIntervenantsPlanifications(activite, Set.of());
+        synchroniserIntervenantsPlanifications(activite);
         if (!planifications.isEmpty()) {
             seanceServices.fillSeances(activite, 29);
         }
@@ -323,7 +428,7 @@ public class ActiviteServices {
      * Keeps the former activity-level relations as an aggregate for legacy screens
      * and inverse mappings. Assignments themselves are stored per session category.
      */
-    private void synchroniserIntervenantsPlanifications(Activite activite, Set<Adherent> anciensReferents) {
+    private void synchroniserIntervenantsPlanifications(Activite activite) {
         activite.getPlanificationsHebdomadaires().forEach(planification -> planification
                 .setReferents(resoudreReferentsValides(activite, planification.getReferents())));
         Set<Adherent> profs = activite.getPlanificationsHebdomadaires().stream()
@@ -337,11 +442,6 @@ public class ActiviteServices {
                 .collect(Collectors.toSet());
         activite.setReferents(referents);
         referents.forEach(adherent -> adherent.getActivitesReferent().add(activite));
-        referents.forEach(this::ajouterRoleReferent);
-        anciensReferents.stream()
-                .filter(adherent -> !referents.contains(adherent))
-                .filter(adherent -> adherent.getActivitesReferent().isEmpty())
-                .forEach(this::retirerRoleReferent);
     }
 
     private void associerSeancesHistoriquesAuxPlanifications(Activite activite) {
@@ -386,38 +486,23 @@ public class ActiviteServices {
         if (referents == null) {
             return new HashSet<>();
         }
-        Set<Long> adherentsValides = activite.getAdhesions().stream()
-                .filter(adhesion -> Status.VALIDEE.label.equals(adhesion.getStatutActuel()))
-                .map(adhesion -> adhesion.getAdherent().getId())
+        Set<Long> adherentsValides = adherentRepository.findReferentCandidates(
+                        activite.getSection().getId(), STATUTS_REFERENTS_EXCLUS).stream()
+                .map(Adherent::getId)
                 .collect(Collectors.toSet());
         Set<Adherent> referentsResolus = referents.stream()
                 .map(referent -> adherentServices.getById(referent.getId()))
                 .collect(Collectors.toSet());
         if (!referentsResolus.stream().allMatch(referent -> adherentsValides.contains(referent.getId()))) {
-            throw new IllegalArgumentException("Un référent doit avoir une adhésion validée à cette activité");
+            throw new IllegalArgumentException("Un référent doit appartenir à une tribu inscrite dans cette section");
         }
         return referentsResolus;
     }
 
-    private void ajouterRoleReferent(Adherent adherent) {
-        if (adherent.getUser() != null && adherent.getUser().getRoles().stream()
-                .noneMatch(role -> role == ERole.ROLE_REFERENT_ACTIVITE)) {
-            adherent.getUser().getRoles().add(ERole.ROLE_REFERENT_ACTIVITE);
-        }
-    }
-
-    private void retirerRoleReferent(Adherent adherent) {
-        if (adherent.getUser() != null) {
-            adherent.getUser().getRoles().remove(ERole.ROLE_REFERENT_ACTIVITE);
-        }
-    }
-
     public List<com.wild.corp.adhesion.models.resources.AdherentLite> getReferentsCandidates(Long activiteId) {
         Activite activite = getById(activiteId);
-        return adherentServices.getLites(activite.getAdhesions().stream()
-                .filter(adhesion -> Status.VALIDEE.label.equals(adhesion.getStatutActuel()))
-                .map(Adhesion::getAdherent)
-                .collect(Collectors.toSet()));
+        return adherentServices.getLites(new LinkedHashSet<>(adherentRepository.findReferentCandidates(
+                activite.getSection().getId(), STATUTS_REFERENTS_EXCLUS)));
     }
 
     public Activite addReferent(Long activiteId, Long adherentId) {

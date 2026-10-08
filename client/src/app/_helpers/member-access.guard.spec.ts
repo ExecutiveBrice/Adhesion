@@ -37,7 +37,7 @@ describe('Accès aux pages du membre actif', () => {
     const route = routes.find(candidate => candidate.path === 'publicites')!;
     expect(route.canActivate).toContain(memberAccessGuard);
     const required = route.data!['roles'];
-    for (const role of ['ROLE_ADMIN', 'ROLE_USER', 'ROLE_COMMUNICATION_SECTION']) {
+    for (const role of ['ROLE_ADMIN', 'ROLE_USER', 'ROLE_COMPTABLE']) {
       roles = [role];
       expect(TestBed.inject(Router).serializeUrl(check(required) as any)).toBe('/profil');
     }

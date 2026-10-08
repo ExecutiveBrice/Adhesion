@@ -95,7 +95,7 @@ class ChatServiceTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = ERole.class, names = {"ROLE_ADMIN", "ROLE_BUREAU", "ROLE_MEMBRECA", "ROLE_SECRETAIRE", "ROLE_ENCADRANT", "ROLE_REFERENT_SECTION", "ROLE_REFERENT_ACTIVITE"})
+    @EnumSource(value = ERole.class, names = {"ROLE_ADMIN", "ROLE_BUREAU", "ROLE_MEMBRECA", "ROLE_SECRETAIRE", "ROLE_ENCADRANT"})
     void rolesAloneNeverGrantAccessToUnrelatedChats(ERole role) {
         user.setRoles(Set.of(role));
         for (ChatTarget target : ChatTarget.values()) {

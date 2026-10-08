@@ -61,10 +61,16 @@ SeanceRepository seanceRepository;
 
 
 	@GetMapping("/seancesDuJour")
-	@PreAuthorize("hasAnyRole('ENCADRANT', 'REFERENT_ACTIVITE')")
+	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<?> getSeancesDuJour(Authentication principal) {
 		log.info("getAllCours by " + principal.getName() );
 		return ResponseEntity.ok(userServices.getSeancesDuJourForUser(principal.getName()));
+	}
+
+	@GetMapping("/referentActivite")
+	@PreAuthorize("isAuthenticated()")
+	public ResponseEntity<Boolean> isReferentActivite(Authentication principal) {
+		return ResponseEntity.ok(userServices.isReferentActivite(principal.getName()));
 	}
 
 	@GetMapping("/secretariat/seances")
@@ -96,20 +102,20 @@ SeanceRepository seanceRepository;
 	}
 
 	@GetMapping("/seances/{seanceId}/presences")
-	@PreAuthorize("hasAnyRole('ENCADRANT', 'REFERENT_ACTIVITE')")
+	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<?> getPresences(@PathVariable Long seanceId, Authentication principal) {
 		return ResponseEntity.ok(presenceServices.getPresences(seanceId, principal.getName()));
 	}
 
 	@PatchMapping("/seances/{seanceId}/presences/{presenceId}")
-	@PreAuthorize("hasAnyRole('ENCADRANT', 'REFERENT_ACTIVITE')")
+	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<?> updatePresence(@PathVariable Long seanceId, @PathVariable Long presenceId,
 			@RequestBody PresenceUpdateRequest request, Authentication principal) {
 		return ResponseEntity.ok(presenceServices.updatePresence(seanceId, presenceId, request.presence(), principal.getName()));
 	}
 
 	@PatchMapping("/seances/{seanceId}/commentaire")
-	@PreAuthorize("hasAnyRole('ENCADRANT', 'REFERENT_ACTIVITE')")
+	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<?> updateCommentaire(@PathVariable Long seanceId,
 			@RequestBody CommentaireSeanceRequest request, Authentication principal) {
 		return ResponseEntity.ok(SeanceDuJourResponse.from(
@@ -117,7 +123,7 @@ SeanceRepository seanceRepository;
 	}
 
 	@PostMapping("/seances/{seanceId}/adherents")
-	@PreAuthorize("hasAnyRole('ENCADRANT', 'REFERENT_ACTIVITE')")
+	@PreAuthorize("isAuthenticated()")
 	@Transactional
 	public ResponseEntity<PresenceSeanceResponse> ajouterNouvelAdherent(
 			@PathVariable Long seanceId,

@@ -12,13 +12,13 @@ La lecture est accordée si au moins une des conditions suivantes est satisfaite
 
 Les adhésions en liste d’attente et annulées ne créent pas de lien. Les autres états et le surclassement conservent la lecture. Les relations d’encadrement et de référent d’activité proviennent des affectations existantes. Les référents de section sont affectés dans Administration → Sections, indépendamment des rôles globaux du compte.
 
-Les permissions par rôle sont additives et indépendantes du rattachement pour **tous les rôles**, y compris `ROLE_USER`, `ROLE_ENCADRANT`, `ROLE_REFERENT_ACTIVITE` et `ROLE_REFERENT_SECTION`. Cocher un rôle accorde la lecture à tous les comptes qui le possèdent, même hors de l’activité ou de la section. Une permission comporte en plus le droit d’écriture ; la présence d’une permission signifie le droit de lecture. Un rattachement seul ouvre la lecture, jamais l’écriture. Aucun rôle administratif ne contourne ces règles.
+Les permissions par rôle sont additives et indépendantes du rattachement pour les rôles restants, notamment `ROLE_USER` et `ROLE_ENCADRANT`. Cocher un rôle accorde la lecture à tous les comptes qui le possèdent, même hors de l’activité ou de la section. Une permission comporte en plus le droit d’écriture ; la présence d’une permission signifie le droit de lecture. Un rattachement seul ouvre la lecture, jamais l’écriture. Aucun rôle administratif ne contourne ces règles.
 
 Un chat global utilise uniquement les permissions par rôle pour définir son audience. Pour le rendre accessible à tous les adhérents, ajouter `ROLE_USER` en lecture. Un chat rattaché peut être créé sans permission explicite ; un chat global doit avoir au moins un rôle en lecture. La visibilité et le droit d’écriture sont revérifiés à chaque requête. La révocation d’un lien retire l’accès sauf si une autre liaison ou une permission par rôle l’accorde encore.
 
 ## Administration et API
 
-La gestion utilise `GET/POST /param/chats` et `PUT/DELETE /param/chats/{id}`. La configuration comporte `nom`, `cible` (`SECTION`, `ACTIVITE`, `ASSOCIATION` pour global), `cibleId` et `permissions` (`role`, `ecriture`). Un chat global ne porte aucun identifiant de cible. Une contrainte en base interdit tout rattachement incohérent ou simultané à une section et une activité.
+La gestion s’ouvre depuis le bouton « Administration » de la page Chat, visible uniquement par les administrateurs. Ils peuvent accéder à cette page même lorsque le Chat est désactivé pour les autres utilisateurs. La modale permet de créer, modifier et supprimer les chats. Elle utilise `GET/POST /param/chats` et `PUT/DELETE /param/chats/{id}`. La configuration comporte `nom`, `cible` (`SECTION`, `ACTIVITE`, `ASSOCIATION` pour global), `cibleId` et `permissions` (`role`, `ecriture`). Un chat global ne porte aucun identifiant de cible. Une contrainte en base interdit tout rattachement incohérent ou simultané à une section et une activité.
 
 L’API des comptes authentifiés utilise le même identifiant positif pour tous les chats :
 
@@ -31,6 +31,6 @@ Les messages sont affichés comme texte, sans interprétation HTML. L’actualis
 
 ## Migration
 
-Le changelog `v2/chat.xml` crée les tables unifiées `chats`, `chat_permissions`, `chat_messages`, `chat_reads` et `section_referents`. Le changelog `v2/changeset-v10.xml` ajoute les contraintes de cohérence des rattachements et du contenu des messages aux bases déjà créées ; les données valides existantes sont conservées.
+Le changelog `v2/chat.xml` crée les tables unifiées `chats`, `chat_permissions`, `chat_messages`, `chat_reads` et `section_referents`. Le changelog `v2/changeset-v10.xml` ajoute les contraintes de cohérence des rattachements et du contenu des messages aux bases déjà créées ; les données valides existantes sont conservées. Le changelog `v2/changeset-v12.xml` supprime les anciens rôles globaux de référent et leurs permissions de chat ; les affectations aux sections et activités restent la source des liens. Le changelog `v2/changeset-v13.xml` supprime le rôle Communication de section et ses permissions de chat.
 
 Les permissions déjà enregistrées deviennent toutes indépendantes du rattachement, y compris `ROLE_USER` : un tel droit explicite donne donc désormais accès à tous les adhérents. Retirer cette permission pour limiter la lecture aux seules personnes liées au rattachement. La suppression d’un chat supprime ses messages, permissions et repères. La suppression d’une section ou activité supprime les chats directement rattachés ; les chats globaux restent conservés.

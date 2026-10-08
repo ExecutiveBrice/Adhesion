@@ -41,7 +41,7 @@ class PubliciteControllerTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"USER", "ADMIN", "SECRETAIRE", "COMMUNICATION_SECTION"})
+    @ValueSource(strings = {"USER", "ADMIN", "SECRETAIRE", "COMPTABLE"})
     void otherRolesCanViewButCannotPublishOrDelete(String role) throws Exception {
         var member = user("member").roles(role);
         when(service.image(1, "member", false)).thenReturn(new PubliciteRepository.Image("image/png", new byte[]{1, 2}));

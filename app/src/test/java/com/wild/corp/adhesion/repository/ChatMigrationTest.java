@@ -9,6 +9,26 @@ import static org.assertj.core.api.Assertions.*;
 
 class ChatMigrationTest {
     @Test
+    void removesFormerReferentRolesAndTheirChatPermissions() throws Exception {
+        try (var dataSource = new SingleConnectionDataSource("jdbc:h2:mem:referent_roles;MODE=PostgreSQL", "sa", "", true)) {
+            JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+            jdbc.execute("CREATE TABLE user_role_names (user_id bigint, role_name varchar(32))");
+            jdbc.execute("CREATE TABLE chat_permissions (chat_id bigint, role varchar(32))");
+            jdbc.execute("INSERT INTO user_role_names VALUES (1, 'ROLE_REFERENT_ACTIVITE'), (1, 'ROLE_USER'), (2, 'ROLE_REFERENT_SECTION'), (3, 'ROLE_COMMUNICATION_SECTION')");
+            jdbc.execute("INSERT INTO chat_permissions VALUES (1, 'ROLE_REFERENT_SECTION'), (1, 'ROLE_USER'), (2, 'ROLE_COMMUNICATION_SECTION')");
+            migrate(dataSource, "v2/changeset-v12.xml");
+            migrate(dataSource, "v2/changeset-v13.xml");
+
+            assertThat(jdbc.queryForList("SELECT role_name FROM user_role_names", String.class)).containsExactly("ROLE_USER");
+            assertThat(jdbc.queryForList("SELECT role FROM chat_permissions", String.class)).containsExactly("ROLE_USER");
+            assertThatThrownBy(() -> jdbc.execute("INSERT INTO user_role_names VALUES (2, 'ROLE_REFERENT_ACTIVITE')"))
+                    .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+            assertThatThrownBy(() -> jdbc.execute("INSERT INTO user_role_names VALUES (3, 'ROLE_COMMUNICATION_SECTION')"))
+                    .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        }
+    }
+
+    @Test
     void addsConstraintsWithoutLosingChatsMessagesRolesOrReadCursors() throws Exception {
         try (var dataSource = new SingleConnectionDataSource("jdbc:h2:mem:unified_chats;MODE=PostgreSQL", "sa", "", true)) {
             JdbcTemplate jdbc = new JdbcTemplate(dataSource);

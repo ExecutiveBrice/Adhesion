@@ -8,6 +8,7 @@ import { faExternalLinkSquareAlt } from '@fortawesome/free-solid-svg-icons';
 import { AdherentService } from 'src/app/_services/adherent.service';
 import { ActiviteService } from 'src/app/_services/activite.service';
 import { ParamService } from 'src/app/_services/param.service';
+import { ManagedSection } from 'src/app/_services/section-management.service';
 import { faCircleQuestion, faEnvelope, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faCircleCheck, faUserPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ToastService } from '../../_services/toast.service';
 import { NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap/dropdown';
@@ -15,6 +16,7 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass, DatePipe } from '@angular/common';
 import { UserCheckboxDropdownComponent } from '../user-checkbox-dropdown/user-checkbox-dropdown.component';
+import { UtilisateurSelectionnable } from '../../models/utilisateurSelectionnable';
 
 @Component({
     selector: 'modal',
@@ -46,11 +48,13 @@ export class ModalActivite implements OnInit, OnDestroy {
   faExternalLinkSquareAlt = faExternalLinkSquareAlt;
   @Input()
   activite!: Activite;
+  @Input() scopedToManagedSections = false;
+  @Input() managedSections: ManagedSection[] = [];
 
-  profs: AdherentLite[] = []
+  profs: UtilisateurSelectionnable[] = []
   referents: AdherentLite[] = []
   salles: SalleConfiguration[] = [];
-  sections: SectionConfiguration[] = [];
+  sections: (SectionConfiguration | ManagedSection)[] = [];
   seances: Seance[] = [];
   tachesSeance: TacheSeanceConfiguration[] = [];
   adherentsResponsabilite: AdherentResponsabilite[] = [];
@@ -85,22 +89,30 @@ export class ModalActivite implements OnInit, OnDestroy {
     this.activite.referents ??= [];
     this.initialiserPlanificationsHebdomadaires();
     this.dateDebutSeances = this.aujourdHui();
+    if (this.scopedToManagedSections) {
+      this.sections = this.managedSections;
+      if (!this.activite.id && this.sections.length === 1) {
+        this.activite.section = this.sections[0] as SectionConfiguration;
+      }
+    }
     this.getProfs();
     if (this.activite.id) {
       this.getReferents();
     }
     this.getSalles();
-    this.paramService.getSections().subscribe({
-      next: sections => this.sections = sections,
-      error: err => this.showError(err.message)
-    });
+    if (!this.scopedToManagedSections) {
+      this.paramService.getSections().subscribe({
+        next: sections => this.sections = sections,
+        error: err => this.showError(err.message)
+      });
+    }
     if (this.activite.id) {
       this.getSeances();
       this.paramService.getTachesSeance().subscribe({
         next: taches => this.tachesSeance = taches,
         error: () => this.chargementResponsabilitesErreur = 'Les tâches n’ont pas pu être chargées.'
       });
-      this.activiteService.getResponsabiliteCandidates(this.activite.id).subscribe({
+      this.activiteService.getResponsabiliteCandidates(this.activite.id, this.scopedToManagedSections).subscribe({
         next: adherents => this.adherentsResponsabilite = adherents,
         error: () => this.chargementResponsabilitesErreur = 'Les adhérents de la section n’ont pas pu être chargés.'
       });
@@ -114,7 +126,9 @@ export class ModalActivite implements OnInit, OnDestroy {
 
 
   get sectionSelectionnee(): boolean {
-    return (this.activite.section?.id ?? 0) > 0;
+    const sectionId = this.activite.section?.id;
+    return (sectionId ?? 0) > 0 && (!this.scopedToManagedSections
+      || this.managedSections.some(section => section.id === sectionId));
   }
 
   enregistrer() {
@@ -123,7 +137,10 @@ export class ModalActivite implements OnInit, OnDestroy {
       return;
     }
     this.retirerPlanificationHistoriqueSiVide();
-    this.activiteService.save(this.activite).subscribe(
+    const request = this.scopedToManagedSections
+      ? this.activiteService.save(this.activite, true)
+      : this.activiteService.save(this.activite);
+    request.subscribe(
       data => {
         this.showSucces(data.nom + " " + data.horaire)
         this.activeModal.close('valider')
@@ -136,7 +153,10 @@ export class ModalActivite implements OnInit, OnDestroy {
 
 
   getProfs() {
-    this.adherentService.getByRole(ERole.ROLE_ENCADRANT).subscribe(
+    const request = this.scopedToManagedSections
+      ? this.activiteService.getManagedEncadrants()
+      : this.adherentService.getByRole(ERole.ROLE_ENCADRANT);
+    request.subscribe(
       data => {
         this.profs = data;
       },
@@ -165,7 +185,7 @@ export class ModalActivite implements OnInit, OnDestroy {
     return salleA?.id === salleB?.id;
   }
 
-  comparerSections(sectionA?: SectionConfiguration, sectionB?: SectionConfiguration): boolean {
+  comparerSections(sectionA?: SectionConfiguration | ManagedSection, sectionB?: SectionConfiguration | ManagedSection): boolean {
     return sectionA?.id === sectionB?.id;
   }
 
@@ -237,7 +257,7 @@ export class ModalActivite implements OnInit, OnDestroy {
 
   getSeances() {
     this.chargementSeances = true;
-    this.activiteService.getSeances(this.activite.id).subscribe({
+    this.activiteService.getSeances(this.activite.id, this.scopedToManagedSections).subscribe({
       next: data => {
         this.seances = this.preparerSeances(data);
         this.initialiserResponsabilites();
@@ -260,16 +280,15 @@ export class ModalActivite implements OnInit, OnDestroy {
       this.activite.id,
       this.planificationAjout.id,
       this.nombreSeances,
-      this.dateDebutSeances
+      this.dateDebutSeances,
+      this.scopedToManagedSections
     ).subscribe({
       next: data => {
         this.seances = this.preparerSeances(data);
         this.ajoutSeancesEnCours = false;
         this.initialiserResponsabilites();
-        this.toastr.success(
-          `${data.length} séance(s) ajoutée(s)`,
-          'Séances enregistrées'
-        );
+        this.toastr.success(this.scopedToManagedSections ? 'Séances ajoutées.' : `${data.length} séance(s) ajoutée(s)`,
+          'Séances enregistrées');
         this.fermerModalAjoutSeances();
       },
       error: err => {
@@ -285,7 +304,7 @@ export class ModalActivite implements OnInit, OnDestroy {
     }
 
     this.enregistrementSeances.add(seance.id);
-    this.activiteService.modifierEtatSeance(this.activite.id, seance).subscribe({
+    this.activiteService.modifierEtatSeance(this.activite.id, seance, this.scopedToManagedSections).subscribe({
       next: () => this.enregistrementSeances.delete(seance.id),
       error: err => {
         this.enregistrementSeances.delete(seance.id);
@@ -301,7 +320,7 @@ export class ModalActivite implements OnInit, OnDestroy {
     }
 
     this.enregistrementSeances.add(seance.id);
-    this.activiteService.modifierCommentaireSeance(this.activite.id, seance).subscribe({
+    this.activiteService.modifierCommentaireSeance(this.activite.id, seance, this.scopedToManagedSections).subscribe({
       next: () => this.enregistrementSeances.delete(seance.id),
       error: err => {
         this.enregistrementSeances.delete(seance.id);
@@ -338,7 +357,7 @@ export class ModalActivite implements OnInit, OnDestroy {
     }
 
     this.enregistrementSeances.add(seance.id);
-    this.activiteService.modifierHoraireSeance(this.activite.id, seance).subscribe({
+    this.activiteService.modifierHoraireSeance(this.activite.id, seance, this.scopedToManagedSections).subscribe({
       next: data => {
         seance.debut = data.debut;
         seance.fin = data.fin;
@@ -359,7 +378,7 @@ export class ModalActivite implements OnInit, OnDestroy {
     }
 
     this.enregistrementSeances.add(seance.id);
-    this.activiteService.modifierSalleSeance(this.activite.id, seance).subscribe({
+    this.activiteService.modifierSalleSeance(this.activite.id, seance, this.scopedToManagedSections).subscribe({
       next: data => {
         seance.salle = data.salle;
         this.enregistrementSeances.delete(seance.id);
@@ -398,7 +417,8 @@ export class ModalActivite implements OnInit, OnDestroy {
       return;
     }
     this.enregistrementSeances.add(seance.id);
-    this.activiteService.modifierResponsabilitesSeance(this.activite.id, seance.id, responsabilites).subscribe({
+    this.activiteService.modifierResponsabilitesSeance(this.activite.id, seance.id, responsabilites,
+      this.scopedToManagedSections).subscribe({
       next: resultat => {
         seance.responsabilites = resultat.responsabilites ?? [];
         this.enregistrementSeances.delete(seance.id);
@@ -455,7 +475,7 @@ export class ModalActivite implements OnInit, OnDestroy {
       this.horaireTimers.delete(seance.id);
     }
     this.suppressionSeances.add(seance.id);
-    this.activiteService.supprimerSeance(this.activite.id, seance.id).subscribe({
+    this.activiteService.supprimerSeance(this.activite.id, seance.id, this.scopedToManagedSections).subscribe({
       next: () => {
         this.suppressionSeances.delete(seance.id);
         this.seances = this.seances.filter(element => element.id !== seance.id);
@@ -469,7 +489,7 @@ export class ModalActivite implements OnInit, OnDestroy {
   }
 
   private aujourdHui(): string {
-    const maintenant = new Date('2026-09-14T00:00:00.000Z');
+    const maintenant = new Date();
     const dateLocale = new Date(maintenant.getTime() - maintenant.getTimezoneOffset() * 60_000);
     return dateLocale.toISOString().slice(0, 10);
   }

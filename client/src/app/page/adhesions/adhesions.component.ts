@@ -25,6 +25,7 @@ import {ParamService} from 'src/app/_services/param.service';
 import {ActiviteService} from 'src/app/_services/activite.service';
 import {AdherentService} from 'src/app/_services/adherent.service';
 import { ToastService } from '../../_services/toast.service';
+import { ManagedSection, SectionManagementService } from '../../_services/section-management.service';
 import {Subject, debounceTime, distinctUntilChanged} from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownButtonItem, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap/dropdown';
@@ -50,6 +51,7 @@ export class AdhesionsComponent implements OnInit {
   private adherentService = inject(AdherentService);
   private activiteService = inject(ActiviteService);
   private adhesionService = inject(AdhesionService);
+  private sectionManagement = inject(SectionManagementService);
   private tokenStorageService = inject(TokenStorageService);
   private modalService = inject(NgbModal);
   paramService = inject(ParamService);
@@ -109,6 +111,8 @@ export class AdhesionsComponent implements OnInit {
 
   showAdmin: boolean = false;
   showSecretaire: boolean = false;
+  scopedToManagedSections = false;
+  managedSections: ManagedSection[] = [];
   choixSection: string = ""
   visuelselection: string = "";
 
@@ -133,7 +137,11 @@ export class AdhesionsComponent implements OnInit {
     if (this.tokenStorageService.getUser().roles) {
       this.showAdmin = this.tokenStorageService.getUser().roles.includes('ROLE_ADMIN');
       this.showSecretaire = this.tokenStorageService.getUser().roles.includes('ROLE_SECRETAIRE');
-      if (this.tokenStorageService.getUser().username == "alodbasket@free.fr" || this.tokenStorageService.getUser().username == "laurence.basket@yahoo.com" || this.tokenStorageService.getUser().username == "xlcharonnat@yahoo.fr" || this.tokenStorageService.getUser().username == "c.rullie@free.fr") {
+      this.scopedToManagedSections = !this.showAdmin && !this.showSecretaire;
+      if (this.scopedToManagedSections) {
+        this.choixSection = 'Toutes';
+        this.visuelselection = 'Mes sections';
+      } else if (this.tokenStorageService.getUser().username == "alodbasket@free.fr" || this.tokenStorageService.getUser().username == "laurence.basket@yahoo.com" || this.tokenStorageService.getUser().username == "xlcharonnat@yahoo.fr" || this.tokenStorageService.getUser().username == "c.rullie@free.fr") {
         this.choixSection = "groupe#Basket"
         this.visuelselection = "Basket · Toutes les catégories"
       } else {
@@ -152,8 +160,16 @@ export class AdhesionsComponent implements OnInit {
     ).subscribe(() => this.applyFilters());
 
     this.getAdhesion();
-    this.getActivites();
-    this.getStatuses();
+    if (!this.scopedToManagedSections) {
+      this.getActivites();
+      this.getStatuses();
+    } else {
+      this.statusOptions = Array.from(new Set([...this.generalStatuses, ...this.basketStatuses])).sort();
+      this.sectionManagement.sections().subscribe({
+        next: sections => this.managedSections = sections,
+        error: () => this.showError('Les sections affectées n’ont pas pu être chargées.')
+      });
+    }
   }
 
   loadder: boolean = true
@@ -173,7 +189,7 @@ export class AdhesionsComponent implements OnInit {
       documentsValidated: this.validDocumentSecretariat,
       flagged: this.flag,
       sort: `${this.sortField},${this.sortDirection}`
-    }).subscribe({
+    }, this.scopedToManagedSections).subscribe({
       next: (data) => {
         this.adhesions = data.content;
         this.totalElements = data.totalElements;

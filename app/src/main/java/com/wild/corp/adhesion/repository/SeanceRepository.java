@@ -17,6 +17,8 @@ public interface SeanceRepository extends JpaRepository<Seance, Long> {
 
     Optional<Seance> findByIdAndActivite_Id(Long id, Long activiteId);
 
+    List<Seance> findByActivite_IdOrderByDebutAsc(Long activiteId);
+
     List<Seance> findAllByDebutGreaterThanEqualAndDebutLessThanOrderByDebut(
             LocalDateTime debut, LocalDateTime fin);
 

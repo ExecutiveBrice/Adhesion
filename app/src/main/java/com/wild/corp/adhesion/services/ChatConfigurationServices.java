@@ -35,7 +35,9 @@ public class ChatConfigurationServices {
 
     @Transactional
     public List<ChatConfiguration> getAll(Long sectionId) {
-        return chatRepository.findAllBySectionIdOrderByNomAsc(sectionId).stream().map(this::toConfiguration).toList();
+        return chatRepository.findAllBySectionIdOrderByNomAsc(sectionId).stream()
+                .filter(chat -> chat.getCible() == ChatTarget.SECTION)
+                .map(this::toConfiguration).toList();
     }
 
     @Transactional

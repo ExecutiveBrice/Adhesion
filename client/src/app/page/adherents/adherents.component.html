@@ -46,6 +46,7 @@
 </ng-template>
 
 <section class="adherents-page">
+  @if (scopedToManagedSections) { <p class="text-body-secondary">Membres des tribus inscrites dans mes sections · consultation seule</p> }
 
 
   <div class="filter-panel">
@@ -116,7 +117,7 @@
     <table class="table adherent-table">
       <thead>
         <tr>
-          <th scope="col">Adhérent     <button type="button" class="btn btn-primary" (click)="openModalAddUser(newAdherentModal)">Nouvel adhérent</button></th>
+          <th scope="col">Adhérent @if (!scopedToManagedSections) { <button type="button" class="btn btn-primary" (click)="openModalAddUser(newAdherentModal)">Nouvel adhérent</button> }</th>
           <th scope="col">Téléphone</th>
           <th scope="col">Adresse</th>
           <th scope="col">Naissance / Lieu</th>
@@ -140,11 +141,14 @@
           <tr>
             <td class="member-cell">
               <div class="member-summary">
-                <button type="button" class="icon-action" title="Ouvrir la fiche adhérent"
+                @if (!scopedToManagedSections) { <button type="button" class="icon-action" title="Ouvrir la fiche adhérent"
                   (click)="opennewTab('/profil/' + adherent.tribuId + '?adherentId=' + adherent.id)"><fa-icon [icon]="faUsersRays"></fa-icon></button>
+                }
                   <div class="member-info">
                     <div class="member-name">
                       <strong>{{adherent.nom}} {{adherent.prenom}}</strong>
+                      @if (adherent.referentSection) { <span class="badge text-bg-info ms-1">Référent de section</span> }
+                      @if (adherent.referentActivite) { <span class="badge text-bg-info ms-1">Référent d’activité</span> }
                       @let displayedRoles = displayedRolesFor(adherent.roles);
                       @if (displayedRoles.length) {
                         <span class="member-roles">

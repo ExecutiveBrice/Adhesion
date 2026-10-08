@@ -74,6 +74,10 @@ export class ParamService {
     return this.http.get<SectionConfiguration[]>(API_URL + 'sections', { responseType: 'json' });
   }
 
+  getSectionReferentCandidates(sectionId: number): Observable<{ id: number; nom: string }[]> {
+    return this.http.get<{ id: number; nom: string }[]>(API_URL + 'sections/' + sectionId + '/referents/candidats');
+  }
+
   createSection(section: SectionConfiguration): Observable<SectionConfiguration> {
     return this.http.post<SectionConfiguration>(API_URL + 'sections', section, { responseType: 'json' });
   }

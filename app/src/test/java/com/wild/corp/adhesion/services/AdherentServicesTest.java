@@ -68,6 +68,8 @@ class AdherentServicesTest {
         when(repository.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(existing)));
         ReflectionTestUtils.setField(adherentServices, "adherentRepository", repository);
+        ReflectionTestUtils.setField(adherentServices, "sectionRepository",
+                mock(com.wild.corp.adhesion.repository.SectionRepository.class));
 
         var page = adherentServices.getPage("", "", "", PageRequest.of(0, 10));
 

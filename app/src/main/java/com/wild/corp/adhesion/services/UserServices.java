@@ -1,6 +1,7 @@
 package com.wild.corp.adhesion.services;
 
 import com.wild.corp.adhesion.repository.SeanceRepository;
+import com.wild.corp.adhesion.repository.ActiviteRepository;
 import com.wild.corp.adhesion.repository.UserRepository;
 import com.wild.corp.adhesion.models.*;
 import com.wild.corp.adhesion.models.resources.SeanceDuJourResponse;
@@ -26,6 +27,12 @@ public class UserServices {
     UserRepository userRepository;
     @Autowired
     SeanceRepository seanceRepository;
+    @Autowired
+    ActiviteRepository activiteRepository;
+
+    public boolean isReferentActivite(String username) {
+        return activiteRepository.existsByReferentUsername(username);
+    }
     @Autowired
     ConfirmationTokenService confirmationTokenService;
     @Autowired

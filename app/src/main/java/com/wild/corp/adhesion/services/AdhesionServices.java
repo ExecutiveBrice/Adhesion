@@ -6,6 +6,7 @@ import com.wild.corp.adhesion.models.resources.AdherentLite;
 import com.wild.corp.adhesion.repository.AdhesionRepository;
 import com.wild.corp.adhesion.repository.NotificationRepository;
 import com.wild.corp.adhesion.repository.PaiementRepository;
+import com.wild.corp.adhesion.repository.SectionListingSpecifications;
 import com.wild.corp.adhesion.utils.Status;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,7 +107,12 @@ public class AdhesionServices {
                         .nom(adhesion.getAdherent().getNom())
                         .prenom(adhesion.getAdherent().getPrenom())
                         .naissance(adhesion.getAdherent().getNaissance())
-                        .email(Boolean.TRUE.equals(adhesion.getAdherent().getEmailRepresentant()) && adhesion.getAdherent().getRepresentant() != null ? adhesion.getAdherent().getRepresentant().getUser().getUsername() : adhesion.getAdherent().getUser().getUsername())
+                        .email(Boolean.TRUE.equals(adhesion.getAdherent().getEmailRepresentant())
+                                && adhesion.getAdherent().getRepresentant() != null
+                                && adhesion.getAdherent().getRepresentant().getUser() != null
+                                ? adhesion.getAdherent().getRepresentant().getUser().getUsername()
+                                : adhesion.getAdherent().getUser() != null
+                                ? adhesion.getAdherent().getUser().getUsername() : null)
                         .adresse(adhesion.getAdherent().getAdresse())
                         .derniereVisites(adhesion.getAdherent().getDerniereVisites())
                         .derniereModifs(adhesion.getAdherent().getDerniereModifs())
@@ -150,7 +156,16 @@ public class AdhesionServices {
     public Page<AdhesionLite> getAllLite(String section, String search, String status,
                                          Boolean paymentValidated, Boolean documentsValidated,
                                          Boolean flagged, Pageable pageable) {
+        return getAllLite(section, search, status, paymentValidated, documentsValidated, flagged, pageable, null);
+    }
+
+    public Page<AdhesionLite> getAllLite(String section, String search, String status,
+                                         Boolean paymentValidated, Boolean documentsValidated,
+                                         Boolean flagged, Pageable pageable, Set<Long> allowedSectionIds) {
         Specification<Adhesion> specification = (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
+        if (allowedSectionIds != null) {
+            specification = specification.and(SectionListingSpecifications.adhesions(allowedSectionIds));
+        }
         String[] sections = section.split("#", 2);
 
         if (sections.length == 2 && sections[0].equals("activite")) {

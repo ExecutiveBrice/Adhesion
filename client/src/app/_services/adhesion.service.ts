@@ -105,7 +105,7 @@ export class AdhesionService {
     return this.http.get<Adhesion[]>(API_URL+"liteBysection", {params, responseType: 'json' });
   }
 
-  getPage(query: AdhesionPageQuery): Observable<Page<AdhesionLite>> {
+  getPage(query: AdhesionPageQuery, managed = false): Observable<Page<AdhesionLite>> {
     let params = new HttpParams()
       .set('sections', query.sections)
       .set('page', query.page)
@@ -130,7 +130,7 @@ export class AdhesionService {
       params = params.set('sort', query.sort);
     }
 
-    return this.http.get<Page<AdhesionLite>>(API_URL + "page", {params, responseType: 'json'});
+    return this.http.get<Page<AdhesionLite>>(API_URL + (managed ? 'managed/page' : 'page'), {params, responseType: 'json'});
   }
 
   getStatuses(): Observable<string[]> {

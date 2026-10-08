@@ -18,13 +18,15 @@ class SectionConfigurationServicesTest {
 
     private SectionRepository sectionRepository;
     private com.wild.corp.adhesion.repository.UserRepository users;
+    private com.wild.corp.adhesion.repository.AdherentRepository adherents;
     private SectionConfigurationServices service;
 
     @BeforeEach
     void setUp() {
         sectionRepository = mock(SectionRepository.class);
         users = mock(com.wild.corp.adhesion.repository.UserRepository.class);
-        service = new SectionConfigurationServices(sectionRepository, users);
+        adherents = mock(com.wild.corp.adhesion.repository.AdherentRepository.class);
+        service = new SectionConfigurationServices(sectionRepository, users, adherents);
     }
 
     @Test
@@ -96,9 +98,13 @@ class SectionConfigurationServicesTest {
         Section section = Section.builder().id(12L).nom("Basket").type("COMPETITION").build();
         var referent = new com.wild.corp.adhesion.models.User("referent", "password");
         referent.setId(4L);
+        var membre = new com.wild.corp.adhesion.models.Adherent();
+        membre.setUser(referent);
         when(sectionRepository.findById(12L)).thenReturn(java.util.Optional.of(section));
         when(sectionRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(users.findAllById(java.util.List.of(4L))).thenReturn(java.util.List.of(referent));
+        when(adherents.findReferentCandidates(org.mockito.ArgumentMatchers.eq(12L), any()))
+                .thenReturn(java.util.List.of(membre));
         assertThat(service.update(12L, new SectionConfiguration(12L, "Basket", "COMPETITION", java.util.List.of(4L)))
                 .referentUserIds()).containsExactly(4L);
         assertThat(service.update(12L, new SectionConfiguration(12L, "Basket", "COMPETITION"))
@@ -114,5 +120,19 @@ class SectionConfigurationServicesTest {
             assertThatThrownBy(() -> service.create(new SectionConfiguration(null, "Basket", "COMPETITION", ids)))
                     .isInstanceOf(ResponseStatusException.class);
         }
+    }
+
+    @Test
+    void rejectsAnExistingUserWhoIsNotEligibleForTheSection() {
+        Section section = Section.builder().id(12L).nom("Basket").type("COMPETITION").build();
+        var user = new com.wild.corp.adhesion.models.User("outside@example.test", "password");
+        user.setId(4L);
+        when(sectionRepository.findById(12L)).thenReturn(java.util.Optional.of(section));
+        when(users.findAllById(java.util.List.of(4L))).thenReturn(java.util.List.of(user));
+
+        assertThatThrownBy(() -> service.update(12L,
+                new SectionConfiguration(12L, "Basket", "COMPETITION", java.util.List.of(4L))))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("tribu inscrite");
     }
 }

@@ -3,6 +3,7 @@ package com.wild.corp.adhesion.services;
 import com.wild.corp.adhesion.models.Section;
 import com.wild.corp.adhesion.models.Activite;
 import com.wild.corp.adhesion.models.Chat;
+import com.wild.corp.adhesion.models.ChatTarget;
 import com.wild.corp.adhesion.models.resources.ChatConfiguration;
 import com.wild.corp.adhesion.repository.ChatRepository;
 import com.wild.corp.adhesion.repository.SectionRepository;
@@ -49,11 +50,11 @@ class ChatConfigurationServicesTest {
 
         var created = service.create(new ChatConfiguration(null, "  Encadrants  ", "SECTION", 4L, null, List.of(
                 new ChatConfiguration.RolePermission("role_encadrant", true),
-                new ChatConfiguration.RolePermission("ROLE_REFERENT_ACTIVITE", false))));
+                new ChatConfiguration.RolePermission("ROLE_COMMUNICATION_GLOBAL", false))));
 
         assertThat(created).isEqualTo(new ChatConfiguration(8L, "Encadrants", "SECTION", 4L, "Section · Basket", List.of(
                 new ChatConfiguration.RolePermission("ROLE_ENCADRANT", true),
-                new ChatConfiguration.RolePermission("ROLE_REFERENT_ACTIVITE", false))));
+                new ChatConfiguration.RolePermission("ROLE_COMMUNICATION_GLOBAL", false))));
     }
 
     @Test
@@ -62,6 +63,25 @@ class ChatConfigurationServicesTest {
         when(chats.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         assertThat(service.create(new ChatConfiguration(null, "Encadrants", "SECTION", 4L, null, List.of())).permissions())
                 .isEmpty();
+    }
+
+    @Test
+    void listsOnlyChatsDirectlyAttachedToTheRequestedSection() {
+        Section section = Section.builder().id(4L).nom("Basket").build();
+        Chat sectionChat = new Chat();
+        sectionChat.setId(8L);
+        sectionChat.setNom("Informations");
+        sectionChat.setCible(ChatTarget.SECTION);
+        sectionChat.setSection(section);
+        Chat activityChat = new Chat();
+        activityChat.setId(9L);
+        activityChat.setNom("Équipe");
+        activityChat.setCible(ChatTarget.ACTIVITE);
+        activityChat.setSection(section);
+        when(chats.findAllBySectionIdOrderByNomAsc(4L)).thenReturn(List.of(sectionChat, activityChat));
+
+        assertThat(service.getAll(4L)).containsExactly(
+                new ChatConfiguration(8L, "Informations", "SECTION", 4L, "Section · Basket", List.of()));
     }
 
     @Test

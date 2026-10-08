@@ -17,5 +17,7 @@ export class AdherentFlat {
   naissance!: string;
   tribuId!: number;
   roles!: ERole[];
+  referentSection!: boolean;
+  referentActivite!: boolean;
 
 }

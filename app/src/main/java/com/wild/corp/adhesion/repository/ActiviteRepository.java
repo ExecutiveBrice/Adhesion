@@ -20,6 +20,9 @@ public interface ActiviteRepository extends JpaRepository<Activite, Long>, JpaSp
 
     boolean existsByNom(String nom);
 
+    @Query("select count(a) > 0 from Activite a join a.referents r where r.user.username = :username")
+    boolean existsByReferentUsername(@Param("username") String username);
+
     @Query("""
         select a from Activite a where
         exists (select h.id from Adhesion h where h.adherent.user.id = :userId

@@ -1,4 +1,5 @@
 <section class="adhesions-page">
+  @if (scopedToManagedSections) { <p class="text-body-secondary">Adhésions de mes sections · consultation seule</p> }
   <div class="filter-panel">
     <div class="filter-field search-field">
       <label for="adhesion-search">Recherche</label>
@@ -94,6 +95,17 @@
       <thead>
         <tr>
           <th scope="col" class="activity-header">
+            @if (scopedToManagedSections) {
+              <div ngbDropdown container="body" class="section-picker">
+                <button type="button" class="btn btn-primary btn-sm" ngbDropdownToggle>{{visuelselection}}</button>
+                <div ngbDropdownMenu class="section-menu">
+                  <button ngbDropdownItem (click)="selectSection('Toutes', 'Mes sections')">Mes sections</button>
+                  @for (section of managedSections; track section.id) {
+                    <button ngbDropdownItem (click)="selectSection('groupe#' + section.nom, section.nom)">{{section.nom}}</button>
+                  }
+                </div>
+              </div>
+            } @else {
             <div ngbDropdown container="body" class="section-picker">
               <button type="button" class="btn btn-primary btn-sm" id="section-filter-button" ngbDropdownToggle>
                 {{visuelselection || 'Activité'}}
@@ -126,6 +138,7 @@
                 </div>
               }
             </div>
+            }
             <button class="sort-button" (click)="changeSort('activite.nom')" aria-label="Trier par activité">
               {{sortIndicator('activite.nom')}}
             </button>
@@ -158,8 +171,9 @@
             <td class="member-cell">
               <div class="member-name">
                 <strong>{{adhesion.adherent.nom}} {{adhesion.adherent.prenom}}</strong>
-                <button type="button" class="icon-action" title="Ouvrir la fiche adhérent"
+                @if (!scopedToManagedSections) { <button type="button" class="icon-action" title="Ouvrir la fiche adhérent"
                   (click)="opennewTab('/profil/' + adhesion.adherent.tribuId + '?adherentId=' + adhesion.adherent.id)"><fa-icon [icon]="faPen"></fa-icon></button>
+                }
                 </div>
                 <a [href]="'mailto:' + adhesion.adherent.email">{{adhesion.adherent.email}}</a>
                 @if (adhesion.adherent.adresse) {
@@ -183,11 +197,13 @@
                 }
                 <div class="cell-actions">
                   <span class="total-amount">Total {{calculSomme(adhesion)}} €</span>
+                  @if (!scopedToManagedSections) {
                   <button type="button" class="icon-action success" [class.active]="adhesion.validPaiementSecretariat"
                     title="Marquer le paiement comme validé" (click)="updatePaiementSecretariat(adhesion, true)"><fa-icon [icon]="faCircleCheck"></fa-icon></button>
                     <button type="button" class="icon-action warning" [class.active]="!adhesion.validPaiementSecretariat"
                       title="Marquer le paiement comme à vérifier" (click)="updatePaiementSecretariat(adhesion, false)"><fa-icon [icon]="faCircleXmark"></fa-icon></button>
                       <button type="button" class="btn btn-sm btn-outline-primary" (click)="openModal(editProfileModal, adhesion)">Gérer</button>
+                  } @else { <span>{{adhesion.validPaiementSecretariat ? 'Paiement validé' : 'Paiement à vérifier'}}</span> }
                     </div>
                   </td>
                   <td class="documents-cell">
@@ -201,29 +217,36 @@
                       <div class="muted">Aucun document</div>
                     }
                     <div class="cell-actions">
+                      @if (!scopedToManagedSections) {
                       <button type="button" class="icon-action success" [class.active]="adhesion.validDocumentSecretariat"
                         title="Marquer les documents comme validés" (click)="updateDocumentsSecretariat(adhesion, true)"><fa-icon [icon]="faCircleCheck"></fa-icon></button>
                         <button type="button" class="icon-action warning" [class.active]="!adhesion.validDocumentSecretariat"
                           title="Marquer les documents comme à vérifier" (click)="updateDocumentsSecretariat(adhesion, false)"><fa-icon [icon]="faCircleXmark"></fa-icon></button>
+                      } @else { <span>{{adhesion.validDocumentSecretariat ? 'Documents validés' : 'Documents à vérifier'}}</span> }
                         </div>
                       </td>
                       <td class="status-cell">
+                        @if (scopedToManagedSections) { <span>{{adhesion.statutActuel}}</span> } @else {
                         <select class="form-select form-select-sm" [ngModel]="adhesion.statutActuel"
                           (ngModelChange)="choisirStatut(adhesion, $event)">
                           @for (status of statusesFor(adhesion); track status) {
                             <option [value]="status">{{status}}</option>
                           }
                         </select>
+                        }
                         @if (adhesion.dateChangementStatut || adhesion.dateAjoutPanier) {
                           <small>Depuis le {{ (adhesion.dateChangementStatut || adhesion.dateAjoutPanier) | date:'dd/MM/yyyy' }}</small>
                         }
 
                       </td>
                       <td class="note-cell">
+                        @if (scopedToManagedSections) { <span>{{adhesion.remarqueSecretariat}}</span> } @else {
                         <textarea class="form-control" [(ngModel)]="adhesion.remarqueSecretariat" rows="3"
                         placeholder="Ajouter une note…" (blur)="enregistrerRemarque(adhesion)"></textarea>
+                        }
                       </td>
                       <td class="tracking-cell">
+                        @if (!scopedToManagedSections) {
                         <button type="button" class="icon-action warning" [class.active]="adhesion.flag"
                           [title]="adhesion.flag ? 'Retirer le signalement' : 'Signaler cette adhésion'"
                           (click)="updateFlag(adhesion, !adhesion.flag)"><fa-icon [icon]="faFlag"></fa-icon></button>
@@ -233,6 +256,7 @@
                             <button type="button" class="icon-action" [class.attention]="verifyAdherent(adhesion)"
                               title="Marquer les modifications de l’adhérent comme vues" [disabled]="!verifyAdherent(adhesion)"
                               (click)="updateVisiteAdherent(adhesion)"><fa-icon [icon]="faCircleUser"></fa-icon></button>
+                        } @else if (adhesion.flag) { <span>Signalée</span> }
                             </td>
                           </tr>
                         }

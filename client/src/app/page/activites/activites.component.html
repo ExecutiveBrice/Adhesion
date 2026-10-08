@@ -1,4 +1,5 @@
 <section class="activites-page">
+  @if (scopedToManagedSections) { <p class="text-body-secondary">Activités des sections qui vous sont confiées</p> }
   <div class="filter-panel">
     <div class="filter-field search-field">
       <label for="activite-search">Recherche</label>
@@ -95,7 +96,8 @@
 
   <div class="activities-header">
     <h2>Activités</h2>
-    <button type="button" class="btn btn-primary" (click)="openActivite(newActivite)">
+    <button type="button" class="btn btn-primary" (click)="openActivite(newActivite)"
+      [disabled]="scopedToManagedSections && managedSections.length === 0">
       <fa-icon [icon]="faCartPlus"></fa-icon> Ajouter une activité
     </button>
   </div>

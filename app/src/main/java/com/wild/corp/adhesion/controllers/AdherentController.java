@@ -6,6 +6,7 @@ import com.wild.corp.adhesion.models.resources.AdherentLite;
 import com.wild.corp.adhesion.services.AdherentServices;
 import com.wild.corp.adhesion.services.RappelServices;
 import com.wild.corp.adhesion.services.UserServices;
+import com.wild.corp.adhesion.repository.SectionRepository;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -21,6 +22,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -31,6 +33,8 @@ public class AdherentController {
 
     @Autowired
     AdherentServices adherentServices;
+    @Autowired
+    SectionRepository sectionRepository;
     @Autowired
     UserServices userServices;
     @Autowired
@@ -156,6 +160,19 @@ public class AdherentController {
                                      @PageableDefault(size = 20, sort = {"nom", "prenom"}) Pageable pageable) {
         log.info("getPage by " + principal.getName());
         return ResponseEntity.ok(adherentServices.getPage(search, activite, activiteNm1, pageable));
+    }
+
+    @GetMapping("/managed/page")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getManagedPage(Authentication principal,
+                                            @RequestParam(defaultValue = "") String search,
+                                            @RequestParam(defaultValue = "") String activite,
+                                            @RequestParam(defaultValue = "") String activiteNm1,
+                                            @PageableDefault(size = 20, sort = {"nom", "prenom"}) Pageable pageable) {
+        var sectionIds = sectionRepository.findManagedByUsername(principal.getName()).stream()
+                .map(section -> section.getId()).collect(java.util.stream.Collectors.toSet());
+        if (sectionIds.isEmpty()) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        return ResponseEntity.ok(adherentServices.getPage(search, activite, activiteNm1, pageable, sectionIds));
     }
     @GetMapping("/allExportLite")
     @PreAuthorize("hasRole('SECRETAIRE') or hasRole('MODERATOR') or hasRole('BUREAU') or hasRole('MEMBRECA') or hasRole('ADMIN')")

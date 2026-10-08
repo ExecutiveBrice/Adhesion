@@ -39,6 +39,8 @@ public class AdherentFlat {
 
     private UUID tribuId;
     private List<ERole> roles = List.of();
+    private boolean referentSection;
+    private boolean referentActivite;
 
 
 

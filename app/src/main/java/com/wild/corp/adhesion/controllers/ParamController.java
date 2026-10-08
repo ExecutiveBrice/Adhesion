@@ -148,6 +148,12 @@ public class ParamController {
 		return ResponseEntity.ok(sectionConfigurationServices.getAll());
 	}
 
+	@GetMapping("/sections/{sectionId}/referents/candidats")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<?> getSectionReferentCandidates(@PathVariable Long sectionId) {
+		return ResponseEntity.ok(sectionConfigurationServices.getReferentCandidates(sectionId));
+	}
+
 	@PostMapping("/sections")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<?> createSection(@RequestBody SectionConfiguration section) {

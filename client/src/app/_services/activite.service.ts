@@ -5,6 +5,7 @@ import { environment } from 'src/environments/environment';
 import { Activite, Adherent, AdherentLite, ActiviteNm1, ActiviteDropDown, HoraireDropDown } from '../models';
 import { CalendrierGoogle, Seance, SeanceCalendrier } from '../models/seance';
 import { AdherentResponsabilite, ResponsabiliteSeanceEdition } from '../models/responsabiliteSeance';
+import { UtilisateurSelectionnable } from '../models/utilisateurSelectionnable';
 
 const API_URL = environment.server + '/activite/';
 
@@ -48,21 +49,25 @@ export class ActiviteService {
     return this.http.get<Seance[]>(API_URL + 'seancesDuJour', { responseType: 'json' });
   }
 
-  getSeances(activiteId: number): Observable<Seance[]> {
-    return this.http.get<Seance[]>(API_URL + activiteId + '/seances', { responseType: 'json' });
+  getSeances(activiteId: number, managed = false): Observable<Seance[]> {
+    return this.http.get<Seance[]>(API_URL + (managed ? 'managed/' : '') + activiteId + '/seances', { responseType: 'json' });
   }
 
   getReferentsCandidates(activiteId: number): Observable<AdherentLite[]> {
     return this.http.get<AdherentLite[]>(API_URL + activiteId + '/referents/candidats', { responseType: 'json' });
   }
 
-  getResponsabiliteCandidates(activiteId: number): Observable<AdherentResponsabilite[]> {
-    return this.http.get<AdherentResponsabilite[]>(API_URL + activiteId + '/responsabilites/candidats');
+  getManagedEncadrants(): Observable<UtilisateurSelectionnable[]> {
+    return this.http.get<UtilisateurSelectionnable[]>(API_URL + 'managed/encadrants');
+  }
+
+  getResponsabiliteCandidates(activiteId: number, managed = false): Observable<AdherentResponsabilite[]> {
+    return this.http.get<AdherentResponsabilite[]>(API_URL + (managed ? 'managed/' : '') + activiteId + '/responsabilites/candidats');
   }
 
   modifierResponsabilitesSeance(activiteId: number, seanceId: number,
-                               responsabilites: ResponsabiliteSeanceEdition[]): Observable<Seance> {
-    return this.http.patch<Seance>(API_URL + activiteId + '/seances/' + seanceId, { responsabilites });
+                               responsabilites: ResponsabiliteSeanceEdition[], managed = false): Observable<Seance> {
+    return this.http.patch<Seance>(API_URL + (managed ? 'managed/' : '') + activiteId + '/seances/' + seanceId, { responsabilites });
   }
 
   getCalendrier(dateDebut: string, dateFin: string, tribuUuid?: string): Observable<SeanceCalendrier[]> {
@@ -93,44 +98,44 @@ export class ActiviteService {
   }
 
   ajouterSeancesPlanification(activiteId: number, planificationId: number, nombreSemaines: number,
-    dateDebut: string): Observable<Seance[]> {
+    dateDebut: string, managed = false): Observable<Seance[]> {
     return this.http.post<Seance[]>(
-      API_URL + activiteId + '/planifications/' + planificationId + '/seances',
+      API_URL + (managed ? 'managed/' : '') + activiteId + '/planifications/' + planificationId + '/seances',
       { nombreSeances: nombreSemaines, dateDebut },
       { responseType: 'json' }
     );
   }
 
-  modifierEtatSeance(activiteId: number, seance: Seance): Observable<Seance> {
-    return this.http.patch<Seance>(API_URL + activiteId + '/seances/' + seance.id, {
+  modifierEtatSeance(activiteId: number, seance: Seance, managed = false): Observable<Seance> {
+    return this.http.patch<Seance>(API_URL + (managed ? 'managed/' : '') + activiteId + '/seances/' + seance.id, {
       etatSeance: seance.etatSeance
     }, { responseType: 'json' });
   }
 
-  modifierCommentaireSeance(activiteId: number, seance: Seance): Observable<Seance> {
-    return this.http.patch<Seance>(API_URL + activiteId + '/seances/' + seance.id, {
+  modifierCommentaireSeance(activiteId: number, seance: Seance, managed = false): Observable<Seance> {
+    return this.http.patch<Seance>(API_URL + (managed ? 'managed/' : '') + activiteId + '/seances/' + seance.id, {
       commentaire: seance.commentaire,
       commentairePresent: true
     }, { responseType: 'json' });
   }
 
-  modifierHoraireSeance(activiteId: number, seance: Seance): Observable<Seance> {
-    return this.http.patch<Seance>(API_URL + activiteId + '/seances/' + seance.id, {
+  modifierHoraireSeance(activiteId: number, seance: Seance, managed = false): Observable<Seance> {
+    return this.http.patch<Seance>(API_URL + (managed ? 'managed/' : '') + activiteId + '/seances/' + seance.id, {
       date: seance.dateEdition,
       heureDebut: seance.heureEdition,
       horairePresent: true
     }, { responseType: 'json' });
   }
 
-  modifierSalleSeance(activiteId: number, seance: Seance): Observable<Seance> {
-    return this.http.patch<Seance>(API_URL + activiteId + '/seances/' + seance.id, {
+  modifierSalleSeance(activiteId: number, seance: Seance, managed = false): Observable<Seance> {
+    return this.http.patch<Seance>(API_URL + (managed ? 'managed/' : '') + activiteId + '/seances/' + seance.id, {
       salleId: seance.salle?.id ?? null,
       sallePresente: true
     }, { responseType: 'json' });
   }
 
-  supprimerSeance(activiteId: number, seanceId: number): Observable<void> {
-    return this.http.delete<void>(API_URL + activiteId + '/seances/' + seanceId);
+  supprimerSeance(activiteId: number, seanceId: number, managed = false): Observable<void> {
+    return this.http.delete<void>(API_URL + (managed ? 'managed/' : '') + activiteId + '/seances/' + seanceId);
   }
 
   getAllNm1(): Observable<ActiviteNm1[]> {
@@ -140,7 +145,7 @@ export class ActiviteService {
     return this.http.get<Activite[]>(API_URL + 'all', { responseType: 'json' });
   }
 
-  getPage(query: ActivitePageQuery): Observable<ActivitePage> {
+  getPage(query: ActivitePageQuery, managed = false): Observable<ActivitePage> {
     let params = new HttpParams()
       .set('page', query.page)
       .set('size', query.size);
@@ -162,7 +167,7 @@ export class ActiviteService {
     if (query.genre) {
       params = params.set('genre', query.genre);
     }
-    return this.http.get<ActivitePage>(API_URL + 'page', { params, responseType: 'json' });
+    return this.http.get<ActivitePage>(API_URL + (managed ? 'managed/page' : 'page'), { params, responseType: 'json' });
   }
 
 
@@ -172,7 +177,7 @@ export class ActiviteService {
     return this.http.get<Activite[]>(API_URL + "addReferent", { params, responseType: 'json' });
   }
 
-  save(activite: Activite): Observable<Activite> {
+  save(activite: Activite, managed = false): Observable<Activite> {
     // Les intervenants sont associés aux catégories de séance. L'API attend
     // uniquement leurs identifiants, afin d'éviter d'envoyer les sous-objets
     // des DTO « lite ».
@@ -186,7 +191,7 @@ export class ActiviteService {
         referents: (planification.referents ?? []).map(({ id }) => ({ id }))
       }))
     };
-    return this.http.post<Activite>(API_URL + 'save', activiteAEnregistrer, { responseType: 'json' });
+    return this.http.post<Activite>(API_URL + (managed ? 'managed/save' : 'save'), activiteAEnregistrer, { responseType: 'json' });
   }
 
   fillObjects(activites: Activite[], activitesListe: ActiviteDropDown[], adherent?: Adherent) {

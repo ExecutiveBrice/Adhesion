@@ -16,6 +16,14 @@ public interface AdherentRepository extends JpaRepository<Adherent, Long>, JpaSp
 
     Optional<Adherent> findByUserUsername(String username);
 
+    @Query("select distinct a from Adherent a where exists (select ad.id from Adhesion ad " +
+            "where ad.adherent.tribu = a.tribu and a.tribu is not null " +
+            "and ad.activite.section.id = :sectionId " +
+            "and (ad.statutActuel is null or ad.statutActuel not in :statutsExclus)) " +
+            "order by a.nom, a.prenom, a.id")
+    List<Adherent> findReferentCandidates(@Param("sectionId") Long sectionId,
+                                         @Param("statutsExclus") List<String> statutsExclus);
+
     @Query("select distinct a from Adherent a join a.user u join u.roles r where r = :role")
     List<Adherent> findByUserRole(@Param("role") ERole role);
     @Query("select a.id from Adherent a")

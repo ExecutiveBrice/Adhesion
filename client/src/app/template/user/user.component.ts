@@ -36,9 +36,6 @@ export class UserComponent implements OnInit {
     { code: ERole.ROLE_MEMBRECA, libelle: 'Membre du CA' },
     { code: ERole.ROLE_COMPTABLE, libelle: 'Comptable' },
     { code: ERole.ROLE_ENCADRANT, libelle: 'Encadrant' },
-    { code: ERole.ROLE_REFERENT_ACTIVITE, libelle: 'Référent d’activité' },
-    { code: ERole.ROLE_REFERENT_SECTION, libelle: 'Référent de section' },
-    { code: ERole.ROLE_COMMUNICATION_SECTION, libelle: 'Communication de section' },
     { code: ERole.ROLE_COMMUNICATION_GLOBAL, libelle: 'Communication globale' },
     { code: ERole.ROLE_RESPONSABLE_BOUTIQUE, libelle: 'Responsable boutique' }
   ];

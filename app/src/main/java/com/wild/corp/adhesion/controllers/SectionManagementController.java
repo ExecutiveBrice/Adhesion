@@ -31,7 +31,6 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.DayOfWeek;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Locale;
@@ -205,10 +204,7 @@ public class SectionManagementController {
     @Transactional
     public List<ChatConfiguration> chats(Principal principal, @PathVariable Long sectionId) {
         requireManaged(principal, sectionId);
-        return chatConfigurations.getAll().stream()
-                .filter(chat -> belongsToSection(chat, sectionId))
-                .sorted(Comparator.comparing(ChatConfiguration::nom, String.CASE_INSENSITIVE_ORDER))
-                .toList();
+        return chatConfigurations.getAll(sectionId);
     }
 
     @PostMapping("/sections/{sectionId}/chats")
@@ -227,7 +223,7 @@ public class SectionManagementController {
         requireManaged(principal, sectionId);
         requireExistingChat(sectionId, chatId);
         requireTargetInSection(chat, sectionId);
-        return chatConfigurations.update(chatId, chat);
+        return chatConfigurations.update(sectionId, chatId, chat);
     }
 
     @DeleteMapping("/sections/{sectionId}/chats/{chatId}")
@@ -236,7 +232,7 @@ public class SectionManagementController {
                                            @PathVariable Long chatId) {
         requireManaged(principal, sectionId);
         requireExistingChat(sectionId, chatId);
-        chatConfigurations.delete(chatId);
+        chatConfigurations.delete(sectionId, chatId);
         return ResponseEntity.noContent().build();
     }
 
@@ -247,29 +243,19 @@ public class SectionManagementController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Cette section ne vous est pas confiée"));
     }
 
-    private boolean belongsToSection(ChatConfiguration chat, Long sectionId) {
-        if ("SECTION".equals(chat.cible())) return sectionId.equals(chat.cibleId());
-        return "ACTIVITE".equals(chat.cible()) && chat.cibleId() != null && activites.findById(chat.cibleId())
-                .map(activity -> activity.getSection() != null && sectionId.equals(activity.getSection().getId()))
-                .orElse(false);
-    }
-
     private void requireExistingChat(Long sectionId, Long chatId) {
         Chat chat = chats.findById(chatId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Chat introuvable"));
         boolean inSection = chat.getCible() == ChatTarget.SECTION && chat.getSection() != null
                 && sectionId.equals(chat.getSection().getId());
-        boolean inActivity = chat.getCible() == ChatTarget.ACTIVITE && chat.getActivite() != null
-                && chat.getActivite().getSection() != null
-                && sectionId.equals(chat.getActivite().getSection().getId());
-        if (!inSection && !inActivity) {
+        if (!inSection) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Chat introuvable dans cette section");
         }
     }
 
     private void requireTargetInSection(ChatConfiguration chat, Long sectionId) {
-        if (chat == null || !belongsToSection(chat, sectionId)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le chat doit être rattaché à cette section ou à une de ses activités");
+        if (chat == null || !"SECTION".equals(chat.cible()) || !sectionId.equals(chat.cibleId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le chat doit être réservé à cette section");
         }
     }
 

@@ -52,11 +52,11 @@ class UserRoleAuthorizationMvcTest {
     }
 
     @Test
-    void oldProfAuthorityNoLongerGrantsAccess() throws Exception {
+    void sessionListUsesAssignmentsRatherThanAReferentRole() throws Exception {
         mockMvc.perform(get("/user/seancesDuJour")
                 .with(user("prof@example.test").roles("PROF")))
-                .andExpect(status().isForbidden());
-        verifyNoInteractions(userServices);
+                .andExpect(status().isOk());
+        verify(userServices).getSeancesDuJourForUser("prof@example.test");
     }
 
     @Test

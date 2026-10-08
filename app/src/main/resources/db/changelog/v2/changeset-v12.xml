@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  <changeSet id="v12-remove-referent-roles" author="adhesion">
+    <sql>DELETE FROM chat_permissions WHERE role IN ('ROLE_REFERENT_ACTIVITE', 'ROLE_REFERENT_SECTION')</sql>
+    <sql>DELETE FROM user_role_names WHERE role_name IN ('ROLE_REFERENT_ACTIVITE', 'ROLE_REFERENT_SECTION')</sql>
+    <sql>ALTER TABLE user_role_names DROP CONSTRAINT IF EXISTS user_role_names_v2_role_name_check</sql>
+    <sql>ALTER TABLE user_role_names ADD CONSTRAINT user_role_names_v2_role_name_check CHECK (role_name IN (
+      'ROLE_USER', 'ROLE_SECRETAIRE', 'ROLE_BUREAU', 'ROLE_MEMBRECA', 'ROLE_ADMIN',
+      'ROLE_COMPTABLE', 'ROLE_ENCADRANT', 'ROLE_COMMUNICATION_SECTION',
+      'ROLE_COMMUNICATION_GLOBAL', 'ROLE_RESPONSABLE_BOUTIQUE'))</sql>
+  </changeSet>
+</databaseChangeLog>

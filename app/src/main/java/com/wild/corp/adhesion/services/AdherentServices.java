@@ -9,6 +9,8 @@ import com.wild.corp.adhesion.models.resources.Groupe;
 import com.wild.corp.adhesion.repository.AdherentRepository;
 import com.wild.corp.adhesion.repository.AdhesionRepository;
 import com.wild.corp.adhesion.repository.NotificationRepository;
+import com.wild.corp.adhesion.repository.SectionRepository;
+import com.wild.corp.adhesion.repository.SectionListingSpecifications;
 import jakarta.transaction.Transactional;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
@@ -58,6 +60,8 @@ public class AdherentServices {
     NotificationRepository notificationRepository;
     @Autowired
     AdherentRepository adherentRepository;
+    @Autowired
+    SectionRepository sectionRepository;
     @Autowired
     AdhesionRepository adhesionRepository;
     @Autowired
@@ -550,8 +554,17 @@ public class AdherentServices {
     }
 
     public Page<AdherentFlat> getPage(String search, String activite, String activiteNm1, Pageable pageable) {
+        return getPage(search, activite, activiteNm1, pageable, null);
+    }
+
+    public Page<AdherentFlat> getPage(String search, String activite, String activiteNm1,
+                                     Pageable pageable, Set<Long> allowedSectionIds) {
         Specification<Adherent> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
+            if (allowedSectionIds != null) {
+                predicates.add(SectionListingSpecifications.membresDesTribus(allowedSectionIds)
+                        .toPredicate(root, query, criteriaBuilder));
+            }
             if (search != null && !search.isBlank()) {
                 String pattern = "%" + search.trim().toLowerCase() + "%";
                 predicates.add(criteriaBuilder.or(
@@ -615,7 +628,9 @@ public class AdherentServices {
 
         adherentFlat.setId(adherent.getId());
         adherentFlat.setEmail(Boolean.TRUE.equals(adherent.getEmailRepresentant()) && adherent.getRepresentant() != null
-                ? adherent.getRepresentant().getUser().getUsername() : adherent.getUser().getUsername());
+                && adherent.getRepresentant().getUser() != null
+                ? adherent.getRepresentant().getUser().getUsername()
+                : adherent.getUser() != null ? adherent.getUser().getUsername() : null);
         adherentFlat.setTelephone(Boolean.TRUE.equals(adherent.getTelephoneRepresentant()) && adherent.getRepresentant() != null
                 ? adherent.getRepresentant().getTelephone() : adherent.getTelephone());
         adherentFlat.setAdresse(Boolean.TRUE.equals(adherent.getAdresseRepresentant()) && adherent.getRepresentant() != null
@@ -630,6 +645,9 @@ public class AdherentServices {
         adherentFlat.setTribuId(adherent.getTribu().getUuid());
         adherentFlat.setRoles(adherent.getUser() != null && adherent.getUser().getRoles() != null
                 ? adherent.getUser().getRoles().stream().toList() : List.of());
+        adherentFlat.setReferentActivite(!adherent.getActivitesReferent().isEmpty());
+        adherentFlat.setReferentSection(adherent.getUser() != null && adherent.getUser().getId() != null
+                && sectionRepository.existsByReferents_Id(adherent.getUser().getId()));
         return adherentFlat;
     }
 
@@ -657,7 +675,10 @@ public class AdherentServices {
                 .adresse(adherent.getAdresse())
                 .codePostal(adherent.getCodePostal())
                 .ville(adherent.getVille())
-                .email(Boolean.TRUE.equals(adherent.getEmailRepresentant()) && adherent.getRepresentant() != null ? adherent.getRepresentant().getUser().getUsername() : adherent.getUser().getUsername())
+                .email(Boolean.TRUE.equals(adherent.getEmailRepresentant()) && adherent.getRepresentant() != null
+                        && adherent.getRepresentant().getUser() != null
+                        ? adherent.getRepresentant().getUser().getUsername()
+                        : adherent.getUser() != null ? adherent.getUser().getUsername() : null)
                 .telephone(adherent.getTelephone())
                 .mineur(adherent.getMineur())
                 .representant(adherent.getRepresentant() != null ? ReduceRepresentant(adherent.getRepresentant()) : null)

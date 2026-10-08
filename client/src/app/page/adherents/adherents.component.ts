@@ -71,6 +71,7 @@ export class AdherentsComponent implements OnInit {
   type: string = 'Mineur';
   showAdmin: boolean = false;
   showSecretaire: boolean = false;
+  scopedToManagedSections = false;
 
   activitesListe: ActiviteDropDown[] = [];
   activites: Activite[] = []
@@ -88,6 +89,7 @@ export class AdherentsComponent implements OnInit {
     if (this.tokenStorageService.getUser().roles) {
       this.showAdmin = this.tokenStorageService.getUser().roles.includes('ROLE_ADMIN');
       this.showSecretaire = this.tokenStorageService.getUser().roles.includes('ROLE_SECRETAIRE');
+      this.scopedToManagedSections = !this.showAdmin && !this.showSecretaire;
     } else {
       this.router.navigate(['login']);
     }
@@ -98,7 +100,9 @@ export class AdherentsComponent implements OnInit {
     ).subscribe(() => this.getAdherents(true));
 
     this.getAdherents();
-    this.activiteService.fillObjects(this.activites, this.activitesListe, undefined);
+    if (!this.scopedToManagedSections) {
+      this.activiteService.fillObjects(this.activites, this.activitesListe, undefined);
+    }
   }
 
   getAdherents(resetPage: boolean = false) {
@@ -111,7 +115,8 @@ export class AdherentsComponent implements OnInit {
       this.pageSize,
       this.searchTerm.trim(),
       this.activitySearchTerm.trim(),
-      this.activityNm1SearchTerm.trim()
+      this.activityNm1SearchTerm.trim(),
+      this.scopedToManagedSections
     ).subscribe({
       next: (data) => {
         this.adherents = data.content.sort((first, second) =>

@@ -22,6 +22,10 @@ export class UserService {
     return this.http.get<SeanceDuJour[]>(API_URL + 'seancesDuJour', { responseType: 'json' });
   }
 
+  isReferentActivite(): Observable<boolean> {
+    return this.http.get<boolean>(API_URL + 'referentActivite');
+  }
+
   getSeancesDuJourPourLeSecretariat(date: string): Observable<SeanceDuJour[]> {
     const params = new HttpParams().set('date', date);
     return this.http.get<SeanceDuJour[]>(API_URL + 'secretariat/seances', { params, responseType: 'json' });
@@ -90,4 +94,3 @@ export class UserService {
 
 
 }
-

@@ -4,6 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { catchError, EMPTY, exhaustMap, filter, finalize, Subscription, timer } from 'rxjs';
 import { ChatMessage, ChatRoom, ChatService } from '../../_services/chat.service';
 import { TokenStorageService } from '../../_services/token-storage.service';
+import { ManagedSection, SectionManagementService } from '../../_services/section-management.service';
+import { ERole } from '../../models';
+import { ChatAdministrationComponent } from './chat-administration.component';
 
 interface RoomState {
   initialized: boolean;
@@ -25,16 +28,22 @@ const emptyState = (): RoomState => ({
 @Component({
   selector: 'app-chat',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ChatAdministrationComponent],
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.css']
 })
 export class ChatComponent implements OnInit, OnDestroy {
   private readonly chat = inject(ChatService);
+  private readonly sectionManagement = inject(SectionManagementService);
   readonly unreadCounts = this.chat.unreadCounts;
   private readonly readThrough = new Map<number, number>();
   private readonly reading = new Set<number>();
-  readonly userId = inject(TokenStorageService).getUser().id;
+  private readonly user = inject(TokenStorageService).getUser();
+  readonly userId = this.user.id;
+  readonly isAdmin = Array.isArray(this.user.roles) && this.user.roles.includes(ERole.ROLE_ADMIN);
+  readonly managedSections = signal<ManagedSection[]>([]);
+  readonly canAdminister = computed(() => this.isAdmin || this.managedSections().length > 0);
+  readonly administrationOpen = signal(false);
   readonly rooms = signal<ChatRoom[]>([]);
   readonly filter = signal('');
   readonly filteredRooms = computed(() => {
@@ -56,7 +65,15 @@ export class ChatComponent implements OnInit, OnDestroy {
   private readonly requests = new Subscription();
   private readonly roomRequests = new Map<number, Subscription>();
 
-  ngOnInit(): void { this.loadRooms(); }
+  ngOnInit(): void {
+    this.loadRooms();
+    if (!this.isAdmin) {
+      this.requests.add(this.sectionManagement.sections().subscribe({
+        next: sections => this.managedSections.set(sections),
+        error: () => this.managedSections.set([])
+      }));
+    }
+  }
 
   loadRooms(): void {
     this.loadingRooms.set(true);
@@ -98,6 +115,17 @@ export class ChatComponent implements OnInit, OnDestroy {
       this.roomRequests.delete(room.id);
     }
     this.activeRoomId.set(undefined);
+  }
+
+  openAdministration(): void {
+    if (!this.canAdminister()) return;
+    this.close();
+    this.administrationOpen.set(true);
+  }
+
+  closeAdministration(): void {
+    this.administrationOpen.set(false);
+    queueMicrotask(() => document.getElementById('chat-administration-button')?.focus());
   }
 
   updateDraft(roomId: number, draft: string): void { this.update(roomId, { draft }); }

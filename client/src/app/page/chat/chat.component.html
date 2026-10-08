@@ -1,4 +1,7 @@
 <section class="chat-page py-3">
+  @if (canAdminister()) {
+    <div class="d-flex justify-content-end mb-3"><button id="chat-administration-button" type="button" class="btn btn-outline-primary" (click)="openAdministration()">Administration</button></div>
+  }
   <label for="chat-filter" class="visually-hidden">Filtrer les salons</label>
   <input id="chat-filter" type="search" class="form-control mb-3" placeholder="Filtrer les chats par nom ou rattachement"
     [ngModel]="filter()" (ngModelChange)="filter.set($event)">
@@ -27,6 +30,10 @@
     }
   }
 </section>
+
+@if (administrationOpen() && canAdminister()) {
+  <app-chat-administration [managedSections]="managedSections()" (closed)="closeAdministration()" (chatsChanged)="loadRooms()"></app-chat-administration>
+}
 
 @if (activeRoom(); as room) {
   @let roomState = state(room.id);

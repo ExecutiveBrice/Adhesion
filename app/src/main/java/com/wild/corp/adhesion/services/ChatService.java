@@ -74,7 +74,7 @@ public class ChatService {
         message.setChat(chat);
         message.setSenderUserId(user.getId());
         message.setSenderName(name.isBlank() ? "Adhérent" : name.substring(0, Math.min(name.length(), 255)));
-        message.setSenderRole(displayRole(user));
+        message.setSenderRole(displayRole(user, chat));
         message.setContent(content.strip());
         message.setCreatedAt(Instant.now());
         return response(messages.save(message));
@@ -131,14 +131,18 @@ public class ChatService {
         return user.getRoles().stream().anyMatch(role -> role.name().equals(permission.getRole()));
     }
 
-    private String displayRole(User user) {
+    private String displayRole(User user, Chat chat) {
         // The visual precedence is intentional: it follows the requested order.
         if (user.getRoles().contains(ERole.ROLE_SECRETAIRE)) return "SECRETAIRE";
         if (user.getRoles().contains(ERole.ROLE_MEMBRECA)) return "MEMBRECA";
         if (user.getRoles().contains(ERole.ROLE_ENCADRANT)) return "ENCADRANT";
-        if (user.getRoles().contains(ERole.ROLE_REFERENT_ACTIVITE)) return "REFERENT_ACTIVITE";
-        if (user.getRoles().contains(ERole.ROLE_REFERENT_SECTION)) return "REFERENT_SECTION";
-        if (user.getRoles().contains(ERole.ROLE_COMMUNICATION_SECTION)) return "COMMUNICATION_SECTION";
+        if (user.getAdherent() != null && chat.getCible() == ChatTarget.ACTIVITE
+                && chat.getActivite().getReferents().stream().anyMatch(ref -> ref.getId().equals(user.getAdherent().getId())))
+            return "REFERENT_ACTIVITE";
+        Section section = chat.getCible() == ChatTarget.SECTION ? chat.getSection()
+                : chat.getCible() == ChatTarget.ACTIVITE ? chat.getActivite().getSection() : null;
+        if (section != null && section.getReferents().stream().anyMatch(ref -> ref.getId().equals(user.getId())))
+            return "REFERENT_SECTION";
         if (user.getRoles().contains(ERole.ROLE_COMMUNICATION_GLOBAL)) return "COMMUNICATION_GLOBAL";
         return null;
     }

@@ -6,6 +6,7 @@ import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { ActivitePageQuery, ActiviteService } from 'src/app/_services/activite.service';
 import { ParamService } from 'src/app/_services/param.service';
 import { TokenStorageService } from 'src/app/_services/token-storage.service';
+import { ManagedSection, SectionManagementService } from 'src/app/_services/section-management.service';
 import { Activite } from 'src/app/models';
 import { UtilisateurSelectionnable } from 'src/app/models/utilisateurSelectionnable';
 import { Router } from '@angular/router';
@@ -29,6 +30,7 @@ export class ActivitesComponent implements OnInit {
   private readonly apiViewRefresh = registerApiViewRefresh();
   activiteService = inject(ActiviteService);
   paramService = inject(ParamService);
+  private sectionManagement = inject(SectionManagementService);
   private tokenStorageService = inject(TokenStorageService);
   router = inject(Router);
 
@@ -56,6 +58,8 @@ export class ActivitesComponent implements OnInit {
 
   showAdmin = false;
   showSecretaire = false;
+  scopedToManagedSections = false;
+  managedSections: ManagedSection[] = [];
 
   private readonly searchChanges = new Subject<string>();
   private readonly destroyRef = inject(DestroyRef);
@@ -65,6 +69,7 @@ export class ActivitesComponent implements OnInit {
     if (this.tokenStorageService.getUser().roles) {
       this.showAdmin = this.tokenStorageService.getUser().roles.includes('ROLE_ADMIN');
       this.showSecretaire = this.tokenStorageService.getUser().roles.includes('ROLE_SECRETAIRE');
+      this.scopedToManagedSections = !this.showAdmin && !this.showSecretaire;
     } else {
       this.router.navigate(['login']);
       return;
@@ -77,16 +82,26 @@ export class ActivitesComponent implements OnInit {
     ).subscribe(() => this.getActivites(true));
 
     this.getActivites();
+    if (this.scopedToManagedSections) {
+      this.sectionManagement.sections().subscribe({
+        next: sections => this.managedSections = sections,
+        error: () => this.errorMessage = 'Les sections confiées n’ont pas pu être chargées.'
+      });
+    }
   }
 
   openActivite(activite: Activite): void {
+    if (this.scopedToManagedSections && (this.managedSections.length === 0
+      || (activite.id != null && !this.managedSections.some(section => section.id === activite.section?.id)))) return;
     const modalRef = this.modalService.open(ModalActivite, {
       size: 'xl',
       centered: true,
       backdrop: 'static',
       scrollable: true
     });
-    modalRef.componentInstance.activite = activite;
+    modalRef.componentInstance.activite = activite.id == null ? new Activite() : activite;
+    modalRef.componentInstance.scopedToManagedSections = this.scopedToManagedSections;
+    modalRef.componentInstance.managedSections = this.managedSections;
     modalRef.result.then(
       () => this.getActivites(),
       () => undefined
@@ -110,7 +125,7 @@ export class ActivitesComponent implements OnInit {
     if (this.age !== null) query.age = this.age;
     if (this.genre) query.genre = this.genre;
 
-    this.activiteService.getPage(query).subscribe({
+    this.activiteService.getPage(query, this.scopedToManagedSections).subscribe({
       next: data => {
         this.activites = data.content;
         this.totalElements = data.totalElements;

@@ -12,6 +12,7 @@ import { AuthService } from './_services/auth.service';
 import { LoginPageService } from './_services/login-page.service';
 import { ChatService } from './_services/chat.service';
 import { SectionManagementService } from './_services/section-management.service';
+import { UserService } from './_services/user.service';
 import { ShopCartLinkComponent } from './shop/components/shop-cart-link.component';
 import { filter } from 'rxjs';
 import { NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, NgbDropdownButtonItem } from '@ng-bootstrap/ng-bootstrap/dropdown';
@@ -51,6 +52,7 @@ export class AppComponent {
   readonly loginPage = inject(LoginPageService);
   readonly chat = inject(ChatService);
   private readonly sectionManagement = inject(SectionManagementService);
+  private readonly userService = inject(UserService);
   private readonly router = inject(Router);
   private readonly currentUrl = signal(this.router.url);
   readonly isLoginPage = computed(() => ['/', '/login'].includes(this.currentUrl().split(/[?#]/)[0]));
@@ -135,6 +137,7 @@ export class AppComponent {
   showChat = false;
   showManagedSections = false;
   private loadedManagedSectionsUserId?: number;
+  private loadedReferentUserId?: number;
   username?: string;
   maintenance: Boolean = false
 
@@ -217,7 +220,22 @@ export class AppComponent {
     this.showMembreCA = this.roles.includes('ROLE_MEMBRECA');
     this.showSecretaire = this.roles.includes('ROLE_SECRETAIRE');
     this.showProf = this.roles.includes('ROLE_ENCADRANT');
-    this.showReferent = this.roles.includes('ROLE_REFERENT_ACTIVITE');
+    if (this.isLoggedIn && user.id && this.loadedReferentUserId !== user.id) {
+      this.showReferent = false;
+      this.loadedReferentUserId = user.id;
+      this.userService.isReferentActivite().subscribe({
+        next: referent => {
+          if (this.isLoggedIn && this.tokenStorageService.getUser().id === user.id) {
+            this.showReferent = referent;
+            this.showSeances = this.showProf || referent;
+          }
+        },
+        error: () => {
+          this.showReferent = false;
+          this.showSeances = this.showProf;
+        }
+      });
+    }
     this.showSeances = this.showProf || this.showReferent;
     this.showCommunication = this.roles.includes('ROLE_COMMUNICATION_GLOBAL');
     this.showShopManager = this.roles.includes('ROLE_RESPONSABLE_BOUTIQUE');
@@ -225,6 +243,9 @@ export class AppComponent {
     if (!this.isLoggedIn) {
       this.showManagedSections = false;
       this.loadedManagedSectionsUserId = undefined;
+      this.loadedReferentUserId = undefined;
+      this.showReferent = false;
+      this.showSeances = false;
       this.loadedUserId = undefined;
       this.tribeMembers.set([]);
       this.activeMember.set(undefined);

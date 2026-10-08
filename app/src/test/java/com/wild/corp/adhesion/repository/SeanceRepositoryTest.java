@@ -1,7 +1,9 @@
 package com.wild.corp.adhesion.repository;
 
 import com.wild.corp.adhesion.models.ESeance;
+import com.wild.corp.adhesion.models.Activite;
 import com.wild.corp.adhesion.models.Seance;
+import com.wild.corp.adhesion.models.Section;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +34,31 @@ class SeanceRepositoryTest {
 
     @Autowired private EntityManager entityManager;
     @Autowired private SeanceRepository seanceRepository;
+    @Autowired private ActiviteRepository activiteRepository;
+
+    @Test
+    void explicitlySavedSessionsRemainAvailableAfterReload() {
+        Section section = Section.builder().nom("Basket").type("COMPETITION").build();
+        entityManager.persist(section);
+        Activite activity = new Activite();
+        activity.setNom("Senior F");
+        activity.setSection(section);
+        entityManager.persist(activity);
+        entityManager.flush();
+        entityManager.clear();
+
+        Activite managed = activiteRepository.findById(activity.getId()).orElseThrow();
+        Seance session = new Seance();
+        session.setActivite(managed);
+        session.setDebut(LocalDateTime.of(2026, 10, 12, 20, 45));
+        managed.getSeances().add(session);
+        seanceRepository.saveAllAndFlush(List.of(session));
+        entityManager.flush();
+        entityManager.clear();
+
+        assertThat(seanceRepository.findByActivite_IdOrderByDebutAsc(activity.getId()))
+                .extracting(Seance::getDebut).containsExactly(LocalDateTime.of(2026, 10, 12, 20, 45));
+    }
 
     @Test
     void catchesUpPastSessionsWithoutChangingCanceledOrCurrentSessions() {

@@ -70,4 +70,5 @@ export class SectionManagementService {
   deleteChat(sectionId: number, chatId: number): Observable<void> {
     return this.http.delete<void>(`${this.url}/${sectionId}/chats/${chatId}`);
   }
+
 }

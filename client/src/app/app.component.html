@@ -49,15 +49,7 @@
                   </a>
                 </li>
               }
-              @if (showManagedSections) {
-                <li class="nav-item">
-                  <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="mes-sections" aria-label="Mes sections" title="Mes sections">
-                    <fa-icon [icon]="faPeopleGroup" aria-hidden="true"></fa-icon>
-                    <span class="nav-label">Mes sections</span>
-                  </a>
-                </li>
-              }
-              @if (showAdmin || showSecretaire) {
+              @if (showAdmin || showSecretaire || showManagedSections) {
                 <li class="nav-item">
                   <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="activites" aria-label="Activités" title="Activités">
                     <fa-icon [icon]="faPersonRunning" aria-hidden="true"></fa-icon>
@@ -65,7 +57,7 @@
                   </a>
                 </li>
               }
-              @if (showAdmin || showSecretaire) {
+              @if (showAdmin || showSecretaire || showManagedSections) {
                 <li class="nav-item">
                   <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="adherents" aria-label="Adhérents" title="Adhérents">
                     <fa-icon [icon]="faUsers" aria-hidden="true"></fa-icon>
@@ -73,7 +65,7 @@
                   </a>
                 </li>
               }
-              @if (showAdmin || showSecretaire) {
+              @if (showAdmin || showSecretaire || showManagedSections) {
                 <li class="nav-item">
                   <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="adhesions" aria-label="Adhésions" title="Adhésions">
                     <fa-icon [icon]="faIdCard" aria-hidden="true"></fa-icon>
@@ -89,7 +81,7 @@
                   </a>
                 </li>
               }
-              @if (isLoggedIn && showChat) {
+              @if (isLoggedIn && (showChat || showAdmin || showManagedSections)) {
                 <li class="nav-item">
                   <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="chat" [attr.aria-label]="chat.totalUnread() > 0 ? 'Chat, ' + chat.totalUnread() + ' messages non lus' : 'Chat'" title="Chat">
                     <fa-icon [icon]="faComments" aria-hidden="true"></fa-icon>

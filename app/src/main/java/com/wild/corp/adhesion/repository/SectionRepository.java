@@ -16,6 +16,8 @@ public interface SectionRepository extends JpaRepository<Section, Long> {
     @Query("select distinct s from Section s join s.referents r where r.username = :username order by s.nom")
     List<Section> findManagedByUsername(@Param("username") String username);
 
+    boolean existsByReferents_Id(Long userId);
+
     boolean existsByNomIgnoreCase(String nom);
 
     boolean existsByNomIgnoreCaseAndIdNot(String nom, Long id);

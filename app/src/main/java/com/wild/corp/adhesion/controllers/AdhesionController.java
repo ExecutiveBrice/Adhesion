@@ -4,15 +4,18 @@ import com.wild.corp.adhesion.models.Accord;
 import com.wild.corp.adhesion.models.Adhesion;
 import com.wild.corp.adhesion.models.Paiement;
 import com.wild.corp.adhesion.services.AdhesionServices;
+import com.wild.corp.adhesion.repository.SectionRepository;
 import jakarta.websocket.server.PathParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 
 import java.io.IOException;
@@ -26,6 +29,8 @@ public class AdhesionController {
 
 @Autowired
 AdhesionServices adhesionServices;
+@Autowired
+SectionRepository sectionRepository;
 
 
 
@@ -127,6 +132,23 @@ AdhesionServices adhesionServices;
 		log.info("getPage by " + principal.getName() + " for section " + sections);
 		return ResponseEntity.ok(adhesionServices.getAllLite(sections, search, status, paymentValidated,
 				documentsValidated, flagged, pageable));
+	}
+
+	@GetMapping("/managed/page")
+	@PreAuthorize("isAuthenticated()")
+	public ResponseEntity<?> getManagedPage(Authentication principal,
+			@RequestParam(defaultValue = "Toutes") String sections,
+			@RequestParam(defaultValue = "") String search,
+			@RequestParam(defaultValue = "") String status,
+			@RequestParam(required = false) Boolean paymentValidated,
+			@RequestParam(required = false) Boolean documentsValidated,
+			@RequestParam(required = false) Boolean flagged,
+			@PageableDefault(size = 20, sort = {"adherent.nom", "adherent.prenom"}) Pageable pageable) {
+		var sectionIds = sectionRepository.findManagedByUsername(principal.getName()).stream()
+				.map(section -> section.getId()).collect(java.util.stream.Collectors.toSet());
+		if (sectionIds.isEmpty()) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+		return ResponseEntity.ok(adhesionServices.getAllLite(sections, search, status, paymentValidated,
+				documentsValidated, flagged, pageable, sectionIds));
 	}
 
 	@GetMapping("/statuses")
