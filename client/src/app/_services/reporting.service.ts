@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { ReportingActivite, ReportingAdhesion } from '../models';
+import { ReportingActivite, ReportingAdhesion, ReportingAdhesionExport } from '../models';
 
 const API_URL = environment.server+'/reporting/';
 
@@ -25,7 +25,10 @@ export class ReportingService {
     return this.http.get<ReportingAdhesion[]>(API_URL + 'getAllAdhesions', { responseType: 'json' });
   }
 
+  getAdhesionsExport(): Observable<ReportingAdhesionExport[]> {
+    return this.http.get<ReportingAdhesionExport[]>(API_URL + 'adhesionsExport', { responseType: 'json' });
+  }
+
   
 }
-
 

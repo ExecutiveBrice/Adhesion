@@ -7,7 +7,14 @@ import { ReportingService } from 'src/app/_services/reporting.service';
 import { AdherentService } from 'src/app/_services/adherent.service';
 import { ExcelService } from 'src/app/_services/excel.service';
 import { ToastService } from 'src/app/_services/toast.service';
-import { ReportingActivite } from 'src/app/models';
+import { ReportingActivite, ReportingAdhesionExport } from 'src/app/models';
+
+const ADHESION_EXPORT_COLUMNS: (keyof ReportingAdhesionExport)[] = [
+  'nomActivite', 'nomAdherent', 'prenomAdherent', 'emailAdherent', 'statutActuel',
+  'dateReglement1', 'dateReglement2', 'dateReglement3',
+  'paiement1', 'paiement2', 'paiement3',
+  'typeReglement1', 'typeReglement2', 'typeReglement3', 'remarqueSecretariat'
+];
 
 interface ReportingGroup {
   nom: string;
@@ -107,6 +114,23 @@ export class ReportingComponent implements OnInit {
       error: (error: HttpErrorResponse) => {
         this.loader = false;
         this.toastr.error("Une erreur est survenue, recharger la page et recommencez. si le problème persiste contactez l'administrateur<br />" + error.message, 'Erreur');
+      }
+    });
+  }
+
+  exportAdhesionsAsXLSX(): void {
+    this.loader = true;
+    this.reportingService.getAdhesionsExport().subscribe({
+      next: data => {
+        this.loader = false;
+        const rows = data.map(adhesion => Object.fromEntries(
+          ADHESION_EXPORT_COLUMNS.map(column => [column, adhesion[column] ?? ''])
+        ));
+        this.excelService.exportAsExcelFile(rows, 'adhesions', ADHESION_EXPORT_COLUMNS);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.loader = false;
+        this.toastr.error("Une erreur est survenue, rechargez la page et recommencez. Si le problème persiste, contactez l'administrateur<br />" + error.message, 'Erreur');
       }
     });
   }
