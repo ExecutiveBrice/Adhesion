@@ -19,6 +19,12 @@ public class ReportingController {
 	@Autowired
 	ReportingService reportingService;
 
+	@GetMapping("/adhesionsExport")
+	@PreAuthorize("hasAnyRole('SECRETAIRE', 'BUREAU', 'MEMBRECA', 'ADMIN', 'COMPTABLE')")
+	public ResponseEntity<?> getAdhesionsExport() {
+		return ResponseEntity.ok(reportingService.getAdhesionsExport());
+	}
+
 	@GetMapping("/getAllBasket")
 	@PreAuthorize("hasAnyRole('SECRETAIRE', 'BUREAU', 'MEMBRECA', 'ADMIN', 'COMPTABLE')")
 	public ResponseEntity<?> getAllBasket() {

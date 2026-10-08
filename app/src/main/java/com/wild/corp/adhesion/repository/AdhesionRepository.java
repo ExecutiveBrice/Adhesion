@@ -5,6 +5,7 @@ import com.wild.corp.adhesion.models.Adhesion;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -16,6 +17,10 @@ public interface AdhesionRepository extends JpaRepository<Adhesion, Long>, JpaSp
 
 
     List<Adhesion> findByActiviteNom(String nom);
+
+    @EntityGraph(attributePaths = {"activite", "adherent", "adherent.user", "adherent.representant", "adherent.representant.user", "paiements"})
+    @Query("select distinct adhesion from Adhesion adhesion")
+    List<Adhesion> findAllForReportingExport();
 
     Page<Adhesion> findByActiviteNom(String nom, Pageable pageable);
 

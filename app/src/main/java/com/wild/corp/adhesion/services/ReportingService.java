@@ -1,12 +1,15 @@
 package com.wild.corp.adhesion.services;
 
 import com.wild.corp.adhesion.models.*;
+import com.wild.corp.adhesion.models.resources.ReportingAdhesionExport;
+import com.wild.corp.adhesion.repository.AdhesionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -17,6 +20,18 @@ public class ReportingService {
 
     @Autowired
     AdhesionServices adhesionServices;
+
+    @Autowired
+    AdhesionRepository adhesionRepository;
+
+    public List<ReportingAdhesionExport> getAdhesionsExport() {
+        return adhesionRepository.findAllForReportingExport().stream()
+                .map(ReportingAdhesionExport::from)
+                .sorted(Comparator.comparing(ReportingAdhesionExport::nomActivite, Comparator.nullsLast(String::compareTo))
+                        .thenComparing(ReportingAdhesionExport::nomAdherent, Comparator.nullsLast(String::compareTo))
+                        .thenComparing(ReportingAdhesionExport::prenomAdherent, Comparator.nullsLast(String::compareTo)))
+                .toList();
+    }
 
 
 
