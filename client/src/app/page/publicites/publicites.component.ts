@@ -35,7 +35,7 @@ export class PublicitesComponent implements OnInit, OnDestroy {
   readonly cropper = viewChild(ImageCropperComponent);
   description = '';
   facebookUrl = '';
-  snapchatUrl = '';
+  instagramUrl = '';
   websiteUrl = '';
   selectedSectionIds: number[] = [];
   displayOrder = 0;
@@ -226,7 +226,7 @@ export class PublicitesComponent implements OnInit, OnDestroy {
     const editingId = this.editingId();
     const links = {
       facebookUrl: this.facebookUrl,
-      snapchatUrl: this.snapchatUrl,
+      instagramUrl: this.instagramUrl,
       websiteUrl: this.websiteUrl
     };
     const request = editingId === null
@@ -262,7 +262,7 @@ export class PublicitesComponent implements OnInit, OnDestroy {
     this.editingId.set(item.id);
     this.description = item.description;
     this.facebookUrl = item.facebookUrl ?? '';
-    this.snapchatUrl = item.snapchatUrl ?? '';
+    this.instagramUrl = item.instagramUrl ?? '';
     this.websiteUrl = item.websiteUrl ?? '';
     this.selectedSectionIds = [...item.sectionIds];
     this.displayOrder = item.displayOrder;
@@ -285,7 +285,7 @@ export class PublicitesComponent implements OnInit, OnDestroy {
     this.editingId.set(null);
     this.description = '';
     this.facebookUrl = '';
-    this.snapchatUrl = '';
+    this.instagramUrl = '';
     this.websiteUrl = '';
     this.selectedSectionIds = [];
     this.displayOrder = 0;

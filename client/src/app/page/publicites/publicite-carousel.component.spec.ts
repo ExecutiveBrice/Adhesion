@@ -30,7 +30,7 @@ describe('Carrousel des publicités', () => {
     fixture.componentInstance.paused.set(false);
     fixture.detectChanges();
     http.expectOne(url).flush([
-      { id: 1, description: 'Premier visuel', facebookUrl: 'https://facebook.com/alod', snapchatUrl: 'https://snapchat.com/add/alod', websiteUrl: 'https://alod.fr' },
+      { id: 1, description: 'Premier visuel', facebookUrl: 'https://facebook.com/alod', instagramUrl: 'https://instagram.com/alod', websiteUrl: 'https://alod.fr' },
       { id: 2, description: 'Deuxième visuel' }
     ]);
     fixture.detectChanges();
@@ -43,12 +43,19 @@ describe('Carrousel des publicités', () => {
     const links = fixture.nativeElement.querySelectorAll('.publicite-links a');
     expect(links.length).toBe(3);
     expect([...links].map((link: HTMLAnchorElement) => link.href)).toEqual([
-      'https://facebook.com/alod', 'https://snapchat.com/add/alod', 'https://alod.fr/'
+      'https://facebook.com/alod', 'https://instagram.com/alod', 'https://alod.fr/'
     ]);
+    expect(links[1].getAttribute('aria-label')).toContain('Instagram');
     expect([...links].every((link: HTMLAnchorElement) => link.target === '_blank' && link.rel === 'noopener noreferrer')).toBeTrue();
     expect(fixture.nativeElement.querySelector('.carousel-control-next')).not.toBeNull();
-    fixture.nativeElement.querySelector('button.btn').click();
+    const pause = fixture.nativeElement.querySelector('.publicite-actions .publicite-pause');
+    expect(pause).not.toBeNull();
+    expect(pause.getAttribute('aria-label')).toBe('Mettre en pause');
+    pause.click();
+    fixture.detectChanges();
     expect(fixture.componentInstance.paused()).toBeTrue();
+    expect(pause.getAttribute('aria-label')).toBe('Reprendre le défilement');
+    expect(pause.getAttribute('aria-pressed')).toBe('true');
     fixture.destroy();
     expect(revoke).toHaveBeenCalledTimes(2);
   });

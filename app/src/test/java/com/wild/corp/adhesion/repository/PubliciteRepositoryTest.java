@@ -25,6 +25,15 @@ class PubliciteRepositoryTest {
             migration.afterPropertiesSet();
             migration.setChangeLog("classpath:db/changelog/v2/changeset-v5.xml");
             migration.afterPropertiesSet();
+            jdbc.update("""
+                    INSERT INTO publicites (id, description, content_type, image, snapchat_url, display_order, active)
+                    VALUES (99, 'Lien existant', 'image/png', ?, 'https://instagram.com/alod', 0, TRUE)
+                    """, new byte[]{1});
+            migration.setChangeLog("classpath:db/changelog/v2/changeset-v11.xml");
+            migration.afterPropertiesSet();
+            assertThat(jdbc.queryForObject("SELECT instagram_url FROM publicites WHERE id = 99", String.class))
+                    .isEqualTo("https://instagram.com/alod");
+            jdbc.update("DELETE FROM publicites WHERE id = 99");
             jdbc.execute("CREATE TABLE users (id bigint PRIMARY KEY, username varchar(255))");
             jdbc.execute("CREATE TABLE adherents (id bigint PRIMARY KEY, user_id bigint)");
             jdbc.execute("CREATE TABLE activites (id bigint PRIMARY KEY, section_id bigint)");
@@ -38,7 +47,7 @@ class PubliciteRepositoryTest {
             assertThat(repository.findAll()).isEmpty();
             var first = repository.create("Première", "https://facebook.com/alod", null,
                     "https://alod.fr", List.of(), 20, true, "image/png", new byte[]{1, 2, 3});
-            var second = repository.create("Deuxième", null, "https://snapchat.com/add/alod",
+            var second = repository.create("Deuxième", null, "https://instagram.com/alod",
                     null, List.of(1L), 10, true, "image/jpeg", new byte[]{4, 5});
             var third = repository.create("Troisième", null, null,
                     null, List.of(2L), 5, false, "image/jpeg", new byte[]{6});

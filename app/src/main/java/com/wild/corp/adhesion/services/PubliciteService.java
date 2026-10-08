@@ -38,25 +38,25 @@ public class PubliciteService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
-    public Publicite create(String description, String facebookUrl, String snapchatUrl, String websiteUrl,
+    public Publicite create(String description, String facebookUrl, String instagramUrl, String websiteUrl,
                             List<Long> sectionIds, Integer displayOrder, boolean active, MultipartFile file) {
         String validDescription = validDescription(description);
         List<Long> audience = validSections(sectionIds);
         int order = validOrder(displayOrder);
         ValidatedImage image = validImage(file);
         return repository.create(validDescription, validUrl(facebookUrl, "Facebook"),
-                validUrl(snapchatUrl, "Snapchat"), validUrl(websiteUrl, "site internet"),
+                validUrl(instagramUrl, "Instagram"), validUrl(websiteUrl, "site internet"),
                 audience, order, active, image.contentType(), image.bytes());
     }
 
-    public Publicite update(long id, String description, String facebookUrl, String snapchatUrl, String websiteUrl,
+    public Publicite update(long id, String description, String facebookUrl, String instagramUrl, String websiteUrl,
                             List<Long> sectionIds, Integer displayOrder, boolean active, MultipartFile file) {
         String validDescription = validDescription(description);
         List<Long> audience = validSections(sectionIds);
         int order = validOrder(displayOrder);
         ValidatedImage image = file == null ? null : validImage(file);
         return repository.update(id, validDescription, validUrl(facebookUrl, "Facebook"),
-                        validUrl(snapchatUrl, "Snapchat"), validUrl(websiteUrl, "site internet"), audience,
+                        validUrl(instagramUrl, "Instagram"), validUrl(websiteUrl, "site internet"), audience,
                         order, active, image == null ? null : image.contentType(), image == null ? null : image.bytes())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }

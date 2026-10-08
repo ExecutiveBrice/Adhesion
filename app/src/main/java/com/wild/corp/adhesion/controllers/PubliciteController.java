@@ -41,13 +41,13 @@ public class PubliciteController {
     @PreAuthorize("hasRole('COMMUNICATION_GLOBAL')")
     public Publicite create(@RequestParam String description,
                             @RequestParam(required = false) String facebookUrl,
-                            @RequestParam(required = false) String snapchatUrl,
+                            @RequestParam(required = false) String instagramUrl,
                             @RequestParam(required = false) String websiteUrl,
                             @RequestParam(required = false) List<Long> sectionIds,
                             @RequestParam(defaultValue = "0") Integer displayOrder,
                             @RequestParam(defaultValue = "true") boolean active,
                             @RequestParam MultipartFile file) {
-        return service.create(description, facebookUrl, snapchatUrl, websiteUrl, sectionIds, displayOrder, active, file);
+        return service.create(description, facebookUrl, instagramUrl, websiteUrl, sectionIds, displayOrder, active, file);
     }
 
     public record Settings(Integer displayOrder, Boolean active) {}
@@ -57,13 +57,13 @@ public class PubliciteController {
     public Publicite update(@PathVariable long id,
                             @RequestParam String description,
                             @RequestParam(required = false) String facebookUrl,
-                            @RequestParam(required = false) String snapchatUrl,
+                            @RequestParam(required = false) String instagramUrl,
                             @RequestParam(required = false) String websiteUrl,
                             @RequestParam(required = false) List<Long> sectionIds,
                             @RequestParam Integer displayOrder,
                             @RequestParam boolean active,
                             @RequestParam(required = false) MultipartFile file) {
-        return service.update(id, description, facebookUrl, snapchatUrl, websiteUrl, sectionIds, displayOrder,
+        return service.update(id, description, facebookUrl, instagramUrl, websiteUrl, sectionIds, displayOrder,
                 active, file);
     }
 

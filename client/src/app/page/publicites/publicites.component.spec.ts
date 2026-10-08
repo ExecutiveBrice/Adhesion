@@ -127,7 +127,7 @@ describe('Gestion des publicités', () => {
     const file = await prepareCrop();
     component.description = '  Nouvelle publicité  ';
     component.facebookUrl = ' https://facebook.com/alod ';
-    component.snapchatUrl = 'https://snapchat.com/add/alod';
+    component.instagramUrl = 'https://instagram.com/alod';
     component.websiteUrl = 'https://alod.fr';
     component.selectedSectionIds = [2, 4];
     component.displayOrder = 6;
@@ -140,7 +140,7 @@ describe('Gestion des publicités', () => {
     expect(request.request.body.get('description')).toBe('Nouvelle publicité');
     expect(request.request.body.get('file')).toBe(file);
     expect(request.request.body.get('facebookUrl')).toBe('https://facebook.com/alod');
-    expect(request.request.body.get('snapchatUrl')).toBe('https://snapchat.com/add/alod');
+    expect(request.request.body.get('instagramUrl')).toBe('https://instagram.com/alod');
     expect(request.request.body.get('websiteUrl')).toBe('https://alod.fr');
     expect(request.request.body.getAll('sectionIds')).toEqual(['2', '4']);
     expect(request.request.body.get('displayOrder')).toBe('6');
@@ -151,7 +151,7 @@ describe('Gestion des publicités', () => {
     expect(component.file).toBeUndefined();
     expect(component.sourceFile()).toBeUndefined();
     expect(component.facebookUrl).toBe('');
-    expect(component.snapchatUrl).toBe('');
+    expect(component.instagramUrl).toBe('');
     expect(component.websiteUrl).toBe('');
     expect(component.selectedSectionIds).toEqual([]);
     expect(component.displayOrder).toBe(0);

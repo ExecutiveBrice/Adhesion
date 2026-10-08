@@ -43,14 +43,14 @@ class PubliciteServiceTest {
     void acceptsNineteenByNineLinksAndSections() throws Exception {
         var file = image(190, 90, "png");
         var result = service.create("  Fête de l’association  ", " https://facebook.com/alod ",
-                "https://snapchat.com/add/alod", "https://alod.fr", List.of(3L, 9L, 3L), 12, true, file);
+                "https://instagram.com/alod", "https://alod.fr", List.of(3L, 9L, 3L), 12, true, file);
         assertThat(result.description()).isEqualTo("Fête de l’association");
         assertThat(result.facebookUrl()).isEqualTo("https://facebook.com/alod");
         assertThat(result.sectionIds()).containsExactly(3L, 9L);
         assertThat(result.displayOrder()).isEqualTo(12);
         assertThat(result.active()).isTrue();
         verify(repository).create(eq("Fête de l’association"), eq("https://facebook.com/alod"),
-                eq("https://snapchat.com/add/alod"), eq("https://alod.fr"), eq(List.of(3L, 9L)),
+                eq("https://instagram.com/alod"), eq("https://alod.fr"), eq(List.of(3L, 9L)),
                 eq(12), eq(true), eq("image/png"), eq(file.getBytes()));
         service.create("JPEG", null, "", null, null, 0, false, image(380, 180, "jpeg"));
         verify(repository).create(eq("JPEG"), isNull(), isNull(), isNull(), eq(List.of()), eq(0), eq(false),

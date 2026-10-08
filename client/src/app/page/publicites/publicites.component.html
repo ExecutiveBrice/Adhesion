@@ -20,9 +20,9 @@
             maxlength="2048" placeholder="https://www.facebook.com/…">
         </div>
         <div class="col-12 col-md-4">
-          <label for="publicite-snapchat" class="form-label">Snapchat</label>
-          <input id="publicite-snapchat" name="snapchatUrl" type="url" class="form-control" [(ngModel)]="snapchatUrl"
-            maxlength="2048" placeholder="https://www.snapchat.com/…">
+          <label for="publicite-instagram" class="form-label">Instagram</label>
+          <input id="publicite-instagram" name="instagramUrl" type="url" class="form-control" [(ngModel)]="instagramUrl"
+            maxlength="2048" placeholder="https://www.instagram.com/…">
         </div>
         <div class="col-12 col-md-4">
           <label for="publicite-website" class="form-label">Site internet</label>
@@ -129,11 +129,11 @@
               <p class="publicite-description">{{ item.description }}</p>
               @if (!item.active) { <span class="badge text-bg-secondary">Désactivée</span> }
             </div>
-            @if (item.facebookUrl || item.snapchatUrl || item.websiteUrl) {
+            @if (item.facebookUrl || item.instagramUrl || item.websiteUrl) {
               <p class="small text-muted">
                 Liens :
                 @if (item.facebookUrl) { Facebook }
-                @if (item.snapchatUrl) { Snapchat }
+                @if (item.instagramUrl) { Instagram }
                 @if (item.websiteUrl) { Site internet }
               </p>
             }

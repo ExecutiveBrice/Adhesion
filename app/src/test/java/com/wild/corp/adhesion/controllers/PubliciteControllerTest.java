@@ -65,16 +65,17 @@ class PubliciteControllerTest {
     void globalCommunicationCanPublishAndDelete() throws Exception {
         var communication = user("communication").roles("COMMUNICATION_GLOBAL");
         when(service.create(eq("Affiche"), eq("https://facebook.com/alod"),
-                eq("https://snapchat.com/add/alod"), eq("https://alod.fr"), eq(List.of(2L, 4L)), eq(5), eq(false), any()))
+                eq("https://instagram.com/alod"), eq("https://alod.fr"), eq(List.of(2L, 4L)), eq(5), eq(false), any()))
                 .thenReturn(new PubliciteRepository.Publicite(7L, "Affiche", "https://facebook.com/alod",
-                        "https://snapchat.com/add/alod", "https://alod.fr", List.of(2L, 4L), 5, false));
+                        "https://instagram.com/alod", "https://alod.fr", List.of(2L, 4L), 5, false));
         mvc.perform(multipart("/publicites").file(file).param("description", "Affiche")
                         .param("facebookUrl", "https://facebook.com/alod")
-                        .param("snapchatUrl", "https://snapchat.com/add/alod")
+                        .param("instagramUrl", "https://instagram.com/alod")
                         .param("websiteUrl", "https://alod.fr").param("sectionIds", "2", "4")
                         .param("displayOrder", "5").param("active", "false").with(communication))
                 .andExpect(status().isCreated()).andExpect(jsonPath("$.id").value(7))
                 .andExpect(jsonPath("$.facebookUrl").value("https://facebook.com/alod"))
+                .andExpect(jsonPath("$.instagramUrl").value("https://instagram.com/alod"))
                 .andExpect(jsonPath("$.sectionIds[1]").value(4))
                 .andExpect(jsonPath("$.displayOrder").value(5))
                 .andExpect(jsonPath("$.active").value(false));

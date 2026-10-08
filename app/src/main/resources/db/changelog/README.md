@@ -11,7 +11,7 @@ crée ni ne modifie les tables.
   complet de `baseline/master-changeset.xml`.
 - `v2/changeset-v2.xml` est le point d'entrée unique de toutes les évolutions
   postérieures à V1. Il inclut d'abord les modules `activity.xml`, `shop.xml`,
-  `chat.xml` et `communication.xml`, puis les changesets V3 à V10 dans leur
+  `chat.xml` et `communication.xml`, puis les changesets V3 à V11 dans leur
   ordre d'origine. Tous ces fichiers sont rangés dans `v2/`.
 - Chaque fichier de module V2 contient un seul changeset et uniquement des
   opérations Liquibase XML, sans balise `sql` ni fichier SQL externe.
