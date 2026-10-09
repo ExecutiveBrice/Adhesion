@@ -9,6 +9,8 @@ export class ComptaActivite {
   passport!: number;
   espece!: number;
   autre!: number;
+  intermarche!: number;
+  cb!: number;
 
   constructor() {
 

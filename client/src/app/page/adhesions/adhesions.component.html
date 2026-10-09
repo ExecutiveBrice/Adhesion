@@ -257,90 +257,9 @@
                           {{selectedAdhesion.adherent?selectedAdhesion.adherent.prenom:''}}
                           {{selectedAdhesion.adherent?selectedAdhesion.adherent.nom:''}}
                         </div>
-                        @if (selectedAdhesion.paiements.length > 0) {
-                          <div>
-                            <table class="table table-striped">
-                              <thead>
-                                <tr>
-                                  <th class="center" scope="col truncate">Montant</th>
-                                  <th class="center" scope="col truncate">Date</th>
-                                  <th class="center" scope="col truncate">Type</th>
-                                  <th class="center" scope="col truncate"></th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                @for (paiement of selectedAdhesion.paiements | orderBy:'id':false ; track paiement) {
-                                  <tr>
-                                    <td class="truncate">
-                                      <div class="form-group">
-                                        <input type="number" class="form-control" name="{{'montant'+paiement.id}}"
-                                          [(ngModel)]="paiement.montant" (blur)="updatePaiement(selectedAdhesion,paiement)"
-                                          #montant="ngModel" />
-                                      </div>
-                                    </td>
-                                    <td class="truncate">
-                                      <div class="form-group">
-                                        <input type="date" class="form-control" name="{{'dateReglement'+paiement.id}}"
-                                          [ngModel]="paiement.dateReglement" (ngModelChange)="paiement.dateReglement = $event"
-                                          #dateReglement="ngModel" required (blur)="updatePaiement(selectedAdhesion,paiement)" />
-                                        @if (dateReglement.errors && f.submitted) {
-                                          <div class="alert-danger">
-                                            @if (dateReglement.errors.required) {
-                                              <div>Date de reglement obligatoire</div>
-                                            }
-                                          </div>
-                                        }
-                                      </div>
-                                    </td>
-                                    <td class="truncate">
-                                      <div ngbDropdown class="d-inline-block">
-                                        <div type="button"
-                                          [ngClass]="paiement.typeReglement.length>0 ? 'btn-outline-secondary' : 'btn-primary'" class="btn"
-                                          id="dropdownBasic1" ngbDropdownToggle>
-                                          {{paiement.typeReglement.length>0?paiement.typeReglement:"Aucun"}}
-                                        </div>
-                                        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-                                          <div ngbDropdownItem
-                                            (click)="paiement.typeReglement ='HelloAsso'; updatePaiement(selectedAdhesion,paiement)">
-                                          HelloAsso</div>
-                                          <div ngbDropdownItem
-                                            (click)="paiement.typeReglement='HelloAsso 3X'; updatePaiement(selectedAdhesion,paiement)">
-                                          HelloAsso 3X</div>
-                                          <div ngbDropdownItem
-                                            (click)="paiement.typeReglement='Chèque'; updatePaiement(selectedAdhesion,paiement)">Chèque
-                                          </div>
-                                          <div ngbDropdownItem
-                                            (click)="paiement.typeReglement = 'Chèque 3X'; updatePaiement(selectedAdhesion,paiement)">Chèque
-                                          3X</div>
-                                          <div ngbDropdownItem
-                                            (click)="paiement.typeReglement ='Pass sport'; updatePaiement(selectedAdhesion,paiement)">Pass
-                                          sport</div>
-                                          <div ngbDropdownItem
-                                            (click)="paiement.typeReglement = 'Espèces'; updatePaiement(selectedAdhesion,paiement)">Espèces
-                                          </div>
-                                          <div ngbDropdownItem
-                                          (click)="paiement.typeReglement = 'CB'; updatePaiement(selectedAdhesion,paiement)">CB</div>
-                                          <div ngbDropdownItem
-                                          (click)="paiement.typeReglement = 'Intermarché'; updatePaiement(selectedAdhesion,paiement)">Intermarché</div>
-                                          <div ngbDropdownItem
-                                            (click)="paiement.typeReglement = 'Autre'; updatePaiement(selectedAdhesion,paiement)">Autre
-                                          paiement</div>
-                                        </div>
-                                      </div>
-                                    </td>
-                                    <td class="truncate">
-                                      @if (showAdmin || showSecretaire) {
-                                        <fa-icon class="fa-2xl"
-                                        (click)="retraitPaiement(selectedAdhesion,paiement.id)" [icon]="faSquareMinus"></fa-icon>
-                                      }
-                                    </td>
-                                  </tr>
-                                }
-                              </tbody>
-                            </table>
-                          </div>
-                        }
-                        <div type="button" (click)="addNewPaiement(selectedAdhesion)" class="btn btn-primary">Ajouter un paiement</div>
+                        <app-paiement-editor [paiements]="selectedAdhesion.paiements" [canDelete]="showAdmin || showSecretaire"
+                          (save)="updatePaiement(selectedAdhesion, $event)" (remove)="retraitPaiement(selectedAdhesion, $event)"
+                          (add)="addNewPaiement(selectedAdhesion)"></app-paiement-editor>
                       </div>
                       <div class="modal-footer">
 

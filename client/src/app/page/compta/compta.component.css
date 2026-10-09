@@ -1,0 +1,57 @@
+.period-selector {
+  padding: 1rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: .375rem;
+}
+
+.period-calendar {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.period-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem 2rem;
+}
+
+.calendar-day {
+  display: inline-block;
+  width: 2rem;
+  height: 2rem;
+  line-height: 2rem;
+  text-align: center;
+  border-radius: .25rem;
+}
+
+.calendar-day:hover,
+.calendar-day.focused {
+  outline: 2px solid var(--bs-primary);
+  outline-offset: -2px;
+}
+
+.calendar-day.in-range {
+  background-color: var(--bs-primary-bg-subtle);
+  border-radius: 0;
+}
+
+.calendar-day.range-boundary {
+  color: #fff;
+  background-color: var(--bs-primary);
+  border-radius: .25rem;
+}
+
+@media (max-width: 575.98px) {
+  :host ::ng-deep .compta-calendar .ngb-dp-months {
+    flex-direction: column;
+  }
+
+  :host ::ng-deep .compta-calendar .ngb-dp-month .ngb-dp-week {
+    padding-left: .25rem;
+    padding-right: .25rem;
+  }
+
+  :host ::ng-deep .compta-calendar .ngb-dp-month + .ngb-dp-month .ngb-dp-month-name {
+    padding-left: 0;
+  }
+}

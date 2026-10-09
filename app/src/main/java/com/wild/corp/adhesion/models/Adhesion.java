@@ -33,6 +33,8 @@ public class Adhesion {
 
     private Boolean validPaiementSecretariat;
 
+    private Boolean rapprochement;
+
     private Boolean validDocumentSecretariat;
 
     private String statutActuel;

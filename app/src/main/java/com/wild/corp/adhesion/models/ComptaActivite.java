@@ -26,5 +26,7 @@ public class ComptaActivite {
 
     private Integer intermarche =0;
 
+    private Integer cb =0;
+
     private Integer autre =0;
 }
