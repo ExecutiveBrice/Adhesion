@@ -1,0 +1,221 @@
+<div class="container">
+  <div class="row">
+    <div class="col-12">
+      <section class="period-selector" aria-labelledby="compta-period-title">
+        <h2 id="compta-period-title" class="h6">Période comptable</h2>
+        <p id="compta-period-help" class="text-muted mb-2">Cliquez sur la date de début, puis sur la date de fin. Le calcul se lance automatiquement.</p>
+        <div class="period-calendar">
+          <ngb-datepicker class="compta-calendar" [displayMonths]="2" [startDate]="calendarStart"
+            [dayTemplate]="rangeDay" navigation="select" outsideDays="hidden" [firstDayOfWeek]="1"
+            [ngModel]="null" [ngModelOptions]="{standalone: true}" [disabled]="saving"
+            (dateSelect)="onDateSelection($event)" aria-label="Sélection de la période comptable"
+            aria-describedby="compta-period-help" />
+        </div>
+        <ng-template #rangeDay let-date let-focused="focused">
+          <span class="calendar-day" [class.range-boundary]="isRangeBoundary(date)"
+            [class.in-range]="isInRange(date)" [class.focused]="focused"
+            (mouseenter)="hoveredDate = calendarDate(date)" (mouseleave)="hoveredDate = null">
+            {{date.day}}
+          </span>
+        </ng-template>
+        <div class="period-dates mt-2" aria-live="polite">
+          <span><strong>Début :</strong> {{debutPlage ? (debutPlage | date:'dd/MM/yyyy') + ' à 00h00' : 'À sélectionner'}}</span>
+          <span><strong>Fin :</strong> {{finPlage ? (finPlage | date:'dd/MM/yyyy') + ' à 23h59' : 'À sélectionner'}}</span>
+        </div>
+        @if (debutPlage && !finPlage) {
+          <p class="text-muted mt-2 mb-0" role="status">Sélectionnez une date de fin égale ou postérieure au début. Une date antérieure redéfinit le début.</p>
+        }
+      </section>
+    </div>
+    <div class="col-12">
+      <ul ngbNav #comptaNav="ngbNav" [(activeId)]="activeTab" class="nav-tabs mt-3" aria-label="Comptabilité de la période">
+        <li ngbNavItem="recap">
+          <button ngbNavLink>Récapitulatif</button>
+          <ng-template ngbNavContent>
+            @if (periodeCalculee) {
+              <div class="table-responsive">
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th class="center" scope="col">Activité</th>
+                      <th class="center" scope="col">HelloAsso</th>
+                      <th class="center" scope="col">HelloAsso 3X</th>
+                      <th class="center" scope="col">Chèque</th>
+                      <th class="center" scope="col">Chèque 3X</th>
+                      <th class="center" scope="col">Espèces</th>
+                      <th class="center" scope="col">PassSport</th>
+                      <th class="center" scope="col">Intermarché</th>
+                      <th class="center" scope="col">Autre</th>
+                      <th class="center" scope="col">CB</th>
+                      <th class="center" scope="col">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (compte of dataCompta | orderBy:'nomActivite':false; track compte.nomActivite) {
+                      <tr>
+                        <td>{{compte.nomActivite}}</td>
+                        <td>{{compte.helloAsso}}</td>
+                        <td>{{compte.helloAsso3x}}</td>
+                        <td>{{compte.cheque}}</td>
+                        <td>{{compte.cheque3x}}</td>
+                        <td>{{compte.espece}}</td>
+                        <td>{{compte.passport}}</td>
+                        <td>{{compte.intermarche}}</td>
+                        <td>{{compte.autre}}</td>
+                        <td>{{compte.cb}}</td>
+                        <td>{{totalActivite(compte)}}</td>
+                      </tr>
+                    }
+                    <tr>
+                      <th scope="row">Totaux</th>
+                      <td><b>{{totalHA}}</b></td>
+                      <td><b>{{totalHA3X}}</b></td>
+                      <td><b>{{totalC}}</b></td>
+                      <td><b>{{totalC3X}}</b></td>
+                      <td><b>{{totalE}}</b></td>
+                      <td><b>{{totalPS}}</b></td>
+                      <td><b>{{totalIntermarche}}</b></td>
+                      <td><b>{{totalA}}</b></td>
+                      <td><b>{{totalCB}}</b></td>
+                      <td><b>{{totalGeneral}}</b></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            } @else if (!loading && !erreur) {
+              <p class="text-muted mt-3">Sélectionnez les dates de début et de fin dans le calendrier.</p>
+            }
+          </ng-template>
+        </li>
+        <li ngbNavItem="adhesions">
+          <button ngbNavLink>Adhésions @if (periodeCalculee) { ({{adhesionsCompta.length}}) }</button>
+          <ng-template ngbNavContent>
+            @if (periodeCalculee) {
+              <p class="text-muted mt-3">Tous les règlements de ces adhésions sont affichés. Seuls ceux marqués « Dans le total » sont comptabilisés sur la période sélectionnée.</p>
+              <div class="row g-3 align-items-end mb-3">
+                <div class="col-12 col-lg-4">
+                  <label for="compta-adherent-search" class="form-label">Rechercher un adhérent</label>
+                  <input id="compta-adherent-search" type="search" class="form-control" [(ngModel)]="rechercheAdherent"
+                    placeholder="Nom, prénom ou e-mail" [disabled]="saving" />
+                </div>
+                <div class="col-12 col-md-6 col-lg-3">
+                  <label for="compta-payment-filter" class="form-label">Moyen de paiement</label>
+                  <select id="compta-payment-filter" class="form-select" [(ngModel)]="typePaiementFiltre" [disabled]="saving">
+                    <option value="">Tous les moyens de paiement</option>
+                    @for (type of typesPaiementDisponibles; track type) {
+                      <option [value]="type">{{type}}</option>
+                    }
+                  </select>
+                </div>
+                <div class="col-12 col-md-6 col-lg-3">
+                  <label for="compta-activity-filter" class="form-label">Activité</label>
+                  <select id="compta-activity-filter" class="form-select" [(ngModel)]="activiteFiltre" [disabled]="saving">
+                    <option value="">Toutes les activités</option>
+                    @for (activite of activitesDisponibles; track activite) {
+                      <option [value]="activite">{{activite}}</option>
+                    }
+                  </select>
+                </div>
+                <div class="col-12 col-lg-2">
+                  <button type="button" class="btn btn-outline-secondary" [disabled]="saving || !filtresAdhesionsActifs"
+                    (click)="resetAdhesionFilters()">Réinitialiser</button>
+                </div>
+              </div>
+              @let adhesionsAffichees = adhesionsFiltrees;
+              <p class="text-muted" role="status">{{adhesionsAffichees.length}} adhésion(s) affichée(s) sur {{adhesionsCompta.length}}.
+                Le filtre de paiement porte sur tous les règlements de l’adhésion.</p>
+              <div class="table-responsive">
+                <table class="table table-striped" aria-label="Adhésions prises en compte dans la période">
+                  <thead>
+                    <tr>
+                      <th scope="col">Adhérent</th>
+                      <th scope="col">Activité</th>
+                      <th scope="col">Statut</th>
+                      <th scope="col">Rapprochement</th>
+                      <th scope="col">Tous les règlements</th>
+                      <th scope="col" class="text-end">Total période</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (adhesion of adhesionsAffichees; track adhesion.id) {
+                      <tr>
+                        <td>
+                          <div>{{adhesion.nomAdherent}} {{adhesion.prenomAdherent}}</div>
+                          @if (adhesion.emailAdherent) {
+                            <a [href]="'mailto:' + adhesion.emailAdherent">{{adhesion.emailAdherent}}</a>
+                          }
+                        </td>
+                        <td>{{adhesion.nomActivite}}</td>
+                        <td>{{adhesion.statutActuel}}</td>
+                        <td>
+                          <div class="btn-group" role="group"
+                            [attr.aria-label]="'Rapprochement de ' + (adhesion.nomAdherent || '') + ' ' + (adhesion.prenomAdherent || '')">
+                            <button type="button" class="btn btn-sm"
+                              [class.btn-success]="adhesion.rapprochement === true"
+                              [class.btn-secondary]="adhesion.rapprochement !== true"
+                              [attr.aria-pressed]="adhesion.rapprochement === true" [disabled]="saving || loading"
+                              (click)="updateRapprochement(adhesion, true)">Oui</button>
+                            <button type="button" class="btn btn-sm"
+                              [class.btn-danger]="adhesion.rapprochement === false"
+                              [class.btn-secondary]="adhesion.rapprochement !== false"
+                              [attr.aria-pressed]="adhesion.rapprochement === false" [disabled]="saving || loading"
+                              (click)="updateRapprochement(adhesion, false)">Non</button>
+                          </div>
+                        </td>
+                        <td>
+                          <app-paiement-editor [paiements]="adhesion.paiements" [disabled]="saving || loading"
+                            [canDelete]="true" [addAsDraft]="true" [defaultDate]="periodeCalculee.debut" [showPeriodStatus]="true"
+                            (save)="updatePaiement(adhesion, $event)" (remove)="retraitPaiement(adhesion, $event)">
+                          </app-paiement-editor>
+                        </td>
+                        <td class="text-end"><b>{{adhesion.totalPeriode}}</b></td>
+                      </tr>
+                    } @empty {
+                      <tr>
+                        <td colspan="6" class="text-muted">
+                          @if (adhesionsCompta.length > 0 && filtresAdhesionsActifs) {
+                            Aucune adhésion ne correspond aux filtres. Modifiez les critères ou réinitialisez les filtres.
+                          } @else {
+                            Aucune adhésion avec un règlement retenu dans cette période.
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <th scope="row" colspan="5">Total période des adhésions affichées</th>
+                      <td class="text-end"><b>{{totalAdhesionsFiltrees}}</b></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            } @else if (!loading && !erreur) {
+              <p class="text-muted mt-3">Sélectionnez les dates de début et de fin dans le calendrier.</p>
+            }
+          </ng-template>
+        </li>
+      </ul>
+      <p class="text-muted mt-3">Les dates de début et de fin sont incluses dans le calcul des règlements validés par le secrétariat.</p>
+      @if (erreur) {
+        <div class="alert alert-danger" role="alert">{{erreur}}</div>
+      }
+      @if (saving) {
+        <p role="status">Enregistrement en cours…</p>
+      }
+      @if (erreurPaiement) {
+        <div class="alert alert-danger" role="alert">{{erreurPaiement}}</div>
+      }
+      @if (erreurRapprochement) {
+        <div class="alert alert-danger" role="alert">{{erreurRapprochement}}</div>
+      }
+      @if (loading) {
+        <p role="status">Calcul en cours…</p>
+      }
+      @if (periodeCalculee; as periode) {
+        <p>Période calculée : du {{periode.debut | date:'dd/MM/yyyy'}} à 00h00 au {{periode.fin | date:'dd/MM/yyyy'}} à 23h59, dates incluses.</p>
+      }
+      <div [ngbNavOutlet]="comptaNav" class="mt-3"></div>
+    </div>
+  </div>
+</div>

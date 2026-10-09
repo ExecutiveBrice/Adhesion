@@ -1,0 +1,67 @@
+@if (rows.length > 0) {
+  <div class="table-responsive">
+    <table class="table table-striped table-sm mb-2" aria-label="Modification des règlements">
+      <thead>
+        <tr>
+          <th scope="col">Montant</th>
+          <th scope="col">Date</th>
+          <th scope="col">Type</th>
+          @if (showPeriodStatus) {
+            <th scope="col">Total période</th>
+          }
+          <th scope="col"><span class="visually-hidden">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (paiement of rows; track paiement) {
+          <tr>
+            <td>
+              <input type="number" class="form-control form-control-sm" step="1" aria-label="Montant du règlement"
+                [ngModel]="draft(paiement).montant" (ngModelChange)="draft(paiement).montant = $event"
+                [ngModelOptions]="{standalone: true}" [disabled]="disabled" (blur)="savePaiement(paiement)" />
+            </td>
+            <td>
+              <input type="date" class="form-control form-control-sm" aria-label="Date du règlement"
+                [ngModel]="draft(paiement).dateReglement" (ngModelChange)="draft(paiement).dateReglement = $event"
+                [ngModelOptions]="{standalone: true}" [disabled]="disabled" (blur)="savePaiement(paiement)" />
+            </td>
+            <td>
+              <div ngbDropdown container="body" class="d-inline-block">
+                <button type="button" class="btn btn-sm btn-outline-secondary" ngbDropdownToggle [disabled]="disabled"
+                  aria-label="Moyen de paiement">{{draft(paiement).typeReglement || 'Aucun'}}</button>
+                <div ngbDropdownMenu>
+                  @for (type of types; track type) {
+                    <button type="button" ngbDropdownItem (click)="selectType(paiement, type)">{{type}}</button>
+                  }
+                </div>
+              </div>
+            </td>
+            @if (showPeriodStatus) {
+              <td>
+                @if (paiement.id == null) {
+                  <span class="badge text-bg-secondary">À enregistrer</span>
+                } @else if (paiement.inclusDansPeriode) {
+                  <span class="badge text-bg-success">Dans le total</span>
+                } @else {
+                  <span class="badge text-bg-secondary">Non comptabilisé</span>
+                }
+              </td>
+            }
+            <td>
+              @if (canDelete || paiement.id == null) {
+                <button type="button" class="btn btn-sm btn-outline-danger" aria-label="Supprimer le règlement"
+                  [disabled]="disabled" (click)="removePaiement(paiement)">
+                  <fa-icon [icon]="faSquareMinus"></fa-icon>
+                </button>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+@if (erreur) {
+  <p class="text-danger" role="alert">{{erreur}}</p>
+}
+<button type="button" class="btn btn-primary btn-sm" [disabled]="disabled" (click)="addPaiement()">Ajouter un paiement</button>

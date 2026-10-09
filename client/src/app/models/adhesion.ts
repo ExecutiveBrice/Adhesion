@@ -21,6 +21,7 @@ export class Adhesion {
   majoration!: boolean;
   dejaLicencie?: boolean;
   validPaiementSecretariat!: boolean;
+  rapprochement: boolean | null = null;
   validDocumentSecretariat!: boolean;
   blocage!: boolean;
   accords!: Accord[];

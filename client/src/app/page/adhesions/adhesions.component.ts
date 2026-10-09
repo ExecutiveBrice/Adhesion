@@ -32,6 +32,7 @@ import { NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownButtonItem,
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass, DatePipe } from '@angular/common';
 import { OrderByPipe } from '../../_helpers/sort.pipe';
+import { PaiementEditorComponent } from '../../template/paiement-editor/paiement-editor.component';
 
 interface GroupeActivites {
   nom: string;
@@ -43,7 +44,7 @@ interface GroupeActivites {
     selector: 'app-adherents',
     templateUrl: './adhesions.component.html',
     styleUrls: ['./adhesions.component.css'],
-    imports: [FormsModule, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownButtonItem, NgbDropdownItem, FaIconComponent, NgClass, DatePipe, OrderByPipe]
+    imports: [FormsModule, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownButtonItem, NgbDropdownItem, FaIconComponent, NgClass, DatePipe, OrderByPipe, PaiementEditorComponent]
 })
 export class AdhesionsComponent implements OnInit {
   private readonly apiViewRefresh = registerApiViewRefresh();
