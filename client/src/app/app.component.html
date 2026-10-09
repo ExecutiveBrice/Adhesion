@@ -102,6 +102,14 @@
                   </a>
                 </li>
               }
+              @if (showAdmin || showComptable || showMembreCA || showBureau) {
+                <li class="nav-item">
+                  <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="compta" aria-label="Compta" title="Compta">
+                    <fa-icon [icon]="faCalculator" aria-hidden="true"></fa-icon>
+                    <span class="nav-label">Compta</span>
+                  </a>
+                </li>
+              }
               @if (showCommunication) {
                 <li class="nav-item">
                   <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="publicites" aria-label="Publicités" title="Publicités">

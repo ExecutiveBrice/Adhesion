@@ -20,7 +20,7 @@ import { TribuService } from './_services/tribu.service';
 import { Adherent } from './models';
 import { SessionNavigationService } from './_services/session-navigation.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faHouse, faCalendarDays, faUser, faComments, faStore, faGear, faPersonRunning, faUsers, faIdCard, faEnvelope, faChartColumn, faPeopleGroup, faCalendarCheck, faClipboardList, faRightToBracket, faBullhorn } from '@fortawesome/free-solid-svg-icons';
+import { faHouse, faCalendarDays, faUser, faComments, faStore, faGear, faPersonRunning, faUsers, faIdCard, faEnvelope, faChartColumn, faPeopleGroup, faCalendarCheck, faClipboardList, faRightToBracket, faBullhorn, faCalculator } from '@fortawesome/free-solid-svg-icons';
 
 
 @Component({
@@ -42,6 +42,7 @@ export class AppComponent {
   readonly faIdCard = faIdCard;
   readonly faEnvelope = faEnvelope;
   readonly faChartColumn = faChartColumn;
+  readonly faCalculator = faCalculator;
   readonly faPeopleGroup = faPeopleGroup;
   readonly faCalendarCheck = faCalendarCheck;
   readonly faClipboardList = faClipboardList;
@@ -128,6 +129,7 @@ export class AppComponent {
   showBureau = false;
   showMembreCA = false;
   showSecretaire = false;
+  showComptable = false;
   showProf=false;
   showReferent=false;
   showSeances=false;
@@ -219,6 +221,7 @@ export class AppComponent {
     this.showBureau = this.roles.includes('ROLE_BUREAU');
     this.showMembreCA = this.roles.includes('ROLE_MEMBRECA');
     this.showSecretaire = this.roles.includes('ROLE_SECRETAIRE');
+    this.showComptable = this.roles.includes('ROLE_COMPTABLE');
     this.showProf = this.roles.includes('ROLE_ENCADRANT');
     if (this.isLoggedIn && user.id && this.loadedReferentUserId !== user.id) {
       this.showReferent = false;
