@@ -146,7 +146,8 @@ describe('Gestion des publicités', () => {
     expect(request.request.body.get('displayOrder')).toBe('6');
     expect(request.request.body.get('active')).toBe('false');
     request.flush({ id: 8, description: 'Nouvelle publicité', facebookUrl: 'https://facebook.com/alod', sectionIds: [2, 4], displayOrder: 6, active: false });
-    expect(component.publicites().map(value => value.id)).toEqual([8, 7]);
+    // The existing ad has displayOrder 0; the new one has 6 and follows it.
+    expect(component.publicites().map(value => value.id)).toEqual([7, 8]);
     expect(component.preview()).toBe('');
     expect(component.file).toBeUndefined();
     expect(component.sourceFile()).toBeUndefined();

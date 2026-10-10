@@ -153,7 +153,33 @@ class LiquibaseMigrationTest {
         int v1Count = jdbc.queryForObject("SELECT count(*) FROM databasechangelog", Integer.class);
         migrate(source, V2);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM databasechangelog", Integer.class))
-                .isEqualTo(v1Count + 12);
+                .isEqualTo(v1Count + 16); // Four modules and follow-up changesets V3 through V14.
+    }
+
+    @Test
+    void addsReconciliationFlagAndPreservesItsValueOnRestart() throws Exception {
+        var source = database();
+        isolatePostgres(source);
+        migrate(source, V1);
+        var jdbc = new JdbcTemplate(source);
+        jdbc.update("INSERT INTO adhesions (id) VALUES (42)");
+        migrate(source, MASTER);
+        assertThat(jdbc.queryForObject("SELECT rapprochement FROM adhesions WHERE id = 42", Boolean.class)).isFalse();
+        jdbc.update("UPDATE adhesions SET rapprochement = TRUE WHERE id = 42");
+        migrate(source, MASTER);
+        assertThat(jdbc.queryForObject("SELECT rapprochement FROM adhesions WHERE id = 42", Boolean.class)).isTrue();
+    }
+
+    @Test
+    void preservesReconciliationValuesWhenTheHistoricalColumnAlreadyExists() throws Exception {
+        var source = database();
+        isolatePostgres(source);
+        migrate(source, V1);
+        var jdbc = new JdbcTemplate(source);
+        jdbc.execute("ALTER TABLE adhesions ADD COLUMN rapprochement boolean");
+        jdbc.update("INSERT INTO adhesions (id, rapprochement) VALUES (42, TRUE)");
+        migrate(source, MASTER);
+        assertThat(jdbc.queryForObject("SELECT rapprochement FROM adhesions WHERE id = 42", Boolean.class)).isTrue();
     }
 
     @Test

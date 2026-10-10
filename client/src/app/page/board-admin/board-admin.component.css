@@ -120,6 +120,20 @@
 .parameter-card label { color: #263338; font-weight: 600; }
 .roles-utilisateurs-liste { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 
+.impersonnalisation-menu {
+  max-height: 18rem;
+  min-width: min(20rem, calc(100vw - 2rem));
+  overflow-y: auto;
+  z-index: 1064;
+}
+
+.impersonnalisation-recherche {
+  background: var(--bs-dropdown-bg);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
 @media (max-width: 575.98px) {
   .admin-page { margin-top: 0.75rem; }
   .admin-page-header { min-height: auto; }

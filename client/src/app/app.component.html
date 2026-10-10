@@ -9,6 +9,11 @@
           <div class="navbar-login-actions d-flex gap-2 ms-auto">
             <button type="button" class="btn btn-primary"
               (click)="loginPage.view.set('connexion')">Connexion</button>
+            @if (!isLoggedIn && loginPage.inscriptionOpen()) {
+              <button type="button" class="btn btn-outline-light"
+                [attr.aria-pressed]="loginPage.view() === 'inscription'"
+                (click)="loginPage.view.set('inscription')">Inscription</button>
+            }
           </div>
         } @else {
           <div class="navbar-navigation" id="navbarNavigation">

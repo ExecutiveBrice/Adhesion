@@ -1,0 +1,162 @@
+{
+  "suites": {
+    "architecture": "app/src/test/java/com/wild/corp/adhesion/security/ControllerAuthorizationArchitectureTest.java",
+    "managedListings": "app/src/test/java/com/wild/corp/adhesion/controllers/ManagedListingControllerTest.java",
+    "sectionManagement": "app/src/test/java/com/wild/corp/adhesion/controllers/SectionManagementControllerTest.java",
+    "passwordReset": "app/src/test/java/com/wild/corp/adhesion/controllers/PasswordResetMockMvcTest.java",
+    "chat": "app/src/test/java/com/wild/corp/adhesion/services/ChatServiceTest.java",
+    "chatRepository": "app/src/test/java/com/wild/corp/adhesion/repository/ChatRepositoryTest.java",
+    "members": "app/src/test/java/com/wild/corp/adhesion/services/AdherentServicesTest.java",
+    "presence": "app/src/test/java/com/wild/corp/adhesion/services/PresenceServicesTest.java",
+    "activities": "app/src/test/java/com/wild/corp/adhesion/services/ActiviteServicesTest.java",
+    "sessions": "app/src/test/java/com/wild/corp/adhesion/services/SeanceServicesTest.java",
+    "accounting": "app/src/test/java/com/wild/corp/adhesion/services/ComptaServiceTest.java",
+    "orders": "app/src/test/java/com/wild/corp/adhesion/shop/order/service/OrderServiceTest.java",
+    "payment": "app/src/test/java/com/wild/corp/adhesion/shop/payment/service/PaymentServiceTest.java",
+    "reconciliation": "app/src/test/java/com/wild/corp/adhesion/shop/payment/service/PaymentReconciliationIntegrationTest.java",
+    "migration": "app/src/test/java/com/wild/corp/adhesion/shop/migration/LiquibaseMigrationTest.java",
+    "browser": "client/tests/browser/critical-journeys.spec.ts",
+    "adminImpersonationBrowser": "client/tests/browser/admin-impersonation.spec.ts",
+    "registrationBrowser": "client/tests/browser/registration.spec.ts"
+  },
+  "rules": [
+    { "id": "ACCESS-001", "spec": "docs/functional/access.md", "status": "observed", "coverage": "automated", "tests": [
+      { "suite": "architecture", "method": "everyControllerEndpointIsPubliclyDocumentedOrProtectedByMethodSecurity" }
+    ] },
+    { "id": "ACCESS-002", "spec": "docs/functional/access.md", "status": "documented", "coverage": "automated", "tests": [
+      { "suite": "managedListings", "method": "passesOnlyAssignedSectionIdsToBothLists" },
+      { "suite": "managedListings", "method": "rejectsAccountsWithoutManagedSections" },
+      { "suite": "browser", "title": "ACCESS-002: le référent consulte ses adhésions sans actions de secrétariat" }
+    ] },
+    { "id": "ACCESS-003", "spec": "docs/functional/access.md", "status": "documented", "coverage": "automated", "tests": [
+      { "suite": "sectionManagement", "method": "deniesASectionWithoutAnAssignment" },
+      { "suite": "sectionManagement", "method": "cannotMoveAChatOutsideItsSectionOrEditAnOutsideChat" }
+    ] },
+    { "id": "ACCESS-004", "spec": "docs/functional/access.md", "status": "observed", "coverage": "automated", "tests": [
+      { "suite": "passwordReset", "method": "requestHasTheSameAcceptedResponseAndNeverReturnsTheToken" },
+      { "suite": "passwordReset", "method": "rejectsAnExpiredToken" },
+      { "suite": "passwordReset", "method": "tokenCannotBeReused" },
+      { "suite": "passwordReset", "method": "onlyOneConcurrentConfirmationCanConsumeTheToken" }
+    ] },
+    { "id": "ACCESS-005", "spec": "docs/functional/access.md", "status": "documented", "coverage": "automated", "tests": [
+      { "suite": "adminImpersonationBrowser", "title": "ACCESS-005: le sélecteur filtre les adhérents par nom ou identifiant" },
+      { "suite": "adminImpersonationBrowser", "title": "ACCESS-005: la sélection recharge la page avec la nouvelle session" },
+      { "suite": "adminImpersonationBrowser", "title": "ACCESS-005: un refus conserve la session et affiche une erreur" }
+    ] },
+    { "id": "ACCESS-006", "spec": "docs/functional/access.md", "status": "documented", "coverage": "automated", "tests": [
+      { "suite": "registrationBrowser", "title": "ACCESS-006: le menu ouvre l’inscription activée puis permet de revenir à la connexion" },
+      { "suite": "registrationBrowser", "title": "ACCESS-006: une inscription réussie connecte le nouveau compte avant d’ouvrir l’accueil" }
+    ] },
+    { "id": "CHAT-001", "spec": "docs/functional/chat.md", "status": "documented", "coverage": "automated", "tests": [
+      { "suite": "chat", "method": "linksGrantReadAccessToExactActivityAndItsSectionWithoutAnyRoleGrant" },
+      { "suite": "chat", "method": "sectionReferentsCanReadEvenAnEmptySection" },
+      { "suite": "chatRepository", "method": "chatMembershipIncludesEveryStatusExceptWaitingListAndCancelled" }
+    ] },
+    { "id": "CHAT-002", "spec": "docs/functional/chat.md", "status": "documented", "coverage": "automated", "tests": [
+      { "suite": "chat", "method": "allExplicitRolePermissionsAreIndependentOfLinksIncludingMemberAndReferentRoles" }
+    ] },
+    { "id": "CHAT-003", "spec": "docs/functional/chat.md", "status": "documented", "coverage": "automated", "tests": [
+      { "suite": "chat", "method": "revokingLinkRevokesDirectAccessUnlessAnIndependentRoleStillGrantsIt" },
+      { "suite": "chat", "method": "rolesAloneNeverGrantAccessToUnrelatedChats" }
+    ] },
+    { "id": "CHAT-004", "spec": "docs/functional/chat.md", "status": "documented", "coverage": "partial", "gap": "Le contrôle d'appartenance est testé ; ajouter un scénario vérifiant en base qu'un ancien accusé ne fait pas reculer le repère de lecture.", "tests": [
+      { "suite": "chat", "method": "readCursorMustBelongToTheAuthorizedChat" }
+    ] },
+    { "id": "CHAT-005", "spec": "docs/functional/chat.md", "status": "documented", "coverage": "partial", "gap": "Rendu texte et conservation du brouillon à vérifier dans un parcours navigateur dédié.", "tests": [
+      { "suite": "chat", "method": "preservesHistoryOrderAndRejectsInvalidPaginationAndContent" }
+    ] },
+    { "id": "MEMBER-001", "spec": "docs/functional/memberships.md", "status": "observed", "coverage": "automated", "tests": [
+      { "suite": "members", "method": "refusesEmailChangesByOtherRolesBeforeChangingPersonalData" },
+      { "suite": "members", "method": "allowsEmailChangesBySecretaryAndAdministrator" },
+      { "suite": "members", "method": "preservesEmailWhenUserIsOmittedFromTheUpdate" }
+    ] },
+    { "id": "MEMBER-002", "spec": "docs/functional/memberships.md", "status": "observed", "coverage": "automated", "tests": [
+      { "suite": "members", "method": "refusesToCreateAnAdherentWithoutATribu" },
+      { "suite": "members", "method": "createsDistinctConnectionAccountsWithoutEmail" },
+      { "suite": "members", "method": "preservesAnEmailProvidedAtCreation" }
+    ] },
+    { "id": "MEMBER-003", "spec": "docs/functional/memberships.md", "status": "observed", "coverage": "gap", "gap": "Couvrir le choix initial de statut, position et tarif ainsi que la concurrence de deux inscriptions.", "tests": [] },
+    { "id": "MEMBER-004", "spec": "docs/functional/memberships.md", "status": "observed", "coverage": "automated", "tests": [
+      { "suite": "presence", "method": "doesNotCreatePresencesForAWaitingListOrCancelledAdhesion" },
+      { "suite": "presence", "method": "createsPresencesOnlyForScheduledSessionsWhenAnAdhesionIsValidated" },
+      { "suite": "presence", "method": "doesNotCreateDuplicatePresences" }
+    ] },
+    { "id": "ACTIVITY-001", "spec": "docs/functional/activities.md", "status": "documented", "coverage": "automated", "tests": [
+      { "suite": "activities", "method": "managedSaveAllowsOnlyActivitiesInAnAssignedSection" },
+      { "suite": "activities", "method": "managedSessionCreationChecksActivitySectionBeforeAdding" },
+      { "suite": "activities", "method": "managedSessionsAndResponsibilitiesStayWithinAssignedSections" }
+    ] },
+    { "id": "ACTIVITY-002", "spec": "docs/functional/activities.md", "status": "observed", "coverage": "automated", "tests": [
+      { "suite": "activities", "method": "updatesAnActivityWithoutReplacingOrDeletingItsSessions" }
+    ] },
+    { "id": "ACTIVITY-003", "spec": "docs/functional/activities.md", "status": "observed", "coverage": "automated", "tests": [
+      { "suite": "sessions", "method": "createsWeeklySessionsAtActivityStartAndSkipsVacationsAndPublicHolidays" },
+      { "suite": "sessions", "method": "addsTheRequestedNumberOfSessionsAndSkipsExistingDates" }
+    ] },
+    { "id": "ACTIVITY-004", "spec": "docs/functional/activities.md", "status": "observed", "coverage": "automated", "tests": [
+      { "suite": "presence", "method": "updatesOnlyTheConnectedMembersPlannedPresenceWithoutChangingActualAttendance" },
+      { "suite": "presence", "method": "rejectsUpdatingCancelledCompletedOrPastSessions" }
+    ] },
+    { "id": "ACTIVITY-005", "spec": "docs/functional/activities.md", "status": "observed", "coverage": "automated", "tests": [
+      { "suite": "sessions", "method": "exposesPublicCalendarDataWithoutSessionComments" }
+    ] },
+    { "id": "ACCOUNT-001", "spec": "docs/functional/accounting.md", "status": "observed", "coverage": "automated", "tests": [
+      { "suite": "accounting", "method": "includesBothBoundariesAndExcludesAdjacentDays" },
+      { "suite": "accounting", "method": "includesPaymentsForASingleDay" },
+      { "suite": "accounting", "method": "rejectsMissingAndReversedPeriodsBeforeReadingData" }
+    ] },
+    { "id": "ACCOUNT-002", "spec": "docs/functional/accounting.md", "status": "observed", "coverage": "automated", "tests": [
+      { "suite": "accounting", "method": "separatesPaymentTypesAndGroupsActivitiesWithTheSameName" },
+      { "suite": "accounting", "method": "ignoresUnvalidatedAdhesionsAndIncompletePayments" },
+      { "suite": "accounting", "method": "detailsContainAllPaymentsAndIdentifyThoseUsedInTheSummary" }
+    ] },
+    { "id": "ACCOUNT-003", "spec": "docs/functional/accounting.md", "status": "observed", "coverage": "automated", "tests": [
+      { "suite": "accounting", "method": "rejectsCrossAdhesionPaymentEditsAndDeletesWithoutWriting" },
+      { "suite": "accounting", "method": "rejectsIncompletePaymentWritesBeforeReadingAnAdhesion" },
+      { "suite": "accounting", "method": "addsTheRequestedPaymentWithoutReplacingItsDateOrAmount" }
+    ] },
+    { "id": "ACCOUNT-004", "spec": "docs/functional/accounting.md", "status": "observed", "coverage": "automated", "tests": [
+      { "suite": "accounting", "method": "persistsReconciliationChoicesWithoutChangingPaymentsOrTotals" }
+    ] },
+    { "id": "SHOP-001", "spec": "docs/functional/shop.md", "status": "observed", "coverage": "automated", "tests": [
+      { "suite": "orders", "method": "keepsPriceSnapshotWhenCatalogPriceChanges" },
+      { "suite": "orders", "method": "returnsExistingOrderForTheSameCheckoutKeyWithoutCreatingAnotherOne" },
+      { "suite": "browser", "title": "SHOP-001: du catalogue à la commande, le panier est vidé après création" }
+    ] },
+    { "id": "SHOP-002", "spec": "docs/functional/shop.md", "status": "documented", "coverage": "automated", "tests": [
+      { "suite": "orders", "method": "cancelsPendingPaymentOrderAndItsItemsAndReleasesStock" },
+      { "suite": "orders", "method": "refusesPartialCancellationOfAnUnpaidOrder" },
+      { "suite": "orders", "method": "cancellingTheOnlyUnpaidItemCancelsTheOrderAndReleasesItsReservation" }
+    ] },
+    { "id": "SHOP-003", "spec": "docs/functional/shop.md", "status": "documented", "coverage": "partial", "gap": "Les doubles de prestataire ne valident pas la connexion ni un paiement réel dans le sandbox HelloAsso.", "tests": [
+      { "suite": "payment", "method": "createsAnIdempotentSessionThenVerifiesPaymentServerSide" },
+      { "suite": "payment", "method": "helloAssoCanConfirmPaymentWithAnAdditionalContribution" },
+      { "suite": "browser", "title": "SHOP-003: un retour navigateur ne confirme pas un paiement en attente" },
+      { "suite": "browser", "title": "SHOP-003: la confirmation du serveur ouvre la page de succès" }
+    ] },
+    { "id": "SHOP-004", "spec": "docs/functional/shop.md", "status": "documented", "coverage": "partial", "gap": "La concurrence est vérifiée sur H2 ; ajouter les confirmations concurrentes sur PostgreSQL.", "tests": [
+      { "suite": "reconciliation", "method": "periodicReconciliationConfirmsPaymentWithoutBrowserAndRemovesItFromPendingScan" },
+      { "suite": "reconciliation", "method": "webhookManualAndPeriodicVerificationCanArriveTogetherWithoutDoubleStockConsumption" }
+    ] },
+    { "id": "SHOP-005", "spec": "docs/functional/shop.md", "status": "documented", "coverage": "automated", "tests": [
+      { "suite": "reconciliation", "method": "providerOutageLeavesReservationAndOrderUntouchedForRetry" },
+      { "suite": "reconciliation", "method": "expiredOrderCannotStartAnotherPaymentSession" },
+      { "suite": "reconciliation", "method": "overdueOrderWithoutConfirmedPaymentExpiresAndReleasesStock" }
+    ] },
+    { "id": "SHOP-006", "spec": "docs/functional/shop.md", "status": "documented", "coverage": "automated", "tests": [
+      { "suite": "orders", "method": "refusesPaidItemCancellationWithoutChangingTotalOrStock" },
+      { "suite": "reconciliation", "method": "duplicateOrStaleNotificationsDoNotDowngradePaidOrRefundedOrders" }
+    ] },
+    { "id": "DATA-001", "spec": "docs/functional/migrations.md", "status": "documented", "coverage": "automated", "tests": [
+      { "suite": "migration", "method": "createsCompleteSchemaAndCanRestartWithoutReapplyingChanges" }
+    ] },
+    { "id": "DATA-002", "spec": "docs/functional/migrations.md", "status": "documented", "coverage": "partial", "gap": "Les tests jetables ne remplacent pas une répétition avant déploiement sur une copie de la base à migrer.", "tests": [
+      { "suite": "migration", "method": "createsCompleteSchemaAndCanRestartWithoutReapplyingChanges" },
+      { "suite": "migration", "method": "linksActivitiesToExistingSectionsAndCreatesMissingSections" },
+      { "suite": "migration", "method": "adoptsHistoricalSchemaAndPreservesData" },
+      { "suite": "migration", "method": "createsV2ShopSchemaAndPreservesDataOnRestart" },
+      { "suite": "migration", "method": "addsReconciliationFlagAndPreservesItsValueOnRestart" },
+      { "suite": "migration", "method": "preservesReconciliationValuesWhenTheHistoricalColumnAlreadyExists" }
+    ] }
+  ]
+}

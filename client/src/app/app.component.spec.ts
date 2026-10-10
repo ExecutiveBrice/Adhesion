@@ -4,7 +4,7 @@ import { ChatService } from './_services/chat.service';
 import { ApiRenderService } from './_services/api-render.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { of, Subject } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { AppComponent } from './app.component';
 import { AuthService } from './_services/auth.service';
 import { ParamService } from './_services/param.service';
@@ -144,12 +144,68 @@ describe('Navigation du bandeau', () => {
     expect(fixture.nativeElement.querySelector('app-shop-cart-link')).toBeNull();
   });
 
-  it('masque le lien Chat lorsque son paramètre est désactivé', () => {
+  it('masque le lien Chat désactivé pour un membre sans droit de paramétrage', () => {
     expect(fixture.nativeElement.querySelector('[routerLink="chat"]')).not.toBeNull();
     fixture.componentInstance.showChat = false;
+    fixture.componentInstance.showAdmin = false;
+    fixture.componentInstance.showManagedSections = false;
     TestBed.inject(ApiRenderService).notify();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('[routerLink="chat"]')).toBeNull();
+  });
+
+  it('ACCESS-006: affiche le bouton Inscription activé et ouvre le formulaire', async () => {
+    spyOn(TestBed.inject(ParamService), 'getAllBoolean').and.returnValue(of([
+      { paramName: 'Inscription', paramValue: true } as any
+    ]));
+    storage.getToken.and.returnValue(null);
+    await router.navigateByUrl('/login');
+    fixture.componentInstance.ngOnInit();
+    TestBed.inject(ApiRenderService).notify();
+    fixture.detectChanges();
+    const button: HTMLButtonElement | undefined = Array.from(
+      fixture.nativeElement.querySelectorAll('.navbar-login-actions button')
+    ).find((item: any) => item.textContent.includes('Inscription')) as HTMLButtonElement | undefined;
+    expect(button).toBeDefined();
+    button?.click();
+    expect(TestBed.inject(LoginPageService).view()).toBe('inscription');
+  });
+
+  it('masque l’inscription avant le chargement puis actualise le bouton à réception du paramètre', async () => {
+    const params = new Subject<any[]>();
+    spyOn(TestBed.inject(ParamService), 'getAllBoolean').and.returnValue(params);
+    storage.getToken.and.returnValue(null);
+    await router.navigateByUrl('/login');
+    fixture.componentInstance.ngOnInit();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.navbar-login-actions button').length).toBe(1);
+    params.next([{ paramName: 'Inscription', paramValue: true }]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.navbar-login-actions button').length).toBe(2);
+  });
+
+  for (const [label, params] of [
+    ['désactivé', of([{ paramName: 'Inscription', paramValue: false } as any])],
+    ['absent', of([])],
+    ['en erreur', throwError(() => new Error('Indisponible'))]
+  ] as const) {
+    it(`masque le bouton Inscription lorsque le paramètre est ${label}`, async () => {
+      spyOn(TestBed.inject(ParamService), 'getAllBoolean').and.returnValue(params);
+      storage.getToken.and.returnValue(null);
+      await router.navigateByUrl('/login');
+      TestBed.inject(LoginPageService).inscriptionOpen.set(true);
+      fixture.componentInstance.ngOnInit();
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelectorAll('.navbar-login-actions button').length).toBe(1);
+    });
+  }
+
+  it('conserve le paramétrage Chat accessible à un administrateur quand les discussions sont désactivées', () => {
+    fixture.componentInstance.showChat = false;
+    fixture.componentInstance.showAdmin = true;
+    TestBed.inject(ApiRenderService).notify();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[routerLink="chat"]')).not.toBeNull();
   });
 });
 

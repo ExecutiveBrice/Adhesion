@@ -12,6 +12,7 @@ import { faCalendarDays, faCircleCheck, faCircleXmark, faFont, faHashtag, faLaye
 import { AdherentService } from 'src/app/_services/adherent.service';
 import {AuthService} from "../../_services/auth.service";
 import {TokenStorageService} from "../../_services/token-storage.service";
+import { SessionNavigationService } from '../../_services/session-navigation.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { NgClass } from '@angular/common';
@@ -37,6 +38,7 @@ export class BoardAdminComponent implements OnInit {
   private readonly apiViewRefresh = registerApiViewRefresh();
   private tokenStorage = inject(TokenStorageService);
   private authService = inject(AuthService);
+  private sessionNavigation = inject(SessionNavigationService);
   private paramService = inject(ParamService);
   private userService = inject(UserService);
   private adherentService = inject(AdherentService);
@@ -87,6 +89,9 @@ export class BoardAdminComponent implements OnInit {
   sectionErreur = '';
   sectionEnEdition?: number;
   usersLite: UserLite[] = [];
+  rechercheImpersonnalisation = '';
+  impersonnalisationEnCours = false;
+  impersonnalisationErreur = '';
   utilisateursSelectionnables: UtilisateurSelectionnable[] = [];
   candidatsReferentsParSection: Record<number, UtilisateurSelectionnable[]> = {};
   selectionsRoles: Record<RoleUtilisateur, UtilisateurSelectionnable[]> = {
@@ -179,17 +184,29 @@ export class BoardAdminComponent implements OnInit {
   }
 
 
-  impersonate(email: string) {
-    this.authService.impersonate(email).subscribe(
-      data => {
-        console.log(data)
+  get utilisateursImpersonnalisation(): UserLite[] {
+    const normaliser = (texte: string) => texte.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    const recherche = normaliser(this.rechercheImpersonnalisation);
+    return this.usersLite.filter(user => !recherche
+      || normaliser(user.adherent || '').includes(recherche)
+      || normaliser(user.username).includes(recherche));
+  }
+
+  impersonate(username: string): void {
+    if (this.impersonnalisationEnCours) return;
+    this.impersonnalisationEnCours = true;
+    this.impersonnalisationErreur = '';
+    this.authService.impersonate(username).subscribe({
+      next: data => {
         this.tokenStorage.saveToken(data.token);
         this.tokenStorage.saveUser(data);
+        this.sessionNavigation.reloadAccueil();
       },
-      err => {
-        ;
+      error: () => {
+        this.impersonnalisationEnCours = false;
+        this.impersonnalisationErreur = 'L’impersonnalisation a échoué. Réessayez.';
       }
-    );
+    });
   }
 
   updateParamText(param: ParamText) {

@@ -17,4 +17,5 @@
   <include file="changeset-v11.xml" relativeToChangelogFile="true"/>
   <include file="changeset-v12.xml" relativeToChangelogFile="true"/>
   <include file="changeset-v13.xml" relativeToChangelogFile="true"/>
+  <include file="changeset-v14.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

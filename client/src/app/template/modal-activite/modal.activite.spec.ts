@@ -94,7 +94,7 @@ describe('ModalActivite : section obligatoire', () => {
     expect(activites.save).toHaveBeenCalledTimes(1);
   });
 
-  it('permet de choisir les encadrants et d’ajouter des séances dans une catégorie confiée', () => {
+  it('permet de choisir les encadrants et d’ajouter des séances dans une catégorie confiée', async () => {
     const categorie = { id: 3, jour: 'MONDAY', horaireDebut: '18:00', duree: 60, profs: [], referents: [] };
     component.activite = Object.assign(new Activite(), { id: 5, section,
       planificationsHebdomadaires: [categorie] });
@@ -102,12 +102,15 @@ describe('ModalActivite : section obligatoire', () => {
     component.managedSections = [{ id: 7, nom: 'Yoga', couleur: '#000000' }];
     activites.ajouterSeancesPlanification.and.returnValue(of([]));
     fixture.detectChanges();
+    await fixture.whenStable();
 
     expect(activites.getSeances).toHaveBeenCalledOnceWith(5, true);
     expect(activites.getResponsabiliteCandidates).toHaveBeenCalledOnceWith(5, true);
 
     component.ouvrirModalEditionCategorie(0);
+    fixture.changeDetectorRef.markForCheck();
     fixture.detectChanges();
+    await fixture.whenStable();
     expect(fixture.nativeElement.querySelector('app-user-checkbox-dropdown')).not.toBeNull();
     component.categorieEnEdition!.profs = [component.profs[0]];
     component.enregistrerCategorie();

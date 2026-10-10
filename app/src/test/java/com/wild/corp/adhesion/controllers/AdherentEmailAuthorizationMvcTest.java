@@ -34,6 +34,8 @@ class AdherentEmailAuthorizationMvcTest {
     @MockitoBean
     private AdherentServices adherentServices;
     @MockitoBean
+    private com.wild.corp.adhesion.repository.SectionRepository sectionRepository;
+    @MockitoBean
     private UserServices userServices;
     @MockitoBean
     private RappelServices rappelServices;

@@ -3,6 +3,10 @@ app/target/
 client/.angular/
 client/dist/
 client/node_modules/
+client/coverage/
+client/playwright-report/
+client/test-results/
+*.log
 
 .env*
 

@@ -11,7 +11,8 @@ describe('ShopManagementComponent', () => {
   beforeAll(() => registerLocaleData(localeFr));
 
   it('ouvre le tableau de stock et charge le catalogue à la demande', () => {
-    const api = jasmine.createSpyObj<ShopAdminApiService>('ShopAdminApiService', ['products', 'orders', 'categories']);
+    const api = jasmine.createSpyObj<ShopAdminApiService>('ShopAdminApiService', ['products', 'orders', 'categories', 'supplierOrders']);
+    api.supplierOrders.and.returnValue(of([]));
     api.products.and.returnValue(of([]));
     api.orders.and.returnValue(of([]));
     api.categories.and.returnValue(of([]));
@@ -23,7 +24,7 @@ describe('ShopManagementComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('#stocks-tab')?.getAttribute('aria-selected')).toBe('true');
-    expect(fixture.nativeElement.querySelector('#stock-overview-title')?.textContent).toContain('État des stocks');
+    expect(fixture.nativeElement.querySelector('#stock-overview-title')?.textContent).toContain('Besoins et approvisionnements');
     expect(api.products).toHaveBeenCalledTimes(1);
     expect(api.categories).not.toHaveBeenCalled();
 
@@ -34,7 +35,7 @@ describe('ShopManagementComponent', () => {
     fixture.destroy();
   });
 
-  it('crée une variante sans choix de quantité ni de suivi du stock', () => {
+  it('crée une variante sans choix de quantité ni de suivi du stock', async () => {
     const product: ShopAdminProductDto = {
       id: 1, name: 'T-shirt', slug: 't-shirt', description: null, imageUrl: null,
       active: true, displayOrder: 0, categories: [], variants: [{
@@ -43,7 +44,8 @@ describe('ShopManagementComponent', () => {
       }]
     };
     const api = jasmine.createSpyObj<ShopAdminApiService>('ShopAdminApiService',
-      ['products', 'orders', 'categories', 'createVariant']);
+      ['products', 'orders', 'categories', 'createVariant', 'supplierOrders']);
+    api.supplierOrders.and.returnValue(of([]));
     api.products.and.returnValue(of([product]));
     api.orders.and.returnValue(of([]));
     api.categories.and.returnValue(of([]));
@@ -57,8 +59,9 @@ describe('ShopManagementComponent', () => {
     });
     const fixture = TestBed.createComponent(ShopManagementComponent);
     fixture.detectChanges();
-    fixture.componentInstance.selectTab('catalogue');
+    (fixture.nativeElement.querySelector('#catalogue-tab') as HTMLButtonElement).click();
     fixture.detectChanges();
+    await fixture.whenStable();
 
     const form = fixture.nativeElement.querySelector('.new-variant') as HTMLFormElement;
     expect(form.querySelector('input[name^="newVariantStock"]')).toBeNull();

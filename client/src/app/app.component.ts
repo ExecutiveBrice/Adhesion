@@ -175,11 +175,13 @@ export class AppComponent {
     });
     this.paramService.getAllBoolean().subscribe({
       next: params => {
+        this.loginPage.inscriptionOpen.set(params.some(param => param.paramName === 'Inscription' && param.paramValue === true));
         this.showShop = params.some(param => param.paramName === 'Show_Boutique' && param.paramValue);
         this.showChat = params.some(param => param.paramName === 'Show_Chat' && param.paramValue);
         this.chat.monitorUnread(this.showChat && this.isLoggedIn ? this.tokenStorageService.getUser().id : undefined);
       },
       error: () => {
+        this.loginPage.inscriptionOpen.set(false);
         this.showShop = false;
         this.showChat = false;
         this.chat.monitorUnread();

@@ -15,6 +15,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.wild.corp.adhesion.domain.chat.ChatAccessPolicy.canRead;
+import static com.wild.corp.adhesion.domain.chat.ChatAccessPolicy.canWrite;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -108,27 +111,6 @@ public class ChatService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Vous n’êtes pas autorisé à accéder à ce chat");
         }
         return chat;
-    }
-
-    private boolean canRead(User user, Chat chat, List<Activite> linkedActivities) {
-        // Links grant read access; explicit role grants apply independently, including ROLE_USER.
-        return chat.getPermissions().stream().anyMatch(permission -> hasRole(user, permission))
-                || switch (chat.getCible()) {
-                    case SECTION -> chat.getSection().getReferents().stream().anyMatch(ref -> user.getId().equals(ref.getId()))
-                            || linkedActivities.stream().map(Activite::getSection)
-                            .anyMatch(section -> section != null && chat.getSection().getId().equals(section.getId()));
-                    case ACTIVITE -> linkedActivities.stream()
-                            .anyMatch(activity -> chat.getActivite().getId().equals(activity.getId()));
-                    case ASSOCIATION -> false;
-                };
-    }
-
-    private boolean canWrite(User user, Chat chat) {
-        return chat.getPermissions().stream().anyMatch(permission -> permission.isEcriture() && hasRole(user, permission));
-    }
-
-    private boolean hasRole(User user, ChatPermission permission) {
-        return user.getRoles().stream().anyMatch(role -> role.name().equals(permission.getRole()));
     }
 
     private String displayRole(User user, Chat chat) {

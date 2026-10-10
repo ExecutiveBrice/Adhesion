@@ -4,7 +4,7 @@ import { TokenStorageService } from '../../_services/token-storage.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ParamTransmissionService } from 'src/app/_services/transmission.service';
 import { faBook, faCheck, faClock, faCloudDownloadAlt, faPencilSquare, faScaleBalanced, faSquareMinus, faSquarePlus, faTriangleExclamation, faUserPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { catchError, forkJoin, of } from 'rxjs';
+import { catchError, finalize, forkJoin, of, switchMap, tap } from 'rxjs';
 import { ParamService } from 'src/app/_services/param.service';
 import { ToastService } from '../../_services/toast.service';
 import { ActiviteService } from 'src/app/_services/activite.service';
@@ -75,6 +75,15 @@ export class LoginComponent implements OnInit {
   isLoggedIn = false;
   isLoginFailed = false;
   isresetFailed = false;
+  isSuccessful = false;
+  inscriptionSubmitting = false;
+  inscriptionError = '';
+  messageInscription = '';
+  textRGPD = '';
+
+  get newInscription(): boolean {
+    return this.loginPage.view() === 'inscription' && this.loginPage.inscriptionOpen() && !this.isLoggedIn;
+  }
   get oublieMDP(): boolean {
     return this.loginPage.view() === 'recuperation';
   }
@@ -115,6 +124,8 @@ export class LoginComponent implements OnInit {
     this.paramService.getAllText().subscribe({
       next: (data) => {
         this.messageConnexion = data.find(param => param.paramName == "Text_Accueil")?.paramValue || '';
+        this.messageInscription = data.find(param => param.paramName === 'Text_Inscription')?.paramValue || '';
+        this.textRGPD = data.find(param => param.paramName === 'RGPD')?.paramValue || '';
         this.textMaintenance = data.find(param => param.paramName == "Text_Maintenance")?.paramValue || '';
       },
       error: (error) => {
@@ -349,6 +360,29 @@ export class LoginComponent implements OnInit {
   sourceEvenement(evenement: EvenementCalendrier): string {
     return evenement.source === 'GOOGLE' ? `Google · ${this.nomAgenda(evenement)}` : this.etatLibelle(evenement.etatSeance);
   }
+  onSubmitInscription(): void {
+    if (!this.loginPage.inscriptionOpen() || this.inscriptionSubmitting || this.isSuccessful) return;
+    const { username, password } = this.form;
+    this.inscriptionSubmitting = true;
+    this.inscriptionError = '';
+    this.authService.register(username, password).pipe(
+      tap(() => this.isSuccessful = true),
+      switchMap(() => this.authService.login(username, password)),
+      finalize(() => this.inscriptionSubmitting = false)
+    ).subscribe({
+      next: () => {
+        this.isLoggedIn = true;
+        this.roles = this.tokenStorage.getUser().roles;
+        this.sessionNavigation.reloadAccueil();
+      },
+      error: error => {
+        this.inscriptionError = this.isSuccessful
+          ? 'Votre compte a été créé, mais la connexion a échoué. Utilisez le bouton Connexion pour vous connecter.'
+          : error.error?.message || "Votre inscription a échoué. Veuillez réessayer.";
+      }
+    });
+  }
+
   onSubmit(): void {
     const { username, password } = this.form;
 

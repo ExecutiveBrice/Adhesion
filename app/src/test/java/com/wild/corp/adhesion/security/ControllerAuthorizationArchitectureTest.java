@@ -2,42 +2,52 @@ package com.wild.corp.adhesion.security;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.core.annotation.AnnotatedElementUtils;
+import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Prevents a new controller route from silently inheriting an overly broad access rule. */
 class ControllerAuthorizationArchitectureTest {
 
-    private static final String CONTROLLER_PACKAGE = "com.wild.corp.adhesion.controllers.";
-    private static final Path CONTROLLER_SOURCES = Path.of("src/main/java/com/wild/corp/adhesion/controllers");
-
     @Test
-    void everyControllerEndpointIsPubliclyDocumentedOrProtectedByMethodSecurity() throws IOException {
+    void everyControllerEndpointIsPubliclyDocumentedOrProtectedByMethodSecurity() throws ClassNotFoundException {
         List<String> unsecuredEndpoints = new ArrayList<>();
-
-        try (var files = Files.list(CONTROLLER_SOURCES)) {
-            for (Path file : files.filter(path -> path.getFileName().toString().endsWith(".java")).toList()) {
-                inspectController(Class.forName(CONTROLLER_PACKAGE + sourceClassName(file)), unsecuredEndpoints);
-            }
-        } catch (ClassNotFoundException exception) {
-            throw new IllegalStateException("Impossible de charger un contrôleur pour le test d'architecture", exception);
+        var scanner = new ClassPathScanningCandidateComponentProvider(false);
+        scanner.addIncludeFilter(new AnnotationTypeFilter(RestController.class));
+        var controllers = scanner.findCandidateComponents("com.wild.corp.adhesion");
+        assertThat(controllers).as("Le contrôle doit découvrir les contrôleurs de l'application").isNotEmpty();
+        assertThat(controllers).as("Les contrôleurs boutique doivent aussi être contrôlés")
+                .anyMatch(bean -> bean.getBeanClassName().startsWith("com.wild.corp.adhesion.shop.api."));
+        for (var bean : controllers) {
+            inspectController(Class.forName(bean.getBeanClassName()), unsecuredEndpoints);
         }
 
         assertThat(unsecuredEndpoints)
                 .as("Chaque endpoint doit être annoté @PreAuthorize ou présent dans PublicApiEndpoints")
                 .isEmpty();
+    }
+
+    @Test
+    void publicEndpointInventoryHasUniqueKeysAndExplanations() {
+        Set<String> keys = PublicApiEndpoints.ENDPOINTS.stream()
+                .map(endpoint -> endpoint.method() + " " + endpoint.path()).collect(Collectors.toSet());
+        assertThat(keys).hasSize(PublicApiEndpoints.ENDPOINTS.size());
+        assertThat(PublicApiEndpoints.ENDPOINTS).allSatisfy(endpoint -> {
+            assertThat(endpoint.path()).startsWith("/");
+            assertThat(endpoint.purpose()).isNotBlank();
+        });
     }
 
     private void inspectController(Class<?> controller, List<String> unsecuredEndpoints) {
@@ -46,7 +56,7 @@ class ControllerAuthorizationArchitectureTest {
         }
         boolean protectedAtClassLevel = AnnotatedElementUtils.hasAnnotation(controller, PreAuthorize.class);
         List<String> classPaths = paths(AnnotatedElementUtils.findMergedAnnotation(controller, RequestMapping.class));
-        for (Method method : controller.getDeclaredMethods()) {
+        for (Method method : controller.getMethods()) {
             RequestMapping mapping = AnnotatedElementUtils.findMergedAnnotation(method, RequestMapping.class);
             if (mapping == null) {
                 continue;
@@ -67,6 +77,10 @@ class ControllerAuthorizationArchitectureTest {
     }
 
     private List<HttpMethod> httpMethods(RequestMapping mapping) {
+        // An unrestricted @RequestMapping accepts every verb, not zero verbs.
+        if (mapping.method().length == 0) {
+            return Arrays.stream(RequestMethodMapper.values()).map(value -> value.httpMethod).toList();
+        }
         return Arrays.stream(mapping.method()).map(RequestMethodMapper::toHttpMethod).toList();
     }
 
@@ -78,11 +92,6 @@ class ControllerAuthorizationArchitectureTest {
     private String join(String base, String child) {
         String path = (base + "/" + child).replaceAll("/{2,}", "/");
         return path.startsWith("/") ? path : "/" + path;
-    }
-
-    private String sourceClassName(Path file) {
-        String fileName = file.getFileName().toString();
-        return fileName.substring(0, fileName.length() - ".java".length());
     }
 
     private enum RequestMethodMapper {

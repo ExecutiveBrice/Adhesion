@@ -4,6 +4,7 @@ import com.wild.corp.adhesion.services.AdherentServices;
 import com.wild.corp.adhesion.services.RappelServices;
 import com.wild.corp.adhesion.services.UserDetailsService;
 import com.wild.corp.adhesion.services.UserServices;
+import com.wild.corp.adhesion.repository.SectionRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -32,6 +33,8 @@ class MaintenanceAuthorizationMvcTest {
 
     @MockitoBean
     private AdherentServices adherentServices;
+    @MockitoBean
+    private SectionRepository sectionRepository;
     @MockitoBean
     private UserServices userServices;
     @MockitoBean

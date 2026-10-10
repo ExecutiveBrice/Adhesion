@@ -57,7 +57,9 @@ public final class RoleDataMigration implements CustomTaskChange {
     private String findPrimaryKeyName(Connection connection) throws SQLException {
         var metadata = connection.getMetaData();
         var schema = connection.getSchema();
-        String[] schemas = {schema, lower(schema), upper(schema), null};
+        // A null schema scans every schema and can return another table's key
+        // when the historical table in the current schema has none.
+        String[] schemas = schema == null ? new String[]{null} : new String[]{schema, lower(schema), upper(schema)};
         String[] tables = {"user_role_names", "USER_ROLE_NAMES"};
         for (var schemaCandidate : schemas) {
             for (var tableCandidate : tables) {

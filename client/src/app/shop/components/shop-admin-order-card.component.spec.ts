@@ -30,7 +30,7 @@ describe('ShopAdminOrderCardComponent', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.order-toggle .delivery-indicator').textContent).toContain('1 article manquant');
     expect(fixture.nativeElement.querySelector('.item-availability').textContent).toContain('Manque 1 sur 2');
-    component.availability = new Map([[7, { state: 'ready', missingQuantity: 0, label: 'Disponible : 2 / 2' }]]);
+    fixture.componentRef.setInput('availability', new Map([[7, { state: 'ready', missingQuantity: 0, label: 'Disponible : 2 / 2' }]]));
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.order-toggle .delivery-indicator').textContent).toContain('Peut être livrée');
     component.order.status = 'PENDING_PAYMENT';
