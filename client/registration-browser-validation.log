@@ -1,0 +1,42 @@
+npm notice run asso@1.0.0 test:browser
+npm notice run playwright test
+[WebServer] (node:8476) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:8476) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 15 tests using 8 workers
+
+(node:5636) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:18260) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:24548) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:23148) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:17980) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29060) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13984) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27372) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  4 [chromium] › tests\browser\critical-journeys.spec.ts:13:5 › ACCESS-002: le référent consulte ses adhésions sans actions de secrétariat (4.9s)
+  ok  5 [chromium] › tests\browser\admin-impersonation.spec.ts:25:5 › ACCESS-005: le sélecteur filtre les adhérents par nom ou identifiant (5.3s)
+  ok  7 [chromium] › tests\browser\admin-impersonation.spec.ts:40:5 › ACCESS-005: la sélection recharge la page avec la nouvelle session (5.1s)
+  ok  3 [chromium] › tests\browser\admin-impersonation.spec.ts:55:5 › ACCESS-005: un refus conserve la session et affiche une erreur (5.3s)
+  ok  8 [chromium] › tests\browser\critical-journeys.spec.ts:26:5 › Accès: un membre sans section ne peut pas ouvrir la liste gérée (5.4s)
+  ok  1 [chromium] › tests\browser\critical-journeys.spec.ts:3:5 › Connexion: une session anonyme est redirigée puis peut se connecter (5.7s)
+  ok  2 [chromium] › tests\browser\critical-journeys.spec.ts:52:5 › Commande: un échec de création conserve le panier et permet de réessayer (6.9s)
+  ok 11 [chromium] › tests\browser\registration.spec.ts:17:7 › Inscription: le menu masque le bouton quand le paramètre est désactivé (1.6s)
+  ok 12 [chromium] › tests\browser\registration.spec.ts:3:5 › ACCESS-006: le menu ouvre l’inscription activée puis permet de revenir à la connexion (1.7s)
+  ok 13 [chromium] › tests\browser\registration.spec.ts:17:7 › Inscription: le menu masque le bouton quand le paramètre est absent (1.7s)
+  ok 14 [chromium] › tests\browser\registration.spec.ts:26:5 › ACCESS-006: une inscription réussie connecte le nouveau compte avant d’ouvrir l’accueil (1.8s)
+  ok  9 [chromium] › tests\browser\critical-journeys.spec.ts:65:5 › SHOP-003: un retour navigateur ne confirme pas un paiement en attente (2.7s)
+  ok  6 [chromium] › tests\browser\critical-journeys.spec.ts:33:5 › SHOP-001: du catalogue à la commande, le panier est vidé après création (7.7s)
+  ok 10 [chromium] › tests\browser\critical-journeys.spec.ts:73:5 › SHOP-003: la confirmation du serveur ouvre la page de succès (2.5s)
+  ok 15 [chromium] › tests\browser\registration.spec.ts:39:5 › Inscription: un refus conserve le formulaire et permet de réessayer (1.5s)
+
+  15 passed (18.8s)

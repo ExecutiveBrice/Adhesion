@@ -20,7 +20,7 @@ import { UserCheckboxDropdownComponent } from '../../template/user-checkbox-drop
 import { UtilisateurSelectionnable } from '../../models/utilisateurSelectionnable';
 
 type RoleUtilisateur = ERole.ROLE_ADMIN | ERole.ROLE_MEMBRECA | ERole.ROLE_BUREAU |
-  ERole.ROLE_SECRETAIRE | ERole.ROLE_COMPTABLE | ERole.ROLE_ENCADRANT;
+  ERole.ROLE_SECRETAIRE | ERole.ROLE_COMPTABLE | ERole.ROLE_ENCADRANT | ERole.ROLE_LOGISTIQUE;
 
 
 @Component({
@@ -73,7 +73,8 @@ export class BoardAdminComponent implements OnInit {
     [ERole.ROLE_BUREAU]: [],
     [ERole.ROLE_SECRETAIRE]: [],
     [ERole.ROLE_COMPTABLE]: [],
-    [ERole.ROLE_ENCADRANT]: []
+    [ERole.ROLE_ENCADRANT]: [],
+    [ERole.ROLE_LOGISTIQUE]: []
   };
   rolesEnCoursDeMiseAJour: Partial<Record<RoleUtilisateur, boolean>> = {};
   maintenanceEnCours = false;
@@ -85,7 +86,8 @@ export class BoardAdminComponent implements OnInit {
     { code: ERole.ROLE_BUREAU, libelle: 'Membres du bureau de l’ALOD' },
     { code: ERole.ROLE_SECRETAIRE, libelle: 'Secrétaires de l’ALOD' },
     { code: ERole.ROLE_COMPTABLE, libelle: 'Comptables de l’ALOD' },
-    { code: ERole.ROLE_ENCADRANT, libelle: 'Encadrant de l’ALOD' }
+    { code: ERole.ROLE_ENCADRANT, libelle: 'Encadrant de l’ALOD' },
+    { code: ERole.ROLE_LOGISTIQUE, libelle: 'Logistique' }
   ];
 
   ngOnInit(): void {

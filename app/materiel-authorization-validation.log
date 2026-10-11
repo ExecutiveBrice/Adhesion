@@ -1,0 +1,383 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------------------< com.gestion:app_adhesion >----------------------
+[INFO] Building Adhesion 26.8.1
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- openapi-generator:7.25.0:generate (ApiHelloasso) @ app_adhesion ---
+[INFO] Generating with dryRun=false
+[INFO] OpenAPI Generator: spring (server)
+[INFO] Generator 'spring' is considered stable.
+[INFO] ----------------------------------
+[INFO] Environment variable JAVA_POST_PROCESS_FILE not defined so the Java code may not be properly formatted. To define it, try 'export JAVA_POST_PROCESS_FILE="/usr/local/bin/clang-format -i"' (Linux/Mac)
+[INFO] NOTE: To enable file post-processing, 'enablePostProcessFile' must be set to `true` (--enable-post-process-file for CLI).
+[INFO] Invoker Package Name, originally not set, is now derived from api package name: org.wild.corp.adhesion.client.helloasso
+[INFO] Defaulting includeHttpRequestContext to 'false' for blocking
+[WARNING] 'generateJsonIncludeAnnotations' is not set. Defaulting to false: no @JsonInclude annotations are generated and property inclusion is governed entirely by the global ObjectMapper (7.23.0-equivalent output). Set 'generateJsonIncludeAnnotations=false' to keep this behavior and silence this warning, or 'generateJsonIncludeAnnotations=true' to emit spec-honest @JsonInclude annotations (see 'optionalNonNullPropertyJsonInclude'). Note: before 7.24.0 released output had no field-level @JsonInclude, so leaving this unset preserves that behavior.
+[WARNING] 'generateJsonSetterNullsAnnotations' is not set. Defaulting to false: no @JsonSetter(nulls = ...) annotations are generated and deserialization null-handling is governed entirely by the global ObjectMapper (7.23.0-equivalent output). Set 'generateJsonSetterNullsAnnotations=false' to keep this behavior and silence this warning, or 'generateJsonSetterNullsAnnotations=true' to emit @JsonSetter(nulls = ...) on optional non-nullable fields.
+[WARNING] Empty operationId found for path: GET /organizations/{organizationSlug}/checkout-intents/{checkoutIntentId}. Renamed to auto-generated operationId: organizationsOrganizationSlugCheckoutIntentsCheckoutIntentIdGET
+[WARNING] Empty operationId found for path: POST /organizations/{organizationSlug}/checkout-intents. Renamed to auto-generated operationId: organizationsOrganizationSlugCheckoutIntentsPOST
+[WARNING] Empty operationId found for path: POST /directory/forms. Renamed to auto-generated operationId: directoryFormsPOST
+[WARNING] Empty operationId found for path: POST /directory/organizations. Renamed to auto-generated operationId: directoryOrganizationsPOST
+[WARNING] Empty operationId found for path: POST /organizations/{organizationSlug}/forms/{formType}/action/quick-create. Renamed to auto-generated operationId: organizationsOrganizationSlugFormsFormTypeActionQuickCreatePOST
+[WARNING] Empty operationId found for path: PUT /organizations/{organizationSlug}/forms/{formType}/{formSlug}/state. Renamed to auto-generated operationId: organizationsOrganizationSlugFormsFormTypeFormSlugStatePUT
+[WARNING] Empty operationId found for path: GET /organizations/{organizationSlug}/forms/{formType}/{formSlug}/public. Renamed to auto-generated operationId: organizationsOrganizationSlugFormsFormTypeFormSlugPublicGET
+[WARNING] Empty operationId found for path: GET /organizations/{organizationSlug}/formTypes. Renamed to auto-generated operationId: organizationsOrganizationSlugFormTypesGET
+[WARNING] Empty operationId found for path: GET /organizations/{organizationSlug}/forms. Renamed to auto-generated operationId: organizationsOrganizationSlugFormsGET
+[WARNING] Empty operationId found for path: GET /items/{itemId}. Renamed to auto-generated operationId: itemsItemIdGET
+[WARNING] Empty operationId found for path: GET /organizations/{organizationSlug}/forms/{formType}/{formSlug}/items. Renamed to auto-generated operationId: organizationsOrganizationSlugFormsFormTypeFormSlugItemsGET
+[WARNING] Empty operationId found for path: GET /organizations/{organizationSlug}/items. Renamed to auto-generated operationId: organizationsOrganizationSlugItemsGET
+[WARNING] Empty operationId found for path: GET /orders/{orderId}. Renamed to auto-generated operationId: ordersOrderIdGET
+[WARNING] Empty operationId found for path: GET /organizations/{organizationSlug}/forms/{formType}/{formSlug}/orders. Renamed to auto-generated operationId: organizationsOrganizationSlugFormsFormTypeFormSlugOrdersGET
+[WARNING] Empty operationId found for path: GET /organizations/{organizationSlug}/orders. Renamed to auto-generated operationId: organizationsOrganizationSlugOrdersGET
+[WARNING] Empty operationId found for path: POST /orders/{orderId}/cancel. Renamed to auto-generated operationId: ordersOrderIdCancelPOST
+[WARNING] Empty operationId found for path: GET /organizations/{organizationSlug}/cash-out/{cashOutId}/export. Renamed to auto-generated operationId: organizationsOrganizationSlugCashOutCashOutIdExportGET
+[WARNING] Empty operationId found for path: GET /organizations/{organizationSlug}. Renamed to auto-generated operationId: organizationsOrganizationSlugGET
+[WARNING] Empty operationId found for path: PUT /partners/me/api-clients. Renamed to auto-generated operationId: partnersMeApiClientsPUT
+[WARNING] Empty operationId found for path: PUT /partners/me/api-notifications/organizations/{organizationSlug}. Renamed to auto-generated operationId: partnersMeApiNotificationsOrganizationsOrganizationSlugPUT
+[WARNING] Empty operationId found for path: DELETE /partners/me/api-notifications/organizations/{organizationSlug}. Renamed to auto-generated operationId: partnersMeApiNotificationsOrganizationsOrganizationSlugDELETE
+[WARNING] Empty operationId found for path: PUT /partners/me/api-notifications. Renamed to auto-generated operationId: partnersMeApiNotificationsPUT
+[WARNING] Empty operationId found for path: DELETE /partners/me/api-notifications. Renamed to auto-generated operationId: partnersMeApiNotificationsDELETE
+[WARNING] Empty operationId found for path: GET /partners/me. Renamed to auto-generated operationId: partnersMeGET
+[WARNING] Empty operationId found for path: GET /partners/me/organizations. Renamed to auto-generated operationId: partnersMeOrganizationsGET
+[WARNING] Empty operationId found for path: GET /payments/{paymentId}. Renamed to auto-generated operationId: paymentsPaymentIdGET
+[WARNING] Empty operationId found for path: GET /organizations/{organizationSlug}/forms/{formType}/{formSlug}/payments. Renamed to auto-generated operationId: organizationsOrganizationSlugFormsFormTypeFormSlugPaymentsGET
+[WARNING] Empty operationId found for path: GET /organizations/{organizationSlug}/payments. Renamed to auto-generated operationId: organizationsOrganizationSlugPaymentsGET
+[WARNING] Empty operationId found for path: GET /tags/{tagName}. Renamed to auto-generated operationId: tagsTagNameGET
+[WARNING] Empty operationId found for path: GET /users/me/organizations. Renamed to auto-generated operationId: usersMeOrganizationsGET
+[WARNING] Empty operationId found for path: GET /values/form/{formType}/types. Renamed to auto-generated operationId: valuesFormFormTypeTypesGET
+[WARNING] Empty operationId found for path: GET /values/organization/categories. Renamed to auto-generated operationId: valuesOrganizationCategoriesGET
+[WARNING] Empty operationId found for path: GET /values/tags. Renamed to auto-generated operationId: valuesTagsGET
+[WARNING] Empty operationId found for path: GET /values/company-legal-status. Renamed to auto-generated operationId: valuesCompanyLegalStatusGET
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] Processing operation null
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\FormLightModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsAccountsClientsApiClientModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsAccountsClientsPublicPutApiClientRequest.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsAccountsCompanyLegalStatusModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsAccountsOrganismCategoryModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsApiNotificationsApiNotificationType.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsApiNotificationsApiUrlNotificationModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsApiNotificationsPostApiUrlNotificationBody.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsCartsCheckoutIntentResponse.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsCartsCheckoutPayer.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsCartsCheckoutPaymentOptions.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsCartsCheckoutTerm.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsCartsInitCheckoutBody.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsCartsInitCheckoutResponse.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsCommonContactModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsCommonDocumentModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsCommonImageModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsCommonMetaModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsCommonPaginationModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsCommonPlaceModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsCommonVideoModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsComplianceV2DocumentsDocumentState.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsDirectoryDirectoryOrganizationPublicModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsDirectoryListFormsRequest.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsDirectoryListOrganizationsRequest.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsDirectoryPartnerOrganizationModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsDirectorySynchronizableFormModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsDirectorySynchronizableOrganizationModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsEnumsFieldType.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsEnumsFormState.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsEnumsFormType.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsEnumsItemState.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsEnumsMembershipValidityType.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsEnumsOperationState.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsEnumsOrganizationType.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsEnumsPaymentCashOutState.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsEnumsPaymentFrequencyType.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsEnumsPaymentMeans.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsEnumsPaymentProviderType.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsEnumsPaymentState.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsEnumsPaymentType.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsEnumsPriceCategory.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsEnumsRecordActionType.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsEnumsSortField.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsEnumsSortOrder.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsEnumsTagType.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsEnumsTierType.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsFormsCustomFieldPublicModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsFormsExtraOptionPublicModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsFormsFormActivityModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsFormsFormBasicModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsFormsFormLightModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsFormsFormPublicModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsFormsFormQuickCreateModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsFormsFormQuickCreateRequest.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsFormsFormStateRequest.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsFormsTermModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsFormsTierLightModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsFormsTierPublicModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsOrganizationsOrganizationBasicModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsOrganizationsOrganizationLightModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsOrganizationsOrganizationPublicModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsPartnersPartnerPublicModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsPaymentCashoutExportCashoutExportPaymentOperation.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsPaymentCashoutExportCashoutExportPaymentStatus.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsPaymentCashoutExportCashoutExportRowModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsPaymentRefundOperationModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsStatisticsItem.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsStatisticsItemCustomField.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsStatisticsItemDetail.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsStatisticsItemDiscount.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsStatisticsItemOption.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsStatisticsItemPayment.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsStatisticsOrder.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsStatisticsOrderAmountModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsStatisticsOrderDetail.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsStatisticsOrderItem.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsStatisticsOrderLight.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsStatisticsOrderPayment.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsStatisticsPayer.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsStatisticsPayment.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsStatisticsPaymentDetail.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsStatisticsPaymentItem.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsStatisticsRefundOperationLightModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsStatisticsShareItem.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsStatisticsSharePayment.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsStatisticsUser.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsTagsInternalTagModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5CommonModelsTagsPublicTagModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoApiV5ModelsPartnerStatisticsModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoModelsEnumsGlobalRole.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\HelloAssoModelsSharedGeoLocation.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\Item.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\Order.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\PartnerOrganizationModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\Payment.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\SynchronizableFormModel.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\model\SynchronizableOrganizationModel.java
+[WARNING] Empty operationId found for path: get /organizations/{organizationSlug}/checkout-intents/{checkoutIntentId}. Renamed to auto-generated operationId: organizationsOrganizationSlugCheckoutIntentsCheckoutIntentIdGet
+[WARNING] Empty operationId found for path: post /organizations/{organizationSlug}/checkout-intents. Renamed to auto-generated operationId: organizationsOrganizationSlugCheckoutIntentsPost
+[WARNING] Empty operationId found for path: post /directory/forms. Renamed to auto-generated operationId: directoryFormsPost
+[WARNING] Empty operationId found for path: post /directory/organizations. Renamed to auto-generated operationId: directoryOrganizationsPost
+[WARNING] Empty operationId found for path: post /organizations/{organizationSlug}/forms/{formType}/action/quick-create. Renamed to auto-generated operationId: organizationsOrganizationSlugFormsFormTypeActionQuickCreatePost
+[WARNING] Empty operationId found for path: put /organizations/{organizationSlug}/forms/{formType}/{formSlug}/state. Renamed to auto-generated operationId: organizationsOrganizationSlugFormsFormTypeFormSlugStatePut
+[WARNING] Empty operationId found for path: get /organizations/{organizationSlug}/forms/{formType}/{formSlug}/public. Renamed to auto-generated operationId: organizationsOrganizationSlugFormsFormTypeFormSlugPublicGet
+[WARNING] Empty operationId found for path: get /organizations/{organizationSlug}/formTypes. Renamed to auto-generated operationId: organizationsOrganizationSlugFormTypesGet
+[WARNING] Empty operationId found for path: get /organizations/{organizationSlug}/forms. Renamed to auto-generated operationId: organizationsOrganizationSlugFormsGet
+[WARNING] Empty operationId found for path: get /items/{itemId}. Renamed to auto-generated operationId: itemsItemIdGet
+[WARNING] Empty operationId found for path: get /organizations/{organizationSlug}/forms/{formType}/{formSlug}/items. Renamed to auto-generated operationId: organizationsOrganizationSlugFormsFormTypeFormSlugItemsGet
+[WARNING] Empty operationId found for path: get /organizations/{organizationSlug}/items. Renamed to auto-generated operationId: organizationsOrganizationSlugItemsGet
+[WARNING] Empty operationId found for path: get /orders/{orderId}. Renamed to auto-generated operationId: ordersOrderIdGet
+[WARNING] Empty operationId found for path: get /organizations/{organizationSlug}/forms/{formType}/{formSlug}/orders. Renamed to auto-generated operationId: organizationsOrganizationSlugFormsFormTypeFormSlugOrdersGet
+[WARNING] Empty operationId found for path: get /organizations/{organizationSlug}/orders. Renamed to auto-generated operationId: organizationsOrganizationSlugOrdersGet
+[WARNING] Empty operationId found for path: post /orders/{orderId}/cancel. Renamed to auto-generated operationId: ordersOrderIdCancelPost
+[WARNING] Empty operationId found for path: get /organizations/{organizationSlug}/cash-out/{cashOutId}/export. Renamed to auto-generated operationId: organizationsOrganizationSlugCashOutCashOutIdExportGet
+[WARNING] Empty operationId found for path: get /organizations/{organizationSlug}. Renamed to auto-generated operationId: organizationsOrganizationSlugGet
+[WARNING] Empty operationId found for path: put /partners/me/api-clients. Renamed to auto-generated operationId: partnersMeApiClientsPut
+[WARNING] Empty operationId found for path: put /partners/me/api-notifications/organizations/{organizationSlug}. Renamed to auto-generated operationId: partnersMeApiNotificationsOrganizationsOrganizationSlugPut
+[WARNING] Empty operationId found for path: delete /partners/me/api-notifications/organizations/{organizationSlug}. Renamed to auto-generated operationId: partnersMeApiNotificationsOrganizationsOrganizationSlugDelete
+[WARNING] Empty operationId found for path: put /partners/me/api-notifications. Renamed to auto-generated operationId: partnersMeApiNotificationsPut
+[WARNING] Empty operationId found for path: delete /partners/me/api-notifications. Renamed to auto-generated operationId: partnersMeApiNotificationsDelete
+[WARNING] Empty operationId found for path: get /partners/me. Renamed to auto-generated operationId: partnersMeGet
+[WARNING] Empty operationId found for path: get /partners/me/organizations. Renamed to auto-generated operationId: partnersMeOrganizationsGet
+[WARNING] Empty operationId found for path: get /payments/{paymentId}. Renamed to auto-generated operationId: paymentsPaymentIdGet
+[WARNING] Empty operationId found for path: get /organizations/{organizationSlug}/forms/{formType}/{formSlug}/payments. Renamed to auto-generated operationId: organizationsOrganizationSlugFormsFormTypeFormSlugPaymentsGet
+[WARNING] Empty operationId found for path: get /organizations/{organizationSlug}/payments. Renamed to auto-generated operationId: organizationsOrganizationSlugPaymentsGet
+[WARNING] Empty operationId found for path: get /tags/{tagName}. Renamed to auto-generated operationId: tagsTagNameGet
+[WARNING] Empty operationId found for path: get /users/me/organizations. Renamed to auto-generated operationId: usersMeOrganizationsGet
+[WARNING] Empty operationId found for path: get /values/form/{formType}/types. Renamed to auto-generated operationId: valuesFormFormTypeTypesGet
+[WARNING] Empty operationId found for path: get /values/organization/categories. Renamed to auto-generated operationId: valuesOrganizationCategoriesGet
+[WARNING] Empty operationId found for path: get /values/tags. Renamed to auto-generated operationId: valuesTagsGet
+[WARNING] Empty operationId found for path: get /values/company-legal-status. Renamed to auto-generated operationId: valuesCompanyLegalStatusGet
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\api\CheckoutIntentsManagementApi.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\api\DirectoryApi.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\api\FormsApi.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\api\OrdersItemsApi.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\api\OrganizationCashOutManagementApi.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\api\OrganizationVisualisationApi.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\api\PartnerManagementApi.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\api\PaymentsManagementApi.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\api\TagsApi.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\api\UsersApi.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\src\main\java\org\wild\corp\adhesion\client\helloasso\api\ValuesDefinitionsApi.java
+[INFO] Skipping generation of Webhooks.
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\pom.xml
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\README.md
+[INFO] Skipped C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\.openapi-generator-ignore (Skipped by supportingFiles options supplied by user.)
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\.openapi-generator\VERSION
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\clientHelloasso\.openapi-generator\FILES
+############################################################################################
+# Thanks for using OpenAPI Generator.                                                      #
+# We appreciate your support! Please consider donating to help us maintain this project.   #
+# https://opencollective.com/openapi_generator/donate                                      #
+############################################################################################
+[INFO] 
+[INFO] --- openapi-generator:7.25.0:generate (VacancesScolaire) @ app_adhesion ---
+[INFO] Generating with dryRun=false
+[INFO] OpenAPI Generator: spring (server)
+[INFO] Generator 'spring' is considered stable.
+[INFO] ----------------------------------
+[INFO] Environment variable JAVA_POST_PROCESS_FILE not defined so the Java code may not be properly formatted. To define it, try 'export JAVA_POST_PROCESS_FILE="/usr/local/bin/clang-format -i"' (Linux/Mac)
+[INFO] NOTE: To enable file post-processing, 'enablePostProcessFile' must be set to `true` (--enable-post-process-file for CLI).
+[INFO] Invoker Package Name, originally not set, is now derived from api package name: org.wild.corp.adhesion.client.vacances
+[INFO] Defaulting includeHttpRequestContext to 'false' for blocking
+[WARNING] 'generateJsonIncludeAnnotations' is not set. Defaulting to false: no @JsonInclude annotations are generated and property inclusion is governed entirely by the global ObjectMapper (7.23.0-equivalent output). Set 'generateJsonIncludeAnnotations=false' to keep this behavior and silence this warning, or 'generateJsonIncludeAnnotations=true' to emit spec-honest @JsonInclude annotations (see 'optionalNonNullPropertyJsonInclude'). Note: before 7.24.0 released output had no field-level @JsonInclude, so leaving this unset preserves that behavior.
+[WARNING] 'generateJsonSetterNullsAnnotations' is not set. Defaulting to false: no @JsonSetter(nulls = ...) annotations are generated and deserialization null-handling is governed entirely by the global ObjectMapper (7.23.0-equivalent output). Set 'generateJsonSetterNullsAnnotations=false' to keep this behavior and silence this warning, or 'generateJsonSetterNullsAnnotations=true' to emit @JsonSetter(nulls = ...) on optional non-nullable fields.
+[WARNING] Failed to get the schema name: null
+[INFO] Inline schema created as getRecords_400_response. To have complete control of the model name, set the `title` field or use the modelNameMapping option (e.g. --model-name-mappings getRecords_400_response=NewModel,ModelA=NewModelA in CLI) or inlineSchemaNameMapping option (--inline-schema-name-mappings getRecords_400_response=NewModel,ModelA=NewModelA in CLI).
+[INFO] Inline schema created as getRecords_429_response. To have complete control of the model name, set the `title` field or use the modelNameMapping option (e.g. --model-name-mappings getRecords_429_response=NewModel,ModelA=NewModelA in CLI) or inlineSchemaNameMapping option (--inline-schema-name-mappings getRecords_429_response=NewModel,ModelA=NewModelA in CLI).
+[INFO] Inline schema created as dataset_attachments_inner. To have complete control of the model name, set the `title` field or use the modelNameMapping option (e.g. --model-name-mappings dataset_attachments_inner=NewModel,ModelA=NewModelA in CLI) or inlineSchemaNameMapping option (--inline-schema-name-mappings dataset_attachments_inner=NewModel,ModelA=NewModelA in CLI).
+[INFO] Inline schema created as dataset_fields_inner. To have complete control of the model name, set the `title` field or use the modelNameMapping option (e.g. --model-name-mappings dataset_fields_inner=NewModel,ModelA=NewModelA in CLI) or inlineSchemaNameMapping option (--inline-schema-name-mappings dataset_fields_inner=NewModel,ModelA=NewModelA in CLI).
+[INFO] Inline schema created as attachment_metas. To have complete control of the model name, set the `title` field or use the modelNameMapping option (e.g. --model-name-mappings attachment_metas=NewModel,ModelA=NewModelA in CLI) or inlineSchemaNameMapping option (--inline-schema-name-mappings attachment_metas=NewModel,ModelA=NewModelA in CLI).
+[INFO] Processing operation getRecords
+[INFO] Processing operation getRecord
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\vacances\src\main\java\org\wild\corp\adhesion\client\vacances\model\Attachment.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\vacances\src\main\java\org\wild\corp\adhesion\client\vacances\model\AttachmentMetas.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\vacances\src\main\java\org\wild\corp\adhesion\client\vacances\model\Dataset.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\vacances\src\main\java\org\wild\corp\adhesion\client\vacances\model\DatasetAttachmentsInner.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\vacances\src\main\java\org\wild\corp\adhesion\client\vacances\model\DatasetFieldsInner.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\vacances\src\main\java\org\wild\corp\adhesion\client\vacances\model\Datasets.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\vacances\src\main\java\org\wild\corp\adhesion\client\vacances\model\EnumFormatDatasets.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\vacances\src\main\java\org\wild\corp\adhesion\client\vacances\model\FacetEnumeration.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\vacances\src\main\java\org\wild\corp\adhesion\client\vacances\model\FacetValueEnumeration.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\vacances\src\main\java\org\wild\corp\adhesion\client\vacances\model\GetRecords400Response.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\vacances\src\main\java\org\wild\corp\adhesion\client\vacances\model\GetRecords429Response.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\vacances\src\main\java\org\wild\corp\adhesion\client\vacances\model\Links.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\vacances\src\main\java\org\wild\corp\adhesion\client\vacances\model\Record.java
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\vacances\src\main\java\org\wild\corp\adhesion\client\vacances\model\Records.java
+[INFO] Found one or more content media type(s) with examples in response, but none was application/json. Examples can currently only be generated for application/json media type.
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\vacances\src\main\java\org\wild\corp\adhesion\client\vacances\api\DatasetApi.java
+[INFO] Skipping generation of Webhooks.
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\vacances\pom.xml
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\vacances\README.md
+[INFO] Skipped C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\vacances\.openapi-generator-ignore (Skipped by supportingFiles options supplied by user.)
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\vacances\.openapi-generator\VERSION
+[INFO] writing file C:\Users\brice\IdeaProjects\Adhesion\app\target\generated-sources\vacances\.openapi-generator\FILES
+############################################################################################
+# Thanks for using OpenAPI Generator.                                                      #
+# We appreciate your support! Please consider donating to help us maintain this project.   #
+# https://opencollective.com/openapi_generator/donate                                      #
+############################################################################################
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ app_adhesion ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 7 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ app_adhesion ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 273 source files with javac [debug parameters release 21] to target\classes
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/ReportingActivite.java:[18,18] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/ReportingActivite.java:[20,18] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/ReportingActivite.java:[22,18] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/ReportingActivite.java:[24,18] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/ReportingActivite.java:[26,18] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/ReportingActivite.java:[28,18] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/AdhesionLite.java:[50,28] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/AdhesionLite.java:[52,26] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/AdhesionLite.java:[58,32] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/AdhesionLite.java:[60,32] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/GoogleAgenda.java:[39,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/ComptaActivite.java:[15,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/ComptaActivite.java:[17,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/ComptaActivite.java:[19,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/ComptaActivite.java:[21,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/ComptaActivite.java:[23,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/ComptaActivite.java:[25,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/ComptaActivite.java:[27,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/ComptaActivite.java:[29,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/ComptaActivite.java:[31,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/ActiviteLite.java:[24,31] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/ReportingAdhesion.java:[15,18] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/ReportingAdhesion.java:[16,18] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/ReportingAdhesion.java:[17,18] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/resources/AdherentLite.java:[55,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/resources/AdherentLite.java:[57,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/resources/AdherentLite.java:[89,26] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/resources/AdherentLite.java:[97,32] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/brice/IdeaProjects/Adhesion/app/src/main/java/com/wild/corp/adhesion/models/resources/AdherentLite.java:[99,32] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[INFO] /C:/Users/brice/IdeaProjects/Adhesion/app/target/generated-sources/vacances/src/main/java/org/wild/corp/adhesion/client/vacances/api/DatasetApi.java: Some input files use or override a deprecated API.
+[INFO] /C:/Users/brice/IdeaProjects/Adhesion/app/target/generated-sources/vacances/src/main/java/org/wild/corp/adhesion/client/vacances/api/DatasetApi.java: Recompile with -Xlint:deprecation for details.
+[INFO] 
+[INFO] --- resources:3.5.0:testResources (default-testResources) @ app_adhesion ---
+[INFO] skip non existing resourceDirectory C:\Users\brice\IdeaProjects\Adhesion\app\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.15.0:testCompile (default-testCompile) @ app_adhesion ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 30 source files with javac [debug parameters release 21] to target\test-classes
+[INFO] /C:/Users/brice/IdeaProjects/Adhesion/app/src/test/java/com/wild/corp/adhesion/services/ActiviteServicesTest.java: Some input files use unchecked or unsafe operations.
+[INFO] /C:/Users/brice/IdeaProjects/Adhesion/app/src/test/java/com/wild/corp/adhesion/services/ActiviteServicesTest.java: Recompile with -Xlint:unchecked for details.
+[INFO] 
+[INFO] --- surefire:3.5.6:test (default-test) @ app_adhesion ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.wild.corp.adhesion.controllers.MaterielControllerTest
+23:18:38.814 [main] INFO net.fortuna.ical4j.util.Configurator -- ical4j.properties not found.
+SLF4J(W): A number (1) of logging calls during the initialization phase have been intercepted and are
+SLF4J(W): now being replayed. These are subject to the filtering rules of the underlying logging system.
+SLF4J(W): See also https://www.slf4j.org/codes.html#replay
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.1.1)
+
+2026-10-10T23:18:39.277+02:00  INFO 26476 --- [           main] c.w.c.a.c.MaterielControllerTest         : Starting MaterielControllerTest using Java 21.0.11 with PID 26476 (started by brice in C:\Users\brice\IdeaProjects\Adhesion\app)
+2026-10-10T23:18:39.278+02:00  INFO 26476 --- [           main] c.w.c.a.c.MaterielControllerTest         : No active profile set, falling back to 1 default profile: "default"
+Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+WARNING: A Java agent has been loaded dynamically (C:\Users\brice\.m2\repository\net\bytebuddy\byte-buddy-agent\1.18.11\byte-buddy-agent-1.18.11.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+2026-10-10T23:18:40.649+02:00  INFO 26476 --- [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-10-10T23:18:40.649+02:00  INFO 26476 --- [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-10-10T23:18:40.651+02:00  INFO 26476 --- [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 2 ms
+2026-10-10T23:18:40.671+02:00  INFO 26476 --- [           main] c.w.c.a.c.MaterielControllerTest         : Started MaterielControllerTest in 1.657 seconds (process running for 2.544)
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.344 s -- in com.wild.corp.adhesion.controllers.MaterielControllerTest
+[INFO] Running com.wild.corp.adhesion.security.ControllerAuthorizationArchitectureTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.176 s -- in com.wild.corp.adhesion.security.ControllerAuthorizationArchitectureTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  26.979 s
+[INFO] Finished at: 2026-10-10T23:18:41+02:00
+[INFO] ------------------------------------------------------------------------

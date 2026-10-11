@@ -1,0 +1,42 @@
+npm notice run asso@1.0.0 test:ci
+npm notice run node scripts/angular-cli.cjs test --watch=false --browsers=ChromeHeadless --include=src/app/app.component.spec.ts
+> Building...
+√ Building...
+Initial chunk files            | Names                       |  Raw size
+chunk-D3RHXASC.js              | -                           |   2.70 MB | 
+polyfills.js                   | polyfills                   |   1.09 MB | 
+spec-app-app.component.spec.js | spec-app-app.component.spec | 656.71 kB | 
+styles.css                     | styles                      | 280.73 kB | 
+chunk-TFYYYQB5.js              | -                           |  71.44 kB | 
+test_main.js                   | test_main                   |  26.57 kB | 
+jasmine-cleanup-0.js           | jasmine-cleanup-0           | 446 bytes | 
+jasmine-cleanup-1.js           | jasmine-cleanup-1           | 125 bytes | 
+
+                               | Initial total               |   4.82 MB
+
+Application bundle generation complete. [3.525 seconds] - 2026-10-10T11:53:00.737Z
+
+10 10 2026 13:53:01.002:INFO [karma-server]: Karma v6.4.4 server started at http://localhost:9876/
+10 10 2026 13:53:01.003:INFO [launcher]: Launching browsers ChromeHeadless with concurrency unlimited
+10 10 2026 13:53:01.014:INFO [launcher]: Starting browser ChromeHeadless
+10 10 2026 13:53:01.323:INFO [Chrome Headless 155.0.0.0 (Windows 10)]: Connected on socket NAHhJfq5cK1a_ScyAAAA with id 29655256
+Chrome Headless 155.0.0.0 (Windows 10): Executed 0 of 17[32m SUCCESS[39m (0 secs / 0 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 1 of 17[32m SUCCESS[39m (0 secs / 0.101 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 2 of 17[32m SUCCESS[39m (0 secs / 0.112 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 3 of 17[32m SUCCESS[39m (0 secs / 0.121 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 4 of 17[32m SUCCESS[39m (0 secs / 0.128 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 5 of 17[32m SUCCESS[39m (0 secs / 0.135 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 6 of 17[32m SUCCESS[39m (0 secs / 0.143 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 7 of 17[32m SUCCESS[39m (0 secs / 0.148 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 8 of 17[32m SUCCESS[39m (0 secs / 0.158 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 9 of 17[32m SUCCESS[39m (0 secs / 0.164 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 10 of 17[32m SUCCESS[39m (0 secs / 0.169 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 11 of 17[32m SUCCESS[39m (0 secs / 0.171 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 12 of 17[32m SUCCESS[39m (0 secs / 0.172 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 13 of 17[32m SUCCESS[39m (0 secs / 0.174 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 14 of 17[32m SUCCESS[39m (0 secs / 0.176 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 15 of 17[32m SUCCESS[39m (0 secs / 0.177 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 16 of 17[32m SUCCESS[39m (0 secs / 0.178 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 17 of 17[32m SUCCESS[39m (0 secs / 0.179 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 17 of 17[32m SUCCESS[39m (0.187 secs / 0.179 secs)
+[32mTOTAL: 17 SUCCESS[39m

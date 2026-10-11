@@ -1,0 +1,44 @@
+npm notice run asso@1.0.0 build
+npm notice run ng build --configuration development
+> Building...
+√ Building...
+Initial chunk files | Names                 |  Raw size
+chunk-KQDOPQCK.js   | -                     | 962.62 kB | 
+chunk-VYPE5OVE.js   | -                     | 437.95 kB | 
+styles.css          | styles                | 280.33 kB | 
+chunk-YPPNHIQZ.js   | -                     | 259.46 kB | 
+main.js             | main                  | 221.00 kB | 
+chunk-H5QQTLPU.js   | -                     | 218.10 kB | 
+chunk-IZT73E22.js   | -                     | 210.19 kB | 
+chunk-TZATPQTK.js   | -                     | 139.23 kB | 
+polyfills.js        | polyfills             |  94.56 kB | 
+chunk-CMKDTE23.js   | -                     |   6.91 kB | 
+chunk-3CSXIB76.js   | -                     |   2.78 kB | 
+chunk-IG2QQDR7.js   | -                     |   2.48 kB | 
+chunk-HFVMXAKW.js   | -                     |   1.84 kB | 
+chunk-SUDI5ZWV.js   | -                     |   1.31 kB | 
+
+                    | Initial total         |   2.84 MB
+
+Lazy chunk files    | Names                 |  Raw size
+chunk-L476LE4I.js   | board-user-component  |   2.20 MB | 
+chunk-6QWH6HBF.js   | reporting-component   |   1.02 MB | 
+chunk-WE5ISFZM.js   | mailling-component    | 466.00 kB | 
+chunk-MDFO2Q6L.js   | -                     | 207.16 kB | 
+chunk-QVQ6VVE7.js   | activites-component   | 173.06 kB | 
+chunk-NRQ3EOZL.js   | board-admin-component | 107.77 kB | 
+chunk-7VI5E5JM.js   | adhesions-component   |  94.83 kB | 
+chunk-WWTQAW4M.js   | materiel-component    |  88.43 kB | 
+chunk-2NWBIPGV.js   | login-component       |  73.29 kB | 
+chunk-SEAHBUEZ.js   | -                     |  66.86 kB | 
+chunk-L3PNDGAC.js   | compta-component      |  60.95 kB | 
+chunk-VMAEGAQE.js   | adherents-component   |  53.87 kB | 
+chunk-BAUEPMWA.js   | profs-component       |  30.07 kB | 
+chunk-FCJUVXWO.js   | -                     |  22.21 kB | 
+chunk-AH3WKAHK.js   | -                     |  19.60 kB | 
+...and 14 more lazy chunks files. Use "--verbose" to show all the files.
+
+Application bundle generation complete. [3.893 seconds] - 2026-10-10T21:40:49.827Z
+
+Output location: C:\Users\brice\IdeaProjects\Adhesion\client\dist
+

@@ -1,0 +1,44 @@
+npm notice run asso@1.0.0 build:production
+npm notice run node scripts/angular-cli.cjs build --base-href / --configuration=production
+> Building...
+√ Building...
+Initial chunk files   | Names                     |  Raw size | Estimated transfer size
+main-D2FZ63CT.js      | main                      | 274.49 kB |                66.44 kB
+styles-KM75Y3ZB.css   | styles                    | 233.61 kB |                23.18 kB
+chunk-DL9RZb6z.js     | -                         | 192.36 kB |                57.04 kB
+chunk-BIyH9ajn.js     | -                         | 147.78 kB |                36.29 kB
+chunk-DkVHy0Vi.js     | -                         |  52.81 kB |                14.40 kB
+chunk-CqSW3FWr.js     | -                         |  51.17 kB |                10.49 kB
+chunk-5_OBZWLe.js     | -                         |  49.97 kB |                14.57 kB
+polyfills-OMGXLRKZ.js | polyfills                 |  36.38 kB |                11.86 kB
+chunk-B29rO0NZ.js     | -                         |  13.60 kB |                 4.31 kB
+chunk-CCFMR5oO.js     | -                         |   1.48 kB |               464 bytes
+chunk-DyLRnzFf.js     | -                         | 216 bytes |               216 bytes
+
+                      | Initial total             |   1.05 MB |               239.26 kB
+
+Lazy chunk files      | Names                     |  Raw size | Estimated transfer size
+chunk-Cs--hdRq.js     | profil-component          |   1.01 MB |               132.19 kB
+chunk-IKaeekXr.js     | reporting-component       | 498.96 kB |               143.27 kB
+chunk-DeD_toVP.js     | mailling-component        | 216.53 kB |                48.87 kB
+chunk-rwaXuSRN.js     | shop-management-component | 101.24 kB |                20.12 kB
+chunk-WJXaIbMF.js     | activites-component       |  69.80 kB |                14.45 kB
+chunk-DpZsqsd_.js     | publicites-component      |  66.19 kB |                15.07 kB
+chunk-lNxPxB-O.js     | board-admin-component     |  50.58 kB |                10.50 kB
+chunk-DxOisyTn.js     | -                         |  39.29 kB |                 9.41 kB
+chunk-CBsb6IAI.js     | chat-component            |  38.99 kB |                 9.32 kB
+chunk-DPDUrpgm.js     | adhesions-component       |  38.73 kB |                 8.98 kB
+chunk-PAyJC8M_.js     | login-component           |  22.75 kB |                 6.21 kB
+chunk-CxUiDBpb.js     | compta-component          |  21.45 kB |                 6.35 kB
+chunk-D725U_2k.js     | agenda-component          |  21.43 kB |                 5.87 kB
+chunk-M33uw3wV.js     | adherents-component       |  20.95 kB |                 6.22 kB
+chunk-iQmeOZjj.js     | -                         |  18.27 kB |                 5.41 kB
+...and 28 more lazy chunks files. Use "--verbose" to show all the files.
+
+Application bundle generation complete. [7.374 seconds] - 2026-10-09T15:37:56.531Z
+
+▲ [WARNING] bundle initial exceeded maximum budget. Budget 600.00 kB was not met by 453.86 kB with a total of 1.05 MB.
+
+
+Output location: C:\Users\brice\IdeaProjects\Adhesion\client\dist
+

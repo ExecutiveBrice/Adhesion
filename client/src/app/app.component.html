@@ -65,6 +65,11 @@
                   <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="reporting">Reporting</a>
                 </li>
               }
+              @if (showAdmin || showMembreCA || showLogistique) {
+                <li class="nav-item" (click)="isCollapsed = true">
+                  <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="materiel">Matériel</a>
+                </li>
+              }
               @if (showProf) {
                 <li class="nav-item" (click)="isCollapsed = true">
                   <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="profs">Mes groupes</a>

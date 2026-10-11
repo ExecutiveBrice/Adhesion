@@ -1,0 +1,38 @@
+<div class="modal-header">
+  <h2 id="modifier-materiel-title" class="modal-title h5">Modifier le matériel</h2>
+  <button type="button" class="btn-close" aria-label="Fermer" [disabled]="enregistrement" (click)="activeModal.dismiss()"></button>
+</div>
+<form (ngSubmit)="enregistrer()" #form="ngForm">
+  <div class="modal-body">
+    @if (confirmationSuppression) {
+      <p>Supprimer définitivement <strong>{{objet.nom}}</strong> et son journal d’emprunt ?</p>
+      <p class="text-body-secondary mb-0">Cette action est irréversible.</p>
+    } @else {
+      <div class="mb-3">
+        <label class="form-label" for="modifierMaterielNom">Nom du matériel</label>
+        <input id="modifierMaterielNom" name="nom" class="form-control" type="text" maxlength="150" required [(ngModel)]="nom" [disabled]="enregistrement" ngbAutofocus>
+      </div>
+      <div>
+        <label class="form-label" for="modifierMaterielZonage">Zonage du stock</label>
+        <select id="modifierMaterielZonage" name="zonageId" class="form-select" required [(ngModel)]="zonageId" [disabled]="enregistrement">
+          <option [ngValue]="null">Choisir un zonage</option>
+          @for (zone of zonages; track zone.id) { <option [ngValue]="zone.id">{{zone.nom}}</option> }
+        </select>
+      </div>
+      @if (objet.emprunteurId !== null) {
+        <p class="text-body-secondary mt-3 mb-0">Ce matériel est emprunté. Il doit être restitué avant de pouvoir être supprimé.</p>
+      }
+    }
+    @if (erreur) { <div class="alert alert-danger mt-3 mb-0" role="alert">{{erreur}}</div> }
+  </div>
+  <div class="modal-footer">
+    @if (confirmationSuppression) {
+      <button type="button" class="btn btn-outline-secondary" [disabled]="enregistrement" (click)="confirmationSuppression = false; erreur = ''">Retour</button>
+      <button type="button" class="btn btn-danger" [disabled]="enregistrement" (click)="supprimer()">{{enregistrement ? 'Suppression…' : 'Confirmer la suppression'}}</button>
+    } @else {
+      <button type="button" class="btn btn-outline-danger me-auto" [disabled]="enregistrement || objet.emprunteurId !== null" (click)="confirmationSuppression = true; erreur = ''">Supprimer</button>
+      <button type="button" class="btn btn-outline-secondary" [disabled]="enregistrement" (click)="activeModal.dismiss()">Annuler</button>
+      <button type="submit" class="btn btn-primary" [disabled]="enregistrement || form.invalid || !nom.trim() || zonages.length === 0">{{enregistrement ? 'Enregistrement…' : 'Enregistrer'}}</button>
+    }
+  </div>
+</form>

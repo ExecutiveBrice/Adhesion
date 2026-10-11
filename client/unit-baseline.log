@@ -1,0 +1,169 @@
+npm notice run asso@1.0.0 test
+npm notice run node scripts/angular-cli.cjs test --watch=false --browsers=ChromeHeadless
+> Building...
+√ Building...
+Initial chunk files                                                       | Names                                                                  |  Raw size
+chunk-NMAIHFCD.js                                                         | -                                                                      |   2.05 MB | 
+chunk-HFOPB3NT.js                                                         | -                                                                      |   1.20 MB | 
+chunk-ORNJFFHY.js                                                         | -                                                                      |   1.17 MB | 
+polyfills.js                                                              | polyfills                                                              |   1.09 MB | 
+chunk-NS5ZPY5U.js                                                         | -                                                                      | 369.37 kB | 
+styles.css                                                                | styles                                                                 | 280.73 kB | 
+chunk-F7T4UW5P.js                                                         | -                                                                      | 254.09 kB | 
+chunk-N3BLMVLM.js                                                         | -                                                                      | 243.30 kB | 
+chunk-7Z4DZNTA.js                                                         | -                                                                      | 188.24 kB | 
+chunk-BZM3XNLI.js                                                         | -                                                                      | 185.93 kB | 
+chunk-IC5FZ4H4.js                                                         | -                                                                      | 107.98 kB | 
+chunk-FL3XF6QP.js                                                         | -                                                                      | 101.03 kB | 
+chunk-6CJHDKYW.js                                                         | -                                                                      |  90.75 kB | 
+chunk-TFYYYQB5.js                                                         | -                                                                      |  71.44 kB | 
+chunk-NKSMGSXH.js                                                         | -                                                                      |  56.04 kB | 
+chunk-4AVPBINV.js                                                         | -                                                                      |  54.45 kB | 
+chunk-UQL2YIPU.js                                                         | -                                                                      |  54.44 kB | 
+chunk-DITZND4Q.js                                                         | -                                                                      |  53.77 kB | 
+spec-app-app.component.spec.js                                            | spec-app-app.component.spec                                            |  47.17 kB | 
+chunk-CYUKT57B.js                                                         | -                                                                      |  46.71 kB | 
+chunk-O4O5R4PK.js                                                         | -                                                                      |  46.01 kB | 
+chunk-BJJUKVGJ.js                                                         | -                                                                      |  41.36 kB | 
+chunk-O2C3W7DJ.js                                                         | -                                                                      |  35.42 kB | 
+spec-app-page-compta-compta.component.spec.js                             | spec-app-page-compta-compta.component.spec                             |  32.66 kB | 
+spec-app-page-agenda-agenda.component.spec.js                             | spec-app-page-agenda-agenda.component.spec                             |  29.20 kB | 
+spec-app-template-calendrier-calendrier.component.spec.js                 | spec-app-template-calendrier-calendrier.component.spec                 |  28.46 kB | 
+chunk-SXK6HWS5.js                                                         | -                                                                      |  27.37 kB | 
+chunk-LU7JJZ4K.js                                                         | -                                                                      |  26.89 kB | 
+chunk-6WLZCYTE.js                                                         | -                                                                      |  24.03 kB | 
+chunk-SKZJEOX3.js                                                         | -                                                                      |  23.14 kB | 
+chunk-23VHK6ON.js                                                         | -                                                                      |  23.00 kB | 
+chunk-YC4CKXDG.js                                                         | -                                                                      |  21.10 kB | 
+chunk-IN2FLM34.js                                                         | -                                                                      |  21.01 kB | 
+chunk-DFNCP6GX.js                                                         | -                                                                      |  19.89 kB | 
+spec-app-shop-components-shop-stock-overview.component.spec.js            | spec-app-shop-components-shop-stock-overview.component.spec            |  19.18 kB | 
+spec-app-shop-components-shop-admin-order-card.component.spec.js          | spec-app-shop-components-shop-admin-order-card.component.spec          |  14.56 kB | 
+spec-app-template-modal-activite-modal.activite.spec.js                   | spec-app-template-modal-activite-modal.activite.spec                   |  14.45 kB | 
+spec-app-page-chat-chat.component.spec.js                                 | spec-app-page-chat-chat.component.spec                                 |  14.24 kB | 
+spec-app-page-profil-profil-permissions.component.spec.js                 | spec-app-page-profil-profil-permissions.component.spec                 |  12.29 kB | 
+spec-app-page-publicites-publicites.component.spec.js                     | spec-app-page-publicites-publicites.component.spec                     |  11.95 kB | 
+chunk-I5F3QQQG.js                                                         | -                                                                      |  11.60 kB | 
+chunk-N6KJKCUJ.js                                                         | -                                                                      |  10.99 kB | 
+chunk-YDW3OKNY.js                                                         | -                                                                      |  10.79 kB | 
+spec-app-template-evenement-detail-evenement-detail.component.spec.js     | spec-app-template-evenement-detail-evenement-detail.component.spec     |  10.78 kB | 
+chunk-VZC4NVN7.js                                                         | -                                                                      |  10.68 kB | 
+chunk-SHVZB3HQ.js                                                         | -                                                                      |  10.36 kB | 
+chunk-5X2SM65G.js                                                         | -                                                                      |   9.90 kB | 
+chunk-X7MMFB5Q.js                                                         | -                                                                      |   9.79 kB | 
+chunk-CX73LEPR.js                                                         | -                                                                      |   9.75 kB | 
+chunk-DMV3UMHZ.js                                                         | -                                                                      |   9.39 kB | 
+test_main.js                                                              | test_main                                                              |   9.18 kB | 
+chunk-4I5N7RCR.js                                                         | -                                                                      |   8.62 kB | 
+chunk-AIEGIVFG.js                                                         | -                                                                      |   8.46 kB | 
+spec-app-page-profil-profil.component.spec.js                             | spec-app-page-profil-profil.component.spec                             |   8.46 kB | 
+chunk-KHA3E724.js                                                         | -                                                                      |   8.16 kB | 
+spec-app-_helpers-auth.interceptor.spec.js                                | spec-app-_helpers-auth.interceptor.spec                                |   8.05 kB | 
+chunk-MEWS7ZHX.js                                                         | -                                                                      |   7.66 kB | 
+chunk-SYHUJJK7.js                                                         | -                                                                      |   7.20 kB | 
+spec-app-_services-auth.service.spec.js                                   | spec-app-_services-auth.service.spec                                   |   7.07 kB | 
+chunk-TT25OOIG.js                                                         | -                                                                      |   7.01 kB | 
+chunk-3RCFDXU7.js                                                         | -                                                                      |   6.52 kB | 
+spec-app-shop-pages-shop-management.component.spec.js                     | spec-app-shop-pages-shop-management.component.spec                     |   6.51 kB | 
+chunk-LWHNRPME.js                                                         | -                                                                      |   6.34 kB | 
+chunk-LBF2ZCVX.js                                                         | -                                                                      |   5.78 kB | 
+chunk-DSPAICUU.js                                                         | -                                                                      |   5.58 kB | 
+chunk-IT54YE5V.js                                                         | -                                                                      |   5.47 kB | 
+chunk-TNP5H265.js                                                         | -                                                                      |   5.20 kB | 
+chunk-UBJO674P.js                                                         | -                                                                      |   5.04 kB | 
+chunk-OOCM5VPA.js                                                         | -                                                                      |   4.59 kB | 
+spec-app-template-paiement-editor-paiement-editor.component.spec.js       | spec-app-template-paiement-editor-paiement-editor.component.spec       |   4.47 kB | 
+chunk-R45K3LSV.js                                                         | -                                                                      |   4.04 kB | 
+chunk-EDZ2SCUR.js                                                         | -                                                                      |   3.91 kB | 
+chunk-4RPXUMJW.js                                                         | -                                                                      |   3.90 kB | 
+chunk-QL7MSR5X.js                                                         | -                                                                      |   3.88 kB | 
+spec-app-page-publicites-publicite-carousel.component.spec.js             | spec-app-page-publicites-publicite-carousel.component.spec             |   3.81 kB | 
+spec-app-page-board-admin-board-admin.component.spec.js                   | spec-app-page-board-admin-board-admin.component.spec                   |   3.78 kB | 
+spec-app-shop-pages-shop-orders.component.spec.js                         | spec-app-shop-pages-shop-orders.component.spec                         |   3.77 kB | 
+spec-app-_services-compta.service.spec.js                                 | spec-app-_services-compta.service.spec                                 |   3.77 kB | 
+chunk-CFC7Z74L.js                                                         | -                                                                      |   3.76 kB | 
+spec-app-shop-pages-shop-payment-status.component.spec.js                 | spec-app-shop-pages-shop-payment-status.component.spec                 |   3.61 kB | 
+spec-app-page-login-login.component.spec.js                               | spec-app-page-login-login.component.spec                               |   3.37 kB | 
+spec-app-shop-models-shop-order-availability.spec.js                      | spec-app-shop-models-shop-order-availability.spec                      |   3.35 kB | 
+spec-app-shop-components-shop-product-card.component.spec.js              | spec-app-shop-components-shop-product-card.component.spec              |   3.32 kB | 
+chunk-UZYA4Z7D.js                                                         | -                                                                      |   3.25 kB | 
+spec-app-page-chat-chat-auth.guard.spec.js                                | spec-app-page-chat-chat-auth.guard.spec                                |   3.22 kB | 
+chunk-4WXK2BPA.js                                                         | -                                                                      |   3.14 kB | 
+spec-app-shop-pages-shop-payment-navigation.spec.js                       | spec-app-shop-pages-shop-payment-navigation.spec                       |   3.13 kB | 
+chunk-N5RLDWW2.js                                                         | -                                                                      |   3.00 kB | 
+chunk-CNTEAYMH.js                                                         | -                                                                      |   2.97 kB | 
+chunk-SUH4BVWP.js                                                         | -                                                                      |   2.95 kB | 
+chunk-IE7J7IYM.js                                                         | -                                                                      |   2.85 kB | 
+spec-app-_services-pwa.service.spec.js                                    | spec-app-_services-pwa.service.spec                                    |   2.84 kB | 
+spec-app-shop-components-shop-cart-link.component.spec.js                 | spec-app-shop-components-shop-cart-link.component.spec                 |   2.84 kB | 
+spec-app-template-icone-tache-select-icone-tache-select.component.spec.js | spec-app-template-icone-tache-select-icone-tache-select.component.spec |   2.79 kB | 
+spec-app-shop-services-cart.store.spec.js                                 | spec-app-shop-services-cart.store.spec                                 |   2.75 kB | 
+chunk-PKRQTSBG.js                                                         | -                                                                      |   2.72 kB | 
+chunk-NOH4QM2O.js                                                         | -                                                                      |   2.66 kB | 
+spec-app-_helpers-section-listing-access.guard.spec.js                    | spec-app-_helpers-section-listing-access.guard.spec                    |   2.62 kB | 
+spec-app-_helpers-member-access.guard.spec.js                             | spec-app-_helpers-member-access.guard.spec                             |   2.59 kB | 
+chunk-HLMK5PYE.js                                                         | -                                                                      |   2.54 kB | 
+chunk-VQWTWXK4.js                                                         | -                                                                      |   2.17 kB | 
+spec-app-_services-chat.service.spec.js                                   | spec-app-_services-chat.service.spec                                   |   2.15 kB | 
+spec-app-shop-components-shop-payment-countdown.component.spec.js         | spec-app-shop-components-shop-payment-countdown.component.spec         |   2.05 kB | 
+spec-app-template-user-user.component.spec.js                             | spec-app-template-user-user.component.spec                             |   2.04 kB | 
+chunk-Y6DML3BM.js                                                         | -                                                                      |   1.85 kB | 
+spec-app-_services-adhesion.service.spec.js                               | spec-app-_services-adhesion.service.spec                               |   1.83 kB | 
+chunk-NEG22IBH.js                                                         | -                                                                      |   1.74 kB | 
+spec-app-shop-shop-auth.guard.spec.js                                     | spec-app-shop-shop-auth.guard.spec                                     |   1.69 kB | 
+chunk-L6MERPQD.js                                                         | -                                                                      |   1.59 kB | 
+chunk-ZUWJDFXJ.js                                                         | -                                                                      |   1.57 kB | 
+chunk-7CISO6BN.js                                                         | -                                                                      |   1.50 kB | 
+chunk-AX3D5BSG.js                                                         | -                                                                      |   1.33 kB | 
+chunk-TH4OOSPZ.js                                                         | -                                                                      |   1.27 kB | 
+chunk-7FBU6TCP.js                                                         | -                                                                      |   1.22 kB | 
+chunk-NF5DOISY.js                                                         | -                                                                      |   1.16 kB | 
+spec-app-_services-session-navigation.service.spec.js                     | spec-app-_services-session-navigation.service.spec                     |   1.14 kB | 
+chunk-UGKS5IVI.js                                                         | -                                                                      | 999 bytes | 
+chunk-5LZAUAZA.js                                                         | -                                                                      | 910 bytes | 
+chunk-NM7ITMLM.js                                                         | -                                                                      | 818 bytes | 
+jasmine-cleanup-0.js                                                      | jasmine-cleanup-0                                                      | 446 bytes | 
+chunk-ZKWDIQH6.js                                                         | -                                                                      | 441 bytes | 
+chunk-I77Q5HQL.js                                                         | -                                                                      | 426 bytes | 
+jasmine-cleanup-1.js                                                      | jasmine-cleanup-1                                                      | 125 bytes | 
+
+                                                                          | Initial total                                                          |   8.57 MB
+
+Lazy chunk files                                                          | Names                                                                  |  Raw size
+chunk-CU6PULKJ.js                                                         | reporting-component                                                    |   1.10 MB | 
+chunk-HECQLQI5.js                                                         | mailling-component                                                     | 387.94 kB | 
+chunk-GYTDYTTI.js                                                         | adhesions-component                                                    |  47.63 kB | 
+chunk-IFYM3TPE.js                                                         | adherents-component                                                    |  25.41 kB | 
+chunk-WZDB7DVS.js                                                         | activites-component                                                    |  24.59 kB | 
+chunk-HQEJ4EY6.js                                                         | -                                                                      |  11.40 kB | 
+chunk-B6T3HXJ3.js                                                         | profs-component                                                        |  11.23 kB | 
+chunk-PPNBVJ37.js                                                         | seances-secretariat-component                                          |   9.95 kB | 
+chunk-MZLGJZHN.js                                                         | shop-product-detail-component                                          |   8.02 kB | 
+chunk-A4SAKLKE.js                                                         | shop-order-conversation-component                                      |   8.02 kB | 
+chunk-7Q7X2DCI.js                                                         | shop-catalog-component                                                 |   7.62 kB | 
+chunk-TJBPRNRY.js                                                         | shop-cart-component                                                    |   7.34 kB | 
+chunk-4ZESHYQQ.js                                                         | seances-component                                                      |   7.25 kB | 
+chunk-FSNJJQMO.js                                                         | shop-checkout-component                                                |   5.87 kB | 
+chunk-3B4PRPMG.js                                                         | resetpassword-component                                                |   5.19 kB | 
+...and 14 more lazy chunks files. Use "--verbose" to show all the files.
+
+Application bundle generation complete. [4.428 seconds] - 2026-10-09T15:20:58.958Z
+
+09 10 2026 17:20:59.717:INFO [karma-server]: Karma v6.4.4 server started at http://localhost:9876/
+09 10 2026 17:20:59.718:INFO [launcher]: Launching browsers ChromeHeadless with concurrency unlimited
+09 10 2026 17:20:59.726:INFO [launcher]: Starting browser ChromeHeadless
+09 10 2026 17:20:59.880:ERROR [launcher]: Cannot start ChromeHeadless
+	
+09 10 2026 17:20:59.880:ERROR [launcher]: ChromeHeadless stdout: 
+09 10 2026 17:20:59.880:ERROR [launcher]: ChromeHeadless stderr: 
+09 10 2026 17:21:00.109:INFO [launcher]: Trying to start ChromeHeadless again (1/2).
+09 10 2026 17:21:00.207:ERROR [launcher]: Cannot start ChromeHeadless
+	
+09 10 2026 17:21:00.207:ERROR [launcher]: ChromeHeadless stdout: 
+09 10 2026 17:21:00.207:ERROR [launcher]: ChromeHeadless stderr: 
+09 10 2026 17:21:00.426:INFO [launcher]: Trying to start ChromeHeadless again (2/2).
+09 10 2026 17:21:00.514:ERROR [launcher]: Cannot start ChromeHeadless
+	
+09 10 2026 17:21:00.514:ERROR [launcher]: ChromeHeadless stdout: 
+09 10 2026 17:21:00.514:ERROR [launcher]: ChromeHeadless stderr: 
+09 10 2026 17:21:00.742:ERROR [launcher]: ChromeHeadless failed 2 times (cannot start). Giving up.

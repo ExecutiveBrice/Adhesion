@@ -1,12 +1,14 @@
 import { inject } from '@angular/core';
 import { Routes } from '@angular/router';
 import { TokenStorageService } from './_services/token-storage.service';
+import { materielGuard } from './_helpers/materiel.guard';
 
 const inscriptionTitle = () => inject(TokenStorageService).getUser().roles?.includes('ROLE_SECRETAIRE')
   ? 'Inscriptions manuelles'
   : 'Mes adhésions';
 
 export const routes: Routes = [
+  { path: 'materiel', title: 'Matériel', canActivate: [materielGuard], loadComponent: () => import('./page/materiel/materiel.component').then((m) => m.MaterielComponent) },
   { path: 'login', title: 'Connexion', loadComponent: () => import('./page/login/login.component').then((m) => m.LoginComponent) },
   { path: 'resetPassword/:token', title: 'Réinitialisation du mot de passe', loadComponent: () => import('./page/resetPassword/resetpassword.component').then((m) => m.ResetPasswordComponent) },
   { path: 'inscription/:tribuUuid', title: inscriptionTitle, loadComponent: () => import('./page/board-user/board-user.component').then((m) => m.BoardUserComponent) },

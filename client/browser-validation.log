@@ -1,0 +1,32 @@
+npm notice run asso@1.0.0 test:browser
+npm notice run playwright test
+[WebServer] (node:14280) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:14280) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 7 tests using 7 workers
+
+(node:17280) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:10704) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29200) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:10732) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:24960) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:33176) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15868) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 6 [chromium] › tests\browser\critical-journeys.spec.ts:65:5 › SHOP-003: un retour navigateur ne confirme pas un paiement en attente (2.6s)
+  ok 5 [chromium] › tests\browser\critical-journeys.spec.ts:13:5 › ACCESS-002: le référent consulte ses adhésions sans actions de secrétariat (2.6s)
+  ok 3 [chromium] › tests\browser\critical-journeys.spec.ts:73:5 › SHOP-003: la confirmation du serveur ouvre la page de succès (2.7s)
+  ok 1 [chromium] › tests\browser\critical-journeys.spec.ts:3:5 › Connexion: une session anonyme est redirigée puis peut se connecter (2.9s)
+  ok 2 [chromium] › tests\browser\critical-journeys.spec.ts:26:5 › Accès: un membre sans section ne peut pas ouvrir la liste gérée (2.9s)
+  ok 4 [chromium] › tests\browser\critical-journeys.spec.ts:52:5 › Commande: un échec de création conserve le panier et permet de réessayer (3.2s)
+  ok 7 [chromium] › tests\browser\critical-journeys.spec.ts:33:5 › SHOP-001: du catalogue à la commande, le panier est vidé après création (3.6s)
+
+  7 passed (10.4s)

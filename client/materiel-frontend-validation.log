@@ -1,0 +1,71 @@
+npm notice run asso@1.0.0 test
+npm notice run ng test --watch=false --browsers=ChromeHeadless --include=src/app/page/materiel/*.spec.ts --include=src/app/_helpers/materiel.guard.spec.ts --include=src/app/template/*materiel*/*.spec.ts --include=src/app/template/zonages/*.spec.ts --include=src/app/app.component.spec.ts
+> Building...
+√ Building...
+Initial chunk files                                                                     | Names                                                                                |  Raw size
+chunk-AHQI75WG.js                                                                       | -                                                                                    |   2.65 MB | 
+polyfills.js                                                                            | polyfills                                                                            |   1.09 MB | 
+chunk-2V2RAE4K.js                                                                       | -                                                                                    | 447.83 kB | 
+styles.css                                                                              | styles                                                                               | 280.33 kB | 
+chunk-O24OPMVG.js                                                                       | -                                                                                    | 244.04 kB | 
+chunk-TZ2CHQJU.js                                                                       | -                                                                                    | 197.67 kB | 
+chunk-LWFCYWOL.js                                                                       | -                                                                                    | 187.36 kB | 
+chunk-5ZXNIS5S.js                                                                       | -                                                                                    | 108.56 kB | 
+chunk-TFYYYQB5.js                                                                       | -                                                                                    |  71.44 kB | 
+chunk-5LJCLBBU.js                                                                       | -                                                                                    |  53.67 kB | 
+spec-app-app.component.spec.js                                                          | spec-app-app.component.spec                                                          |  36.59 kB | 
+test_main.js                                                                            | test_main                                                                            |  26.61 kB | 
+spec-app-page-materiel-materiel.component.spec.js                                       | spec-app-page-materiel-materiel.component.spec                                       |  25.13 kB | 
+spec-app-template-zonages-zonages.component.spec.js                                     | spec-app-template-zonages-zonages.component.spec                                     |   9.00 kB | 
+chunk-PWHRESAX.js                                                                       | -                                                                                    |   5.42 kB | 
+chunk-MJ7YOAMQ.js                                                                       | -                                                                                    |   5.27 kB | 
+chunk-2G57ZMAA.js                                                                       | -                                                                                    |   4.88 kB | 
+spec-app-template-emprunt-materiel-modal-emprunt-materiel-modal.component.spec.js       | spec-app-template-emprunt-materiel-modal-emprunt-materiel-modal.component.spec       |   4.66 kB | 
+spec-app-template-materiel-modal-materiel-modal.component.spec.js                       | spec-app-template-materiel-modal-materiel-modal.component.spec                       |   3.13 kB | 
+spec-app-template-historique-materiel-modal-historique-materiel-modal.component.spec.js | spec-app-template-historique-materiel-modal-historique-materiel-modal.component.spec |   3.08 kB | 
+chunk-ZBMS2O2Q.js                                                                       | -                                                                                    |   2.94 kB | 
+spec-app-_helpers-materiel.guard.spec.js                                                | spec-app-_helpers-materiel.guard.spec                                                |   2.17 kB | 
+chunk-NVDAPPVN.js                                                                       | -                                                                                    |   1.40 kB | 
+jasmine-cleanup-0.js                                                                    | jasmine-cleanup-0                                                                    | 446 bytes | 
+jasmine-cleanup-1.js                                                                    | jasmine-cleanup-1                                                                    | 125 bytes | 
+
+                                                                                        | Initial total                                                                        |   5.46 MB
+
+Application bundle generation complete. [2.515 seconds] - 2026-10-10T21:31:26.364Z
+
+10 10 2026 23:31:26.711:INFO [karma-server]: Karma v6.4.4 server started at http://localhost:9876/
+10 10 2026 23:31:26.713:INFO [launcher]: Launching browsers ChromeHeadless with concurrency unlimited
+10 10 2026 23:31:26.733:INFO [launcher]: Starting browser ChromeHeadless
+10 10 2026 23:31:27.261:INFO [Chrome Headless 155.0.0.0 (Windows 10)]: Connected on socket R_6vyvoY4O-Y-uyoAAAA with id 84526635
+Chrome Headless 155.0.0.0 (Windows 10): Executed 0 of 29[32m SUCCESS[39m (0 secs / 0 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 1 of 29[32m SUCCESS[39m (0 secs / 0.035 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 2 of 29[32m SUCCESS[39m (0 secs / 0.04 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 3 of 29[32m SUCCESS[39m (0 secs / 0.043 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 4 of 29[32m SUCCESS[39m (0 secs / 0.07 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 5 of 29[32m SUCCESS[39m (0 secs / 0.079 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 6 of 29[32m SUCCESS[39m (0 secs / 0.084 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 7 of 29[32m SUCCESS[39m (0 secs / 0.087 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 8 of 29[32m SUCCESS[39m (0 secs / 0.091 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 9 of 29[32m SUCCESS[39m (0 secs / 0.094 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 10 of 29[32m SUCCESS[39m (0 secs / 0.097 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 11 of 29[32m SUCCESS[39m (0 secs / 0.1 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 12 of 29[32m SUCCESS[39m (0 secs / 0.105 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 13 of 29[32m SUCCESS[39m (0 secs / 0.131 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 14 of 29[32m SUCCESS[39m (0 secs / 0.134 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 15 of 29[32m SUCCESS[39m (0 secs / 0.154 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 16 of 29[32m SUCCESS[39m (0 secs / 0.161 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 17 of 29[32m SUCCESS[39m (0 secs / 0.185 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 18 of 29[32m SUCCESS[39m (0 secs / 0.191 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 19 of 29[32m SUCCESS[39m (0 secs / 0.198 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 20 of 29[32m SUCCESS[39m (0 secs / 0.21 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 21 of 29[32m SUCCESS[39m (0 secs / 0.22 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 22 of 29[32m SUCCESS[39m (0 secs / 0.223 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 23 of 29[32m SUCCESS[39m (0 secs / 0.231 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 24 of 29[32m SUCCESS[39m (0 secs / 0.232 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 25 of 29[32m SUCCESS[39m (0 secs / 0.233 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 26 of 29[32m SUCCESS[39m (0 secs / 0.239 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 27 of 29[32m SUCCESS[39m (0 secs / 0.243 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 28 of 29[32m SUCCESS[39m (0 secs / 0.244 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 29 of 29[32m SUCCESS[39m (0 secs / 0.245 secs)
+[1A[2KChrome Headless 155.0.0.0 (Windows 10): Executed 29 of 29[32m SUCCESS[39m (0.265 secs / 0.245 secs)
+[32mTOTAL: 29 SUCCESS[39m

@@ -1,0 +1,29 @@
+<div class="modal-header"><h2 id="historique-materiel-title" class="modal-title h5">Journal d’emprunt — {{materiel.nom}}</h2><button type="button" class="btn-close" aria-label="Fermer" (click)="activeModal.dismiss()"></button></div>
+<div class="modal-body">
+  @if (chargement) { <p role="status">Chargement du journal…</p> }
+  @else if (erreur) { <div class="alert alert-danger" role="alert">{{erreur}}<button type="button" class="btn btn-outline-danger btn-sm ms-2" (click)="charger()">Réessayer</button></div> }
+  @else {
+    <div class="d-grid gap-3">
+      @for (emprunt of emprunts; track emprunt.id) {
+        <article class="border rounded-3 p-3">
+          @if (emprunt.horsService !== null && emprunt.horsService !== undefined) {
+            <div class="d-flex flex-wrap justify-content-between gap-2"><h3 class="h6 mb-0">{{emprunt.horsService ? 'Déclaré hors service' : 'Remis en service'}}</h3><span class="badge" [class.text-bg-danger]="emprunt.horsService" [class.text-bg-success]="!emprunt.horsService">{{emprunt.horsService ? 'HS' : 'En service'}}</span></div>
+            <dl class="row mt-3 mb-0">
+              <dt class="col-5">Date</dt><dd class="col-7">{{emprunt.dateEmprunt | date:'dd/MM/yyyy HH:mm'}}</dd>
+              <dt class="col-5">Enregistré par</dt><dd class="col-7 mb-0">{{emprunt.enregistreParNom || 'Non renseigné'}}</dd>
+            </dl>
+          } @else {
+          <div class="d-flex flex-wrap justify-content-between gap-2"><h3 class="h6 mb-0">{{emprunt.emprunteurNom}}</h3><span class="badge" [class.text-bg-warning]="!emprunt.dateRetour" [class.text-bg-success]="!!emprunt.dateRetour">{{emprunt.dateRetour ? 'Rapporté' : 'En cours'}}</span></div>
+          <dl class="row mt-3 mb-0">
+            <dt class="col-5">Emprunt</dt><dd class="col-7">{{emprunt.dateEmprunt | date:'dd/MM/yyyy HH:mm'}}</dd>
+            <dt class="col-5">Enregistré par</dt><dd class="col-7">{{emprunt.enregistreParNom || 'Non renseigné'}}</dd>
+            <dt class="col-5">Retour</dt><dd class="col-7">{{emprunt.dateRetour ? (emprunt.dateRetour | date:'dd/MM/yyyy HH:mm') : 'Non rapporté'}}</dd>
+            @if (emprunt.dateRetour) { <dt class="col-5">Rapporté par</dt><dd class="col-7 mb-0">{{emprunt.rapporteParNom || 'Non renseigné'}}</dd> }
+          </dl>
+          }
+        </article>
+      } @empty { <p class="text-body-secondary mb-0">Aucun emprunt enregistré ni changement d’état pour ce matériel.</p> }
+    </div>
+  }
+</div>
+<div class="modal-footer"><button type="button" class="btn btn-outline-secondary" (click)="activeModal.dismiss()">Fermer</button></div>

@@ -1,0 +1,19 @@
+<div class="d-grid gap-3">
+  <p class="text-body-secondary mb-0">Définissez les emplacements du stock par un nom et une couleur. Un zonage contenant du matériel ne peut pas être supprimé.</p>
+  @if (chargement) { <p role="status">Chargement des zonages…</p> }
+  <form class="bg-light border rounded-3 p-3" (ngSubmit)="ajouter()" #ajoutForm="ngForm"><div class="row g-3 align-items-end">
+    <div class="col-12 col-md"><label class="form-label" for="zonageNom">Nom du zonage</label><input id="zonageNom" name="nom" type="text" class="form-control" maxlength="100" required [(ngModel)]="nom" [disabled]="enregistrement || chargement" placeholder="Ex. Réserve — étagère A"></div>
+    <div class="col-6 col-md-2"><label class="form-label" for="zonageCouleur">Couleur</label><input id="zonageCouleur" name="couleur" type="color" class="form-control form-control-color w-100" [(ngModel)]="couleur" [disabled]="enregistrement || chargement"></div>
+    <div class="col-6 col-md-auto"><button type="submit" class="btn btn-primary w-100" [disabled]="enregistrement || chargement || ajoutForm.invalid || !nom.trim()">Ajouter</button></div>
+  </div></form>
+  @for (zone of zonages; track zone.id) {
+    <form class="border rounded-3 p-3" (ngSubmit)="enregistrer(zone)" #zoneForm="ngForm"><div class="row g-3 align-items-end">
+      <div class="col-12 col-md"><label class="form-label" [for]="'zonageNom' + zone.id">Nom</label><input [id]="'zonageNom' + zone.id" name="nom" type="text" class="form-control" maxlength="100" required [(ngModel)]="zone.nom" [disabled]="enregistrement"></div>
+      <div class="col-6 col-md-2"><label class="form-label" [for]="'zonageCouleur' + zone.id">Couleur</label><input [id]="'zonageCouleur' + zone.id" name="couleur" type="color" class="form-control form-control-color w-100" [(ngModel)]="zone.couleur" [disabled]="enregistrement"></div>
+      <div class="col-6 col-md-auto"><button type="submit" class="btn btn-outline-primary w-100" [disabled]="enregistrement || zoneForm.invalid || !zone.nom.trim()">Enregistrer</button></div>
+      <div class="col-12 col-md-auto"><button type="button" class="btn btn-outline-danger w-100" [disabled]="enregistrement" (click)="supprimer(zone)" [attr.aria-label]="'Supprimer le zonage ' + zone.nom"><fa-icon [icon]="faTrash" aria-hidden="true"></fa-icon><span class="d-md-none ms-2">Supprimer</span></button></div>
+    </div></form>
+  } @empty { @if (!chargement && !erreur) { <p class="text-body-secondary text-center">Aucun zonage configuré.</p> } }
+  @if (message) { <div class="alert alert-success mb-0" role="status">{{message}}</div> }
+  @if (erreur) { <div class="alert alert-danger mb-0" role="alert">{{erreur}}<button type="button" class="btn btn-outline-danger btn-sm ms-2" (click)="charger()" [disabled]="enregistrement || chargement">Actualiser</button></div> }
+</div>

@@ -1,0 +1,14 @@
+<div class="modal-header"><h2 id="materiel-modal-title" class="modal-title h5">Ajouter un matériel</h2><button type="button" class="btn-close" aria-label="Fermer" [disabled]="enregistrement" (click)="activeModal.dismiss()"></button></div>
+<form (ngSubmit)="ajouter()" #form="ngForm">
+  <div class="modal-body">
+    @if (zonages.length === 0) {
+      <p class="mb-0">Ajoutez d’abord un zonage avec un nom et une couleur : fermez cette fenêtre, puis utilisez le bouton Gérer les zonages sur la page Matériel.</p>
+    } @else {
+      <div class="mb-3"><label class="form-label" for="nouveauMaterielNom">Nom du matériel</label><input id="nouveauMaterielNom" name="nom" class="form-control" type="text" maxlength="150" required [(ngModel)]="nom" [disabled]="enregistrement" placeholder="Ex. Vidéoprojecteur n° 1" ngbAutofocus></div>
+      <div><label class="form-label" for="nouveauMaterielZonage">Zonage du stock</label><select id="nouveauMaterielZonage" name="zonageId" class="form-select" required [(ngModel)]="zonageId" [disabled]="enregistrement"><option [ngValue]="null">Choisir un zonage</option>@for (zone of zonages; track zone.id) { <option [ngValue]="zone.id">{{zone.nom}}</option> }</select></div>
+    }
+    @if (zonages.length > 0) { <div class="mt-3"><button id="nouveauMaterielHS" type="button" class="btn btn-sm" [class.btn-secondary]="!horsService" [class.btn-danger]="horsService" [attr.aria-pressed]="horsService" aria-label="Hors service (HS)" [title]="horsService ? 'Remettre en service' : 'Déclarer hors service'" [disabled]="enregistrement" (click)="horsService = !horsService">HS</button></div> }
+    @if (erreur) { <div class="alert alert-danger mt-3 mb-0" role="alert">{{erreur}}</div> }
+  </div>
+  <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" [disabled]="enregistrement" (click)="activeModal.dismiss()">Annuler</button><button type="submit" class="btn btn-primary" [disabled]="enregistrement || zonages.length === 0 || form.invalid || !nom.trim()">{{enregistrement ? 'Enregistrement…' : 'Ajouter le matériel'}}</button></div>
+</form>

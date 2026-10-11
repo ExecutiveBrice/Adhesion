@@ -106,6 +106,15 @@ describe('Navigation du bandeau', () => {
     expect(fixture.componentInstance.showSeances).toBeFalse();
     expect(fixture.componentInstance.username).toBeUndefined();
   });
+
+  it('affiche le lien Matériel pour la Logistique', async () => {
+    storage.getUser.and.returnValue({ username: 'logistique@example.org', roles: ['ROLE_LOGISTIQUE'] });
+    await router.navigateByUrl('/seances');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('a[href="/materiel"]')).not.toBeNull();
+    expect(fixture.componentInstance.showLogistique).toBeTrue();
+    expect(fixture.componentInstance.showAdmin).toBeFalse();
+  });
 });
 
 describe('Déconnexion depuis une page protégée', () => {
