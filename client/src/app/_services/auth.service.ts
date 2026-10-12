@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpBackend, HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { catchError, finalize, firstValueFrom, Observable, of, shareReplay, tap, throwError, timeout } from 'rxjs';
+import { Router } from '@angular/router';
 import { environment } from 'src/environments/environment';
 import { Adherent, User } from '../models';
 import { TokenStorageService } from './token-storage.service';
@@ -17,6 +18,7 @@ export class AuthService {
   private sessionHttp = new HttpClient(inject(HttpBackend));
   private storage = inject(TokenStorageService);
   private pwa = inject(PwaService);
+  private router = inject(Router);
   private refreshInFlight?: Observable<any>;
 
 
@@ -42,8 +44,24 @@ export class AuthService {
   }
 
   async restoreSession(): Promise<void> {
-    if (!this.canRefreshSession() || !this.storage.isTokenExpired()) return;
-    await firstValueFrom(this.refreshSession().pipe(catchError(() => of(null))));
+    if (!this.storage.isTokenExpired()) return;
+    if (this.canRefreshSession()) {
+      await firstValueFrom(this.refreshSession().pipe(catchError(error => {
+        if (error instanceof HttpErrorResponse && (error.status === 400 || error.status === 401)) {
+          this.expireSession();
+        }
+        return of(null);
+      })));
+    } else if (this.storage.getToken()) {
+      this.expireSession();
+    }
+  }
+
+  expireSession(): void {
+    this.storage.signOut();
+    void this.router.navigate(['/login'], {
+      queryParams: { sessionExpiree: '1' }, replaceUrl: true
+    });
   }
 
   refreshSession(): Observable<any> {

@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { Router } from '@angular/router';
 import { AuthService } from './auth.service';
 import { PwaService } from './pwa.service';
 import { TokenStorageService } from './token-storage.service';
@@ -10,23 +11,28 @@ describe('Reconnexion PWA', () => {
   let auth: AuthService;
   let http: HttpTestingController;
   let storage: jasmine.SpyObj<TokenStorageService>;
+  let router: jasmine.SpyObj<Router>;
   let pwa: jasmine.SpyObj<PwaService>;
   const api = environment.server + '/auth/';
   const session = { token: 'new-access-token', refreshToken: 'new-secret', roles: ['ROLE_USER'] };
 
   beforeEach(() => {
     storage = jasmine.createSpyObj('TokenStorageService', [
-      'getRefreshToken', 'isTokenExpired', 'saveSession', 'signOut'
+      'getToken', 'getRefreshToken', 'isTokenExpired', 'saveSession', 'signOut'
     ]);
+    storage.getToken.and.returnValue('old-token');
     storage.getRefreshToken.and.returnValue('remembered-secret');
     storage.isTokenExpired.and.returnValue(true);
     storage.signOut.and.callFake(() => storage.getRefreshToken.and.returnValue(null));
+    router = jasmine.createSpyObj('Router', ['navigate']);
+    router.navigate.and.resolveTo(true);
     pwa = jasmine.createSpyObj('PwaService', ['isMobileStandalone']);
     pwa.isMobileStandalone.and.returnValue(true);
     TestBed.configureTestingModule({ providers: [
       provideHttpClient(), provideHttpClientTesting(), AuthService,
       { provide: TokenStorageService, useValue: storage },
-      { provide: PwaService, useValue: pwa }
+      { provide: PwaService, useValue: pwa },
+      { provide: Router, useValue: router }
     ] });
     auth = TestBed.inject(AuthService);
     http = TestBed.inject(HttpTestingController);
@@ -56,13 +62,30 @@ describe('Reconnexion PWA', () => {
     expect(storage.saveSession).toHaveBeenCalledWith(session);
   });
 
-  it('conserve une session encore valide et ne renouvelle pas dans le navigateur', async () => {
+  it('conserve une session encore valide', async () => {
     storage.isTokenExpired.and.returnValue(false);
     await auth.restoreSession();
-    storage.isTokenExpired.and.returnValue(true);
+    http.expectNone(api + 'refresh');
+    expect(storage.signOut).not.toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
+  it('déconnecte un JWT expiré à l’ouverture du navigateur', async () => {
     pwa.isMobileStandalone.and.returnValue(false);
     await auth.restoreSession();
     http.expectNone(api + 'refresh');
+    expect(storage.signOut).toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalledWith(['/login'], {
+      queryParams: { sessionExpiree: '1' }, replaceUrl: true
+    });
+  });
+
+  it('ne signale pas une expiration pour un visiteur sans session', async () => {
+    storage.getToken.and.returnValue(null);
+    storage.getRefreshToken.and.returnValue(null);
+    await auth.restoreSession();
+    expect(storage.signOut).not.toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
   });
 
   it('partage le renouvellement entre plusieurs appels simultanés', () => {
