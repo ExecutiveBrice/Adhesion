@@ -13,6 +13,7 @@ import { MaterielModalComponent } from '../../template/materiel-modal/materiel-m
 import { EmpruntMaterielModalComponent } from '../../template/emprunt-materiel-modal/emprunt-materiel-modal.component';
 import { HistoriqueMaterielModalComponent } from '../../template/historique-materiel-modal/historique-materiel-modal.component';
 import { ModificationMateriel, ModifierMaterielModalComponent } from '../../template/modifier-materiel-modal/modifier-materiel-modal.component';
+import { HorsServiceMaterielModalComponent } from '../../template/hors-service-materiel-modal/hors-service-materiel-modal.component';
 import { ZonagesModalComponent } from '../../template/zonages-modal/zonages-modal.component';
 
 @Component({
@@ -101,21 +102,19 @@ export class MaterielComponent implements OnInit {
 
   changerHorsService(materiel: Materiel): void {
     if (!this.administrateur || this.actionEnCours !== null) return;
-    const horsService = !materiel.horsService;
     this.actionEnCours = materiel.id;
-    this.erreur = '';
-    this.message = '';
-    this.service.updateHorsService(materiel.id, horsService).subscribe({
-      next: resultat => {
-        this.materiels = this.materiels.map(item => item.id === resultat.id ? resultat : item);
-        this.actionEnCours = null;
-        this.message = 'État du matériel enregistré.';
-      },
-      error: response => {
-        this.actionEnCours = null;
-        this.erreur = response?.error?.detail || response?.error?.message || 'Le statut n’a pas pu être enregistré.';
-      }
+    const reference = this.modal.open(HorsServiceMaterielModalComponent, {
+      centered: true, backdrop: 'static', ariaLabelledBy: 'hors-service-materiel-title',
+      beforeDismiss: () => !reference.componentInstance.enregistrement
     });
+    reference.componentInstance.materiel = materiel;
+    reference.result.then((resultat: Materiel) => {
+      this.materiels = this.materiels.map(item => item.id === resultat.id ? resultat : item);
+      this.actionEnCours = null;
+      this.message = 'État du matériel enregistré.';
+      this.erreur = '';
+      this.changeDetector.markForCheck();
+    }, () => { this.actionEnCours = null; this.changeDetector.markForCheck(); });
   }
 
   private action(materiel: Materiel, retour: boolean): void {

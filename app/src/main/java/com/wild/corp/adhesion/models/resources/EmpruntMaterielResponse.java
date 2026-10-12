@@ -4,4 +4,4 @@ import java.time.OffsetDateTime;
 
 public record EmpruntMaterielResponse(Long id, Long emprunteurId, String emprunteurNom,
         OffsetDateTime dateEmprunt, OffsetDateTime dateRetour, String enregistreParNom, String rapporteParNom,
-        Boolean horsService) {}
+        Boolean horsService, String commentaire) {}

@@ -31,12 +31,15 @@ describe('Journal des emprunts', () => {
 
   it('affiche les changements HS avec leur date et leur auteur sans les présenter comme des emprunts', () => {
     const evenement = { id: 1, emprunteurId: null, emprunteurNom: null, dateEmprunt: '2026-10-10T10:00:00Z',
-      dateRetour: null, enregistreParNom: 'Camille Martin', rapporteParNom: null, horsService: true };
-    service.getHistorique.and.returnValue(of([evenement, { ...evenement, id: 2, horsService: false }]));
+      dateRetour: null, enregistreParNom: 'Camille Martin', rapporteParNom: null, horsService: true, commentaire: 'Lampe cassée' };
+    service.getHistorique.and.returnValue(of([evenement, { ...evenement, id: 2, horsService: false, commentaire: 'Lampe remplacée' }]));
     fixture.detectChanges();
     const text = fixture.nativeElement.textContent;
     expect(text).toContain('Déclaré hors service');
     expect(text).toContain('Remis en service');
+    expect(text).toContain('Lampe cassée');
+    expect(text).toContain('Lampe remplacée');
+    expect(text).toContain('Réparation effectuée');
     expect(text).toContain('Camille Martin');
     expect(text).toContain('10/10/2026');
     expect(text).not.toContain('Non rapporté');

@@ -23,8 +23,8 @@ export class MaterielService {
   restituer(id: number) { return this.http.post<Materiel>(`${API_URL}/${id}/retour`, {}); }
   getMembresCA() { return this.http.get<MembreCAMateriel[]>(`${API_URL}/membres-ca`); }
   getHistorique(id: number) { return this.http.get<EmpruntMateriel[]>(`${API_URL}/${id}/historique`); }
-  updateHorsService(id: number, horsService: boolean) {
-    return this.http.patch<Materiel>(`${API_URL}/${id}/hors-service`, { horsService });
+  updateHorsService(id: number, horsService: boolean, commentaire: string) {
+    return this.http.patch<Materiel>(`${API_URL}/${id}/hors-service`, { horsService, commentaire });
   }
   getZonages() { return this.http.get<Zonage[]>(`${API_URL}/zonages`); }
   createZonage(nom: string, couleur: string) {

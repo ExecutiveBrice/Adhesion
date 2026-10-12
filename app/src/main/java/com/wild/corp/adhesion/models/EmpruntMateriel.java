@@ -28,6 +28,9 @@ public class EmpruntMateriel {
     // Null pour un emprunt ; true/false pour un changement de statut HS.
     private Boolean horsService;
 
+    @Column(length = 2000)
+    private String commentaire;
+
     @Column(nullable = false)
     private OffsetDateTime dateEmprunt;
 

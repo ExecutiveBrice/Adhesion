@@ -110,7 +110,7 @@ class MaterielControllerTest {
         mvc.perform(get("/materiel/membres-ca").with(user("ca").roles("MEMBRECA")))
                 .andExpect(status().isForbidden());
         mvc.perform(patch("/materiel/2/hors-service").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"horsService\":true}").with(user("ca").roles("MEMBRECA")))
+                .content("{\"horsService\":true,\"commentaire\":\"Lampe cassée\"}").with(user("ca").roles("MEMBRECA")))
                 .andExpect(status().isForbidden());
         mvc.perform(get("/materiel/2/historique").with(user("member").roles("USER")))
                 .andExpect(status().isForbidden());
@@ -119,14 +119,14 @@ class MaterielControllerTest {
         mvc.perform(get("/materiel/membres-ca").with(user("admin").roles("ADMIN")))
                 .andExpect(status().isOk());
         mvc.perform(patch("/materiel/2/hors-service").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"horsService\":true}").with(user("admin").roles("ADMIN")))
+                .content("{\"horsService\":true,\"commentaire\":\"Lampe cassée\"}").with(user("admin").roles("ADMIN")))
                 .andExpect(status().isOk());
         mvc.perform(post("/materiel/2/emprunt").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"emprunteurId\":4}").with(user("admin").roles("ADMIN")))
                 .andExpect(status().isOk());
         verify(service).getHistorique(2L);
         verify(service).getMembresCA();
-        verify(service).updateHorsService(2L, new HorsServiceRequest(true), "admin");
+        verify(service).updateHorsService(2L, new HorsServiceRequest(true, "Lampe cassée"), "admin");
         verify(service).emprunter(2L, "admin", 4L, true);
     }
 
@@ -155,7 +155,7 @@ class MaterielControllerTest {
         mvc.perform(post("/materiel/2/emprunt").with(user("logistique").roles("LOGISTIQUE"))).andExpect(status().isForbidden());
         mvc.perform(post("/materiel/2/retour").with(user("logistique").roles("LOGISTIQUE"))).andExpect(status().isForbidden());
         mvc.perform(patch("/materiel/2/hors-service").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"horsService\":true}").with(user("logistique").roles("LOGISTIQUE"))).andExpect(status().isForbidden());
+                .content("{\"horsService\":true,\"commentaire\":\"Lampe cassée\"}").with(user("logistique").roles("LOGISTIQUE"))).andExpect(status().isForbidden());
         mvc.perform(post("/materiel/zonages").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"nom\":\"Zone\",\"couleur\":\"#123456\"}").with(user("logistique").roles("LOGISTIQUE")))
                 .andExpect(status().isCreated());

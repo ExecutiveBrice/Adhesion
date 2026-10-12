@@ -33,4 +33,7 @@ public class Materiel {
 
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean horsService;
+
+    @Column(length = 2000)
+    private String probleme;
 }

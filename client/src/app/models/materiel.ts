@@ -12,6 +12,7 @@ export interface Materiel {
   emprunteurNom: string | null;
   dateEmprunt: string | null;
   horsService: boolean;
+  probleme?: string | null;
 }
 
 export interface MembreCAMateriel { id: number; nom: string; }
@@ -21,6 +22,7 @@ export interface EmpruntMateriel {
   emprunteurId: number | null;
   emprunteurNom: string | null;
   horsService?: boolean | null;
+  commentaire?: string | null;
   dateEmprunt: string;
   dateRetour: string | null;
   enregistreParNom: string | null;

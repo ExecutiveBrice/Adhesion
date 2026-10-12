@@ -118,13 +118,18 @@ public class MaterielServices {
         }
         Materiel materiel = materiel(id);
         if (materiel.isHorsService() == request.horsService()) return toResponse(materiel);
+        String commentaire = request.commentaire() == null ? "" : request.commentaire().trim();
+        if (commentaire.isBlank() || commentaire.length() > 2000) {
+            throw erreur(HttpStatus.BAD_REQUEST, "Le problème ou la réparation est obligatoire et limité à 2000 caractères");
+        }
         User acteur = utilisateur(username);
         // Reprendre un éventuel emprunt ancien avant le nouvel événement du journal.
         if (materiel.getEmprunteurId() != null) empruntOuExistant(materiel);
         empruntRepository.save(EmpruntMateriel.builder().materiel(materiel)
-                .horsService(request.horsService()).dateEmprunt(OffsetDateTime.now(ZoneOffset.UTC))
+                .horsService(request.horsService()).commentaire(commentaire).dateEmprunt(OffsetDateTime.now(ZoneOffset.UTC))
                 .enregistreParId(acteur.getId()).enregistreParNom(nomUtilisateur(acteur)).build());
         materiel.setHorsService(request.horsService());
+        materiel.setProbleme(request.horsService() ? commentaire : null);
         return toResponse(materiel);
     }
 
@@ -143,7 +148,7 @@ public class MaterielServices {
         return empruntRepository.findAllByMaterielIdOrderByDateEmpruntDescIdDesc(id).stream()
                 .map(emprunt -> new EmpruntMaterielResponse(emprunt.getId(), emprunt.getEmprunteurId(),
                         emprunt.getEmprunteurNom(), emprunt.getDateEmprunt(), emprunt.getDateRetour(),
-                        emprunt.getEnregistreParNom(), emprunt.getRapporteParNom(), emprunt.getHorsService())).toList();
+                        emprunt.getEnregistreParNom(), emprunt.getRapporteParNom(), emprunt.getHorsService(), emprunt.getCommentaire())).toList();
     }
 
     private EmpruntMateriel empruntOuExistant(Materiel materiel) {
@@ -228,7 +233,7 @@ public class MaterielServices {
 
     private MaterielResponse toResponse(Materiel materiel) {
         return new MaterielResponse(materiel.getId(), materiel.getNom(), toConfiguration(materiel.getZonage()),
-                materiel.getEmprunteurId(), materiel.getEmprunteurNom(), materiel.getDateEmprunt(), materiel.isHorsService());
+                materiel.getEmprunteurId(), materiel.getEmprunteurNom(), materiel.getDateEmprunt(), materiel.isHorsService(), materiel.getProbleme());
     }
 
     private ResponseStatusException erreur(HttpStatus statut, String message) {

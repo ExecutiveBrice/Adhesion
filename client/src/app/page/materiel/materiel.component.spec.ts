@@ -10,6 +10,7 @@ import { ApiRenderService } from '../../_services/api-render.service';
 import { EmpruntMaterielModalComponent } from '../../template/emprunt-materiel-modal/emprunt-materiel-modal.component';
 import { ModifierMaterielModalComponent } from '../../template/modifier-materiel-modal/modifier-materiel-modal.component';
 import { MaterielModalComponent } from '../../template/materiel-modal/materiel-modal.component';
+import { HorsServiceMaterielModalComponent } from '../../template/hors-service-materiel-modal/hors-service-materiel-modal.component';
 import { ZonagesModalComponent } from '../../template/zonages-modal/zonages-modal.component';
 
 describe('Matériel et emprunts', () => {
@@ -240,36 +241,39 @@ describe('Matériel et emprunts', () => {
     expect(component.peutRestituer(component.materiels[0])).toBeTrue();
   });
 
-  it('un administrateur enregistre HS sans perdre l’emprunt en cours', () => {
+  it('ouvre la saisie HS et affiche le problème sans perdre l’emprunt', async () => {
     storage.getUser.and.returnValue({ id: 9, roles: ['ROLE_ADMIN'] });
     service.getAll.and.returnValue(of([emprunte]));
-    service.updateHorsService.and.returnValue(of({ ...emprunte, horsService: true }));
+    let terminer!: (materiel: Materiel) => void;
+    const reference = { componentInstance: { materiel: disponible }, result: new Promise<Materiel>(resolve => terminer = resolve) };
+    const modal = TestBed.inject(NgbModal);
+    (modal.open as jasmine.Spy).and.returnValue(reference);
     const component = afficher();
-    const bouton: HTMLButtonElement = fixture.nativeElement.querySelector('#materielHS2');
-    expect(bouton.classList.contains('btn-secondary')).toBeTrue();
-    expect(bouton.getAttribute('aria-pressed')).toBe('false');
-    bouton.click();
-    TestBed.inject(ApiRenderService).notify();
-    expect(service.updateHorsService).toHaveBeenCalledWith(2, true);
+    fixture.nativeElement.querySelector('#materielHS2').click();
+    expect(modal.open).toHaveBeenCalledWith(HorsServiceMaterielModalComponent, jasmine.any(Object));
+    expect(reference.componentInstance.materiel).toEqual(emprunte);
+    expect(component.materiels[0].horsService).toBeFalse();
+    expect(component.actionEnCours).toBe(2);
+    terminer({ ...emprunte, horsService: true, probleme: 'Lampe cassée' });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(component.actionEnCours).toBeNull();
     expect(component.materiels[0].emprunteurNom).toBe('Camille Martin');
-    expect(component.materiels[0].horsService).toBeTrue();
-    expect(bouton.classList.contains('btn-danger')).toBeTrue();
-    expect(bouton.getAttribute('aria-pressed')).toBe('true');
-    expect(fixture.nativeElement.textContent).not.toContain('Hors service (HS)');
-    expect(fixture.nativeElement.textContent).toContain('Emprunté');
-    expect(fixture.nativeElement.querySelector('[aria-label="Restituer Vidéoprojecteur"]')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Lampe cassée');
+    expect(fixture.nativeElement.querySelector('#materielHS2').getAttribute('aria-pressed')).toBe('true');
   });
 
-  it('conserve le bouton HS gris et le statut lorsque l’enregistrement échoue', () => {
+  it('annuler la saisie conserve l’état du matériel', async () => {
     storage.getUser.and.returnValue({ id: 3, roles: ['ROLE_ADMIN'] });
-    service.updateHorsService.and.returnValue(throwError(() => ({ error: { detail: 'Enregistrement impossible' } })));
+    let annuler!: () => void;
+    (TestBed.inject(NgbModal).open as jasmine.Spy).and.returnValue({ componentInstance: {},
+      result: new Promise((resolve, reject) => annuler = reject) });
     const component = afficher();
-    const bouton: HTMLButtonElement = fixture.nativeElement.querySelector('#materielHS2');
-    bouton.click();
-    TestBed.inject(ApiRenderService).notify();
-    expect(bouton.classList.contains('btn-secondary')).toBeTrue();
-    expect(bouton.getAttribute('aria-pressed')).toBe('false');
+    fixture.nativeElement.querySelector('#materielHS2').click();
+    annuler();
+    await fixture.whenStable();
     expect(component.materiels[0].horsService).toBeFalse();
-    expect(fixture.nativeElement.textContent).toContain('Enregistrement impossible');
+    expect(component.actionEnCours).toBeNull();
+    expect(service.updateHorsService).not.toHaveBeenCalled();
   });
 });

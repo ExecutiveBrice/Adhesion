@@ -199,17 +199,34 @@ class MaterielServicesTest {
     }
 
     @Test
+    void hsRequiresAnExplanationBeforeChangingState() {
+        for (String commentaire : new String[] {null, "  ", "x".repeat(2001)}) {
+            assertThatThrownBy(() -> service.updateHorsService(2L,
+                    new HorsServiceRequest(true, commentaire), user.getUsername()))
+                    .isInstanceOfSatisfying(ResponseStatusException.class,
+                            error -> assertThat(error.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST));
+        }
+        assertThat(materiel.isHorsService()).isFalse();
+        verify(emprunts, never()).save(any());
+        materiel.setHorsService(true);
+        assertThatThrownBy(() -> service.updateHorsService(2L,
+                new HorsServiceRequest(false, " "), user.getUsername()))
+                .isInstanceOf(ResponseStatusException.class);
+        assertThat(materiel.isHorsService()).isTrue();
+    }
+
+    @Test
     void hsRemainsAnIndicatorAndAllowsLoansAndReturns() {
-        service.updateHorsService(2L, new HorsServiceRequest(true), user.getUsername());
+        service.updateHorsService(2L, new HorsServiceRequest(true, "Lampe cassée"), user.getUsername());
         MaterielResponse emprunte = service.emprunter(2L, user.getUsername());
         assertThat(emprunte.horsService()).isTrue();
         assertThat(emprunte.emprunteurId()).isEqualTo(3L);
         verify(emprunts, times(2)).save(any());
         assertThat(service.restituer(2L, user.getUsername(), false).horsService()).isTrue();
         assertThat(materiel.getEmprunteurId()).isNull();
-        service.updateHorsService(2L, new HorsServiceRequest(false), user.getUsername());
+        service.updateHorsService(2L, new HorsServiceRequest(false, "Lampe remplacée"), user.getUsername());
         assertThat(materiel.isHorsService()).isFalse();
-        assertThatThrownBy(() -> service.updateHorsService(2L, new HorsServiceRequest(null), user.getUsername()))
+        assertThatThrownBy(() -> service.updateHorsService(2L, new HorsServiceRequest(null, null), user.getUsername()))
                 .isInstanceOf(ResponseStatusException.class);
     }
 

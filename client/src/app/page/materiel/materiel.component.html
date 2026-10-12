@@ -35,6 +35,9 @@
               <button type="button" class="btn btn-sm" [class.btn-secondary]="!materiel.horsService" [class.btn-danger]="materiel.horsService" [id]="'materielHS' + materiel.id" [attr.aria-pressed]="materiel.horsService" [attr.aria-label]="'Hors service : ' + materiel.nom" [title]="materiel.horsService ? 'Remettre en service' : 'Déclarer hors service'" [disabled]="!administrateur || actionEnCours !== null" (click)="changerHorsService(materiel)">HS</button>
             </div>
             <dl class="materiel-details">
+              @if (materiel.horsService && materiel.probleme) {
+                <div><dt>Problème</dt><dd style="white-space: pre-wrap; overflow-wrap: anywhere">{{materiel.probleme}}</dd></div>
+              }
               <div>
                 <dt>Zonage du stock</dt>
                 <dd><span class="zone-label"><span class="zone-colour" [style.background-color]="materiel.zonage.couleur" aria-hidden="true"></span><span class="zone-name" [title]="materiel.zonage.nom">{{materiel.zonage.nom}}</span></span></dd>

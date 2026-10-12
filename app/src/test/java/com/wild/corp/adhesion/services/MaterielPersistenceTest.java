@@ -106,7 +106,7 @@ class MaterielPersistenceTest {
         assertThat(journal.getFirst().emprunteurId()).isEqualTo(admin.getId());
         assertThat(journal.getFirst().dateRetour()).isNull();
         assertThat(journal.getLast()).isEqualTo(premier);
-        service.updateHorsService(id, new HorsServiceRequest(true), autre.getUsername());
+        service.updateHorsService(id, new HorsServiceRequest(true, "Lampe cassée"), autre.getUsername());
         assertThat(service.getAll().getFirst().horsService()).isTrue();
         service.restituer(id, autre.getUsername(), true);
         users.deleteAll();
@@ -186,11 +186,13 @@ class MaterielPersistenceTest {
         User acteur = users.save(new User("admin-hs@example.org", "password"));
         ZonageConfiguration zone = service.createZonage(new ZonageConfiguration(null, "Stock", "#123456"));
         Long id = service.create(new MaterielRequest("Objet", zone.id())).id();
-        service.updateHorsService(id, new HorsServiceRequest(true), acteur.getUsername());
-        service.updateHorsService(id, new HorsServiceRequest(true), acteur.getUsername());
+        service.updateHorsService(id, new HorsServiceRequest(true, "Lampe cassée"), acteur.getUsername());
+        service.updateHorsService(id, new HorsServiceRequest(true, "Lampe cassée"), acteur.getUsername());
         assertThat(service.getHistorique(id)).hasSize(1);
         EmpruntMaterielResponse hs = service.getHistorique(id).getFirst();
         assertThat(hs.horsService()).isTrue();
+        assertThat(hs.commentaire()).isEqualTo("Lampe cassée");
+        assertThat(service.getAll().getFirst().probleme()).isEqualTo("Lampe cassée");
         assertThat(hs.emprunteurId()).isNull();
         assertThat(hs.emprunteurNom()).isNull();
         assertThat(hs.dateEmprunt()).isNotNull();
@@ -199,11 +201,13 @@ class MaterielPersistenceTest {
         assertThat(service.getAll().getFirst().emprunteurId()).isNull();
 
         service.emprunter(id, acteur.getUsername());
-        service.updateHorsService(id, new HorsServiceRequest(false), acteur.getUsername());
+        service.updateHorsService(id, new HorsServiceRequest(false, "Lampe remplacée"), acteur.getUsername());
         service.restituer(id, acteur.getUsername(), true);
         List<EmpruntMaterielResponse> journal = service.getHistorique(id);
         assertThat(journal).hasSize(3);
         assertThat(journal.getFirst().horsService()).isFalse();
+        assertThat(journal.getFirst().commentaire()).isEqualTo("Lampe remplacée");
+        assertThat(service.getAll().getFirst().probleme()).isNull();
         assertThat(journal.getFirst().dateRetour()).isNull();
         assertThat(journal.get(1).horsService()).isNull();
         assertThat(journal.get(1).dateRetour()).isNotNull();

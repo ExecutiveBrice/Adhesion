@@ -9,6 +9,9 @@
           @if (emprunt.horsService !== null && emprunt.horsService !== undefined) {
             <div class="d-flex flex-wrap justify-content-between gap-2"><h3 class="h6 mb-0">{{emprunt.horsService ? 'Déclaré hors service' : 'Remis en service'}}</h3><span class="badge" [class.text-bg-danger]="emprunt.horsService" [class.text-bg-success]="!emprunt.horsService">{{emprunt.horsService ? 'HS' : 'En service'}}</span></div>
             <dl class="row mt-3 mb-0">
+              @if (emprunt.commentaire) {
+                <dt class="col-5">{{emprunt.horsService ? 'Problème' : 'Réparation effectuée'}}</dt><dd class="col-7" style="white-space: pre-wrap; overflow-wrap: anywhere">{{emprunt.commentaire}}</dd>
+              }
               <dt class="col-5">Date</dt><dd class="col-7">{{emprunt.dateEmprunt | date:'dd/MM/yyyy HH:mm'}}</dd>
               <dt class="col-5">Enregistré par</dt><dd class="col-7 mb-0">{{emprunt.enregistreParNom || 'Non renseigné'}}</dd>
             </dl>
