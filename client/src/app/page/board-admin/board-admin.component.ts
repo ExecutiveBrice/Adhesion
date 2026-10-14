@@ -6,12 +6,10 @@ import { UserService } from '../../_services/user.service';
 import { ParamService } from '../../_services/param.service';
 
 import { AgendaGoogleConfiguration, ERole, ParamBoolean, ParamNumber, ParamText, SalleConfiguration, SectionConfiguration, UserLite } from 'src/app/models';
-import { forkJoin } from 'rxjs';
 import { TacheSeanceConfiguration } from '../../models/responsabiliteSeance';
 import { ICONE_TACHE_PAR_DEFAUT, COULEUR_TACHE_PAR_DEFAUT } from '../../_helpers/tache-icons';
 import { IconeTacheSelectComponent } from '../../template/icone-tache-select/icone-tache-select.component';
-import { faCalendarDays, faCircleCheck, faCircleXmark, faFont, faHashtag, faLayerGroup, faLocationDot, faPencilSquare, faPlus, faSliders, faTrash, faUserShield, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { AgendaGoogleConfiguration, ERole, ParamBoolean, ParamNumber, ParamText, SalleConfiguration, UserLite } from 'src/app/models';
+import { faLayerGroup, faPencilSquare } from '@fortawesome/free-solid-svg-icons';
 import { exhaustMap, forkJoin, takeWhile, timer } from 'rxjs';
 import { faCalendarDays, faCircleCheck, faCircleXmark, faFont, faHashtag, faLocationDot, faPlus, faSliders, faTrash, faUserShield, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { AdherentService } from 'src/app/_services/adherent.service';
@@ -28,8 +26,7 @@ import { UserCheckboxDropdownComponent } from '../../template/user-checkbox-drop
 import { UtilisateurSelectionnable } from '../../models/utilisateurSelectionnable';
 
 type RoleUtilisateur = ERole.ROLE_ADMIN | ERole.ROLE_MEMBRECA | ERole.ROLE_BUREAU |
-  ERole.ROLE_SECRETAIRE | ERole.ROLE_COMPTABLE | ERole.ROLE_ENCADRANT | ERole.ROLE_LOGISTIQUE;
-  ERole.ROLE_SECRETAIRE | ERole.ROLE_COMPTABLE | ERole.ROLE_ENCADRANT |
+  ERole.ROLE_SECRETAIRE | ERole.ROLE_COMPTABLE | ERole.ROLE_ENCADRANT | ERole.ROLE_LOGISTIQUE |
   ERole.ROLE_COMMUNICATION_GLOBAL | ERole.ROLE_RESPONSABLE_BOUTIQUE;
 
 
@@ -109,7 +106,6 @@ export class BoardAdminComponent implements OnInit {
     [ERole.ROLE_ENCADRANT]: [],
     [ERole.ROLE_COMMUNICATION_GLOBAL]: [],
     [ERole.ROLE_RESPONSABLE_BOUTIQUE]: [],
-    [ERole.ROLE_ENCADRANT]: [],
     [ERole.ROLE_LOGISTIQUE]: []
   };
   rolesEnCoursDeMiseAJour: Partial<Record<RoleUtilisateur, boolean>> = {};
@@ -125,7 +121,6 @@ export class BoardAdminComponent implements OnInit {
     { code: ERole.ROLE_ENCADRANT, libelle: 'Encadrants de l’ALOD' },
     { code: ERole.ROLE_COMMUNICATION_GLOBAL, libelle: 'Communication globale' },
     { code: ERole.ROLE_RESPONSABLE_BOUTIQUE, libelle: 'Responsables de la boutique' },
-    { code: ERole.ROLE_ENCADRANT, libelle: 'Encadrant de l’ALOD' },
     { code: ERole.ROLE_LOGISTIQUE, libelle: 'Logistique' }
   ];
 

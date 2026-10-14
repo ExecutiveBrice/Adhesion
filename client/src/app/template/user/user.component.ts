@@ -6,9 +6,9 @@ import { Accord, Activite, ActiviteDropDown, Adherent, Adhesion, Document, ERole
 
 import { ActiviteService } from '../../_services/activite.service';
 import { AdherentService, AdherentUpdate } from 'src/app/_services/adherent.service';
-import { faRefresh, faCirclePause, faClock, faPiggyBank, faSkull, faFileSignature, faSquareCaretLeft, faSquareCaretDown, faEye, faCircleQuestion, faCircleXmark, faCloudDownloadAlt, faBook, faScaleBalanced, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { faRefresh, faCirclePause, faClock, faEye, faCircleQuestion, faCircleXmark, faCloudDownloadAlt, faPencilSquare, faSquarePlus, faSquareMinus, faCircleCheck } from '@fortawesome/free-solid-svg-icons';
 import { AdhesionService } from 'src/app/_services/adhesion.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import {  Router } from '@angular/router';
 import { ParamService } from 'src/app/_services/param.service';
 import { ToastService } from '../../_services/toast.service';
 import { UtilService } from 'src/app/_services/util.service';
@@ -17,7 +17,6 @@ import { FileService } from 'src/app/_services/file.service';
 import { TokenStorageService } from 'src/app/_services/token-storage.service';
 import { UserService } from 'src/app/_services/user.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgClass, DatePipe, NgTemplateOutlet } from '@angular/common';
 import { NgClass, NgTemplateOutlet, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap/dropdown';
@@ -41,7 +40,6 @@ export class UserComponent implements OnInit {
     { code: ERole.ROLE_ENCADRANT, libelle: 'Encadrant' },
     { code: ERole.ROLE_COMMUNICATION_GLOBAL, libelle: 'Communication globale' },
     { code: ERole.ROLE_RESPONSABLE_BOUTIQUE, libelle: 'Responsable boutique' },
-    { code: ERole.ROLE_REFERENT, libelle: 'Référent' },
     { code: ERole.ROLE_LOGISTIQUE, libelle: 'Logistique' }
   ];
   private readonly apiViewRefresh = registerApiViewRefresh();

@@ -12,19 +12,6 @@
       (click)="activeModal?.dismiss('Cross click')"></button>
   </div>
 }
-<div class="modal-body">
-<div class="modal-header">
-  <div class="adherent-modal-heading">
-    <h4 class="modal-title">{{adherent.prenom}} {{adherent.nom}} @if (adherent.completAdhesion) {
-      <fa-icon
-      class="pointer orange" [icon]="faPencilSquare" (click)="adherentEdit(adherent)" container="body"></fa-icon>
-    }
-    </h4>
-
-  </div>
-<button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss('Cross click')"></button>
-</div>
-<div class="modal-body ">
   <ng-template #newsletterSection>
     @if (!newsletterAvecEmailRepresentant) {
       <section class="col-12 mb-3" aria-labelledby="adherent-newsletter-title">
@@ -45,8 +32,7 @@
     }
   </ng-template>
 
-
-
+<div class="modal-body">
   <div class="row">
     @if (canManageRoles) {
       <div class="col-12">
@@ -142,56 +128,8 @@
         }
 <ng-container *ngTemplateOutlet="documentsTemplate"></ng-container>
       </div>
-<ng-container *ngTemplateOutlet="previousActivitiesTemplate"></ng-container>
-        <div class="col-12 header">
-          Documents :
-          @if (showSecretaire) {
-            <fa-icon
-            class="pointer green" [icon]="faRefresh" (click)="regenerate(adherent)" container="body"></fa-icon>
-          }
-        </div>
-        @for (document of adherent.documents | orderBy:'id':false ; track document) {
-          <div class="col-12 ligne pointer">
-            <div class="row">
-              <div class="col-10 pointer" (click)="downloadPDF(document)">
-                <fa-icon class="green fa-2xl" [icon]="faEye"></fa-icon>
-                {{document}}
-              </div>
-              <div class="col-2 pointer" (click)="deleteDoc(document)">
-                <fa-icon [icon]="faSquareMinus"></fa-icon>
-              </div>
-            </div>
-          </div>
-        }
-        <div class="col-12 pointer" (click)="openAddPDFModal(adherent)">
-          Ajouter un document <fa-icon class="orange fa-xl" [icon]="faSquarePlus" container="body"></fa-icon>
-        </div>
-      </div>
-      <ng-container [ngTemplateOutlet]="newsletterSection"></ng-container>
-      <div class="col-12 header">
-        Activités de l'année dernière:
-      </div>
-      @if (adherent.activitesNm1.length > 0) {
-        <div class="col-12 ">
-          @for (activiteNm1 of adherent.activitesNm1 | simplefilter:'horaire':['Mineur','Majeur'] | orderBy:'id':true; track activiteNm1) {
-            <div
-              class="col-12 ">
-              <div class="cadrePermanent ">
-                <div class="row">
-                  <div class="col-8 ">
-                    <b class="header"> {{activiteNm1.nom}}</b><br>
-                    <i>{{ activiteNm1.horaire }}</i>
-                  </div>
-                  <div class="col-4 ">
-                    <span type='button'
-                    class="btn btn-primary alod btn-independent" (click)="choisir(adherent, activiteNm1.activiteId)">Renouveler</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          }
-        </div>
-      }
+        <ng-container [ngTemplateOutlet]="newsletterSection"></ng-container>
+        <ng-container *ngTemplateOutlet="previousActivitiesTemplate"></ng-container>
     </div>
   }
 </ng-template>
