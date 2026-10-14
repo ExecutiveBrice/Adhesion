@@ -1,0 +1,15 @@
+<div class="modal-header">
+  <h2 id="hors-service-materiel-title" class="modal-title h5">{{materiel.horsService ? 'Remettre en service' : 'Déclarer hors service'}} — {{materiel.nom}}</h2>
+  <button type="button" class="btn-close" aria-label="Fermer" [disabled]="enregistrement" (click)="activeModal.dismiss()"></button>
+</div>
+<form (ngSubmit)="enregistrer()">
+  <div class="modal-body">
+    <label for="horsServiceCommentaire" class="form-label">{{materiel.horsService ? 'Quelle réparation a été effectuée ?' : 'Quel est le problème ?'}}</label>
+    <textarea id="horsServiceCommentaire" name="commentaire" class="form-control" rows="4" [(ngModel)]="commentaire" [disabled]="enregistrement" required maxlength="2000" ngbAutofocus></textarea>
+    @if (erreur) { <div class="alert alert-danger mt-3 mb-0" role="alert">{{erreur}}</div> }
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-outline-secondary" [disabled]="enregistrement" (click)="activeModal.dismiss()">Annuler</button>
+    <button type="submit" class="btn btn-primary" [disabled]="enregistrement || !commentaire.trim() || commentaire.length > 2000">{{enregistrement ? 'Enregistrement…' : 'Enregistrer'}}</button>
+  </div>
+</form>

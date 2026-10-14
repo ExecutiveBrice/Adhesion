@@ -49,6 +49,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       SERVER_PORT: 8000
       BREVO_APIKEY_PRIVATE: ${BREVO_APIKEY_PRIVATE}
+      BREVO_NEWSLETTER_LIST_ID: ${BREVO_NEWSLETTER_LIST_ID:-0}
       IMAGE_STORAGE_DIR: /home/ubuntu/adhesion
       # The production environment explicitly selects its profile. Local
       # docker-compose.local.yml overrides this with helloasso-sandbox.

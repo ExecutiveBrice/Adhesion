@@ -11,6 +11,7 @@ describe('Renouvellement des requêtes PWA', () => {
   let client: HttpClient;
   let http: HttpTestingController;
   let storage: jasmine.SpyObj<TokenStorageService>;
+  let pwa: jasmine.SpyObj<PwaService>;
   let router: jasmine.SpyObj<Router>;
   const api = environment.server;
   const session = { token: 'new-access', refreshToken: 'new-secret', roles: ['ROLE_USER'] };
@@ -31,12 +32,14 @@ describe('Renouvellement des requêtes PWA', () => {
       storage.getToken.and.returnValue(null);
       storage.getRefreshToken.and.returnValue(null);
     });
+    pwa = jasmine.createSpyObj('PwaService', ['isMobileStandalone']);
+    pwa.isMobileStandalone.and.returnValue(true);
     router = jasmine.createSpyObj('Router', ['navigate']);
     router.navigate.and.resolveTo(true);
     TestBed.configureTestingModule({ providers: [
       provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting(), authInterceptorProviders,
       { provide: TokenStorageService, useValue: storage },
-      { provide: PwaService, useValue: { isMobileStandalone: () => true } },
+      { provide: PwaService, useValue: pwa },
       { provide: Router, useValue: router }
     ] });
     client = TestBed.inject(HttpClient);
@@ -84,7 +87,45 @@ describe('Renouvellement des requêtes PWA', () => {
     http.expectOne(api + '/auth/refresh').flush({}, { status: 401, statusText: 'Unauthorized' });
     http.expectNone(api + '/user/profile');
     expect(storage.signOut).toHaveBeenCalled();
-    expect(router.navigate).toHaveBeenCalledWith(['/login'], { queryParams: { sessionExpiree: '1' } });
+    expect(router.navigate).toHaveBeenCalledWith(['/login'], { queryParams: { sessionExpiree: '1' }, replaceUrl: true });
+  });
+
+  it('bloque un JWT expiré dans le navigateur avant tout appel API', () => {
+    pwa.isMobileStandalone.and.returnValue(false);
+    storage.isTokenExpired.and.returnValue(true);
+    let status: number | undefined;
+    client.get(api + '/user/profile').subscribe({ error: error => status = error.status });
+    http.expectNone(api + '/user/profile');
+    http.expectNone(api + '/auth/refresh');
+    expect(status).toBe(401);
+    expect(storage.signOut).toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalledWith(['/login'], {
+      queryParams: { sessionExpiree: '1' }, replaceUrl: true
+    });
+  });
+
+  it('déconnecte un JWT refusé par le serveur dans le navigateur', () => {
+    pwa.isMobileStandalone.and.returnValue(false);
+    client.get(api + '/user/profile').subscribe({ error: () => {} });
+    http.expectOne(api + '/user/profile').flush({}, { status: 401, statusText: 'Unauthorized' });
+    expect(storage.signOut).toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalled();
+  });
+
+  it('déconnecte si le JWT renouvelé par un autre appel est aussi refusé', () => {
+    client.get(api + '/user/profile').subscribe({ error: () => {} });
+    storage.getToken.and.returnValue('new-access');
+    http.expectOne(api + '/user/profile').flush({}, { status: 401, statusText: 'Unauthorized' });
+    http.expectOne(api + '/user/profile').flush({}, { status: 401, statusText: 'Unauthorized' });
+    expect(storage.signOut).toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalled();
+  });
+
+  it('ne déconnecte pas sur un refus de permission (403)', () => {
+    client.get(api + '/user/profile').subscribe({ error: () => {} });
+    http.expectOne(api + '/user/profile').flush({}, { status: 403, statusText: 'Forbidden' });
+    expect(storage.signOut).not.toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
   });
 
   it('un mauvais mot de passe ne déclenche pas de renouvellement', () => {

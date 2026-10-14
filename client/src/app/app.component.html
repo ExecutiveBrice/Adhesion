@@ -118,6 +118,11 @@
                   </a>
                 </li>
               }
+              @if (showAdmin || showMembreCA || showLogistique) {
+                <li class="nav-item" (click)="isCollapsed = true">
+                  <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="materiel">Matériel</a>
+                </li>
+              }
               @if (showProf) {
                 <li class="nav-item">
                   <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="profs" aria-label="Mes groupes" title="Mes groupes">

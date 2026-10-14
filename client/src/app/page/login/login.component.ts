@@ -1,4 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../_services/auth.service';
 import { TokenStorageService } from '../../_services/token-storage.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -105,10 +106,19 @@ export class LoginComponent implements OnInit {
   // d'exposer des panneaux fondés sur une information sensible.
   userExist = true;
 
+  constructor() {
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe(params => {
+      this.sessionExpiree = params.get('sessionExpiree') === '1';
+      if (this.sessionExpiree) {
+        this.isLoggedIn = false;
+        this.roles = [];
+        this.loginPage.view.set('connexion');
+      }
+    });
+  }
+
   ngOnInit(): void {
     this.loginPage.view.set('connexion');
-
-    this.sessionExpiree = this.route.snapshot.queryParamMap.get('sessionExpiree') === '1';
 
     this.chargerConfigurationAgendas();
 

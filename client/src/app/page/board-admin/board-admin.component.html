@@ -204,6 +204,29 @@
       </div></div></ng-template></div></div>
     </section>
 
+    <section ngbAccordionItem="newsletter">
+      <h2 ngbAccordionHeader><button ngbAccordionButton><span class="admin-section-icon" aria-hidden="true"><fa-icon [icon]="faWrench"></fa-icon></span><span class="admin-section-heading"><span>Contacts Brevo</span><small>Remplissez la liste Newsletter ALOD avec les adresses des adhérents.</small></span></button></h2>
+      <div ngbAccordionCollapse><div ngbAccordionBody><ng-template><div class="admin-section-content">
+        <p>Ajoute toutes les adresses e-mail valides des adhérents, ou de leur représentant lorsque ce contact est choisi. Les adresses identiques sont regroupées.</p>
+        <p>Les contacts bloqués sont réabonnés. Le déblocage e-mail dans Brevo s’applique aussi aux autres listes du contact.</p>
+        <div class="d-flex flex-wrap gap-2">
+          <button type="button" class="btn btn-primary" [disabled]="newsletterSyncBusy" (click)="synchroniserNewsletter()">{{ newsletterSyncBusy ? 'Synchronisation / suivi en cours…' : 'Remplir la liste et réabonner les contacts' }}</button>
+          <button type="button" class="btn btn-outline-primary" [disabled]="newsletterSyncBusy" (click)="actualiserSynchronisationNewsletter()">Actualiser le suivi</button>
+        </div>
+        @if (newsletterSync; as sync) {
+          @if (sync.running || sync.total > 0 || sync.ignored > 0 || sync.error) {
+            <div class="alert alert-info mt-3 mb-0" role="status">
+              <p class="mb-1">{{ sync.running ? 'Synchronisation en cours' : sync.error ? 'Synchronisation interrompue' : 'Synchronisation terminée' }} : {{ sync.processed }} / {{ sync.total }} adresses traitées.</p>
+              <p class="mb-0">{{ sync.subscribed }} ajoutées · {{ sync.resubscribed }} réabonnées · {{ sync.alreadySubscribed }} déjà abonnées · {{ sync.ignored }} entrées ignorées (doublons, adresses absentes ou invalides).</p>
+            </div>
+          }
+          @if (sync.unresolved) { <div class="alert alert-warning mt-3 mb-0" role="alert">{{ sync.unresolved }} contacts restent désabonnés de cette liste dans Brevo. Leur réabonnement doit être vérifié dans Brevo.</div> }
+          @if (sync.error) { <div class="alert alert-danger mt-3 mb-0" role="alert">{{ sync.error }}</div> }
+        }
+        @if (newsletterSyncError) { <div class="alert alert-danger mt-3 mb-0" role="alert">{{ newsletterSyncError }}</div> }
+      </div></ng-template></div></div>
+    </section>
+
     <section ngbAccordionItem="maintenance">
       <h2 ngbAccordionHeader><button ngbAccordionButton><span class="admin-section-icon" aria-hidden="true"><fa-icon [icon]="faWrench"></fa-icon></span><span class="admin-section-heading"><span>Maintenance sensible</span><small>Ces opérations sont réservées aux administrateurs et consignées dans le journal d’audit.</small></span></button></h2>
       <div ngbAccordionCollapse><div ngbAccordionBody><ng-template><div class="admin-section-content">

@@ -1,0 +1,68 @@
+<main class="materiel-page">
+  <div class="materiel-header d-flex flex-wrap gap-3 align-items-start justify-content-between mb-4">
+
+    @if (gestionMateriel) {
+      <div class="materiel-management d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-outline-secondary" (click)="gererZonages()" [disabled]="chargement || actionEnCours !== null">Gérer les zonages</button>
+        <button type="button" class="btn btn-outline-primary" (click)="parametrer()" [disabled]="chargement || actionEnCours !== null">
+          <fa-icon [icon]="faSliders" class="me-2" aria-hidden="true"></fa-icon>Ajouter du matériel
+        </button>
+      </div>
+    }
+  </div>
+  @if (message) { <div class="alert alert-success" role="status">{{message}}</div> }
+  @if (erreur) {
+    <div class="alert alert-danger d-flex flex-wrap gap-2 align-items-center" role="alert">
+      <span>{{erreur}}</span><button type="button" class="btn btn-outline-danger btn-sm ms-auto" (click)="charger()" [disabled]="chargement || actionEnCours !== null">Actualiser</button>
+    </div>
+  }
+  @if (chargement) {
+    <p role="status">Chargement du matériel…</p>
+  } @else if (!erreur || materiels.length > 0) {
+    @if (materiels.length > 0) {
+      <div class="row g-3 mb-4">
+        <div class="col-12 col-md-6"><input id="materielRecherche" type="search" class="form-control" [(ngModel)]="recherche" placeholder="Matériel, zonage ou emprunteur"></div>
+        <div class="col-12 col-sm-6 col-md-3"><select id="materielZonage" class="form-select" [(ngModel)]="zonageId"><option [ngValue]="null">Tous les zonages</option>@for (zone of zonages; track zone.id) { <option [ngValue]="zone.id">{{zone.nom}}</option> }</select></div>
+        <div class="col-12 col-sm-6 col-md-3"><select id="materielStatut" class="form-select" [(ngModel)]="statut"><option value="">Tous les matériels</option><option value="disponible">Disponible</option><option value="emprunte">Emprunté</option></select></div>
+      </div>
+      <ul class="materiel-grid" aria-label="Matériel référencé, emplacement et emprunts en cours">
+        @for (materiel of materielsFiltres; track materiel.id) {
+          <li class="materiel-card">
+            <h2 class="h5 mb-3">{{materiel.nom}}</h2>
+            <div class="materiel-etat">
+              @if (materiel.emprunteurId !== null) { <span class="badge text-bg-warning">Emprunté</span> }
+              @else { <span class="badge text-bg-success">Disponible</span> }
+              <button type="button" class="btn btn-sm" [class.btn-secondary]="!materiel.horsService" [class.btn-danger]="materiel.horsService" [id]="'materielHS' + materiel.id" [attr.aria-pressed]="materiel.horsService" [attr.aria-label]="'Hors service : ' + materiel.nom" [title]="materiel.horsService ? 'Remettre en service' : 'Déclarer hors service'" [disabled]="!administrateur || actionEnCours !== null" (click)="changerHorsService(materiel)">HS</button>
+            </div>
+            <dl class="materiel-details">
+              @if (materiel.horsService && materiel.probleme) {
+                <div><dt>Problème</dt><dd style="white-space: pre-wrap; overflow-wrap: anywhere">{{materiel.probleme}}</dd></div>
+              }
+              <div>
+                <dt>Zonage du stock</dt>
+                <dd><span class="zone-label"><span class="zone-colour" [style.background-color]="materiel.zonage.couleur" aria-hidden="true"></span><span class="zone-name" [title]="materiel.zonage.nom">{{materiel.zonage.nom}}</span></span></dd>
+              </div>
+              @if (materiel.emprunteurId !== null) {
+                <div><dt>Emprunteur</dt><dd>{{materiel.emprunteurNom || '—'}}</dd></div>
+                <div><dt>Date d’emprunt</dt><dd>{{materiel.dateEmprunt ? (materiel.dateEmprunt | date:'dd/MM/yyyy HH:mm') : '—'}}</dd></div>
+              }
+            </dl>
+            <div class="materiel-actions">
+              @if (peutEmprunter && materiel.emprunteurId === null) {
+                <button type="button" class="materiel-primary-action btn btn-primary" [disabled]="actionEnCours !== null" (click)="emprunter(materiel)" [attr.aria-label]="'Emprunter ' + materiel.nom">{{actionEnCours === materiel.id ? 'Enregistrement…' : 'Emprunter'}}</button>
+              } @else if (peutRestituer(materiel)) {
+                <button type="button" class="materiel-primary-action btn btn-outline-primary" [disabled]="actionEnCours !== null" (click)="restituer(materiel)" [attr.aria-label]="'Restituer ' + materiel.nom">{{actionEnCours === materiel.id ? 'Enregistrement…' : 'Restituer'}}</button>
+              }
+              <button type="button" class="btn btn-outline-secondary" (click)="historique(materiel)" [disabled]="actionEnCours !== null" [attr.aria-label]="'Journal d’emprunt de ' + materiel.nom">Journal d’emprunt</button>
+              @if (gestionMateriel) {
+                <button type="button" class="btn btn-outline-primary" (click)="modifier(materiel)" [disabled]="actionEnCours !== null" [attr.aria-label]="'Modifier ' + materiel.nom">Modifier</button>
+              }
+            </div>
+          </li>
+        } @empty { <li class="materiel-empty">Aucun matériel ne correspond aux filtres.</li> }
+      </ul>
+    } @else {
+      <div class="materiel-empty"><p class="mb-0">Aucun matériel n’est encore référencé.</p>@if (gestionMateriel) { <p class="mt-2 mb-0">Configurez les emplacements avec le bouton Gérer les zonages, puis utilisez Ajouter du matériel.</p> }</div>
+    }
+  }
+</main>

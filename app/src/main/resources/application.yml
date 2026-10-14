@@ -76,6 +76,13 @@ shop:
       organization-slug: ${HELLOASSO_ORGANIZATION_SLUG:}
       webhook-signature-key: ${HELLOASSO_WEBHOOK_SIGNATURE_KEY:}
 
+# Server-only Brevo newsletter configuration. Zero/empty values disable operations,
+# without preventing startup or changing transactional email delivery.
+brevo:
+  newsletter:
+    api-key: ${BREVO_APIKEY_PRIVATE:}
+    list-id: ${BREVO_NEWSLETTER_LIST_ID:1}
+
 # Zone scolaire utilisée lors de la génération hebdomadaire des séances (A, B ou C).
 adhesion:
   frontend:

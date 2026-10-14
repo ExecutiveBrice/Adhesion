@@ -97,6 +97,20 @@ class UserRoleAuthorizationMvcTest {
     }
 
     @Test
+    void secretaryCanGrantAndRevokeLogisticsRole() throws Exception {
+        mockMvc.perform(post("/user/grantUser").with(user("secretary@example.test").roles("SECRETAIRE"))
+                .param("userEmail", "member@example.test")
+                .contentType(APPLICATION_JSON).content("ROLE_LOGISTIQUE"))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/user/unGrantUser").with(user("secretary@example.test").roles("SECRETAIRE"))
+                .param("userEmail", "member@example.test")
+                .contentType(APPLICATION_JSON).content("ROLE_LOGISTIQUE"))
+                .andExpect(status().isOk());
+        verify(userServices).grantUser(eq(ERole.ROLE_LOGISTIQUE), any());
+        verify(userServices).unGrantUser(eq(ERole.ROLE_LOGISTIQUE), any());
+    }
+
+    @Test
     void membreCaCannotChangeRoles() throws Exception {
         mockMvc.perform(post("/user/grantUser").with(user("member@example.test").roles("MEMBRECA"))
                 .param("userEmail", "member@example.test")

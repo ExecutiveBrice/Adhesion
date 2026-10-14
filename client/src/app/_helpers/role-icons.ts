@@ -6,6 +6,8 @@ import {
   faKeyboard,
   faUserShield,
   faUsers, faUsersGear, faUsersLine, faStreetView, faUserTie, faUserGear, faPeopleRoof, faStore
+  faWrench,
+  faUsers, faUsersGear, faUsersLine, faStreetView, faUserTie, faUserGear, faPeopleRoof
 } from '@fortawesome/free-solid-svg-icons';
 import { ERole } from '../models/eRole';
 
@@ -21,6 +23,8 @@ export const ROLE_ICONS: Partial<Record<ERole, RoleIcon>> = {
   [ERole.ROLE_MEMBRECA]: { icon: faPeopleRoof, label: 'Membre du CA' },
   [ERole.ROLE_COMPTABLE]: { icon: faCalculator, label: 'Comptable' },
   [ERole.ROLE_ENCADRANT]: { icon: faUserTie, label: 'Encadrant' },
+  [ERole.ROLE_REFERENT]: { icon: faUserCheck, label: 'Référent' },
+  [ERole.ROLE_LOGISTIQUE]: { icon: faWrench, label: 'Logistique' }
   [ERole.ROLE_COMMUNICATION_GLOBAL]: { icon: faKeyboard, label: 'Communication globale' },
   [ERole.ROLE_RESPONSABLE_BOUTIQUE]: { icon: faStore, label: 'Responsable boutique' }
 };

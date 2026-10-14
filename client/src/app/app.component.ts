@@ -128,6 +128,7 @@ export class AppComponent {
   showAdmin = false;
   showBureau = false;
   showMembreCA = false;
+  showLogistique = false;
   showSecretaire = false;
   showComptable = false;
   showProf=false;
@@ -158,7 +159,8 @@ export class AppComponent {
         this.updateSession();
         if (this.isLoggedIn) {
           this.reloadMemberSession();
-        } else {          void this.router.navigate(['/login'], { replaceUrl: true });
+        } else {
+          void this.router.navigate(['/login'], { replaceUrl: true });
         }
       });
   }
@@ -220,6 +222,7 @@ export class AppComponent {
     this.showAdmin = this.roles.includes('ROLE_ADMIN');
     this.showBureau = this.roles.includes('ROLE_BUREAU');
     this.showMembreCA = this.roles.includes('ROLE_MEMBRECA');
+    this.showLogistique = this.roles.includes('ROLE_LOGISTIQUE');
     this.showSecretaire = this.roles.includes('ROLE_SECRETAIRE');
     this.showComptable = this.roles.includes('ROLE_COMPTABLE');
     this.showProf = this.roles.includes('ROLE_ENCADRANT');
@@ -258,6 +261,7 @@ export class AppComponent {
 
   logout(): void {
     this.authService.logout().subscribe();
-    this.updateSession();    void this.router.navigate(['/login'], { replaceUrl: true });
+    this.updateSession();
+    void this.router.navigate(['/login'], { replaceUrl: true });
   }
 }

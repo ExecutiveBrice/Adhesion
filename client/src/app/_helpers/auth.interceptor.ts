@@ -1,7 +1,6 @@
 import { HTTP_INTERCEPTORS, HttpErrorResponse, HttpEvent, HttpInterceptorFn } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { HttpInterceptor, HttpHandler, HttpRequest } from '@angular/common/http';
-import { Router } from '@angular/router';
 
 import { TokenStorageService } from '../_services/token-storage.service';
 import { catchError, finalize, Observable, switchMap, throwError } from 'rxjs';
@@ -14,7 +13,6 @@ const TOKEN_HEADER_KEY = 'Authorization';
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
   private token = inject(TokenStorageService);
-  private router = inject(Router);
   private auth = inject(AuthService);
 
 
@@ -37,13 +35,17 @@ export class AuthInterceptor implements HttpInterceptor {
       catchError(error => {
         if (error instanceof HttpErrorResponse
           && (error.status === 401 || (error.status === 400 && !this.token.getToken()))) {
-          this.expireSession();
+          this.auth.expireSession();
         }
         return throwError(() => error);
       })
     );
 
-    if (this.auth.canRefreshSession() && this.token.isTokenExpired()) return renewAndSend();
+    if (token && this.token.isTokenExpired()) {
+      if (this.auth.canRefreshSession()) return renewAndSend();
+      this.auth.expireSession();
+      return throwError(() => new HttpErrorResponse({ status: 401, statusText: 'Session expirée' }));
+    }
 
     return send(token).pipe(catchError(error => {
       if (!(error instanceof HttpErrorResponse) || error.status !== 401 || !token) {
@@ -51,16 +53,16 @@ export class AuthInterceptor implements HttpInterceptor {
       }
       // Un autre appel peut avoir déjà renouvelé le JWT pendant cette requête.
       const currentToken = this.token.getToken();
-      if (currentToken && currentToken !== token) return send(currentToken);
+      if (currentToken && currentToken !== token) return send(currentToken).pipe(catchError(retryError => {
+        if (retryError instanceof HttpErrorResponse && retryError.status === 401) {
+          this.auth.expireSession();
+        }
+        return throwError(() => retryError);
+      }));
       if (this.auth.canRefreshSession()) return renewAndSend();
-      this.expireSession();
+      this.auth.expireSession();
       return throwError(() => error);
     }));
-  }
-
-  private expireSession(): void {
-    this.token.signOut();
-    void this.router.navigate(['/login'], { queryParams: { sessionExpiree: '1' } });
   }
 }
 

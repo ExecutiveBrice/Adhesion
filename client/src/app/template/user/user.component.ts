@@ -1,4 +1,6 @@
-import { Component, OnInit, inject, Input } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, Input } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AdherentNewsletterSubscription, MailService } from '../../_services/mail.service';
 import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { Accord, Activite, ActiviteDropDown, Adherent, Adhesion, Document, ERole, Tribu, User } from '../../models';
 
@@ -16,6 +18,7 @@ import { TokenStorageService } from 'src/app/_services/token-storage.service';
 import { UserService } from 'src/app/_services/user.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass, DatePipe, NgTemplateOutlet } from '@angular/common';
+import { NgClass, NgTemplateOutlet, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap/dropdown';
 import { OrderByPipe } from '../../_helpers/sort.pipe';
@@ -37,12 +40,22 @@ export class UserComponent implements OnInit {
     { code: ERole.ROLE_COMPTABLE, libelle: 'Comptable' },
     { code: ERole.ROLE_ENCADRANT, libelle: 'Encadrant' },
     { code: ERole.ROLE_COMMUNICATION_GLOBAL, libelle: 'Communication globale' },
-    { code: ERole.ROLE_RESPONSABLE_BOUTIQUE, libelle: 'Responsable boutique' }
+    { code: ERole.ROLE_RESPONSABLE_BOUTIQUE, libelle: 'Responsable boutique' },
+    { code: ERole.ROLE_REFERENT, libelle: 'Référent' },
+    { code: ERole.ROLE_LOGISTIQUE, libelle: 'Logistique' }
   ];
   private readonly apiViewRefresh = registerApiViewRefresh();
   private toastr = inject(ToastService);
   private adherentService = inject(AdherentService);
   private userService = inject(UserService);
+  private mailService = inject(MailService);
+  private destroyRef = inject(DestroyRef);
+  newsletter?: AdherentNewsletterSubscription;
+  newsletterBusy = false;
+  newsletterError = '';
+  newsletterMessage = '';
+  newsletterNeedsRefresh = false;
+  private newsletterRequest = 0;
   private adhesionService = inject(AdhesionService);
   activiteService = inject(ActiviteService);
   utilService = inject(UtilService);
@@ -134,6 +147,70 @@ export class UserComponent implements OnInit {
     this.activiteService.fillObjects(this.activites, this.activitesListe, this.adherent);
     console.log(this.activites)
     this.fillFiles();
+    this.chargerNewsletter();
+  }
+
+  get newsletterAvecEmailRepresentant(): boolean {
+    return !!this.adherent?.representant && this.adherent.emailRepresentant === true;
+  }
+
+  chargerNewsletter(): void {
+    const request = ++this.newsletterRequest;
+    if (!this.hasPersistedAdherent() || this.newsletterAvecEmailRepresentant) {
+      this.newsletter = undefined;
+      this.newsletterBusy = false;
+      this.newsletterNeedsRefresh = false;
+      this.newsletterError = '';
+      this.newsletterMessage = '';
+      return;
+    }
+    this.newsletterBusy = true;
+    this.newsletterError = '';
+    this.newsletterMessage = '';
+    this.mailService.getAdherentNewsletter(this.adherent.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: subscription => {
+        if (request !== this.newsletterRequest) return;
+        this.newsletter = subscription;
+        this.newsletterBusy = false;
+        this.newsletterNeedsRefresh = false;
+      },
+      error: error => {
+        if (request !== this.newsletterRequest) return;
+        this.newsletterBusy = false;
+        this.newsletterNeedsRefresh = true;
+        this.newsletterError = error.error?.detail || 'Le statut newsletter est indisponible. Actualisez pour réessayer.';
+      }
+    });
+  }
+
+  modifierNewsletter(subscribed: boolean): void {
+    const subscription = this.newsletter;
+    if (!this.hasPersistedAdherent() || this.newsletterAvecEmailRepresentant || this.newsletterBusy || this.newsletterNeedsRefresh || !subscription?.canModify
+      || subscribed && !subscription.canSubscribe) return;
+    if (subscribed && subscription.status === 'BLOCKED' && !window.confirm(
+      `Réabonner l’adresse ${subscription.email} à la newsletter ? Le déblocage e-mail dans Brevo s’applique aussi aux autres listes auxquelles cette adresse appartient.`)) return;
+    const request = ++this.newsletterRequest;
+    this.newsletterBusy = true;
+    this.newsletterError = '';
+    this.newsletterMessage = '';
+    this.mailService.updateAdherentNewsletter(this.adherent.id, subscribed, subscription.email)
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: result => {
+          if (request !== this.newsletterRequest) return;
+          this.newsletter = result;
+          this.newsletterBusy = false;
+          this.newsletterMessage = subscribed
+            ? result.status === 'SUBSCRIBED' ? 'Votre abonnement à la newsletter est enregistré.'
+              : 'Brevo conserve un désabonnement pour cette liste. Contactez le secrétariat pour finaliser le réabonnement.'
+            : 'Vous n’êtes plus abonné à la liste Newsletter ALOD.';
+        },
+        error: error => {
+          if (request !== this.newsletterRequest) return;
+          this.newsletterBusy = false;
+          this.newsletterNeedsRefresh = true;
+          this.newsletterError = error.error?.detail || 'La modification n’a pas pu être confirmée. Actualisez le statut avant de réessayer.';
+        }
+      });
   }
 
   // Les droits appartiennent au compte connecté, indépendamment du profil consulté.
@@ -315,6 +392,7 @@ export class UserComponent implements OnInit {
         data => {
           this.showSuccess("L'adhérent à bien été mis à jour")
           this.adherent = data;
+          this.chargerNewsletter();
           this.activites = []
           this.activitesListe = []
           this.activiteService.fillObjects(this.activites, this.activitesListe, this.adherent);

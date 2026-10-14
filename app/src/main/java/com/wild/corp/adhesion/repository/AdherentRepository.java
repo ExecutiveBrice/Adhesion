@@ -42,4 +42,8 @@ public interface AdherentRepository extends JpaRepository<Adherent, Long>, JpaSp
                                                  @Param("sectionId") Long sectionId,
                                                  @Param("statutsExclus") List<String> statutsExclus);
 
+    @Query("select case when a.emailRepresentant = true and r is not null then ru.username else u.username end " +
+            "from Adherent a left join a.user u left join a.representant r left join r.user ru order by a.id")
+    List<String> findAllContactEmails();
+
 }

@@ -1,0 +1,8 @@
+<div class="modal-header">
+  <h2 id="zonages-modal-title" class="modal-title h5">Gérer les zonages</h2>
+  <button type="button" class="btn-close" aria-label="Fermer" [disabled]="enregistrement" (click)="activeModal.dismiss()"></button>
+</div>
+<div class="modal-body"><app-zonages></app-zonages></div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-outline-secondary" [disabled]="enregistrement" (click)="activeModal.close()">Fermer</button>
+</div>
