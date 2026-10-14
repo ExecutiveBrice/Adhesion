@@ -10,6 +10,25 @@
 <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss('Cross click')"></button>
 </div>
 <div class="modal-body ">
+  <ng-template #newsletterSection>
+    @if (!newsletterAvecEmailRepresentant) {
+      <section class="col-12 mb-3" aria-labelledby="adherent-newsletter-title">
+        <div class="header" id="adherent-newsletter-title">Newsletter ALOD</div>
+        <div class="cadrePermanent d-flex align-items-center justify-content-between gap-3">
+          <strong role="status">{{ newsletterBusy ? 'Chargement…' : newsletterNeedsRefresh || !newsletter ? 'Statut indisponible' : newsletter.status === 'SUBSCRIBED' ? 'Abonné' : 'Non abonné' }}</strong>
+          @if (newsletter; as subscription) {
+              <button type="button" class="btn btn-sm flex-shrink-0"
+                      [ngClass]="subscription.status === 'SUBSCRIBED' ? 'btn-outline-primary' : 'btn-primary'"
+                      [disabled]="!subscription.canModify || newsletterBusy || newsletterNeedsRefresh || subscription.status !== 'SUBSCRIBED' && !subscription.canSubscribe"
+                      [title]="!subscription.canModify ? 'Modification réservée au titulaire de l’adresse, au secrétariat ou à un administrateur' : subscription.status !== 'SUBSCRIBED' && !subscription.canSubscribe ? 'Validez votre adresse e-mail pour vous abonner' : ''"
+                      (click)="modifierNewsletter(subscription.status !== 'SUBSCRIBED')">
+                {{ subscription.status === 'SUBSCRIBED' ? 'Se désabonner' : 'S’abonner' }}
+              </button>
+          }
+        </div>
+      </section>
+    }
+  </ng-template>
 
 
 
@@ -106,6 +125,7 @@
           Ajouter un document <fa-icon class="orange fa-xl" [icon]="faSquarePlus" container="body"></fa-icon>
         </div>
       </div>
+      <ng-container [ngTemplateOutlet]="newsletterSection"></ng-container>
       <div class="col-12 header">
         Activités de l'année dernière:
       </div>
@@ -493,6 +513,9 @@
           </div>
         </form>
       </div>
+      @if (adherent.id > 0) {
+        <ng-container [ngTemplateOutlet]="newsletterSection"></ng-container>
+      }
     </div>
   }
 

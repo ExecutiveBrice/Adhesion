@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface HistoriqueRepository extends JpaRepository<Historique, Long> {
+    java.util.Optional<Historique> findByCampaignId(Long campaignId);
 
 
 }

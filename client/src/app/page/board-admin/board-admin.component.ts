@@ -1,10 +1,12 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MailService, NewsletterSyncProgress } from '../../_services/mail.service';
 import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { UserService } from '../../_services/user.service';
 import { ParamService } from '../../_services/param.service';
 
 import { AgendaGoogleConfiguration, ERole, ParamBoolean, ParamNumber, ParamText, SalleConfiguration, UserLite } from 'src/app/models';
-import { forkJoin } from 'rxjs';
+import { exhaustMap, forkJoin, takeWhile, timer } from 'rxjs';
 import { faCalendarDays, faCircleCheck, faCircleXmark, faFont, faHashtag, faLocationDot, faPlus, faSliders, faTrash, faUserShield, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { AdherentService } from 'src/app/_services/adherent.service';
 import {AuthService} from "../../_services/auth.service";
@@ -36,6 +38,11 @@ export class BoardAdminComponent implements OnInit {
   private paramService = inject(ParamService);
   private userService = inject(UserService);
   private adherentService = inject(AdherentService);
+  private mailService = inject(MailService);
+  private destroyRef = inject(DestroyRef);
+  newsletterSync?: NewsletterSyncProgress;
+  newsletterSyncBusy = false;
+  newsletterSyncError = '';
 
   faCircleXmark = faCircleXmark;
   faCircleCheck = faCircleCheck;
@@ -97,6 +104,46 @@ export class BoardAdminComponent implements OnInit {
     this.getAgendasGoogle()
     this.getSalles()
     this.fillLists()
+    this.actualiserSynchronisationNewsletter();
+  }
+
+  synchroniserNewsletter(): void {
+    if (this.newsletterSyncBusy || !window.confirm(
+      'Ajouter toutes les adresses e-mail des adhérents à la liste Newsletter ALOD et réabonner les contacts bloqués ? ' +
+      'Brevo applique le déblocage e-mail globalement : ces contacts pourront aussi recevoir les campagnes des autres listes auxquelles ils appartiennent.')) return;
+    this.newsletterSyncBusy = true;
+    this.newsletterSyncError = '';
+    this.mailService.synchronizeNewsletterContacts().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: progress => {
+        this.newsletterSync = progress;
+        this.newsletterSyncBusy = false;
+        this.actualiserSynchronisationNewsletter();
+      },
+      error: () => {
+        this.newsletterSyncBusy = false;
+        this.newsletterSyncError = 'La demande n’a pas pu être confirmée. Actualisez le suivi avant de relancer.';
+      }
+    });
+  }
+
+  actualiserSynchronisationNewsletter(): void {
+    if (this.newsletterSyncBusy) return;
+    this.newsletterSyncBusy = true;
+    this.newsletterSyncError = '';
+    timer(0, 2000).pipe(
+      exhaustMap(() => this.mailService.getNewsletterContactSyncStatus()),
+      takeWhile(progress => progress.running, true),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: progress => {
+        this.newsletterSync = progress;
+        this.newsletterSyncBusy = progress.running;
+      },
+      error: () => {
+        this.newsletterSyncBusy = false;
+        this.newsletterSyncError = 'Le suivi est indisponible. Le traitement peut continuer sur le serveur ; actualisez le suivi.';
+      }
+    });
   }
 
 

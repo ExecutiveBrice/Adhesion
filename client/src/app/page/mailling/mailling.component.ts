@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
-import {MailService} from '../../_services/mail.service';
+import {MailService, NewsletterCampaign} from '../../_services/mail.service';
 import {Activite, ActiviteNm1, Email, ERole, Groupe} from '../../models';
 import {Router} from '@angular/router';
 
@@ -11,6 +11,7 @@ import {Historique} from "../../models/historique";
 
 import { FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgClass, DatePipe } from '@angular/common';
+import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { AngularEditorModule } from '@wfpena/angular-wysiwyg';
 import { OrderSimplePipe } from '../../_helpers/sort-simple.pipe';
 import { OrderObjectByPipe } from '../../_helpers/sortObject.pipe';
@@ -19,7 +20,7 @@ import { OrderObjectByPipe } from '../../_helpers/sortObject.pipe';
     selector: 'app-mailling',
     templateUrl: './mailling.component.html',
     styleUrls: ['./mailling.component.scss'],
-    imports: [FormsModule, ReactiveFormsModule, NgClass, AngularEditorModule, DatePipe, OrderSimplePipe, OrderObjectByPipe]
+    imports: [NgbNavModule, FormsModule, ReactiveFormsModule, NgClass, AngularEditorModule, DatePipe, OrderSimplePipe, OrderObjectByPipe]
 })
 
 export class MaillingComponent implements OnInit {
@@ -42,7 +43,20 @@ export class MaillingComponent implements OnInit {
   subject: string = "";
 
 
-  template: number = 0;
+  activeTab = 'emails';
+  get newsletterMode() { return this.activeTab === 'campaigns'; }
+  expandedCampaignId?: number;
+  private readonly campaignResults = new Map<number, Historique>();
+  newsletterLoading = false;
+  newsletterBusy = false;
+  newsletterConfirming = false;
+  newsletterError = '';
+  newsletterDrafts: NewsletterCampaign[] = [];
+  selectedCampaign?: NewsletterCampaign;
+  newsletterResult?: Historique;
+  private readonly pendingKey = 'alod-newsletter-pending';
+  pendingCampaignId = Number(localStorage.getItem(this.pendingKey)) || undefined;
+
   historiques: Historique[] = []
 
   content = 'Bonjour,<br><br><br>' +
@@ -56,6 +70,8 @@ export class MaillingComponent implements OnInit {
     minHeight: '400px',
     editable: true,
     spellcheck: true,
+    // HTML font size 2 matches the page's normal `small` text size.
+    defaultFontSize: '2',
     placeholder: 'Écris ton mail ici…',
     imageResizeSensitivity: 10,
     toolbar: [
@@ -277,45 +293,115 @@ export class MaillingComponent implements OnInit {
       });
   }
 
-  envoiTemplate() {
+  onTabChange(tab: unknown) {
+    if (tab === 'campaigns') this.openNewsletter();
+  }
 
-    this.inProgress = true;
-    this.showWarning("Envoi de mail en cours, veuillez patienter")
+  openNewsletter() {
+    this.activeTab = 'campaigns';
+    this.loadNewsletterDrafts();
+    if (this.pendingCampaignId) this.checkNewsletterStatus(this.pendingCampaignId);
+  }
 
-    const diffusion: Groupe[]=[];
+  loadNewsletterDrafts() {
+    if (this.newsletterLoading) return;
+    this.newsletterLoading = true;
+    this.newsletterError = '';
+    this.mailService.getNewsletterDrafts().subscribe({
+      next: campaigns => { this.newsletterDrafts = campaigns; this.newsletterLoading = false; },
+      error: error => {
+        this.newsletterLoading = false;
+        this.newsletterError = error.name === 'TimeoutError'
+          ? "La consultation des campagnes a dépassé 30 secondes. Vérifiez la connexion à l'API, puis actualisez les brouillons."
+          : error.status === 0
+            ? "Connexion à l'API impossible. Consultez la console du navigateur pour le détail réseau ou CORS."
+            : error.error?.detail || 'Consultation Brevo indisponible. Vérifiez la configuration ou actualisez les brouillons.';
+      }
+    });
+  }
 
-    const roles = this.roleListe.getRawValue() as Groupe[];
-    roles.forEach(act => {
-      diffusion.push(act)
-    })
-    const acti = this.activiteListe.getRawValue() as Groupe[];
-    acti.forEach(act => {
-      diffusion.push(act)
-    })
-    const actiNm1 = this.activiteNm1Liste.getRawValue() as Groupe[];
-    actiNm1.forEach(act => {
-      diffusion.push(act)
-    })
+  toggleNewsletterCampaign(id: number) {
+    if (this.newsletterBusy) return;
+    if (this.expandedCampaignId === id) {
+      this.expandedCampaignId = undefined;
+      this.newsletterConfirming = false;
+    } else {
+      this.selectNewsletterCampaign(id);
+    }
+  }
 
+  selectNewsletterCampaign(id: number) {
+    if (this.newsletterBusy) return;
+    this.expandedCampaignId = id;
+    this.selectedCampaign = undefined;
+    this.newsletterConfirming = false;
+    this.newsletterResult = this.campaignResults.get(id);
+    this.newsletterError = '';
+    this.newsletterBusy = true;
+    this.mailService.getNewsletterCampaign(id).subscribe({
+      next: campaign => { this.selectedCampaign = campaign; this.newsletterBusy = false; },
+      error: () => { this.newsletterBusy = false; this.newsletterError = 'Aperçu indisponible. Actualisez les campagnes.'; }
+    });
+  }
 
-    this.mailService.sendTemplate(diffusion, this.template)
-      .subscribe({
-        next: (newHistorique) => {
-          this.historiques.push(newHistorique);
-          this.showWarning("Votre message est à bien été envoyé")
+  confirmNewsletter() {
+    if (!this.selectedCampaign || this.newsletterBusy || this.pendingCampaignId || !this.newsletterConfirming) return;
+    const campaign = this.selectedCampaign;
+    this.newsletterBusy = true;
+    this.newsletterConfirming = false;
+    this.newsletterError = '';
+    this.pendingCampaignId = campaign.id;
+    localStorage.setItem(this.pendingKey, String(campaign.id));
+    this.mailService.sendNewsletterCampaign(campaign).subscribe({
+      next: result => { this.newsletterBusy = false; this.recordNewsletterResult(result); },
+      error: error => {
+        this.newsletterBusy = false;
+        this.newsletterError = error.status === 503 ? "L'envoi est désactivé ou la configuration est indisponible."
+          : error.status === 409 ? 'La campagne a changé ou ne peut plus être envoyée. Rechargez son aperçu.'
+          : 'Réponse incertaine. Vérification du statut Brevo avant toute nouvelle tentative.';
+        this.checkNewsletterStatus(campaign.id);
+      }
+    });
+  }
 
-          this.inProgress = false;
-        },
-        error: (error) => {
+  checkNewsletterStatus(id: number) {
+    if (this.newsletterBusy) return;
+    this.newsletterBusy = true;
+    this.mailService.getNewsletterStatus(id).subscribe({
+      next: result => { this.newsletterBusy = false; this.recordNewsletterResult(result); },
+      error: () => {
+        this.newsletterBusy = false;
+        this.newsletterError = 'Statut indisponible. Aucun nouvel envoi ne sera lancé. Vérifiez à nouveau le statut.';
+      }
+    });
+  }
 
-          this.inProgress = false;
-          this.showError("Il y a eu un problème lors de l'envoie du message: "+error.message)
+  recordNewsletterResult(result: Historique) {
+    this.newsletterResult = result;
+    if (result.campaignId) this.campaignResults.set(result.campaignId, result);
+    if (result.campaignStatus === 'NOT_REQUESTED') {
+      this.selectedCampaign = undefined;
+    }
+    if (!['UNKNOWN', 'REQUESTED'].includes(result.campaignStatus || '')) {
+      this.pendingCampaignId = undefined;
+      localStorage.removeItem(this.pendingKey);
+    }
+    this.getHistorique();
+  }
 
-        }
-      });
+  campaignStatusLabel(status?: string): string {
+    switch (status) {
+      case 'COMPLETED': return 'Campagne terminée dans Brevo';
+      case 'ACCEPTED': return "Demande acceptée — campagne en attente ou en cours";
+      case 'REQUESTED': return 'Demande enregistrée — statut à vérifier';
+      case 'UNKNOWN': return 'Réponse incertaine — nouvel envoi bloqué';
+      case 'REJECTED': return 'Demande refusée — consultez Brevo et préparez une nouvelle campagne';
+      default: return "Aucune demande d'envoi enregistrée";
+    }
   }
 
   envoiMail(subject: string) {
+    if (this.inProgress) return;
 
     if (subject == undefined || subject.length < 5 || this.content == undefined || this.content.length < 20) {
       this.showWarning("Le mail n'est pas complet l'objet doit avoir au moins 5 lettres et le corps du message au moins 20 lettres")

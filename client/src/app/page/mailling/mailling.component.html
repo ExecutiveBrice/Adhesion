@@ -1,146 +1,193 @@
-<div class="row">
+<div class="mailing-page">
+  <ul ngbNav #mailingNav="ngbNav" [(activeId)]="activeTab" (activeIdChange)="onTabChange($event)"
+      class="nav nav-tabs mailing-tabs" aria-label="Type de mailing">
+    <li ngbNavItem="emails">
+      <button ngbNavLink>E-mails individuels</button>
+      <ng-template ngbNavContent>
+        <div class="individual-layout">
+          <section class="mailing-panel recipients-panel" aria-labelledby="recipients-title">
+            <h2 id="recipients-title">Destinataires</h2>
+            @if (pageReady){
 
-  <div class="col-4">
-    @if ( pageReady){
+              <button type='button'
+              class="btn btn-primary alod btn-independent" [attr.aria-expanded]="role_bouton" (click)="role_bouton = !role_bouton">Destinataires par rôle</button>
 
-      <span type='button'
-      class="btn btn-primary alod btn-independent" (click)="role_bouton = !role_bouton">mailing par role</span>
+              @if ( role_bouton){
+                @for (groupe of roleListe.controls | orderObjectBy:"value.ordre":false;track $index){
+                  <label class="checkbox">
+                    <input type="checkbox" [formControl]="getControl(groupe)" (change)="selectGroupe(groupe)" />
+                    <span><b>{{groupe.get('text')?.value}}</b></span>
+                  </label>
+                  @for (horaire of groupe.get('horaires')?.controls | orderObjectBy:"value.ordre":false;track $index){
+                    <label class="indentation checkbox">
+                      <input type="checkbox" [formControl]="getControl(horaire)" (change)="evaluateMailing(groupe, horaire)" />
+                      <span >{{horaire.get('text')?.value}}</span>
+                    </label>
+                  }
+                }
+              }
+              <button type='button'
+              class="btn btn-primary alod btn-independent" [attr.aria-expanded]="activite_bouton" (click)="activite_bouton = !activite_bouton">Activités de 2025/2026</button>
 
-      @if ( role_bouton){
-        @for (groupe of roleListe.controls | orderObjectBy:"value.ordre":false;track $index){
-          <label class="checkbox">
-            <input type="checkbox" [formControl]="getControl(groupe)" (change)="selectGroupe(groupe)" />
-            <span><b>{{groupe.get('text')?.value}}</b></span>
-          </label>
-          @for (horaire of groupe.get('horaires')?.controls | orderObjectBy:"value.ordre":false;track $index){
-            <label class="indentation checkbox">
-              <input type="checkbox" [formControl]="getControl(horaire)" (change)="evaluateMailing(groupe, horaire)" />
-              <span >{{horaire.get('text')?.value}}</span>
-            </label>
+              @if ( activite_bouton){
+                @for (groupe of activiteListe.controls | orderObjectBy:"value.ordre":false;track $index){
+                  <label class="checkbox">
+                    <input type="checkbox" [formControl]="getControl(groupe)" (change)="selectGroupe(groupe)" />
+                    <span><b>{{groupe.get('text')?.value}}</b></span>
+                  </label>
+                  @for (horaire of groupe.get('horaires')?.controls | orderObjectBy:"value.ordre":false;track $index){
+                    <label class="indentation checkbox">
+                      <input type="checkbox" [formControl]="getControl(horaire)" (change)="evaluateMailing(groupe, horaire)" />
+                      <span >{{horaire.get('text')?.value}}</span>
+                    </label>
+                  }
+                }
+              }
+              <button type='button'
+              class="btn btn-primary alod btn-independent" [attr.aria-expanded]="activiteNm1_bouton" (click)="activiteNm1_bouton = !activiteNm1_bouton">Activités de 2026/2027</button>
+
+              @if ( activiteNm1_bouton){
+                @for (groupe of activiteNm1Liste.controls | orderObjectBy:"value.ordre":false;track $index){
+                  <label class="checkbox">
+                    <input type="checkbox" [formControl]="getControl(groupe)" (change)="selectGroupe(groupe)" />
+                    <span><b>{{groupe.get('text')?.value}}</b></span>
+                  </label>
+                  @for (horaire of groupe.get('horaires')?.controls | orderObjectBy:"value.ordre":false;track $index){
+                    <label class="indentation checkbox">
+                      <input type="checkbox" [formControl]="getControl(horaire)" (change)="evaluateMailing(groupe, horaire)" />
+                      <span >{{horaire.get('text')?.value}}</span>
+                    </label>
+                  }
+                }
+              }
+            }
+          </section>
+          <section class="mailing-panel message-panel" aria-labelledby="message-title">
+            <h2 id="message-title">Contenu du mail</h2>
+            <div class="message-types" role="group" aria-label="Format du mail">
+            </div>
+
+              <div class="form-group mb-3">
+                <label for="mail-subject">Objet <span class="orange">*</span></label>
+                <input id="mail-subject" type="text" class="form-control" name="subject" [(ngModel)]="subject"
+                       required minlength="10" maxlength="255" />
+              </div>
+              <angular-editor [config]="editorConfig" [(ngModel)]="content"></angular-editor>
+              <button type="button" (click)="envoiMail(subject)" [disabled]="inProgress" class="btn btn-primary send-message">
+                Envoyer ce message à la liste de diffusion
+              </button>
+
+          </section>
+          <section class="mailing-panel history-panel" aria-labelledby="history-title">
+            <h2 id="history-title">Historique</h2>
+            @if (historiques.length === 0) {
+              <p class="text-muted">Aucun envoi dans l'historique.</p>
+            } @else {
+              <table class="mailing-history">
+                <thead>
+                  <tr>
+                    <th scope="col">Date de demande</th>
+                    <th scope="col">Objet</th>
+                    <th scope="col">Destinataires</th>
+                    <th scope="col">Résultat</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (historique of historiques | orderSimpleBy:'dateEnvoi':true; track historique) {
+                    <tr>
+                      <td data-label="Date"><span>{{ historique.dateEnvoi | date:'dd/MM/yyyy HH:mm' }}</span></td>
+                      <td data-label="Objet"><span>{{ historique.subject }}</span></td>
+                      <td data-label="Destinataires"><span>{{ historique.listing }}</span></td>
+                      <td data-label="Résultat">
+                        <div>
+                          @if (historique.campaignId) {
+                            <span>Campagne n°{{ historique.campaignId }} — {{ campaignStatusLabel(historique.campaignStatus) }}</span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" (click)="checkNewsletterStatus(historique.campaignId)" [disabled]="newsletterBusy">Vérifier le statut</button>
+                          } @else { {{ historique.nombre }} réussis / {{ historique.echecs }} échoués }
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            }
+          </section>
+        </div>
+      </ng-template>
+    </li>
+    <li ngbNavItem="campaigns">
+      <button ngbNavLink>Campagnes Brevo</button>
+      <ng-template ngbNavContent>
+        <div class="campaigns-panel">
+          <div class="campaigns-toolbar">
+            <button type="button" class="btn btn-primary" (click)="loadNewsletterDrafts()" [disabled]="newsletterLoading || newsletterBusy">Actualiser les brouillons</button>
+          </div>
+          @if (newsletterLoading) { <p role="status">Chargement des brouillons…</p> }
+          @if (newsletterError) { <p role="alert" class="alert alert-danger">{{ newsletterError }}</p> }
+          @if (pendingCampaignId) {
+            <div class="card pending-campaign">
+              <div class="card-body">
+                <p role="status">Campagne n°{{ pendingCampaignId }} — résultat de la demande d'envoi à vérifier</p>
+                <button type="button" class="btn btn-outline-secondary" (click)="checkNewsletterStatus(pendingCampaignId)" [disabled]="newsletterBusy">Vérifier le statut</button>
+              </div>
+            </div>
           }
-        }
-      }
-      <span type='button'
-      class="btn btn-primary alod btn-independent" (click)="activite_bouton = !activite_bouton">mailing pour les activités de 2025/2026</span>
-
-      @if ( activite_bouton){
-        @for (groupe of activiteListe.controls | orderObjectBy:"value.ordre":false;track $index){
-          <label class="checkbox">
-            <input type="checkbox" [formControl]="getControl(groupe)" (change)="selectGroupe(groupe)" />
-            <span><b>{{groupe.get('text')?.value}}</b></span>
-          </label>
-          @for (horaire of groupe.get('horaires')?.controls | orderObjectBy:"value.ordre":false;track $index){
-            <label class="indentation checkbox">
-              <input type="checkbox" [formControl]="getControl(horaire)" (change)="evaluateMailing(groupe, horaire)" />
-              <span >{{horaire.get('text')?.value}}</span>
-            </label>
+          @if (!newsletterLoading && !newsletterError && newsletterDrafts.length === 0) {
+            <p class="text-muted">Aucun brouillon newsletter disponible.</p>
           }
-        }
-      }
-      <span type='button'
-      class="btn btn-primary alod btn-independent" (click)="activiteNm1_bouton = !activiteNm1_bouton">mailing pour les activités de 2026/2027</span>
-
-      @if ( activiteNm1_bouton){
-        @for (groupe of activiteNm1Liste.controls | orderObjectBy:"value.ordre":false;track $index){
-          <label class="checkbox">
-            <input type="checkbox" [formControl]="getControl(groupe)" (change)="selectGroupe(groupe)" />
-            <span><b>{{groupe.get('text')?.value}}</b></span>
-          </label>
-          @for (horaire of groupe.get('horaires')?.controls | orderObjectBy:"value.ordre":false;track $index){
-            <label class="indentation checkbox">
-              <input type="checkbox" [formControl]="getControl(horaire)" (change)="evaluateMailing(groupe, horaire)" />
-              <span >{{horaire.get('text')?.value}}</span>
-            </label>
-          }
-        }
-      }
-    }
-  </div>
-  <div class="col-4">
-    <div class="btn-group btn-group-sm " role="group">
-      <div (click)="template=0" [ngClass]="template==0? 'btn-primary' : 'btn-pomme'" class="btn btn-block"
-        type='button'>Un mail manuel
-      </div>
-      <div (click)="template=2" [ngClass]="template==2? 'btn-primary' : 'btn-pomme'" class="btn btn-block"
-        type='button'>Le template Brevo n°2 : newsletter
-      </div>
-      <div (click)="template=6" [ngClass]="template==6? 'btn-primary' : 'btn-pomme'" class="btn btn-block"
-        type='button'>Le template Brevo n°6 : Convocation AG
-      </div>
-    </div>
-
-
-    @if (template==0) {
-      <div class="row">
-        <div class="col-sm-12 ">
-          <div class="form-group">
-            <label for="prenom">Objet : <span class="orange" container="body">*</span></label>
-            <input type="text" class="form-control" name="prenom" [(ngModel)]="subject" required
-              minlength="10" maxlength="255" />
+          <div class="campaign-list">
+            @for (draft of newsletterDrafts; track draft.id) {
+              <article class="card campaign-card" [class.campaign-card-open]="expandedCampaignId === draft.id">
+                <h2 class="campaign-heading">
+                  <button type="button" class="campaign-toggle" (click)="toggleNewsletterCampaign(draft.id)"
+                          [disabled]="newsletterBusy" [attr.aria-expanded]="expandedCampaignId === draft.id"
+                          [attr.aria-controls]="'campaign-body-' + draft.id" [id]="'campaign-heading-' + draft.id">
+                    <span class="campaign-summary">
+                      <span class="campaign-name">{{ draft.name }}</span>
+                      <span class="campaign-subject">{{ draft.subject }}</span>
+                      <span class="campaign-meta">Campagne n°{{ draft.id }} · {{ draft.listName }}</span>
+                    </span>
+                    <span class="campaign-chevron" aria-hidden="true">{{ expandedCampaignId === draft.id ? '−' : '+' }}</span>
+                  </button>
+                </h2>
+                @if (expandedCampaignId === draft.id) {
+                  <div class="card-body campaign-body" [id]="'campaign-body-' + draft.id" role="region" [attr.aria-labelledby]="'campaign-heading-' + draft.id">
+                    @if (selectedCampaign; as campaign) {
+                      <h3>{{ campaign.subject }}</h3>
+                      @if (campaign.previewText) { <p>{{ campaign.previewText }}</p> }
+                      <p>Destinataires : <strong>{{ campaign.listName }}</strong> (n°{{ campaign.listId }})
+                        @if (campaign.subscribers !== null) { — {{ campaign.subscribers }} contacts }
+                      </p>
+                      <p class="text-muted">Les contacts désabonnés ne recevront pas cette campagne.</p>
+                      <iframe class="campaign-preview" title="Aperçu de la newsletter" sandbox="" referrerpolicy="no-referrer" [srcdoc]="campaign.htmlContent"></iframe>
+                      @if (!newsletterConfirming) {
+                        <button type="button" class="btn btn-primary" (click)="newsletterConfirming=true"
+                                [disabled]="newsletterBusy || !!pendingCampaignId || campaign.brevoStatus !== 'draft' || !!newsletterResult && newsletterResult.campaignStatus !== 'NOT_REQUESTED'">Préparer l'envoi</button>
+                      } @else {
+                        <div role="alert" class="alert alert-warning campaign-confirmation">
+                          <p>Confirmer le lancement de « {{ campaign.name }} » (n°{{ campaign.id }}) ?</p>
+                          <p>Objet : {{ campaign.subject }}<br>Destinataires : {{ campaign.listName }} (n°{{ campaign.listId }}).</p>
+                          <p>Brevo prend ensuite en charge la diffusion de la campagne.</p>
+                          <div class="campaign-actions">
+                            <button type="button" class="btn btn-primary" (click)="confirmNewsletter()" [disabled]="newsletterBusy || !!pendingCampaignId">Confirmer le lancement</button>
+                            <button type="button" class="btn btn-outline-secondary" (click)="newsletterConfirming=false">Annuler</button>
+                          </div>
+                        </div>
+                      }
+                    } @else if (newsletterBusy) {
+                      <p role="status">Chargement de l'aperçu…</p>
+                    }
+                    @if (newsletterResult?.campaignId === draft.id) {
+                      <p role="status" class="campaign-status">{{ campaignStatusLabel(newsletterResult.campaignStatus) }} — statut Brevo : {{ newsletterResult.brevoStatus }}</p>
+                    }
+                  </div>
+                }
+              </article>
+            }
           </div>
         </div>
-        <div class="col-sm-12">
-          <angular-editor  [config]="editorConfig" [(ngModel)]="content"></angular-editor>
-        </div>
-        <div class="col-sm-12">
-          <button (click)="envoiMail(subject)" [disabled]="inProgress" class="btn btn-block btn-primary">
-            Envoyer ce message à la liste de diffusion
-          </button>
-        </div>
-      </div>
-    }
-
-    @if (template!=0) {
-      <div class="row">
-        <div class="col-sm-12">
-          <button (click)="envoiTemplate()" [disabled]="inProgress" class="btn btn-block btn-primary">
-            Envoyer ce template à la liste de diffusion
-          </button>
-        </div>
-      </div>
-    }
-  </div>
-  <div class="col-4">
-
-    <table>
-      <thead>
-        <tr>
-          <th class="center">
-            Date d'envoi
-
-          </th>
-          <th class="center">
-            Objet
-
-          </th>
-          <th class="center">
-            Maling Liste
-          </th>
-          <th class="center">
-            Réussis/Echoués
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (historique of historiques | orderSimpleBy:'dateEnvoi':true; track historique) {
-          <tr
-            >
-            <td>
-              {{ historique.dateEnvoi | date:'EEEE, MMMM d, y, hh:mm' }}
-            </td>
-            <td>
-              {{ historique.subject }}
-            </td>
-            <td>
-              {{ historique.listing }}
-            </td>
-            <td>
-              {{ historique.nombre }}/{{ historique.echecs }}
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-
-  </div>
+      </ng-template>
+    </li>
+  </ul>
+  <div [ngbNavOutlet]="mailingNav" class="mailing-tab-content"></div>
 </div>

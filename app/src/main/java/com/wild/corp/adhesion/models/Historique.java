@@ -33,6 +33,12 @@ public class Historique {
 
     private LocalDateTime dateEnvoi;
 
+    // Nullable for legacy transactional mail; unique to claim a campaign before contacting Brevo.
+    @Column(unique = true)
+    private Long campaignId;
+    private String campaignStatus;
+    private String brevoStatus;
+
     public Historique(String listing, String subject, Integer echecs, Integer nombre, LocalDateTime dateEnvoi) {
         this.listing = listing;
         this.subject = subject;

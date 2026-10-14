@@ -18,4 +18,8 @@ public interface AdherentRepository extends JpaRepository<Adherent, Long>, JpaSp
     @Query("select a.id from Adherent a")
     List<Long> getAllIds();
 
+    @Query("select case when a.emailRepresentant = true and r is not null then ru.username else u.username end " +
+            "from Adherent a left join a.user u left join a.representant r left join r.user ru order by a.id")
+    List<String> findAllContactEmails();
+
 }

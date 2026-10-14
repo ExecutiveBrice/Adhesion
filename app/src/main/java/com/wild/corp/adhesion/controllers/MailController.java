@@ -43,6 +43,9 @@ public class MailController {
     @PostMapping(value = "/sendTemplate")
     @PreAuthorize("hasAnyRole('SECRETAIRE', 'BUREAU', 'MEMBRECA', 'ADMIN')")
     public ResponseEntity<Historique> sendTemplate(@RequestBody List<Groupe> maillingListe, @RequestParam(value = "templateId") Long templateId) {
+        if (Long.valueOf(2).equals(templateId)) {
+            return ResponseEntity.status(HttpStatus.GONE).build();
+        }
         log.debug("send sendTemplate " + templateId);
         if (!emailService.isMailSendingEnabled()) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
