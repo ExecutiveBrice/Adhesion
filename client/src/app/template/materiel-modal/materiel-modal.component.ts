@@ -16,6 +16,7 @@ export class MaterielModalComponent {
   private readonly service = inject(MaterielService);
   @Input() zonages: Zonage[] = [];
   nom = '';
+  quantiteTotale = 1;
   zonageId: number | null = null;
   horsService = false;
   enregistrement = false;
@@ -23,13 +24,13 @@ export class MaterielModalComponent {
 
   ajouter(): void {
     if (this.enregistrement) return;
-    if (!this.nom.trim() || this.zonageId === null) {
+    if (!this.nom.trim() || this.zonageId === null || !Number.isInteger(this.quantiteTotale) || this.quantiteTotale < 1) {
       this.erreur = 'Saisissez le nom du matériel et choisissez un zonage.';
       return;
     }
     this.enregistrement = true;
     this.erreur = '';
-    this.service.create(this.nom.trim(), this.zonageId, this.horsService).subscribe({
+    this.service.create(this.nom.trim(), this.zonageId, this.horsService, this.quantiteTotale).subscribe({
       next: materiel => this.activeModal.close(materiel),
       error: response => {
         this.enregistrement = false;

@@ -19,11 +19,13 @@ export class ModifierMaterielModalComponent {
   @Input() zonages: Zonage[] = [];
   @Input() set materiel(value: Materiel) {
     this.objet = value;
+    this.quantiteTotale = value.quantiteTotale ?? 1;
     this.nom = value.nom;
     this.zonageId = value.zonage.id;
   }
   objet!: Materiel;
   nom = '';
+  quantiteTotale = 1;
   zonageId: number | null = null;
   enregistrement = false;
   confirmationSuppression = false;
@@ -31,20 +33,20 @@ export class ModifierMaterielModalComponent {
 
   enregistrer(): void {
     if (this.enregistrement || this.confirmationSuppression) return;
-    if (!this.nom.trim() || this.nom.trim().length > 150 || this.zonageId === null) {
+    if (!this.nom.trim() || this.nom.trim().length > 150 || this.zonageId === null || !Number.isInteger(this.quantiteTotale) || this.quantiteTotale < 1) {
       this.erreur = 'Saisissez le nom du matériel et choisissez un zonage.';
       return;
     }
     this.enregistrement = true;
     this.erreur = '';
-    this.service.update(this.objet.id, this.nom.trim(), this.zonageId).subscribe({
+    this.service.update(this.objet.id, this.nom.trim(), this.zonageId, this.quantiteTotale).subscribe({
       next: materiel => this.activeModal.close({ materiel } satisfies ModificationMateriel),
       error: response => this.echec(response, 'Le matériel n’a pas pu être modifié.')
     });
   }
 
   supprimer(): void {
-    if (this.enregistrement || !this.confirmationSuppression || this.objet.emprunteurId !== null) return;
+    if (this.enregistrement || !this.confirmationSuppression || (this.objet.quantiteEmpruntee ?? (this.objet.emprunteurId !== null ? 1 : 0)) > 0) return;
     this.enregistrement = true;
     this.erreur = '';
     this.service.delete(this.objet.id).subscribe({

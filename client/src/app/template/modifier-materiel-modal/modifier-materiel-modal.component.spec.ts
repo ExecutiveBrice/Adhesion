@@ -35,7 +35,7 @@ describe('Modification du matériel', () => {
     const resultat = { ...objet, nom: 'Enceinte', zonage: reserve };
     service.update.and.returnValue(of(resultat));
     component.enregistrer();
-    expect(service.update).toHaveBeenCalledWith(2, 'Enceinte', 6);
+    expect(service.update).toHaveBeenCalledWith(2, 'Enceinte', 6, 1);
     expect(modal.close).toHaveBeenCalledWith({ materiel: resultat });
     expect(objet.nom).toBe('Projecteur');
   });

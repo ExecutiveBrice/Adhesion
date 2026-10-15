@@ -14,17 +14,23 @@ export class HorsServiceMaterielModalComponent {
   private readonly apiViewRefresh = registerApiViewRefresh();
   readonly activeModal = inject(NgbActiveModal);
   private readonly service = inject(MaterielService);
-  @Input() materiel!: Materiel;
+  @Input() set materiel(value: Materiel) {
+    this.objet = value;
+    this.quantiteHorsService = value.quantiteHorsService ?? (value.horsService ? 1 : 0);
+  }
+  get materiel(): Materiel { return this.objet; }
+  objet!: Materiel;
+  quantiteHorsService = 0;
   commentaire = '';
   enregistrement = false;
   erreur = '';
 
   enregistrer(): void {
     const commentaire = this.commentaire.trim();
-    if (this.enregistrement || !commentaire || commentaire.length > 2000) return;
+    if (this.enregistrement || !commentaire || commentaire.length > 2000 || !Number.isInteger(this.quantiteHorsService) || this.quantiteHorsService < 0 || this.quantiteHorsService > ((this.materiel.quantiteTotale ?? 1) - (this.materiel.quantiteEmpruntee ?? 0))) return;
     this.enregistrement = true;
     this.erreur = '';
-    this.service.updateHorsService(this.materiel.id, !this.materiel.horsService, commentaire).subscribe({
+    this.service.updateHorsService(this.materiel.id, this.quantiteHorsService > 0, commentaire, this.quantiteHorsService).subscribe({
       next: materiel => this.activeModal.close(materiel),
       error: response => {
         this.enregistrement = false;

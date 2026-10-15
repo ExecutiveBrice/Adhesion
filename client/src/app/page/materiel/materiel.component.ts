@@ -1,3 +1,4 @@
+import { RetourMaterielModalComponent } from '../../template/retour-materiel-modal/retour-materiel-modal.component';
 import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -66,33 +67,40 @@ export class MaterielComponent implements OnInit {
     const recherche = this.recherche.trim().toLocaleLowerCase('fr');
     return this.materiels.filter(materiel =>
       (!this.zonageId || materiel.zonage.id === this.zonageId)
-      && (!this.statut || (this.statut === 'disponible' && materiel.emprunteurId === null)
-        || (this.statut === 'emprunte' && materiel.emprunteurId !== null))
-      && `${materiel.nom} ${materiel.zonage.nom} ${materiel.emprunteurNom ?? ''}`.toLocaleLowerCase('fr').includes(recherche));
+      && (!this.statut || (this.statut === 'disponible' && (materiel.quantiteDisponible ?? 0) > 0)
+        || (this.statut === 'emprunte' && (materiel.quantiteEmpruntee ?? 0) > 0))
+      && `${materiel.nom} ${materiel.zonage.nom} ${(materiel.emprunts ?? []).map(e => e.emprunteurNom).join(' ')}`.toLocaleLowerCase('fr').includes(recherche));
   }
 
   peutRestituer(materiel: Materiel): boolean {
-    return this.peutEmprunter && materiel.emprunteurId !== null && (this.administrateur || materiel.emprunteurId === this.utilisateurId);
+    return this.peutEmprunter && (materiel.emprunts ?? []).some(e => this.administrateur || e.emprunteurId === this.utilisateurId);
   }
 
   emprunter(materiel: Materiel): void {
-    if (!this.peutEmprunter || materiel.emprunteurId !== null || this.actionEnCours !== null) return;
-    if (!this.administrateur) { this.action(materiel, false); return; }
+    if (!this.peutEmprunter || (materiel.quantiteDisponible ?? 0) < 1 || this.actionEnCours !== null) return;
+    this.ouvrirOperation(materiel, false);
+  }
+
+  restituer(materiel: Materiel): void {
+    if (!this.peutRestituer(materiel) || this.actionEnCours !== null) return;
+    this.ouvrirOperation(materiel, true);
+  }
+
+  private ouvrirOperation(materiel: Materiel, retour: boolean): void {
     this.actionEnCours = materiel.id;
-    const reference = this.modal.open(EmpruntMaterielModalComponent, {
-      centered: true, backdrop: 'static', ariaLabelledBy: 'emprunt-materiel-title',
+    const reference = this.modal.open(retour ? RetourMaterielModalComponent : EmpruntMaterielModalComponent, {
+      centered: true, backdrop: 'static', ariaLabelledBy: retour ? 'retour-materiel-title' : 'emprunt-materiel-title',
       beforeDismiss: () => !reference.componentInstance.enregistrement
     });
     reference.componentInstance.materiel = materiel;
     reference.result.then((resultat: Materiel) => {
       this.materiels = this.materiels.map(item => item.id === resultat.id ? resultat : item);
       this.actionEnCours = null;
-      this.message = `Emprunt enregistré pour ${resultat.emprunteurNom}.`;
+      this.message = retour ? 'Retour enregistré.' : 'Emprunt enregistré.';
       this.erreur = '';
       this.changeDetector.markForCheck();
     }, () => { this.actionEnCours = null; this.changeDetector.markForCheck(); });
   }
-  restituer(materiel: Materiel): void { if (this.peutRestituer(materiel)) this.action(materiel, true); }
 
   historique(materiel: Materiel): void {
     const reference = this.modal.open(HistoriqueMaterielModalComponent, { centered: true, scrollable: true, ariaLabelledBy: 'historique-materiel-title' });
@@ -115,27 +123,6 @@ export class MaterielComponent implements OnInit {
       this.erreur = '';
       this.changeDetector.markForCheck();
     }, () => { this.actionEnCours = null; this.changeDetector.markForCheck(); });
-  }
-
-  private action(materiel: Materiel, retour: boolean): void {
-    if (this.actionEnCours !== null) return;
-    this.actionEnCours = materiel.id;
-    this.erreur = '';
-    this.message = '';
-    (retour ? this.service.restituer(materiel.id) : this.service.emprunter(materiel.id)).subscribe({
-      next: resultat => {
-        this.materiels = this.materiels.map(item => item.id === resultat.id ? resultat : item);
-        this.actionEnCours = null;
-        this.message = retour ? 'Matériel restitué.' : 'Emprunt enregistré à votre nom.';
-      },
-      error: response => {
-        this.actionEnCours = null;
-        this.erreur = response?.error?.detail || response?.error?.message || 'L’opération n’a pas pu être enregistrée.';
-        if (response.status === 409) {
-          this.service.getAll().subscribe({ next: liste => this.materiels = liste, error: () => {} });
-        }
-      }
-    });
   }
 
   parametrer(): void {

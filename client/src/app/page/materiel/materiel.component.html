@@ -30,27 +30,26 @@
           <li class="materiel-card">
             <h2 class="h5 mb-3">{{materiel.nom}}</h2>
             <div class="materiel-etat">
-              @if (materiel.emprunteurId !== null) { <span class="badge text-bg-warning">Emprunté</span> }
-              @else { <span class="badge text-bg-success">Disponible</span> }
-              <button type="button" class="btn btn-sm" [class.btn-secondary]="!materiel.horsService" [class.btn-danger]="materiel.horsService" [id]="'materielHS' + materiel.id" [attr.aria-pressed]="materiel.horsService" [attr.aria-label]="'Hors service : ' + materiel.nom" [title]="materiel.horsService ? 'Remettre en service' : 'Déclarer hors service'" [disabled]="!administrateur || actionEnCours !== null" (click)="changerHorsService(materiel)">HS</button>
+              @if ((materiel.quantiteEmpruntee ?? 0) > 0) { <span class="badge text-bg-warning">{{materiel.quantiteEmpruntee}} emprunté(s)</span> }
+              @if ((materiel.quantiteDisponible ?? 0) > 0) { <span class="badge text-bg-success">{{materiel.quantiteDisponible}} disponible(s)</span> }
+              @else { <span class="badge text-bg-secondary">Aucun disponible</span> }
+              <button type="button" class="btn btn-sm" [class.btn-secondary]="!materiel.horsService" [class.btn-danger]="materiel.horsService" [id]="'materielHS' + materiel.id" [attr.aria-pressed]="materiel.horsService" [attr.aria-label]="'Hors service : ' + materiel.nom" title="Gérer la quantité hors service" [disabled]="!administrateur || actionEnCours !== null" (click)="changerHorsService(materiel)">HS : {{materiel.quantiteHorsService ?? 0}}</button>
             </div>
             <dl class="materiel-details">
+              <div><dt>Stock total</dt><dd>{{materiel.quantiteTotale ?? 1}}</dd></div>
               @if (materiel.horsService && materiel.probleme) {
                 <div><dt>Problème</dt><dd style="white-space: pre-wrap; overflow-wrap: anywhere">{{materiel.probleme}}</dd></div>
               }
-              <div>
-                <dt>Zonage du stock</dt>
-                <dd><span class="zone-label"><span class="zone-colour" [style.background-color]="materiel.zonage.couleur" aria-hidden="true"></span><span class="zone-name" [title]="materiel.zonage.nom">{{materiel.zonage.nom}}</span></span></dd>
-              </div>
-              @if (materiel.emprunteurId !== null) {
-                <div><dt>Emprunteur</dt><dd>{{materiel.emprunteurNom || '—'}}</dd></div>
-                <div><dt>Date d’emprunt</dt><dd>{{materiel.dateEmprunt ? (materiel.dateEmprunt | date:'dd/MM/yyyy HH:mm') : '—'}}</dd></div>
+              <div><dt>Zonage du stock</dt><dd><span class="zone-label"><span class="zone-colour" [style.background-color]="materiel.zonage.couleur" aria-hidden="true"></span><span class="zone-name" [title]="materiel.zonage.nom">{{materiel.zonage.nom}}</span></span></dd></div>
+              @for (emprunt of materiel.emprunts ?? []; track emprunt.id) {
+                <div><dt>{{emprunt.emprunteurNom}}</dt><dd>{{(emprunt.quantite ?? 1) - (emprunt.quantiteRetournee ?? 0)}} à rendre · {{emprunt.dateEmprunt | date:'dd/MM/yyyy HH:mm'}}</dd></div>
               }
             </dl>
             <div class="materiel-actions">
-              @if (peutEmprunter && materiel.emprunteurId === null) {
+              @if (peutEmprunter && (materiel.quantiteDisponible ?? 0) > 0) {
                 <button type="button" class="materiel-primary-action btn btn-primary" [disabled]="actionEnCours !== null" (click)="emprunter(materiel)" [attr.aria-label]="'Emprunter ' + materiel.nom">{{actionEnCours === materiel.id ? 'Enregistrement…' : 'Emprunter'}}</button>
-              } @else if (peutRestituer(materiel)) {
+              }
+              @if (peutRestituer(materiel)) {
                 <button type="button" class="materiel-primary-action btn btn-outline-primary" [disabled]="actionEnCours !== null" (click)="restituer(materiel)" [attr.aria-label]="'Restituer ' + materiel.nom">{{actionEnCours === materiel.id ? 'Enregistrement…' : 'Restituer'}}</button>
               }
               <button type="button" class="btn btn-outline-secondary" (click)="historique(materiel)" [disabled]="actionEnCours !== null" [attr.aria-label]="'Journal d’emprunt de ' + materiel.nom">Journal d’emprunt</button>

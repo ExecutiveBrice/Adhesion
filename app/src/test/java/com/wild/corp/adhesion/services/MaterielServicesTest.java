@@ -27,7 +27,16 @@ class MaterielServicesTest {
         zonages = mock(ZonageRepository.class);
         users = mock(UserRepository.class);
         emprunts = mock(EmpruntMaterielRepository.class);
-        when(emprunts.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        java.util.List<EmpruntMateriel> journal = new java.util.ArrayList<>();
+        when(emprunts.save(any())).thenAnswer(invocation -> {
+            EmpruntMateriel entree = invocation.getArgument(0);
+            entree.setId((long) journal.size() + 1);
+            journal.add(entree);
+            return entree;
+        });
+        when(emprunts.findAllByMaterielIdOrderByDateEmpruntDescIdDesc(any())).thenAnswer(invocation -> journal);
+        when(emprunts.findFirstByMaterielIdAndHorsServiceIsNullAndDateRetourIsNullOrderByDateEmpruntDescIdDesc(any()))
+                .thenAnswer(invocation -> journal.stream().filter(e -> e.getHorsService() == null && e.getDateRetour() == null).findFirst());
         service = new MaterielServices(materiels, zonages, users, emprunts);
         Zonage zone = Zonage.builder().id(1L).nom("Étagère A").couleur("#0F9D58").build();
         materiel = Materiel.builder().id(2L).nom("Vidéoprojecteur").zonage(zone).build();
@@ -65,13 +74,15 @@ class MaterielServicesTest {
     void editChangesNameAndZoneWithoutChangingLoanOrHs() {
         service.emprunter(2L, user.getUsername());
         materiel.setHorsService(true);
+        materiel.setQuantiteHorsService(1);
+        materiel.setQuantiteTotale(2);
         Zonage reserve = Zonage.builder().id(6L).nom("Réserve").couleur("#654321").build();
         when(zonages.findByIdForUpdate(6L)).thenReturn(Optional.of(reserve));
         MaterielResponse resultat = service.update(2L, new MaterielRequest("  Projecteur  ", 6L, false));
         assertThat(resultat.nom()).isEqualTo("Projecteur");
         assertThat(resultat.zonage().id()).isEqualTo(6L);
         assertThat(resultat.emprunteurId()).isEqualTo(user.getId());
-        assertThat(resultat.dateEmprunt()).isEqualTo(materiel.getDateEmprunt());
+        assertThat(resultat.dateEmprunt()).isNotNull();
         assertThat(resultat.horsService()).isTrue();
     }
 
@@ -89,12 +100,12 @@ class MaterielServicesTest {
 
     @Test
     void deleteRefusesActiveLoanAndRemovesHistoryBeforeMaterial() {
-        materiel.setEmprunteurId(3L);
+        service.emprunter(2L, user.getUsername());
         assertThatThrownBy(() -> service.delete(2L)).isInstanceOfSatisfying(ResponseStatusException.class,
                 error -> assertThat(error.getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
         verify(emprunts, never()).deleteAllByMaterielId(any());
         verify(materiels, never()).delete(any());
-        materiel.setEmprunteurId(null);
+        service.restituer(2L, user.getUsername(), false);
         service.delete(2L);
         var ordre = inOrder(emprunts, materiels);
         ordre.verify(emprunts).deleteAllByMaterielId(2L);
@@ -112,7 +123,7 @@ class MaterielServicesTest {
         assertThatThrownBy(() -> service.emprunter(2L, "other@example.org"))
                 .isInstanceOfSatisfying(ResponseStatusException.class,
                         error -> assertThat(error.getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
-        assertThat(materiel.getEmprunteurId()).isEqualTo(3L);
+        assertThat(service.getHistorique(2L).stream().filter(e -> e.dateRetour() == null).findFirst().orElseThrow().emprunteurId()).isEqualTo(3L);
     }
 
     @Test
@@ -124,7 +135,7 @@ class MaterielServicesTest {
         assertThatThrownBy(() -> service.restituer(2L, autre.getUsername(), false))
                 .isInstanceOfSatisfying(ResponseStatusException.class,
                         error -> assertThat(error.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN));
-        assertThat(materiel.getEmprunteurId()).isEqualTo(3L);
+        assertThat(service.getHistorique(2L).stream().filter(e -> e.dateRetour() == null).findFirst().orElseThrow().emprunteurId()).isEqualTo(3L);
         MaterielResponse retour = service.restituer(2L, user.getUsername(), false);
         assertThat(retour.emprunteurId()).isNull();
         assertThat(retour.emprunteurNom()).isNull();
@@ -209,6 +220,7 @@ class MaterielServicesTest {
         assertThat(materiel.isHorsService()).isFalse();
         verify(emprunts, never()).save(any());
         materiel.setHorsService(true);
+        materiel.setQuantiteHorsService(1);
         assertThatThrownBy(() -> service.updateHorsService(2L,
                 new HorsServiceRequest(false, " "), user.getUsername()))
                 .isInstanceOf(ResponseStatusException.class);
@@ -216,16 +228,11 @@ class MaterielServicesTest {
     }
 
     @Test
-    void hsRemainsAnIndicatorAndAllowsLoansAndReturns() {
+    void hsReducesAvailabilityAndCanBeRepaired() {
         service.updateHorsService(2L, new HorsServiceRequest(true, "Lampe cassée"), user.getUsername());
-        MaterielResponse emprunte = service.emprunter(2L, user.getUsername());
-        assertThat(emprunte.horsService()).isTrue();
-        assertThat(emprunte.emprunteurId()).isEqualTo(3L);
-        verify(emprunts, times(2)).save(any());
-        assertThat(service.restituer(2L, user.getUsername(), false).horsService()).isTrue();
-        assertThat(materiel.getEmprunteurId()).isNull();
+        assertThatThrownBy(() -> service.emprunter(2L, user.getUsername())).isInstanceOf(ResponseStatusException.class);
         service.updateHorsService(2L, new HorsServiceRequest(false, "Lampe remplacée"), user.getUsername());
-        assertThat(materiel.isHorsService()).isFalse();
+        assertThat(service.emprunter(2L, user.getUsername()).quantiteDisponible()).isZero();
         assertThatThrownBy(() -> service.updateHorsService(2L, new HorsServiceRequest(null, null), user.getUsername()))
                 .isInstanceOf(ResponseStatusException.class);
     }

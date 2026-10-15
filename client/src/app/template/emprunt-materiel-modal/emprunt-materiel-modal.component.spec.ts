@@ -36,7 +36,7 @@ describe('Choix du membre du CA emprunteur', () => {
     service.emprunter.and.returnValue(of(resultat));
     fixture.componentInstance.emprunteurId = 4;
     fixture.componentInstance.emprunter();
-    expect(service.emprunter).toHaveBeenCalledWith(2, 4);
+    expect(service.emprunter).toHaveBeenCalledWith(2, 4, 1);
     expect(modal.close).toHaveBeenCalledWith(resultat);
   });
 
