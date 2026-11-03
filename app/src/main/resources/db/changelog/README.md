@@ -11,7 +11,7 @@ crée ni ne modifie les tables.
   complet de `baseline/master-changeset.xml`.
 - `v2/changeset-v2.xml` est le point d'entrée unique de toutes les évolutions
   postérieures à V1. Il inclut d'abord les modules `activity.xml`, `shop.xml`,
-  `chat.xml` et `communication.xml`, puis les changesets V3 à V11 dans leur
+  `chat.xml` et `communication.xml`, puis les changesets V3 à V15 dans leur
   ordre d'origine. Tous ces fichiers sont rangés dans `v2/`.
 - Chaque fichier de module V2 contient un seul changeset et uniquement des
   opérations Liquibase XML, sans balise `sql` ni fichier SQL externe.
@@ -54,6 +54,21 @@ Les séances existantes conservent une liste vide. Une tâche utilisée ne peut
 
 La V9 ajoute l'icône Font Awesome et la couleur des tâches. Les tâches déjà
 enregistrées reçoivent l'icône `clipboard-check` et la couleur `#176B4A`.
+
+La V14 ajoute le rapprochement comptable des adhésions, les champs de suivi
+des campagnes newsletter et leur identifiant unique, ainsi que le rôle
+Logistique. Les colonnes et l'index newsletter déjà créés manuellement sont
+conservés, avec leurs données. Les anciens courriers gardent un identifiant
+de campagne nul.
+
+La V15 crée les zonages, le matériel, le journal d'emprunts et les retours
+partiels. Elle reprend aussi les tables historiques créées par Hibernate :
+chaque objet conserve un stock de un, les matériels HS non empruntés deviennent
+une unité HS, et les emprunts encore inscrits sur la fiche sont transférés au
+journal sans doublonner ceux qui s'y trouvent déjà. Un matériel ancien à la
+fois HS et emprunté conserve son emprunt en priorité. Les emprunts terminés
+reçoivent leur quantité retournée. Ces migrations remplacent les scripts
+manuels correspondants pour une base suivie par ce changelog.
 
 Ajouter les prochaines évolutions dans un nouveau changeset sous `v2/`, puis
 l'inclure à la fin de `v2/changeset-v2.xml`. Ne pas modifier un

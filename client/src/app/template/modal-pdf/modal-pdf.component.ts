@@ -4,15 +4,6 @@ import { FileService } from 'src/app/_services/file.service';
 import { Document } from 'src/app/models';
 import { NgxExtendedPdfViewerModule } from 'ngx-extended-pdf-viewer';
 
-export let pdfDefaultOptions = {
-  externalLinkTarget: 0,
-  renderer: 'canvas',
-  assetsFolder: 'assets',
-  workerSrc: () => './' + pdfDefaultOptions.assetsFolder + '/pdf.worker.js',
-};
-
-
-
 @Component({
     selector: 'modal-pdf',
     templateUrl: './modal-pdf.component.html',

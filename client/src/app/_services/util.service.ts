@@ -1,7 +1,6 @@
 import { Injectable, inject } from "@angular/core";
 import { NgbModal } from "@ng-bootstrap/ng-bootstrap";
 import { ModalComponent } from "../template/modal/modal.component";
-import { ModalPDFComponent } from "../template/modal-pdf/modal-pdf.component";
 import { Activite, ActiviteDropDown, Document } from "../models";
 import { ModalChoixActivite } from "../template/modal-choixactivite/modal.choixactivite";
 
@@ -28,7 +27,8 @@ export class UtilService {
     return modalRef.result;
   }
 
-  openModalPDF(documentName: string | undefined, adherentId:number): Promise<any> {
+  async openModalPDF(documentName: string | undefined, adherentId:number): Promise<any> {
+    const { ModalPDFComponent } = await import('../template/modal-pdf/modal-pdf.component');
     const modalRef = this.modalService.open(ModalPDFComponent, {
       animation: true,
       size: 'xl',

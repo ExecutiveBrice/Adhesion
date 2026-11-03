@@ -1,6 +1,6 @@
 {
-  "name": "ALOD — Amicale Laïque de l'Ouche",
-  "short_name": "ALOD",
+  "name": "ALOD-test — Amicale Laïque de l'Ouche",
+  "short_name": "ALOD-test",
   "description": "Application de gestion de l'Amicale Laïque de l'Ouche.",
   "lang": "fr",
   "start_url": "/",

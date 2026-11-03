@@ -18,6 +18,20 @@ Ouvrir `https://localhost:4200/` et accepter le certificat de développement du 
 #Build des sources pour dépot docker (local ou remote)
 npm run build:production
 
+Le lecteur PDF est chargé à l'ouverture de la modale, avec une interface imposée
+en français (`language="fr"`), quelle que soit la langue du navigateur.
+`angular.json` copie uniquement ses scripts `.min.mjs` et sa traduction `fr` ;
+`src/assets/locale/locale.json` référence cette seule traduction. Les polices,
+CMaps, images et modules WASM restent disponibles pour lire tous les documents.
+Les scripts PDF non minifiés et les variantes ES5 sont exclus : les navigateurs
+ciblés dans `.browserslistrc` prennent en charge les scripts modernes. Si ces
+cibles changent, revoir également les ressources PDF copiées.
+
+Pour analyser les blocs JavaScript, lancer `npm run build:production -- --stats-json` ;
+les statistiques sont écrites dans `dist/browser-stats.json`, hors du répertoire
+`dist/browser` à déployer. À titre de comparaison, cette optimisation réduit les
+fichiers déployés de 26,15 Mo à 11,22 Mo (tailles non compressées).
+
 Le Compose racine sert le front sur `https://adhesion.${DNS_NAME}/` avec une base
 Angular `/`. Traefik réécrit les chemins des pages Angular vers `/index.html`
 avec le middleware `client_adhesion_spa`. Nginx sert les fichiers avec sa

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  <changeSet id="v15-zonage" author="adhesion">
+    <preConditions onFail="MARK_RAN" onError="HALT"><not><tableExists tableName="zonage"/></not></preConditions>
+    <createTable tableName="zonage">
+      <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="nom" type="varchar(100)"><constraints nullable="false"/></column>
+      <column name="couleur" type="varchar(7)"><constraints nullable="false"/></column>
+    </createTable>
+  </changeSet>
+  <changeSet id="v15-materiel" author="adhesion">
+    <preConditions onFail="MARK_RAN" onError="HALT"><not><tableExists tableName="materiel"/></not></preConditions>
+    <createTable tableName="materiel">
+      <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="nom" type="varchar(150)"><constraints nullable="false"/></column>
+      <column name="zonage_id" type="bigint"><constraints nullable="false" foreignKeyName="fk_materiel_zonage" references="zonage(id)"/></column>
+      <column name="emprunteur_id" type="bigint"/>
+      <column name="emprunteur_nom" type="varchar(511)"/>
+      <column name="date_emprunt" type="timestamp with time zone"/>
+      <column name="hors_service" type="boolean" defaultValueBoolean="false"><constraints nullable="false"/></column>
+      <column name="probleme" type="varchar(2000)"/>
+    </createTable>
+    <createIndex tableName="materiel" indexName="idx_materiel_zonage"><column name="zonage_id"/></createIndex>
+  </changeSet>
+  <changeSet id="v15-emprunt-materiel" author="adhesion">
+    <preConditions onFail="MARK_RAN" onError="HALT"><not><tableExists tableName="emprunt_materiel"/></not></preConditions>
+    <createTable tableName="emprunt_materiel">
+      <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="materiel_id" type="bigint"><constraints nullable="false" foreignKeyName="fk_emprunt_materiel" references="materiel(id)"/></column>
+      <column name="emprunteur_id" type="bigint"/>
+      <column name="emprunteur_nom" type="varchar(511)"/>
+      <column name="hors_service" type="boolean"/>
+      <column name="commentaire" type="varchar(2000)"/>
+      <column name="date_emprunt" type="timestamp with time zone"><constraints nullable="false"/></column>
+      <column name="date_retour" type="timestamp with time zone"/>
+      <column name="enregistre_par_id" type="bigint"/>
+      <column name="enregistre_par_nom" type="varchar(511)"/>
+      <column name="rapporte_par_id" type="bigint"/>
+      <column name="rapporte_par_nom" type="varchar(511)"/>
+    </createTable>
+    <createIndex tableName="emprunt_materiel" indexName="idx_emprunt_materiel">
+      <column name="materiel_id"/><column name="date_emprunt"/>
+    </createIndex>
+  </changeSet>
+  <changeSet id="v15-materiel-hors-service" author="adhesion">
+    <preConditions onFail="MARK_RAN" onError="HALT"><not><columnExists tableName="materiel" columnName="hors_service"/></not></preConditions>
+    <addColumn tableName="materiel"><column name="hors_service" type="boolean" defaultValueBoolean="false"><constraints nullable="false"/></column></addColumn>
+  </changeSet>
+  <changeSet id="v15-materiel-probleme" author="adhesion">
+    <preConditions onFail="MARK_RAN" onError="HALT"><not><columnExists tableName="materiel" columnName="probleme"/></not></preConditions>
+    <addColumn tableName="materiel"><column name="probleme" type="varchar(2000)"/></addColumn>
+  </changeSet>
+  <changeSet id="v15-emprunt-hors-service" author="adhesion">
+    <preConditions onFail="MARK_RAN" onError="HALT"><not><columnExists tableName="emprunt_materiel" columnName="hors_service"/></not></preConditions>
+    <addColumn tableName="emprunt_materiel"><column name="hors_service" type="boolean"/></addColumn>
+  </changeSet>
+  <changeSet id="v15-emprunt-commentaire" author="adhesion">
+    <preConditions onFail="MARK_RAN" onError="HALT"><not><columnExists tableName="emprunt_materiel" columnName="commentaire"/></not></preConditions>
+    <addColumn tableName="emprunt_materiel"><column name="commentaire" type="varchar(2000)"/></addColumn>
+  </changeSet>
+  <changeSet id="v15-emprunt-identite-facultative" author="adhesion">
+    <dropNotNullConstraint tableName="emprunt_materiel" columnName="emprunteur_id" columnDataType="bigint"/>
+    <dropNotNullConstraint tableName="emprunt_materiel" columnName="emprunteur_nom" columnDataType="varchar(511)"/>
+  </changeSet>
+  <changeSet id="v15-materiel-quantite-totale" author="adhesion">
+    <preConditions onFail="MARK_RAN" onError="HALT"><not><columnExists tableName="materiel" columnName="quantite_totale"/></not></preConditions>
+    <addColumn tableName="materiel"><column name="quantite_totale" type="integer" defaultValueNumeric="1"><constraints nullable="false"/></column></addColumn>
+  </changeSet>
+  <changeSet id="v15-materiel-quantite-hors-service" author="adhesion">
+    <preConditions onFail="MARK_RAN" onError="HALT"><not><columnExists tableName="materiel" columnName="quantite_hors_service"/></not></preConditions>
+    <addColumn tableName="materiel"><column name="quantite_hors_service" type="integer" defaultValueNumeric="0"><constraints nullable="false"/></column></addColumn>
+  </changeSet>
+  <changeSet id="v15-emprunt-quantite" author="adhesion">
+    <preConditions onFail="MARK_RAN" onError="HALT"><not><columnExists tableName="emprunt_materiel" columnName="quantite"/></not></preConditions>
+    <addColumn tableName="emprunt_materiel"><column name="quantite" type="integer" defaultValueNumeric="1"><constraints nullable="false"/></column></addColumn>
+  </changeSet>
+  <changeSet id="v15-emprunt-quantite-retournee" author="adhesion">
+    <preConditions onFail="MARK_RAN" onError="HALT"><not><columnExists tableName="emprunt_materiel" columnName="quantite_retournee"/></not></preConditions>
+    <addColumn tableName="emprunt_materiel"><column name="quantite_retournee" type="integer" defaultValueNumeric="0"><constraints nullable="false"/></column></addColumn>
+  </changeSet>
+  <changeSet id="v15-retour-materiel" author="adhesion">
+    <preConditions onFail="MARK_RAN" onError="HALT"><not><tableExists tableName="retour_materiel"/></not></preConditions>
+    <createTable tableName="retour_materiel">
+      <column name="emprunt_id" type="bigint"><constraints nullable="false" foreignKeyName="fk_retour_materiel_emprunt" references="emprunt_materiel(id)"/></column>
+      <column name="quantite" type="integer"><constraints nullable="false" checkConstraint="quantite &gt; 0"/></column>
+      <column name="date_retour" type="timestamp with time zone"><constraints nullable="false"/></column>
+      <column name="rapporte_par_id" type="bigint"/>
+      <column name="rapporte_par_nom" type="varchar(511)"/>
+    </createTable>
+    <createIndex tableName="retour_materiel" indexName="idx_retour_materiel_emprunt"><column name="emprunt_id"/></createIndex>
+  </changeSet>
+  <changeSet id="v15-reprise-quantites-materiel" author="adhesion">
+    <sql>UPDATE materiel SET quantite_hors_service = 1 WHERE hors_service AND emprunteur_id IS NULL AND quantite_totale = 1 AND quantite_hors_service = 0</sql>
+    <sql>UPDATE emprunt_materiel SET quantite_retournee = quantite WHERE date_retour IS NOT NULL AND hors_service IS NULL</sql>
+    <sql>INSERT INTO emprunt_materiel (materiel_id, emprunteur_id, emprunteur_nom, date_emprunt, quantite, quantite_retournee)
+      SELECT m.id, m.emprunteur_id, m.emprunteur_nom, m.date_emprunt, 1, 0 FROM materiel m
+      WHERE m.emprunteur_id IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM emprunt_materiel e WHERE e.materiel_id = m.id AND e.hors_service IS NULL AND e.date_retour IS NULL)</sql>
+    <sql>UPDATE materiel SET emprunteur_id = NULL, emprunteur_nom = NULL, date_emprunt = NULL, hors_service = (quantite_hors_service &gt; 0)</sql>
+  </changeSet>
+</databaseChangeLog>

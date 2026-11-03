@@ -14,7 +14,7 @@
 
     @if (isLoaded) {
       <div>
-        <ngx-extended-pdf-viewer [src]="pdfFile.content"></ngx-extended-pdf-viewer>
+        <ngx-extended-pdf-viewer [src]="pdfFile.content" language="fr" [minifiedJSLibraries]="true"></ngx-extended-pdf-viewer>
       </div>
     }
     @if (isFailedPdf) {

@@ -26,7 +26,18 @@
               {
                 "glob": "**/*",
                 "input": "node_modules/ngx-extended-pdf-viewer/assets/",
+                "output": "/assets/",
+                "ignore": ["locale/**", "additional-locale/**", "*.mjs", "**/*.map"]
+              },
+              {
+                "glob": "*.min.mjs",
+                "input": "node_modules/ngx-extended-pdf-viewer/assets/",
                 "output": "/assets/"
+              },
+              {
+                "glob": "**/*",
+                "input": "node_modules/ngx-extended-pdf-viewer/assets/locale/fr/",
+                "output": "/assets/locale/fr/"
               }
             ],
             "styles": ["src/styles.css"]

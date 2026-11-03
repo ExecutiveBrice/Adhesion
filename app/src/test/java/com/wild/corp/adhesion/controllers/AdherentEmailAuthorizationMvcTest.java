@@ -1,6 +1,7 @@
 package com.wild.corp.adhesion.controllers;
 
 import com.wild.corp.adhesion.models.resources.AdherentLite;
+import com.wild.corp.adhesion.repository.SectionRepository;
 import com.wild.corp.adhesion.security.WebSecurityConfig;
 import com.wild.corp.adhesion.security.jwt.AuthEntryPointJwt;
 import com.wild.corp.adhesion.security.jwt.JwtUtils;
@@ -33,6 +34,8 @@ class AdherentEmailAuthorizationMvcTest {
     private MockMvc mockMvc;
     @MockitoBean
     private AdherentServices adherentServices;
+    @MockitoBean
+    private SectionRepository sectionRepository;
     @MockitoBean
     private UserServices userServices;
     @MockitoBean

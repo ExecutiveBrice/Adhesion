@@ -1,5 +1,6 @@
 package com.wild.corp.adhesion.controllers;
 
+import com.wild.corp.adhesion.repository.SectionRepository;
 import com.wild.corp.adhesion.services.AdherentServices;
 import com.wild.corp.adhesion.services.RappelServices;
 import com.wild.corp.adhesion.services.UserDetailsService;
@@ -32,6 +33,8 @@ class MaintenanceAuthorizationMvcTest {
 
     @MockitoBean
     private AdherentServices adherentServices;
+    @MockitoBean
+    private SectionRepository sectionRepository;
     @MockitoBean
     private UserServices userServices;
     @MockitoBean
