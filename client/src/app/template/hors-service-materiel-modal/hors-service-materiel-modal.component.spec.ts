@@ -30,19 +30,22 @@ describe('Saisie du problème ou de la réparation', () => {
     const resultat = { ...materiel, horsService: true, probleme: 'Lampe cassée' };
     service.updateHorsService.and.returnValue(of(resultat));
     fixture.componentInstance.commentaire = '  Lampe cassée  ';
+    fixture.componentInstance.quantiteHorsService = 1;
     fixture.componentInstance.enregistrer();
-    expect(service.updateHorsService).toHaveBeenCalledWith(2, true, 'Lampe cassée');
+    expect(service.updateHorsService).toHaveBeenCalledWith(2, true, 'Lampe cassée', 1);
     expect(modal.close).toHaveBeenCalledWith(resultat);
   });
 
   it('demande la réparation lors de la remise en service', () => {
-    fixture.componentInstance.materiel = { ...materiel, horsService: true };
+    fixture.componentInstance.materiel = { ...materiel, horsService: true, quantiteHorsService: 1 };
+    fixture.componentInstance.quantiteHorsService = 0;
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Quelle réparation a été effectuée ?');
     service.updateHorsService.and.returnValue(of(materiel));
     fixture.componentInstance.commentaire = 'Lampe remplacée';
+    fixture.componentInstance.quantiteHorsService = 0;
     fixture.componentInstance.enregistrer();
-    expect(service.updateHorsService).toHaveBeenCalledWith(2, false, 'Lampe remplacée');
+    expect(service.updateHorsService).toHaveBeenCalledWith(2, false, 'Lampe remplacée', 0);
   });
 
   it('empêche les doubles validations et conserve la saisie en cas d’erreur', () => {

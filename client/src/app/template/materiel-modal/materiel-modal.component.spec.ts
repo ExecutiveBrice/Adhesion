@@ -35,7 +35,7 @@ describe('Ajout de matériel', () => {
     const objet: Materiel = { id: 2, nom: 'Vidéoprojecteur', zonage: component.zonages[0], emprunteurId: null, emprunteurNom: null, dateEmprunt: null, horsService: false };
     service.create.and.returnValue(of(objet));
     component.ajouter();
-    expect(service.create).toHaveBeenCalledWith('Vidéoprojecteur', 1, false);
+    expect(service.create).toHaveBeenCalledWith('Vidéoprojecteur', 1, false, 1);
     expect(modal.close).toHaveBeenCalledWith(objet);
   });
 

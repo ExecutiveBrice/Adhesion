@@ -2,13 +2,17 @@
 <form (ngSubmit)="emprunter()">
   <div class="modal-body">
     @if (chargement) { <p role="status">Chargement des membres du conseil d’administration…</p> }
+    @if (administrateur) {
     <label class="form-label" for="emprunteurMembreCA">Membre du CA emprunteur</label>
     <select id="emprunteurMembreCA" name="emprunteurId" class="form-select" [(ngModel)]="emprunteurId" [disabled]="chargement || enregistrement" required ngbAutofocus>
       <option [ngValue]="null">Choisir un membre du CA</option>
       @for (membre of membresCA; track membre.id) { <option [ngValue]="membre.id">{{membre.nom}}</option> }
     </select>
-    @if (!chargement && membresCA.length === 0 && !erreur) { <p class="mt-3 mb-0">Aucun membre du CA disponible.</p> }
-    @if (erreur) { <div class="alert alert-danger mt-3 mb-0" role="alert">{{erreur}}<button type="button" class="btn btn-outline-danger btn-sm ms-2" (click)="charger()" [disabled]="enregistrement || chargement">Actualiser la liste</button></div> }
+    }
+    <label for="quantiteEmprunt" class="form-label mt-3">Quantité à emprunter ({{materiel.quantiteDisponible ?? 1}} disponibles)</label>
+    <input id="quantiteEmprunt" name="quantite" type="number" class="form-control" min="1" [max]="materiel.quantiteDisponible ?? 1" step="1" required [(ngModel)]="quantite" [disabled]="enregistrement">
+    @if (administrateur && !chargement && membresCA.length === 0 && !erreur) { <p class="mt-3 mb-0">Aucun membre du CA disponible.</p> }
+    @if (erreur) { <div class="alert alert-danger mt-3 mb-0" role="alert">{{erreur}}@if (administrateur) { <button type="button" class="btn btn-outline-danger btn-sm ms-2" (click)="charger()" [disabled]="enregistrement || chargement">Actualiser la liste</button> }</div> }
   </div>
-  <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" [disabled]="enregistrement" (click)="activeModal.dismiss()">Annuler</button><button type="submit" class="btn btn-primary" [disabled]="chargement || enregistrement || emprunteurId === null || membresCA.length === 0">{{enregistrement ? 'Enregistrement…' : 'Confirmer l’emprunt'}}</button></div>
+  <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" [disabled]="enregistrement" (click)="activeModal.dismiss()">Annuler</button><button type="submit" class="btn btn-primary" [disabled]="chargement || enregistrement || (administrateur && (emprunteurId === null || membresCA.length === 0)) || quantite < 1 || quantite > (materiel.quantiteDisponible ?? 1)">{{enregistrement ? 'Enregistrement…' : 'Confirmer l’emprunt'}}</button></div>
 </form>

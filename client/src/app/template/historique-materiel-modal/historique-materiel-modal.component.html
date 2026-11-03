@@ -8,21 +8,27 @@
         <article class="border rounded-3 p-3">
           @if (emprunt.horsService !== null && emprunt.horsService !== undefined) {
             <div class="d-flex flex-wrap justify-content-between gap-2"><h3 class="h6 mb-0">{{emprunt.horsService ? 'Déclaré hors service' : 'Remis en service'}}</h3><span class="badge" [class.text-bg-danger]="emprunt.horsService" [class.text-bg-success]="!emprunt.horsService">{{emprunt.horsService ? 'HS' : 'En service'}}</span></div>
-            <dl class="row mt-3 mb-0">
+            <p class="mt-2 mb-0">Quantité : {{emprunt.quantite ?? 1}}</p><dl class="row mt-3 mb-0">
               @if (emprunt.commentaire) {
                 <dt class="col-5">{{emprunt.horsService ? 'Problème' : 'Réparation effectuée'}}</dt><dd class="col-7" style="white-space: pre-wrap; overflow-wrap: anywhere">{{emprunt.commentaire}}</dd>
               }
               <dt class="col-5">Date</dt><dd class="col-7">{{emprunt.dateEmprunt | date:'dd/MM/yyyy HH:mm'}}</dd>
               <dt class="col-5">Enregistré par</dt><dd class="col-7 mb-0">{{emprunt.enregistreParNom || 'Non renseigné'}}</dd>
             </dl>
+          @for (retour of emprunt.retours ?? []; track $index) {
+            <p class="mb-1">Retour de {{retour.quantite}} le {{retour.dateRetour | date:'dd/MM/yyyy HH:mm'}} · {{retour.rapporteParNom}}</p>
+          }
           } @else {
-          <div class="d-flex flex-wrap justify-content-between gap-2"><h3 class="h6 mb-0">{{emprunt.emprunteurNom}}</h3><span class="badge" [class.text-bg-warning]="!emprunt.dateRetour" [class.text-bg-success]="!!emprunt.dateRetour">{{emprunt.dateRetour ? 'Rapporté' : 'En cours'}}</span></div>
-          <dl class="row mt-3 mb-0">
+          <div class="d-flex flex-wrap justify-content-between gap-2"><h3 class="h6 mb-0">{{emprunt.emprunteurNom}} — {{(emprunt.quantite ?? 1) - (emprunt.quantiteRetournee ?? 0)}} à rendre</h3><span class="badge" [class.text-bg-warning]="!emprunt.dateRetour" [class.text-bg-success]="!!emprunt.dateRetour">{{emprunt.dateRetour ? 'Rapporté' : 'En cours'}}</span></div>
+          <p class="mt-2 mb-0">Quantité : {{emprunt.quantite ?? 1}}</p><dl class="row mt-3 mb-0">
             <dt class="col-5">Emprunt</dt><dd class="col-7">{{emprunt.dateEmprunt | date:'dd/MM/yyyy HH:mm'}}</dd>
             <dt class="col-5">Enregistré par</dt><dd class="col-7">{{emprunt.enregistreParNom || 'Non renseigné'}}</dd>
             <dt class="col-5">Retour</dt><dd class="col-7">{{emprunt.dateRetour ? (emprunt.dateRetour | date:'dd/MM/yyyy HH:mm') : 'Non rapporté'}}</dd>
             @if (emprunt.dateRetour) { <dt class="col-5">Rapporté par</dt><dd class="col-7 mb-0">{{emprunt.rapporteParNom || 'Non renseigné'}}</dd> }
           </dl>
+          @for (retour of emprunt.retours ?? []; track $index) {
+            <p class="mb-1">Retour de {{retour.quantite}} le {{retour.dateRetour | date:'dd/MM/yyyy HH:mm'}} · {{retour.rapporteParNom}}</p>
+          }
           }
         </article>
       } @empty { <p class="text-body-secondary mb-0">Aucun emprunt enregistré ni changement d’état pour ce matériel.</p> }

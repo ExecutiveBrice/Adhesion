@@ -48,13 +48,14 @@ public class MaterielController {
     public MaterielResponse emprunter(@PathVariable Long id, Authentication authentication,
             @RequestBody(required = false) EmpruntMaterielRequest request) {
         return service.emprunter(id, authentication.getName(), request == null ? null : request.emprunteurId(),
-                administrateur(authentication));
+                administrateur(authentication), request == null || request.quantite() == null ? 1 : request.quantite());
     }
 
     @PostMapping("/{id}/retour")
     @PreAuthorize("hasAnyRole('ADMIN', 'MEMBRECA')")
-    public MaterielResponse restituer(@PathVariable Long id, Authentication authentication) {
-        return service.restituer(id, authentication.getName(), administrateur(authentication));
+    public MaterielResponse restituer(@PathVariable Long id, Authentication authentication,
+            @RequestBody(required = false) RetourMaterielRequest request) {
+        return service.restituer(id, authentication.getName(), administrateur(authentication), request);
     }
 
     @GetMapping("/membres-ca")

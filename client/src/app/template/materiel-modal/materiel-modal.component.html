@@ -1,6 +1,7 @@
 <div class="modal-header"><h2 id="materiel-modal-title" class="modal-title h5">Ajouter un matériel</h2><button type="button" class="btn-close" aria-label="Fermer" [disabled]="enregistrement" (click)="activeModal.dismiss()"></button></div>
 <form (ngSubmit)="ajouter()" #form="ngForm">
   <div class="modal-body">
+    <div class="mb-3"><label for="stockTotal" class="form-label">Quantité totale en stock</label><input id="stockTotal" name="quantiteTotale" class="form-control" type="number" min="1" step="1" required [(ngModel)]="quantiteTotale" [disabled]="enregistrement"></div>
     @if (zonages.length === 0) {
       <p class="mb-0">Ajoutez d’abord un zonage avec un nom et une couleur : fermez cette fenêtre, puis utilisez le bouton Gérer les zonages sur la page Matériel.</p>
     } @else {

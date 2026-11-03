@@ -1,3 +1,4 @@
+import { RetourMaterielModalComponent } from '../../template/retour-materiel-modal/retour-materiel-modal.component';
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
@@ -18,8 +19,8 @@ describe('Matériel et emprunts', () => {
   let service: jasmine.SpyObj<MaterielService>;
   let storage: jasmine.SpyObj<TokenStorageService>;
   const zone: Zonage = { id: 1, nom: 'Étagère A', couleur: '#123456' };
-  const disponible: Materiel = { id: 2, nom: 'Vidéoprojecteur', zonage: zone, emprunteurId: null, emprunteurNom: null, dateEmprunt: null, horsService: false };
-  const emprunte: Materiel = { ...disponible, emprunteurId: 3, emprunteurNom: 'Camille Martin', dateEmprunt: '2026-10-10T10:30:00Z' };
+  const disponible: Materiel = { id: 2, nom: 'Vidéoprojecteur', zonage: zone, emprunteurId: null, emprunteurNom: null, dateEmprunt: null, horsService: false, quantiteTotale: 1, quantiteDisponible: 1, quantiteEmpruntee: 0, quantiteHorsService: 0, emprunts: [] };
+  const emprunte: Materiel = { ...disponible, emprunteurId: 3, emprunteurNom: 'Camille Martin', dateEmprunt: '2026-10-10T10:30:00Z', quantiteDisponible: 0, quantiteEmpruntee: 1, emprunts: [{ id: 10, emprunteurId: 3, emprunteurNom: 'Camille Martin', dateEmprunt: '2026-10-10T10:30:00Z', dateRetour: null, enregistreParNom: null, rapporteParNom: null, quantite: 1, quantiteRetournee: 0 }] };
 
   beforeEach(() => {
     service = jasmine.createSpyObj('MaterielService', ['getAll', 'getZonages', 'emprunter', 'restituer', 'updateHorsService']);
@@ -42,26 +43,24 @@ describe('Matériel et emprunts', () => {
     return fixture.componentInstance;
   }
 
-  it('permet au CA d’emprunter puis de restituer et affiche le nom et la date', () => {
-    service.emprunter.and.returnValue(of(emprunte));
-    service.restituer.and.returnValue(of(disponible));
+  it('ouvre les formulaires de quantité pour emprunter et restituer', async () => {
+    const open = TestBed.inject(NgbModal).open as jasmine.Spy;
+    open.and.returnValue({ componentInstance: {}, result: Promise.resolve(emprunte) });
     const component = afficher();
-    expect(fixture.nativeElement.textContent).not.toContain('Ajouter du matériel');
-    expect(fixture.nativeElement.querySelector('[aria-label="Modifier Vidéoprojecteur"]')).toBeNull();
     fixture.nativeElement.querySelector('[aria-label="Emprunter Vidéoprojecteur"]').click();
-    fixture.detectChanges();
-    expect(service.emprunter).toHaveBeenCalledWith(2);
+    expect(open).toHaveBeenCalledWith(EmpruntMaterielModalComponent, jasmine.any(Object));
+    await fixture.whenStable(); fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Camille Martin');
     expect(fixture.nativeElement.textContent).toContain('10/10/2026');
-    expect(fixture.nativeElement.querySelector('[aria-label="Emprunter Vidéoprojecteur"]')).toBeNull();
+    open.and.returnValue({ componentInstance: {}, result: Promise.resolve(disponible) });
     fixture.nativeElement.querySelector('[aria-label="Restituer Vidéoprojecteur"]').click();
-    fixture.detectChanges();
-    expect(component.materiels[0].emprunteurId).toBeNull();
-    expect(fixture.nativeElement.textContent).toContain('Disponible');
+    expect(open).toHaveBeenCalledWith(RetourMaterielModalComponent, jasmine.any(Object));
+    await fixture.whenStable(); fixture.detectChanges();
+    expect(component.materiels[0].quantiteDisponible).toBe(1);
   });
 
   it('permet l’ajout à l’administrateur et la restitution à l’emprunteur ou l’administrateur', () => {
-    service.getAll.and.returnValue(of([{ ...emprunte, emprunteurId: 4 }]));
+    service.getAll.and.returnValue(of([{ ...emprunte, emprunteurId: 4, emprunts: emprunte.emprunts!.map(e => ({ ...e, emprunteurId: 4 })) }]));
     afficher();
     expect(fixture.nativeElement.querySelector('[aria-label="Restituer Vidéoprojecteur"]')).toBeNull();
     fixture.destroy();
@@ -71,18 +70,14 @@ describe('Matériel et emprunts', () => {
     expect(fixture.nativeElement.querySelector('[aria-label="Restituer Vidéoprojecteur"]')).not.toBeNull();
   });
 
-  it('empêche les doubles clics pendant un emprunt', () => {
-    const request = new Subject<Materiel>();
-    service.emprunter.and.returnValue(request);
+  it('empêche d’ouvrir deux formulaires pendant une opération', () => {
+    const open = TestBed.inject(NgbModal).open as jasmine.Spy;
+    open.and.returnValue({ componentInstance: {}, result: new Promise(() => {}) });
     const component = afficher();
-    component.emprunter(disponible);
-    component.emprunter(disponible);
-    TestBed.inject(ApiRenderService).notify();
+    component.emprunter(disponible); component.emprunter(disponible);
     fixture.detectChanges();
-    expect(service.emprunter).toHaveBeenCalledTimes(1);
+    expect(open).toHaveBeenCalledTimes(1);
     expect(fixture.nativeElement.querySelector('[aria-label="Emprunter Vidéoprojecteur"]').disabled).toBeTrue();
-    request.next(emprunte);
-    request.complete();
   });
 
   it('permet à la Logistique d’ajouter du matériel sans accorder les droits d’emprunt', async () => {
@@ -182,18 +177,6 @@ describe('Matériel et emprunts', () => {
     expect(service.getAll).toHaveBeenCalledTimes(3);
   });
 
-  it('actualise le listing après un conflit d’emprunt et affiche sa raison', () => {
-    const component = afficher();
-    service.getAll.and.returnValue(of([emprunte]));
-    service.emprunter.and.returnValue(throwError(() => ({ status: 409, error: { detail: 'Ce matériel est déjà emprunté' } })));
-    component.emprunter(disponible);
-    TestBed.inject(ApiRenderService).notify();
-    fixture.detectChanges();
-    expect(component.actionEnCours).toBeNull();
-    expect(fixture.nativeElement.textContent).toContain('Ce matériel est déjà emprunté');
-    expect(fixture.nativeElement.textContent).toContain('Camille Martin');
-  });
-
   it('filtre par nom, zonage et disponibilité', () => {
     const component = afficher();
     component.materiels = [disponible, { ...emprunte, id: 5, nom: 'Enceinte', zonage: { ...zone, id: 6, nom: 'Réserve' } }];
@@ -222,23 +205,17 @@ describe('Matériel et emprunts', () => {
     expect(component.actionEnCours).toBeNull();
   });
 
-  it('HS reste un indicateur et autorise l’emprunt avec le filtre disponible', () => {
-    service.getAll.and.returnValue(of([{ ...disponible, horsService: true }]));
-    service.emprunter.and.returnValue(of({ ...emprunte, horsService: true }));
+  it('une référence partiellement empruntée reste disponible et restituable', () => {
+    const tables = { ...emprunte, nom: 'Tables', quantiteTotale: 10, quantiteEmpruntee: 8, quantiteDisponible: 1, quantiteHorsService: 1, horsService: true };
+    service.getAll.and.returnValue(of([tables]));
     const component = afficher();
-    const hs = { ...disponible, horsService: true };
-    expect(fixture.nativeElement.querySelector('[aria-label="Emprunter Vidéoprojecteur"]')).not.toBeNull();
-    const bouton: HTMLButtonElement = fixture.nativeElement.querySelector('#materielHS2');
-    expect(bouton.disabled).toBeTrue();
-    expect(bouton.classList.contains('btn-danger')).toBeTrue();
     component.statut = 'disponible';
-    expect(component.materielsFiltres).toEqual([hs]);
-    component.emprunter(hs);
-    expect(service.emprunter).toHaveBeenCalledWith(2);
-    expect(component.materielsFiltres).toEqual([]);
+    expect(component.materielsFiltres).toEqual([tables]);
     component.statut = 'emprunte';
-    expect(component.materielsFiltres.length).toBe(1);
-    expect(component.peutRestituer(component.materiels[0])).toBeTrue();
+    expect(component.materielsFiltres).toEqual([tables]);
+    expect(component.peutRestituer(tables)).toBeTrue();
+    expect(fixture.nativeElement.querySelector('[aria-label="Emprunter Tables"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[aria-label="Restituer Tables"]')).not.toBeNull();
   });
 
   it('ouvre la saisie HS et affiche le problème sans perdre l’emprunt', async () => {

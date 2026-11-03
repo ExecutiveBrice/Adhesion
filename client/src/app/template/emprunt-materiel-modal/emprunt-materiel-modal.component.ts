@@ -17,13 +17,15 @@ export class EmpruntMaterielModalComponent implements OnInit {
   private readonly service = inject(MaterielService);
   private readonly storage = inject(TokenStorageService);
   @Input() materiel!: Materiel;
+  readonly administrateur = this.storage.getUser().roles?.includes('ROLE_ADMIN') ?? false;
+  quantite = 1;
   membresCA: MembreCAMateriel[] = [];
   emprunteurId: number | null = this.storage.getUser().id ?? null;
   chargement = true;
   enregistrement = false;
   erreur = '';
 
-  ngOnInit(): void { this.charger(); }
+  ngOnInit(): void { if (this.administrateur) this.charger(); else this.chargement = false; }
 
   charger(): void {
     this.chargement = true;
@@ -41,10 +43,11 @@ export class EmpruntMaterielModalComponent implements OnInit {
 
   emprunter(): void {
     if (this.enregistrement || this.chargement || this.emprunteurId === null
-        || !this.membresCA.some(membre => membre.id === this.emprunteurId)) return;
+        || (this.administrateur && !this.membresCA.some(membre => membre.id === this.emprunteurId))
+        || !Number.isInteger(this.quantite) || this.quantite < 1 || this.quantite > (this.materiel.quantiteDisponible ?? 1)) return;
     this.enregistrement = true;
     this.erreur = '';
-    this.service.emprunter(this.materiel.id, this.emprunteurId).subscribe({
+    this.service.emprunter(this.materiel.id, this.administrateur ? this.emprunteurId! : undefined, this.quantite).subscribe({
       next: materiel => this.activeModal.close(materiel),
       error: response => {
         this.enregistrement = false;

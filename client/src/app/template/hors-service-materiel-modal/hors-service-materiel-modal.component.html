@@ -1,10 +1,13 @@
 <div class="modal-header">
-  <h2 id="hors-service-materiel-title" class="modal-title h5">{{materiel.horsService ? 'Remettre en service' : 'Déclarer hors service'}} — {{materiel.nom}}</h2>
+  <h2 id="hors-service-materiel-title" class="modal-title h5">Gérer le matériel hors service — {{materiel.nom}}</h2>
   <button type="button" class="btn-close" aria-label="Fermer" [disabled]="enregistrement" (click)="activeModal.dismiss()"></button>
 </div>
 <form (ngSubmit)="enregistrer()">
   <div class="modal-body">
-    <label for="horsServiceCommentaire" class="form-label">{{materiel.horsService ? 'Quelle réparation a été effectuée ?' : 'Quel est le problème ?'}}</label>
+    <label for="quantiteHS" class="form-label">Quantité totale hors service</label>
+    <input id="quantiteHS" name="quantiteHorsService" type="number" class="form-control mb-3" min="0" [max]="(materiel.quantiteTotale ?? 1) - (materiel.quantiteEmpruntee ?? 0)" step="1" required [(ngModel)]="quantiteHorsService" [disabled]="enregistrement">
+    <p class="text-body-secondary">Saisissez 0 pour remettre tout le stock en service. Le matériel emprunté doit être restitué avant d’être déclaré hors service.</p>
+    <label for="horsServiceCommentaire" class="form-label">{{quantiteHorsService < (materiel.quantiteHorsService ?? 0) ? 'Quelle réparation a été effectuée ?' : 'Quel est le problème ?'}}</label>
     <textarea id="horsServiceCommentaire" name="commentaire" class="form-control" rows="4" [(ngModel)]="commentaire" [disabled]="enregistrement" required maxlength="2000" ngbAutofocus></textarea>
     @if (erreur) { <div class="alert alert-danger mt-3 mb-0" role="alert">{{erreur}}</div> }
   </div>

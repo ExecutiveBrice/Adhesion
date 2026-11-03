@@ -19,6 +19,14 @@ public class Materiel {
     @Column(nullable = false, length = 150)
     private String nom;
 
+    @Builder.Default
+    @Column(nullable = false, columnDefinition = "integer default 1")
+    private int quantiteTotale = 1;
+
+    @Builder.Default
+    @Column(nullable = false, columnDefinition = "integer default 0")
+    private int quantiteHorsService = 0;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "zonage_id", nullable = false)
     private Zonage zonage;

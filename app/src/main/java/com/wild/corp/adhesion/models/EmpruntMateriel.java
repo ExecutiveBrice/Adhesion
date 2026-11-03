@@ -20,6 +20,21 @@ public class EmpruntMateriel {
     @JoinColumn(name = "materiel_id", nullable = false)
     private Materiel materiel;
 
+    @Builder.Default
+    @Column(nullable = false, columnDefinition = "integer default 1")
+    private int quantite = 1;
+
+    @Builder.Default
+    @Column(nullable = false, columnDefinition = "integer default 0")
+    private int quantiteRetournee = 0;
+
+    @ElementCollection
+    @CollectionTable(name = "retour_materiel", joinColumns = @JoinColumn(name = "emprunt_id"),
+            indexes = @Index(name = "idx_retour_materiel_emprunt", columnList = "emprunt_id"))
+    @OrderBy("dateRetour ASC")
+    @Builder.Default
+    private java.util.List<RetourMateriel> retours = new java.util.ArrayList<>();
+
     private Long emprunteurId;
 
     @Column(length = 511)

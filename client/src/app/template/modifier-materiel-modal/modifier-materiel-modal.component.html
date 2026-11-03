@@ -4,6 +4,7 @@
 </div>
 <form (ngSubmit)="enregistrer()" #form="ngForm">
   <div class="modal-body">
+    <div class="mb-3"><label for="stockTotal" class="form-label">Quantité totale en stock</label><input id="stockTotal" name="quantiteTotale" class="form-control" type="number" min="1" step="1" required [(ngModel)]="quantiteTotale" [disabled]="enregistrement"></div>
     @if (confirmationSuppression) {
       <p>Supprimer définitivement <strong>{{objet.nom}}</strong> et son journal d’emprunt ?</p>
       <p class="text-body-secondary mb-0">Cette action est irréversible.</p>
@@ -19,7 +20,7 @@
           @for (zone of zonages; track zone.id) { <option [ngValue]="zone.id">{{zone.nom}}</option> }
         </select>
       </div>
-      @if (objet.emprunteurId !== null) {
+      @if ((objet.quantiteEmpruntee ?? (objet.emprunteurId !== null ? 1 : 0)) > 0) {
         <p class="text-body-secondary mt-3 mb-0">Ce matériel est emprunté. Il doit être restitué avant de pouvoir être supprimé.</p>
       }
     }
@@ -30,7 +31,7 @@
       <button type="button" class="btn btn-outline-secondary" [disabled]="enregistrement" (click)="confirmationSuppression = false; erreur = ''">Retour</button>
       <button type="button" class="btn btn-danger" [disabled]="enregistrement" (click)="supprimer()">{{enregistrement ? 'Suppression…' : 'Confirmer la suppression'}}</button>
     } @else {
-      <button type="button" class="btn btn-outline-danger me-auto" [disabled]="enregistrement || objet.emprunteurId !== null" (click)="confirmationSuppression = true; erreur = ''">Supprimer</button>
+      <button type="button" class="btn btn-outline-danger me-auto" [disabled]="enregistrement || (objet.quantiteEmpruntee ?? (objet.emprunteurId !== null ? 1 : 0)) > 0" (click)="confirmationSuppression = true; erreur = ''">Supprimer</button>
       <button type="button" class="btn btn-outline-secondary" [disabled]="enregistrement" (click)="activeModal.dismiss()">Annuler</button>
       <button type="submit" class="btn btn-primary" [disabled]="enregistrement || form.invalid || !nom.trim() || zonages.length === 0">{{enregistrement ? 'Enregistrement…' : 'Enregistrer'}}</button>
     }

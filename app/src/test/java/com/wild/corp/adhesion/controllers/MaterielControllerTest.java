@@ -50,8 +50,8 @@ class MaterielControllerTest {
                     .content("{\"username\":\"someone-else\"}")
                     .with(user("connected").roles(role))).andExpect(status().isOk());
         }
-        verify(service).emprunter(2L, "connected", null, false);
-        verify(service).emprunter(2L, "connected", null, true);
+        verify(service).emprunter(2L, "connected", null, false, 1);
+        verify(service).emprunter(2L, "connected", null, true, 1);
     }
 
     @Test
@@ -93,13 +93,13 @@ class MaterielControllerTest {
     void returnsUseAuthenticatedIdentityAndServerGrantedAdminRole() throws Exception {
         mvc.perform(post("/materiel/2/retour").with(user("ca").roles("MEMBRECA"))).andExpect(status().isOk());
         mvc.perform(post("/materiel/2/retour").with(user("admin").roles("ADMIN"))).andExpect(status().isOk());
-        verify(service).restituer(2L, "ca", false);
-        verify(service).restituer(2L, "admin", true);
+        verify(service).restituer(2L, "ca", false, null);
+        verify(service).restituer(2L, "admin", true, null);
     }
 
     @Test
     void conflictIncludesAUsefulMessageForTheUi() throws Exception {
-        when(service.emprunter(2L, "ca", null, false))
+        when(service.emprunter(2L, "ca", null, false, 1))
                 .thenThrow(new ResponseStatusException(HttpStatus.CONFLICT, "Ce matériel est déjà emprunté"));
         mvc.perform(post("/materiel/2/emprunt").with(user("ca").roles("MEMBRECA")))
                 .andExpect(status().isConflict()).andExpect(jsonPath("$.detail").value("Ce matériel est déjà emprunté"));
@@ -127,17 +127,29 @@ class MaterielControllerTest {
         verify(service).getHistorique(2L);
         verify(service).getMembresCA();
         verify(service).updateHorsService(2L, new HorsServiceRequest(true, "Lampe cassée"), "admin");
-        verify(service).emprunter(2L, "admin", 4L, true);
+        verify(service).emprunter(2L, "admin", 4L, true, 1);
+    }
+
+    @Test
+    void quantitiesAndSelectedLoanAreForwardedToTheService() throws Exception {
+        mvc.perform(post("/materiel/2/emprunt").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"quantite\":3}").with(user("ca").roles("MEMBRECA")))
+                .andExpect(status().isOk());
+        verify(service).emprunter(2L, "ca", null, false, 3);
+        mvc.perform(post("/materiel/2/retour").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"empruntId\":15,\"quantite\":2}").with(user("ca").roles("MEMBRECA")))
+                .andExpect(status().isOk());
+        verify(service).restituer(2L, "ca", false, new RetourMaterielRequest(15L, 2));
     }
 
     @Test
     void selectedBorrowerCannotForgeTheAdminRole() throws Exception {
-        when(service.emprunter(2L, "ca", 4L, false))
+        when(service.emprunter(2L, "ca", 4L, false, 1))
                 .thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Seul un administrateur peut choisir l’emprunteur"));
         mvc.perform(post("/materiel/2/emprunt").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"emprunteurId\":4,\"administrateur\":true}").with(user("ca").roles("MEMBRECA")))
                 .andExpect(status().isForbidden());
-        verify(service).emprunter(2L, "ca", 4L, false);
+        verify(service).emprunter(2L, "ca", 4L, false, 1);
     }
 
     @Test

@@ -8,6 +8,11 @@ export interface Materiel {
   id: number;
   nom: string;
   zonage: Zonage;
+  quantiteTotale?: number;
+  quantiteHorsService?: number;
+  quantiteEmpruntee?: number;
+  quantiteDisponible?: number;
+  emprunts?: EmpruntMateriel[];
   emprunteurId: number | null;
   emprunteurNom: string | null;
   dateEmprunt: string | null;
@@ -18,6 +23,9 @@ export interface Materiel {
 export interface MembreCAMateriel { id: number; nom: string; }
 
 export interface EmpruntMateriel {
+  quantite?: number;
+  quantiteRetournee?: number;
+  retours?: { quantite: number; dateRetour: string; rapporteParNom: string }[];
   id: number;
   emprunteurId: number | null;
   emprunteurNom: string | null;
