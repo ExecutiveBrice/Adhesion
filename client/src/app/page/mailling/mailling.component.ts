@@ -10,7 +10,7 @@ import { ToastService } from '../../_services/toast.service';
 import {Historique} from "../../models/historique";
 
 import { FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NgClass, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { AngularEditorModule } from '@wfpena/angular-wysiwyg';
 import { OrderSimplePipe } from '../../_helpers/sort-simple.pipe';
@@ -20,7 +20,7 @@ import { OrderObjectByPipe } from '../../_helpers/sortObject.pipe';
     selector: 'app-mailling',
     templateUrl: './mailling.component.html',
     styleUrls: ['./mailling.component.scss'],
-    imports: [NgbNavModule, FormsModule, ReactiveFormsModule, NgClass, AngularEditorModule, DatePipe, OrderSimplePipe, OrderObjectByPipe]
+    imports: [NgbNavModule, FormsModule, ReactiveFormsModule, AngularEditorModule, DatePipe, OrderSimplePipe, OrderObjectByPipe]
 })
 
 export class MaillingComponent implements OnInit {
