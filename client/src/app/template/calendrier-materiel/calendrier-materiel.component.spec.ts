@@ -46,6 +46,48 @@ describe('Calendrier du matériel', () => {
     expect(jour('2026-12-15').getAttribute('aria-current')).toBe('date');
   });
 
+  it('navigue de mois en mois dans les deux sens et charge les emprunts de la période affichée', () => {
+    const component = afficher();
+    const suivant = fixture.nativeElement.querySelector('[aria-label="Mois suivant"]') as HTMLButtonElement;
+    const precedent = fixture.nativeElement.querySelector('[aria-label="Mois précédent"]') as HTMLButtonElement;
+    suivant.click(); fixture.detectChanges();
+    expect(service.getCalendrier).toHaveBeenCalledWith('2027-01-01', '2027-02-28');
+    expect(fixture.nativeElement.querySelector('.calendrier-navigation h2').textContent).toBe('janvier 2027');
+    expect(jour('2027-01-01').textContent).toContain('Tables');
+    expect(component.jourSelectionne()?.iso).toBe('2027-01-01');
+
+    precedent.click(); fixture.detectChanges();
+    expect(component.jourSelectionne()?.iso).toBe('2026-12-15');
+    precedent.click(); fixture.detectChanges();
+    expect(service.getCalendrier).toHaveBeenCalledWith('2026-11-01', '2026-12-31');
+    expect(fixture.nativeElement.querySelector('.calendrier-navigation h2').textContent).toBe('novembre 2026');
+    expect(component.jourSelectionne()?.iso).toBe('2026-11-01');
+  });
+
+  it('conserve le mois consulté et le jour choisi après une actualisation du matériel', () => {
+    const component = afficher();
+    component.changerMois(2); fixture.detectChanges();
+    jour('2027-02-10').click(); fixture.detectChanges();
+    service.getCalendrier.calls.reset();
+    fixture.componentRef.setInput('materiels', []); fixture.detectChanges();
+    expect(service.getCalendrier).toHaveBeenCalledOnceWith('2027-02-01', '2027-03-31');
+    expect(component.jourSelectionne()?.iso).toBe('2027-02-10');
+  });
+
+  it('garde la navigation utilisable pendant le chargement et après une erreur', () => {
+    service.getCalendrier.and.returnValue(new Subject<EmpruntCalendrierMateriel[]>());
+    afficher();
+    const suivant = fixture.nativeElement.querySelector('[aria-label="Mois suivant"]') as HTMLButtonElement;
+    service.getCalendrier.and.returnValue(throwError(() => new Error('réseau')));
+    suivant.click(); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[aria-label="Mois suivant"]')).toBe(suivant);
+    service.getCalendrier.and.returnValue(of([]));
+    suivant.click(); fixture.detectChanges();
+    expect(service.getCalendrier).toHaveBeenCalledWith('2027-02-01', '2027-03-31');
+    expect(jour('2027-02-01')).not.toBeNull();
+  });
+
   it('affiche les emprunts sur toute leur période, bornes incluses, et détaille le jour sélectionné', () => {
     afficher();
     expect(jour('2026-12-30').querySelector('.jour-emprunt')).toBeNull();

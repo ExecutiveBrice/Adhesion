@@ -1,15 +1,18 @@
 <section class="calendrier-materiel" aria-label="Calendrier des emprunts" [attr.aria-busy]="chargement()">
+  <nav class="calendrier-navigation" aria-label="Navigation entre les mois">
+    <button type="button" class="btn btn-outline-secondary" aria-label="Mois précédent" (click)="changerMois(-1)">
+      <span aria-hidden="true">‹</span>
+    </button>
+    <h2 class="h5 mb-0" aria-live="polite" aria-atomic="true">{{mois()[0].libelle}}</h2>
+    <button type="button" class="btn btn-outline-secondary" aria-label="Mois suivant" (click)="changerMois(1)">
+      <span aria-hidden="true">›</span>
+    </button>
+  </nav>
   @if (chargement()) {
     <p class="p-3 mb-0" role="status">Chargement du calendrier…</p>
   } @else if (erreur()) {
     <div class="alert alert-warning m-3" role="alert">{{erreur()}} <button type="button" class="btn btn-outline-secondary btn-sm" (click)="charger()">Réessayer</button></div>
   } @else {
-    <div class="calendrier-legende" aria-label="Statuts des emprunts">
-      <span><i class="statut-point en-cours" aria-hidden="true"></i>En cours</span>
-      <span><i class="statut-point depassement" aria-hidden="true"></i>En dépassement</span>
-      <span><i class="statut-point a-venir" aria-hidden="true"></i>Programmé</span>
-      <span><i class="statut-point rapporte" aria-hidden="true"></i>Terminé</span>
-    </div>
     <div class="calendrier-mois">
       @for (periode of mois(); track periode.iso) {
         <section class="mois" [attr.aria-label]="periode.libelle">

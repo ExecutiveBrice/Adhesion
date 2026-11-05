@@ -31,11 +31,16 @@ export class CalendrierMaterielComponent {
   readonly erreur = signal('');
   readonly selection = signal(this.statutEmprunt.dateCourante);
   readonly joursSemaine = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+  private readonly decalageMois = signal(0);
+  private readonly premierMois = computed(() => {
+    const aujourdHui = this.date(this.statutEmprunt.dateCourante);
+    return new Date(aujourdHui.getFullYear(), aujourdHui.getMonth() + this.decalageMois(), 1);
+  });
   private requete?: Subscription;
 
   readonly mois = computed(() => {
     const aujourdHui = this.statutEmprunt.dateCourante;
-    const debut = this.date(aujourdHui);
+    const debut = this.premierMois();
     const entrees = this.emprunts();
     return [0, 1].map(decalage => {
       const premier = new Date(debut.getFullYear(), debut.getMonth() + decalage, 1);
@@ -61,15 +66,23 @@ export class CalendrierMaterielComponent {
     effect(() => {
       this.materiels();
       const aujourdHui = this.statutEmprunt.dateCourante;
+      const premier = this.iso(this.premierMois());
       untracked(() => {
-        if (!this.jourSelectionne()) this.selection.set(aujourdHui);
+        if (!this.jourSelectionne()) this.selection.set(aujourdHui.startsWith(premier.slice(0, 7)) ? aujourdHui : premier);
         this.charger();
       });
     });
   }
 
+  changerMois(decalage: number): void {
+    this.decalageMois.update(valeur => valeur + decalage);
+    const premier = this.iso(this.premierMois());
+    const aujourdHui = this.statutEmprunt.dateCourante;
+    this.selection.set(aujourdHui.startsWith(premier.slice(0, 7)) ? aujourdHui : premier);
+  }
+
   charger(): void {
-    const date = this.date(this.statutEmprunt.dateCourante);
+    const date = this.premierMois();
     this.requete?.unsubscribe();
     this.chargement.set(true);
     this.erreur.set('');

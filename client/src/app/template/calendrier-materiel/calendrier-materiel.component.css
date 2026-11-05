@@ -1,9 +1,7 @@
 :host { display: block; margin-bottom: 1.5rem; }
 .calendrier-materiel { border: 1px solid #dce4e2; border-radius: 0.75rem; background: var(--bs-body-bg, #fff); overflow: hidden; }
-.calendrier-legende { display: flex; flex-wrap: wrap; gap: 1rem; padding: 1.25rem 1.25rem 1rem; font-size: 0.8rem; }
-.calendrier-legende > span { display: flex; align-items: center; gap: 0.4rem; }
-.statut-point { width: 0.6rem; height: 0.6rem; border-radius: 50%; }
-.calendrier-mois { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; padding: 0 1.25rem 1.25rem; }
+.calendrier-navigation { display: none; }
+.calendrier-mois { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; padding: 1.25rem; }
 .mois { min-width: 0; }
 .mois h2 { text-transform: capitalize; margin-bottom: 1rem; }
 .jours-semaine, .jours-mois { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
@@ -20,10 +18,6 @@
 .a-venir { background: #cfe2ff; color: #084298; }
 .depassement { background: #f8d7da; color: #842029; }
 .rapporte { background: #d1e7dd; color: #0f5132; }
-.statut-point.en-cours { background: #b58100; }
-.statut-point.a-venir { background: #0d6efd; }
-.statut-point.depassement { background: #dc3545; }
-.statut-point.rapporte { background: #198754; }
 .jour-suite { font-size: 0.65rem; }
 .calendrier-detail { padding: 1.25rem; border-top: 1px solid var(--bs-border-color, #dce4e2); }
 .calendrier-detail h2 { text-transform: capitalize; }
@@ -33,9 +27,15 @@
 .emprunt-detail:hover { border-color: var(--bs-primary, #0d6efd); }
 .emprunt-detail:focus-visible { outline: 3px solid var(--bs-primary, #0d6efd); outline-offset: 2px; }
 @media (max-width: 991.98px) { .calendrier-mois { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 767.98px) {
+  .calendrier-navigation { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.75rem 0.5rem; }
+  .calendrier-navigation h2 { text-align: center; text-transform: capitalize; }
+  .calendrier-navigation button { display: grid; place-items: center; min-width: 44px; min-height: 44px; padding: 0; font-size: 1.75rem; line-height: 1; }
+  .mois + .mois, .mois h2 { display: none; }
+  .calendrier-mois { padding-top: 0; }
+}
 @media (max-width: 575.98px) {
   .calendrier-detail { padding: 0.75rem; }
-  .calendrier-legende { padding-inline: 0.75rem; }
   .calendrier-mois { padding: 0 0.5rem 0.75rem; }
   .calendrier-jour { padding: 3px; min-height: 80px; }
 }
