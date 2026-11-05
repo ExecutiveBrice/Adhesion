@@ -1,6 +1,7 @@
 package com.wild.corp.adhesion.services;
 
 import com.wild.corp.adhesion.models.Materiel;
+import com.wild.corp.adhesion.models.EmpruntMateriel;
 import com.wild.corp.adhesion.models.User;
 import com.wild.corp.adhesion.models.ERole;
 import com.wild.corp.adhesion.models.resources.*;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
+import java.time.LocalDate;
 import java.util.concurrent.*;
 import static org.assertj.core.api.Assertions.*;
 
@@ -48,16 +50,73 @@ class MaterielPersistenceTest {
     }
 
     @Test
+    void photoPersistsWithMaterialAndCanBePreservedReplacedOrRemoved() throws Exception {
+        Long zone = service.createZonage(new ZonageConfiguration(null, "Stock", "#123456")).id();
+        var cree = service.create(new MaterielRequest("Projecteur", zone, false, 1, ImageMaterielTest.photo(1600, 900)));
+        String photo = cree.image();
+        assertThat(photo).startsWith("data:image/jpeg;base64,");
+        assertThat(materiels.findById(cree.id()).orElseThrow().getImage()).isEqualTo(photo);
+        assertThat(service.getAll().getFirst().image()).isEqualTo(photo);
+        service.update(cree.id(), new MaterielRequest("Projecteur renommé", zone));
+        assertThat(service.getAll().getFirst().image()).isEqualTo(photo);
+        service.update(cree.id(), new MaterielRequest("Projecteur", zone, null, 1, ImageMaterielTest.photo(80, 120)));
+        assertThat(service.getAll().getFirst().image()).isNotEqualTo(photo);
+        assertThatThrownBy(() -> service.update(cree.id(), new MaterielRequest("Invalide", zone, null, 2, "invalide")))
+                .isInstanceOf(ResponseStatusException.class);
+        assertThat(service.getAll().getFirst().nom()).isEqualTo("Projecteur");
+        service.update(cree.id(), new MaterielRequest("Projecteur", zone, null, 1, ""));
+        assertThat(service.getAll().getFirst().image()).isNull();
+        assertThat(materiels.findById(cree.id()).orElseThrow().getImage()).isNull();
+    }
+
+    @Test
+    void calendarIncludesOverlappingLoansAndReturnsButExcludesHsAndOtherPeriods() {
+        Long zone = service.createZonage(new ZonageConfiguration(null, "Stock", "#123456")).id();
+        Long id = service.create(new MaterielRequest("Tables", zone, false, 10)).id();
+        Materiel objet = materiels.findById(id).orElseThrow();
+        var enregistre = java.time.OffsetDateTime.parse("2026-10-01T12:00:00Z");
+        EmpruntMateriel ancien = emprunts.save(EmpruntMateriel.builder().materiel(objet).dateEmprunt(enregistre)
+                .dateDebut(LocalDate.of(2026, 10, 1)).dateFinPrevue(LocalDate.of(2026, 10, 2)).emprunteurNom("En retard").build());
+        EmpruntMateriel rendu = emprunts.save(EmpruntMateriel.builder().materiel(objet).dateEmprunt(enregistre)
+                .dateDebut(LocalDate.of(2026, 10, 30)).dateRetour(java.time.OffsetDateTime.parse("2026-10-31T23:00:00Z"))
+                .emprunteurNom("Rendu le 1er novembre à Paris").quantite(2).quantiteRetournee(2).build());
+        EmpruntMateriel futur = emprunts.save(EmpruntMateriel.builder().materiel(objet).dateEmprunt(enregistre)
+                .dateDebut(LocalDate.of(2026, 12, 31)).dateFinPrevue(LocalDate.of(2027, 1, 2)).build());
+        EmpruntMateriel legacy = emprunts.save(EmpruntMateriel.builder().materiel(objet)
+                .dateEmprunt(java.time.OffsetDateTime.parse("2026-12-31T22:59:59Z")).build());
+        emprunts.save(EmpruntMateriel.builder().materiel(objet).dateEmprunt(enregistre).horsService(true).build());
+        emprunts.save(EmpruntMateriel.builder().materiel(objet).dateEmprunt(enregistre).dateDebut(LocalDate.of(2027, 1, 1)).build());
+        emprunts.save(EmpruntMateriel.builder().materiel(objet).dateEmprunt(enregistre)
+                .dateRetour(java.time.OffsetDateTime.parse("2026-10-31T22:59:59Z")).build());
+        emprunts.save(EmpruntMateriel.builder().materiel(objet)
+                .dateEmprunt(java.time.OffsetDateTime.parse("2026-12-31T23:00:00Z")).build());
+
+        var calendrier = service.getCalendrier(LocalDate.of(2026, 11, 1), LocalDate.of(2026, 12, 31));
+        assertThat(calendrier).extracting(e -> e.emprunt().id())
+                .containsExactly(ancien.getId(), rendu.getId(), futur.getId(), legacy.getId());
+        assertThat(calendrier).allSatisfy(e -> {
+            assertThat(e.materielNom()).isEqualTo("Tables");
+            assertThat(e.materielId()).isEqualTo(id);
+            assertThat(e.zonage().nom()).isEqualTo("Stock");
+        });
+        assertThat(calendrier.get(1).emprunt().quantiteRetournee()).isEqualTo(2);
+    }
+
+    @Test
     void loanAndZoneChangesPersistAcrossTransactions() {
         User user = users.save(new User("member@example.org", "password"));
         ZonageConfiguration zone = service.createZonage(new ZonageConfiguration(null, "Étagère A", "#123456"));
         MaterielResponse objet = service.create(new MaterielRequest("Vidéoprojecteur", zone.id()));
-        service.emprunter(objet.id(), user.getUsername());
+        LocalDate debut = LocalDate.of(2026, 3, 29);
+        LocalDate fin = LocalDate.of(2026, 3, 30);
+        service.emprunter(objet.id(), user.getUsername(), null, false, 1, debut, fin);
 
         MaterielResponse emprunte = service.getAll().getFirst();
         assertThat(emprunte.emprunteurId()).isEqualTo(user.getId());
         assertThat(emprunte.emprunteurNom()).isEqualTo(user.getUsername());
         assertThat(emprunte.dateEmprunt()).isNotNull();
+        assertThat(emprunte.emprunts().getFirst().dateDebut()).isEqualTo(debut);
+        assertThat(emprunte.emprunts().getFirst().dateFinPrevue()).isEqualTo(fin);
 
         service.updateZonage(zone.id(), new ZonageConfiguration(null, "Réserve", "#ABCDEF"));
         assertThat(service.getAll().getFirst().zonage().nom()).isEqualTo("Réserve");
@@ -70,6 +129,8 @@ class MaterielPersistenceTest {
         assertThat(retourne.emprunteurNom()).isNull();
         assertThat(retourne.dateEmprunt()).isNull();
         assertThat(retourne.zonage().id()).isEqualTo(zone.id());
+        assertThat(service.getHistorique(objet.id()).getFirst().dateDebut()).isEqualTo(debut);
+        assertThat(service.getHistorique(objet.id()).getFirst().dateFinPrevue()).isEqualTo(fin);
     }
 
     @Test

@@ -4,10 +4,11 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { MaterielService } from '../../_services/materiel.service';
 import { registerApiViewRefresh } from '../../_services/api-render.service';
 import { Zonage } from '../../models/materiel';
+import { PhotoMaterielComponent } from '../photo-materiel/photo-materiel.component';
 
 @Component({
   selector: 'app-materiel-modal',
-  imports: [FormsModule],
+  imports: [FormsModule, PhotoMaterielComponent],
   templateUrl: './materiel-modal.component.html'
 })
 export class MaterielModalComponent {
@@ -19,18 +20,20 @@ export class MaterielModalComponent {
   quantiteTotale = 1;
   zonageId: number | null = null;
   horsService = false;
+  image: string | undefined;
+  chargementImage = false;
   enregistrement = false;
   erreur = '';
 
   ajouter(): void {
-    if (this.enregistrement) return;
+    if (this.enregistrement || this.chargementImage) return;
     if (!this.nom.trim() || this.zonageId === null || !Number.isInteger(this.quantiteTotale) || this.quantiteTotale < 1) {
       this.erreur = 'Saisissez le nom du matériel et choisissez un zonage.';
       return;
     }
     this.enregistrement = true;
     this.erreur = '';
-    this.service.create(this.nom.trim(), this.zonageId, this.horsService, this.quantiteTotale).subscribe({
+    this.service.create(this.nom.trim(), this.zonageId, this.horsService, this.quantiteTotale, this.image).subscribe({
       next: materiel => this.activeModal.close(materiel),
       error: response => {
         this.enregistrement = false;

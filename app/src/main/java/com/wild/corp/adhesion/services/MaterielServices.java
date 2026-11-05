@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import java.time.OffsetDateTime;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Locale;
@@ -34,6 +36,18 @@ public class MaterielServices {
         return materielRepository.findAllByOrderByNomAscIdAsc().stream().map(m -> toResponse(m.getEmprunteurId() == null ? m : materiel(m.getId()))).toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<EmpruntCalendrierMaterielResponse> getCalendrier(LocalDate debut, LocalDate fin) {
+        if (debut == null || fin == null || fin.isBefore(debut) || !fin.isBefore(debut.plusMonths(2))) {
+            throw erreur(HttpStatus.BAD_REQUEST, "La période du calendrier doit être comprise entre un jour et deux mois");
+        }
+        ZoneId paris = ZoneId.of("Europe/Paris");
+        return empruntRepository.findForCalendrier(debut.atStartOfDay(paris).toOffsetDateTime(), fin,
+                fin.plusDays(1).atStartOfDay(paris).toOffsetDateTime()).stream()
+                .map(e -> new EmpruntCalendrierMaterielResponse(e.getMateriel().getId(), e.getMateriel().getNom(),
+                        toConfiguration(e.getMateriel().getZonage()), toEmpruntResponse(e))).toList();
+    }
+
     public MaterielResponse create(MaterielRequest request) {
         if (request == null || request.zonageId() == null) {
             throw erreur(HttpStatus.BAD_REQUEST, "Le zonage du matériel est obligatoire");
@@ -41,6 +55,7 @@ public class MaterielServices {
         String nom = nomValide(request.nom(), 150, "matériel");
         Zonage zonage = zonage(request.zonageId());
         return toResponse(materielRepository.save(Materiel.builder().nom(nom).zonage(zonage)
+                .image(ImageMateriel.redimensionner(request.image()))
                 .quantiteTotale(quantitePositive(request.quantiteTotale() == null ? 1 : request.quantiteTotale()))
                 .quantiteHorsService(Boolean.TRUE.equals(request.horsService()) ? (request.quantiteTotale() == null ? 1 : request.quantiteTotale()) : 0)
                 .horsService(Boolean.TRUE.equals(request.horsService())).build()));
@@ -55,7 +70,10 @@ public class MaterielServices {
         int total = quantitePositive(request.quantiteTotale() == null ? materiel.getQuantiteTotale() : request.quantiteTotale());
         if (total < quantiteEmpruntee(materiel) + materiel.getQuantiteHorsService())
             throw erreur(HttpStatus.CONFLICT, "Le stock ne peut pas être inférieur aux quantités empruntées et hors service");
+        // Un champ absent conserve la photo ; une chaîne vide la supprime.
+        String image = request.image() == null ? materiel.getImage() : ImageMateriel.redimensionner(request.image());
         materiel.setQuantiteTotale(total);
+        materiel.setImage(image);
         materiel.setNom(nom);
         materiel.setZonage(zonage);
         return toResponse(materiel);
@@ -79,6 +97,18 @@ public class MaterielServices {
     }
 
     public MaterielResponse emprunter(Long id, String username, Long emprunteurId, boolean administrateur, Integer quantite) {
+        return emprunter(id, username, emprunteurId, administrateur, quantite, null, null);
+    }
+
+    public MaterielResponse emprunter(Long id, String username, Long emprunteurId, boolean administrateur,
+            Integer quantite, LocalDate dateDebut, LocalDate dateFinPrevue) {
+        if (dateDebut == null && dateFinPrevue == null) {
+            dateDebut = LocalDate.now(ZoneId.of("Europe/Paris"));
+            dateFinPrevue = dateDebut.plusDays(1);
+        }
+        if (dateDebut == null || dateFinPrevue == null || dateFinPrevue.isBefore(dateDebut)) {
+            throw erreur(HttpStatus.BAD_REQUEST, "Sélectionnez une période d’emprunt complète avec une fin égale ou postérieure au début");
+        }
         Materiel materiel = materiel(id);
         int nombre = quantitePositive(quantite == null ? 1 : quantite);
         if (nombre > materiel.getQuantiteTotale() - materiel.getQuantiteHorsService() - quantiteEmpruntee(materiel))
@@ -94,6 +124,7 @@ public class MaterielServices {
         }
         EmpruntMateriel emprunt = EmpruntMateriel.builder().materiel(materiel).quantite(nombre)
                 .emprunteurId(emprunteur.getId()).emprunteurNom(nomUtilisateur(emprunteur))
+                .dateDebut(dateDebut).dateFinPrevue(dateFinPrevue)
                 .dateEmprunt(OffsetDateTime.now(ZoneOffset.UTC)).build();
         emprunt.setEnregistreParId(acteur.getId());
         emprunt.setEnregistreParNom(nomUtilisateur(acteur));
@@ -179,7 +210,8 @@ public class MaterielServices {
     private EmpruntMaterielResponse toEmpruntResponse(EmpruntMateriel emprunt) {
         return new EmpruntMaterielResponse(emprunt.getId(), emprunt.getEmprunteurId(), emprunt.getEmprunteurNom(),
                 emprunt.getDateEmprunt(), emprunt.getDateRetour(), emprunt.getEnregistreParNom(), emprunt.getRapporteParNom(),
-                emprunt.getHorsService(), emprunt.getCommentaire(), emprunt.getQuantite(), emprunt.getQuantiteRetournee(), List.copyOf(emprunt.getRetours()));
+                emprunt.getHorsService(), emprunt.getCommentaire(), emprunt.getQuantite(), emprunt.getQuantiteRetournee(), List.copyOf(emprunt.getRetours()),
+                emprunt.getDateDebut(), emprunt.getDateFinPrevue());
     }
 
     private List<EmpruntMateriel> ouverts(Materiel materiel) {
@@ -295,7 +327,7 @@ public class MaterielServices {
                 premier == null ? null : premier.emprunteurId(), premier == null ? null : premier.emprunteurNom(),
                 premier == null ? null : premier.dateEmprunt(), materiel.getQuantiteHorsService() > 0, materiel.getProbleme(),
                 materiel.getQuantiteTotale(), materiel.getQuantiteHorsService(), empruntee,
-                materiel.getQuantiteTotale() - materiel.getQuantiteHorsService() - empruntee, emprunts);
+                materiel.getQuantiteTotale() - materiel.getQuantiteHorsService() - empruntee, emprunts, materiel.getImage());
     }
 
     private ResponseStatusException erreur(HttpStatus statut, String message) {

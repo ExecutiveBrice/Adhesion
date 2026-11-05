@@ -1,7 +1,7 @@
 :host { display: block; }
 .materiel-page { max-width: 1440px; margin: 1.5rem auto; padding: 0 clamp(0.25rem, 2vw, 1rem) 2rem; }
 .materiel-header > *, .materiel-management, .materiel-grid > * { min-width: 0; }
-.materiel-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; padding: 0; margin: 0; list-style: none; }
+.materiel-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; padding: 0; margin: 0; list-style: none; }
 .materiel-card { display: flex; flex-direction: column; padding: 1.25rem; border: 1px solid #dce4e2; border-radius: 0.75rem; background: var(--bs-body-bg, #fff); overflow-wrap: anywhere; }
 .materiel-etat { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
 .materiel-etat .badge { font-size: 0.8rem; }
@@ -9,6 +9,9 @@
 .materiel-details { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem; margin: 1rem 0 1.25rem; }
 .materiel-details dt { font-size: 0.8rem; font-weight: 500; color: var(--bs-secondary-color); margin-bottom: 0.25rem; }
 .materiel-details dd { margin: 0; font-size: 0.95rem; }
+.materiel-photo { display: flex; align-items: center; justify-content: center; width: 100%; aspect-ratio: 4 / 3; flex-shrink: 0; margin-bottom: 1.25rem; background: #f8faf9; box-shadow: inset 0 0 0 1px #dce4e2; border-radius: 0.5rem; overflow: hidden; }
+.materiel-photo img { width: 100%; height: 100%; object-fit: contain; }
+.materiel-photo .btn { min-height: 44px; margin: 0.5rem; white-space: normal; }
 .zone-label { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
 .zone-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .zone-colour { display: inline-block; flex: 0 0 0.9rem; height: 0.9rem; border-radius: 50%; border: 1px solid rgba(0, 0, 0, 0.2); }
@@ -17,6 +20,7 @@
 .materiel-actions .materiel-primary-action { flex-basis: 100%; }
 .materiel-management .btn, .materiel-page .form-control, .materiel-page .form-select { min-height: 44px; }
 .materiel-empty { grid-column: 1 / -1; padding: 2rem; text-align: center; background: #f8faf9; border: 1px dashed #cbd9d6; border-radius: 0.75rem; color: #68767b; }
+@media (min-width: 768px) { .materiel-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 1200px) { .materiel-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 575.98px) {
   .materiel-page { margin-top: 1rem; }

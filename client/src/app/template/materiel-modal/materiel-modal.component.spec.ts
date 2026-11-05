@@ -5,6 +5,8 @@ import { of, Subject } from 'rxjs';
 import { MaterielModalComponent } from './materiel-modal.component';
 import { MaterielService } from '../../_services/materiel.service';
 import { Materiel } from '../../models/materiel';
+import { By } from '@angular/platform-browser';
+import { PhotoMaterielComponent } from '../photo-materiel/photo-materiel.component';
 
 describe('Ajout de matériel', () => {
   let fixture: ComponentFixture<MaterielModalComponent>;
@@ -35,7 +37,7 @@ describe('Ajout de matériel', () => {
     const objet: Materiel = { id: 2, nom: 'Vidéoprojecteur', zonage: component.zonages[0], emprunteurId: null, emprunteurNom: null, dateEmprunt: null, horsService: false };
     service.create.and.returnValue(of(objet));
     component.ajouter();
-    expect(service.create).toHaveBeenCalledWith('Vidéoprojecteur', 1, false, 1);
+    expect(service.create).toHaveBeenCalledWith('Vidéoprojecteur', 1, false, 1, undefined);
     expect(modal.close).toHaveBeenCalledWith(objet);
   });
 
@@ -53,5 +55,22 @@ describe('Ajout de matériel', () => {
     expect(component.nom).toBe('Objet');
     expect(component.erreur).toBe('Zonage introuvable');
     expect(modal.close).not.toHaveBeenCalled();
+  });
+
+  it('attend la lecture de la photo puis la transmet avec le matériel', () => {
+    const component = fixture.componentInstance;
+    component.zonages = [{ id: 1, nom: 'Stock', couleur: '#123456' }];
+    component.nom = 'Objet';
+    component.zonageId = 1;
+    fixture.detectChanges();
+    const photo = fixture.debugElement.query(By.directive(PhotoMaterielComponent)).componentInstance as PhotoMaterielComponent;
+    photo.chargementChange.emit(true);
+    component.ajouter();
+    expect(service.create).not.toHaveBeenCalled();
+    photo.imageChange.emit('data:image/png;base64,cGhvdG8=');
+    photo.chargementChange.emit(false);
+    service.create.and.returnValue(new Subject<Materiel>());
+    component.ajouter();
+    expect(service.create).toHaveBeenCalledWith('Objet', 1, false, 1, 'data:image/png;base64,cGhvdG8=');
   });
 });

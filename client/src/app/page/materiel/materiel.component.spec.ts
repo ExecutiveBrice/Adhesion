@@ -23,8 +23,9 @@ describe('Matériel et emprunts', () => {
   const emprunte: Materiel = { ...disponible, emprunteurId: 3, emprunteurNom: 'Camille Martin', dateEmprunt: '2026-10-10T10:30:00Z', quantiteDisponible: 0, quantiteEmpruntee: 1, emprunts: [{ id: 10, emprunteurId: 3, emprunteurNom: 'Camille Martin', dateEmprunt: '2026-10-10T10:30:00Z', dateRetour: null, enregistreParNom: null, rapporteParNom: null, quantite: 1, quantiteRetournee: 0 }] };
 
   beforeEach(() => {
-    service = jasmine.createSpyObj('MaterielService', ['getAll', 'getZonages', 'emprunter', 'restituer', 'updateHorsService']);
+    service = jasmine.createSpyObj('MaterielService', ['getAll', 'getCalendrier', 'getZonages', 'emprunter', 'restituer', 'updateHorsService']);
     service.getAll.and.returnValue(of([disponible]));
+    service.getCalendrier.and.returnValue(of([]));
     service.getZonages.and.returnValue(of([zone]));
     storage = jasmine.createSpyObj('TokenStorageService', ['getUser']);
     storage.getUser.and.returnValue({ id: 3, roles: ['ROLE_MEMBRECA'] });
@@ -43,15 +44,90 @@ describe('Matériel et emprunts', () => {
     return fixture.componentInstance;
   }
 
+  it('affiche une carte par ligne sur petit écran et garde une zone photo au format 4:3', () => {
+    afficher();
+    const cadre = document.createElement('iframe');
+    document.body.appendChild(cadre);
+    try {
+      const doc = cadre.contentDocument!;
+      document.querySelectorAll('style').forEach(style => doc.head.appendChild(style.cloneNode(true)));
+      doc.body.appendChild(fixture.nativeElement.cloneNode(true));
+      const grille = doc.querySelector('.materiel-grid')!;
+      for (const [largeur, colonnes] of [[375, 1], [767, 1], [768, 2], [1280, 3]]) {
+        cadre.style.width = `${largeur}px`;
+        expect(cadre.contentWindow!.getComputedStyle(grille).gridTemplateColumns.split(' ').length).toBe(colonnes);
+        const photo = doc.querySelector('.materiel-photo')!.getBoundingClientRect();
+        expect(photo.width / photo.height).toBeCloseTo(4 / 3, 2);
+      }
+    } finally {
+      cadre.remove();
+    }
+  });
+
+  it('réserve un emplacement photo et permet son ajout aux gestionnaires', () => {
+    storage.getUser.and.returnValue({ id: 9, roles: ['ROLE_LOGISTIQUE'] });
+    const reference = { componentInstance: {}, result: new Promise(() => {}) };
+    const open = TestBed.inject(NgbModal).open as jasmine.Spy;
+    open.and.returnValue(reference);
+    afficher();
+    const bouton = fixture.nativeElement.querySelector('[aria-label="Ajouter une photo de Vidéoprojecteur"]');
+    expect(bouton).not.toBeNull();
+    bouton.click();
+    expect(open).toHaveBeenCalledWith(ModifierMaterielModalComponent, jasmine.any(Object));
+  });
+
+  it('affiche la photo sauvegardée sans les noms ni les dates des emprunteurs', () => {
+    const image = 'data:image/jpeg;base64,cGhvdG8=';
+    service.getAll.and.returnValue(of([{ ...emprunte, image }]));
+    afficher();
+    const carte = fixture.nativeElement.querySelector('.materiel-card');
+    expect(carte.querySelector('.materiel-photo img').getAttribute('src')).toBe(image);
+    expect(carte.querySelector('img').getAttribute('alt')).toBe('Photo de Vidéoprojecteur');
+    expect(carte.textContent).not.toContain('Camille Martin');
+    expect(carte.textContent).not.toContain('Début emprunt');
+  });
+
+  it('filtre le matériel au clic sur un emprunt du jour sélectionné, même déjà rapporté et masqué par les filtres', async () => {
+    service.getAll.and.returnValue(of([disponible, { ...disponible, id: 5, nom: 'Enceinte' }]));
+    service.getCalendrier.and.returnValue(of([{
+      materielId: disponible.id, materielNom: disponible.nom, zonage: zone,
+      emprunt: { ...emprunte.emprunts![0], dateDebut: '2000-01-01', dateRetour: new Date().toISOString() }
+    }]));
+    const component = afficher();
+    await fixture.whenStable();
+    component.recherche = 'introuvable';
+    component.zonageId = 999;
+    component.statut = 'emprunte';
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.materiel-card').length).toBe(0);
+    const recherche = fixture.nativeElement.querySelector('#materielRecherche') as HTMLInputElement;
+    const defiler = spyOn(recherche, 'scrollIntoView');
+
+    fixture.nativeElement.querySelector('.emprunt-detail').click();
+    fixture.detectChanges(); await fixture.whenStable(); fixture.detectChanges();
+
+    expect(recherche.value).toBe(disponible.nom);
+    expect(component.zonageId).toBeNull();
+    expect(component.statut).toBe('');
+    expect(component.materielsFiltres).toEqual([disponible]);
+    const cartes = fixture.nativeElement.querySelectorAll('.materiel-card');
+    expect(cartes.length).toBe(1);
+    expect(cartes[0].textContent).toContain(disponible.nom);
+    expect(defiler).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+  });
+
   it('ouvre les formulaires de quantité pour emprunter et restituer', async () => {
     const open = TestBed.inject(NgbModal).open as jasmine.Spy;
     open.and.returnValue({ componentInstance: {}, result: Promise.resolve(emprunte) });
     const component = afficher();
     fixture.nativeElement.querySelector('[aria-label="Emprunter Vidéoprojecteur"]').click();
-    expect(open).toHaveBeenCalledWith(EmpruntMaterielModalComponent, jasmine.any(Object));
+    expect(open).toHaveBeenCalledWith(EmpruntMaterielModalComponent,
+      jasmine.objectContaining({ size: 'lg', scrollable: true }));
     await fixture.whenStable(); fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Camille Martin');
-    expect(fixture.nativeElement.textContent).toContain('10/10/2026');
+    expect(fixture.nativeElement.querySelector('.materiel-card').textContent).not.toContain('Camille Martin');
+    expect(fixture.nativeElement.querySelector('.materiel-card').textContent).not.toContain('10/10/2026');
+    expect(fixture.nativeElement.querySelector('.materiel-photo')).not.toBeNull();
     open.and.returnValue({ componentInstance: {}, result: Promise.resolve(disponible) });
     fixture.nativeElement.querySelector('[aria-label="Restituer Vidéoprojecteur"]').click();
     expect(open).toHaveBeenCalledWith(RetourMaterielModalComponent, jasmine.any(Object));
@@ -74,10 +150,26 @@ describe('Matériel et emprunts', () => {
     const open = TestBed.inject(NgbModal).open as jasmine.Spy;
     open.and.returnValue({ componentInstance: {}, result: new Promise(() => {}) });
     const component = afficher();
-    component.emprunter(disponible); component.emprunter(disponible);
+    fixture.nativeElement.querySelector('[aria-label="Emprunter Vidéoprojecteur"]').click();
+    component.emprunter(disponible);
     fixture.detectChanges();
     expect(open).toHaveBeenCalledTimes(1);
     expect(fixture.nativeElement.querySelector('[aria-label="Emprunter Vidéoprojecteur"]').disabled).toBeTrue();
+  });
+
+  it('distingue les emprunts à venir dans les badges et les filtres', () => {
+    const futur: Materiel = { ...emprunte, emprunts: emprunte.emprunts!.map(e => ({
+      ...e, dateDebut: '9999-01-01', dateFinPrevue: '9999-01-02'
+    })) };
+    service.getAll.and.returnValue(of([futur]));
+    const component = afficher();
+    const text = fixture.nativeElement.querySelector('.materiel-card').textContent;
+    expect(text).toContain('1 à venir');
+    expect(text).not.toContain('1 emprunté(s)');
+    component.statut = 'emprunte';
+    expect(component.materielsFiltres).toEqual([]);
+    component.statut = 'a-venir';
+    expect(component.materielsFiltres).toEqual([futur]);
   });
 
   it('permet à la Logistique d’ajouter du matériel sans accorder les droits d’emprunt', async () => {

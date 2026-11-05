@@ -9,6 +9,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.time.LocalDate;
+import org.springframework.format.annotation.DateTimeFormat;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -26,6 +28,14 @@ public class MaterielController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MEMBRECA', 'LOGISTIQUE')")
     public List<MaterielResponse> getAll() { return service.getAll(); }
+
+    @GetMapping("/calendrier")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEMBRECA', 'LOGISTIQUE')")
+    public List<EmpruntCalendrierMaterielResponse> getCalendrier(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate debut,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fin) {
+        return service.getCalendrier(debut, fin);
+    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -48,7 +58,8 @@ public class MaterielController {
     public MaterielResponse emprunter(@PathVariable Long id, Authentication authentication,
             @RequestBody(required = false) EmpruntMaterielRequest request) {
         return service.emprunter(id, authentication.getName(), request == null ? null : request.emprunteurId(),
-                administrateur(authentication), request == null || request.quantite() == null ? 1 : request.quantite());
+                administrateur(authentication), request == null || request.quantite() == null ? 1 : request.quantite(),
+                request == null ? null : request.dateDebut(), request == null ? null : request.dateFinPrevue());
     }
 
     @PostMapping("/{id}/retour")

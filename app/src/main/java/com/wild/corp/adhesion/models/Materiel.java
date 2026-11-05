@@ -19,6 +19,9 @@ public class Materiel {
     @Column(nullable = false, length = 150)
     private String nom;
 
+    @Column(columnDefinition = "text")
+    private String image;
+
     @Builder.Default
     @Column(nullable = false, columnDefinition = "integer default 1")
     private int quantiteTotale = 1;

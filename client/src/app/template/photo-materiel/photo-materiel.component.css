@@ -1,0 +1,8 @@
+:host { display: block; }
+.photo-preview, .recadrage { display: block; width: 100%; aspect-ratio: 4 / 3; background: #f8faf9; border-radius: .5rem; }
+.photo-preview { object-fit: contain; }
+.recadrage { position: relative; overflow: hidden; touch-action: none; cursor: grab; }
+.recadrage:active { cursor: grabbing; }
+.recadrage img { position: absolute; max-width: none; user-select: none; pointer-events: none; }
+.recadrage-grille { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 0 1px #68767b; background: linear-gradient(to right, transparent calc(33.333% - .5px), #ffffff80 33.333%, transparent calc(33.333% + .5px), transparent calc(66.667% - .5px), #ffffff80 66.667%, transparent calc(66.667% + .5px)), linear-gradient(to bottom, transparent calc(33.333% - .5px), #ffffff80 33.333%, transparent calc(33.333% + .5px), transparent calc(66.667% - .5px), #ffffff80 66.667%, transparent calc(66.667% + .5px)); }
+.btn { min-height: 44px; }

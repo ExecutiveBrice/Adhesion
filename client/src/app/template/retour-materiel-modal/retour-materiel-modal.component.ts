@@ -17,7 +17,7 @@ import { registerApiViewRefresh } from '../../_services/api-render.service';
         <label for="empruntRetour" class="form-label">Emprunt à restituer</label>
         <select id="empruntRetour" name="empruntId" class="form-select mb-3" required [(ngModel)]="empruntId" (ngModelChange)="quantite = restant" [disabled]="enregistrement">
           <option [ngValue]="null">Choisir un emprunt</option>
-          @for (emprunt of emprunts; track emprunt.id) { <option [ngValue]="emprunt.id">{{emprunt.emprunteurNom}} — {{emprunt.dateEmprunt | date:'dd/MM/yyyy HH:mm'}} — {{(emprunt.quantite ?? 1) - (emprunt.quantiteRetournee ?? 0)}} à rendre</option> }
+          @for (emprunt of emprunts; track emprunt.id) { <option [ngValue]="emprunt.id">{{emprunt.emprunteurNom}} — Début emprunt : {{(emprunt.dateDebut || emprunt.dateEmprunt) | date:'dd/MM/yyyy'}} — {{(emprunt.quantite ?? 1) - (emprunt.quantiteRetournee ?? 0)}} à rendre</option> }
         </select>
         <label for="quantiteRetour" class="form-label">Quantité rendue</label>
         <input id="quantiteRetour" name="quantite" class="form-control" type="number" min="1" [max]="restant" step="1" required [(ngModel)]="quantite" [disabled]="enregistrement || empruntId === null">

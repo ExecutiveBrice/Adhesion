@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import java.util.Optional;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -50,6 +52,17 @@ class MaterielServicesTest {
     }
 
     @Test
+    void calendarRejectsInvalidOrExcessivePeriods() {
+        LocalDate debut = LocalDate.of(2026, 12, 1);
+        for (LocalDate[] periode : new LocalDate[][] {
+                { null, debut }, { debut, null }, { debut, debut.minusDays(1) }, { debut, debut.plusMonths(2) } }) {
+            assertThatThrownBy(() -> service.getCalendrier(periode[0], periode[1]))
+                    .isInstanceOfSatisfying(ResponseStatusException.class,
+                            error -> assertThat(error.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST));
+        }
+    }
+
+    @Test
     void createsAvailableMaterialInAnExistingZone() {
         MaterielResponse resultat = service.create(new MaterielRequest("  Vidéoprojecteur  ", 1L));
         assertThat(resultat.nom()).isEqualTo("Vidéoprojecteur");
@@ -68,6 +81,40 @@ class MaterielServicesTest {
         assertThat(resultat.emprunteurId()).isEqualTo(3L);
         assertThat(resultat.emprunteurNom()).isEqualTo("Camille Martin");
         assertThat(resultat.dateEmprunt()).isNotNull();
+    }
+
+    @Test
+    void keepsSelectedPeriodInLoanAndHistory() {
+        LocalDate debut = LocalDate.of(2026, 12, 31);
+        LocalDate fin = LocalDate.of(2027, 1, 2);
+        EmpruntMaterielResponse emprunt = service.emprunter(2L, user.getUsername(), null, false, 1, debut, fin)
+                .emprunts().getFirst();
+        assertThat(emprunt.dateDebut()).isEqualTo(debut);
+        assertThat(emprunt.dateFinPrevue()).isEqualTo(fin);
+        service.restituer(2L, user.getUsername(), false);
+        assertThat(service.getHistorique(2L).getFirst().dateFinPrevue()).isEqualTo(fin);
+    }
+
+    @Test
+    void defaultsToTodayAndTomorrowForClientsWithoutDates() {
+        LocalDate today = LocalDate.now(ZoneId.of("Europe/Paris"));
+        EmpruntMaterielResponse emprunt = service.emprunter(2L, user.getUsername()).emprunts().getFirst();
+        assertThat(emprunt.dateDebut()).isEqualTo(today);
+        assertThat(emprunt.dateFinPrevue()).isEqualTo(today.plusDays(1));
+    }
+
+    @Test
+    void rejectsIncompleteOrReversedPeriodsWithoutSavingALoan() {
+        LocalDate debut = LocalDate.of(2026, 12, 31);
+        for (LocalDate[] periode : new LocalDate[][] {
+                { debut, null }, { null, debut }, { debut, debut.minusDays(1) } }) {
+            assertThatThrownBy(() -> service.emprunter(2L, user.getUsername(), null, false, 1, periode[0], periode[1]))
+                    .isInstanceOfSatisfying(ResponseStatusException.class,
+                            error -> assertThat(error.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST));
+        }
+        verify(emprunts, never()).save(any());
+        assertThat(service.emprunter(2L, user.getUsername(), null, false, 1, debut, debut)
+                .emprunts().getFirst().dateFinPrevue()).isEqualTo(debut);
     }
 
     @Test

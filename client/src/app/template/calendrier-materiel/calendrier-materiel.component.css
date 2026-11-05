@@ -1,0 +1,41 @@
+:host { display: block; margin-bottom: 1.5rem; }
+.calendrier-materiel { border: 1px solid #dce4e2; border-radius: 0.75rem; background: var(--bs-body-bg, #fff); overflow: hidden; }
+.calendrier-legende { display: flex; flex-wrap: wrap; gap: 1rem; padding: 1.25rem 1.25rem 1rem; font-size: 0.8rem; }
+.calendrier-legende > span { display: flex; align-items: center; gap: 0.4rem; }
+.statut-point { width: 0.6rem; height: 0.6rem; border-radius: 50%; }
+.calendrier-mois { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; padding: 0 1.25rem 1.25rem; }
+.mois { min-width: 0; }
+.mois h2 { text-transform: capitalize; margin-bottom: 1rem; }
+.jours-semaine, .jours-mois { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.jours-semaine { text-align: center; font-size: 0.75rem; font-weight: 600; color: var(--bs-secondary-color); padding-bottom: 0.5rem; }
+.jours-mois { gap: 3px; }
+.calendrier-jour { display: flex; flex-direction: column; gap: 3px; min-width: 0; min-height: 88px; padding: 5px; border: 1px solid var(--bs-border-color, #dce4e2); border-radius: 0.3rem; background: var(--bs-body-bg, #fff); color: var(--bs-body-color, #212529); text-align: left; }
+.calendrier-jour:hover { background: var(--bs-tertiary-bg, #f8faf9); }
+.calendrier-jour:focus-visible { outline: 3px solid var(--bs-primary, #0d6efd); outline-offset: 1px; z-index: 1; }
+.calendrier-jour.selectionne { border-color: var(--bs-primary, #0d6efd); box-shadow: inset 0 0 0 1px var(--bs-primary, #0d6efd); }
+.jour-numero { font-size: 0.8rem; line-height: 1.5rem; text-align: center; width: 1.5rem; border-radius: 50%; }
+.aujourdhui .jour-numero { background: var(--bs-primary, #0d6efd); color: white; font-weight: 700; }
+.jour-emprunt { display: block; width: 100%; padding: 1px 3px; border-radius: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.65rem; line-height: 1.25; }
+.en-cours { background: #fff3cd; color: #664d03; }
+.a-venir { background: #cfe2ff; color: #084298; }
+.depassement { background: #f8d7da; color: #842029; }
+.rapporte { background: #d1e7dd; color: #0f5132; }
+.statut-point.en-cours { background: #b58100; }
+.statut-point.a-venir { background: #0d6efd; }
+.statut-point.depassement { background: #dc3545; }
+.statut-point.rapporte { background: #198754; }
+.jour-suite { font-size: 0.65rem; }
+.calendrier-detail { padding: 1.25rem; border-top: 1px solid var(--bs-border-color, #dce4e2); }
+.calendrier-detail h2 { text-transform: capitalize; }
+.emprunts-jour { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 0.75rem; padding: 0; margin: 1rem 0 0; list-style: none; }
+.emprunts-jour > li { min-width: 0; }
+.emprunt-detail { display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; width: 100%; height: 100%; padding: 0.75rem; border: 1px solid transparent; background: var(--bs-tertiary-bg, #f8faf9); color: var(--bs-body-color, #212529); border-radius: 0.5rem; font: inherit; font-size: 0.875rem; text-align: left; overflow-wrap: anywhere; cursor: pointer; }
+.emprunt-detail:hover { border-color: var(--bs-primary, #0d6efd); }
+.emprunt-detail:focus-visible { outline: 3px solid var(--bs-primary, #0d6efd); outline-offset: 2px; }
+@media (max-width: 991.98px) { .calendrier-mois { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 575.98px) {
+  .calendrier-detail { padding: 0.75rem; }
+  .calendrier-legende { padding-inline: 0.75rem; }
+  .calendrier-mois { padding: 0 0.5rem 0.75rem; }
+  .calendrier-jour { padding: 3px; min-height: 80px; }
+}

@@ -19,18 +19,22 @@
   @if (chargement) {
     <p role="status">Chargement du matériel…</p>
   } @else if (!erreur || materiels.length > 0) {
+    <app-calendrier-materiel [materiels]="materiels" (empruntSelectionne)="visualiserEmprunt($event)"></app-calendrier-materiel>
     @if (materiels.length > 0) {
       <div class="row g-3 mb-4">
-        <div class="col-12 col-md-6"><input id="materielRecherche" type="search" class="form-control" [(ngModel)]="recherche" placeholder="Matériel, zonage ou emprunteur"></div>
+        <div class="col-12 col-md-6"><input #rechercheMateriel id="materielRecherche" type="search" class="form-control" [(ngModel)]="recherche" placeholder="Matériel, zonage ou emprunteur"></div>
         <div class="col-12 col-sm-6 col-md-3"><select id="materielZonage" class="form-select" [(ngModel)]="zonageId"><option [ngValue]="null">Tous les zonages</option>@for (zone of zonages; track zone.id) { <option [ngValue]="zone.id">{{zone.nom}}</option> }</select></div>
-        <div class="col-12 col-sm-6 col-md-3"><select id="materielStatut" class="form-select" [(ngModel)]="statut"><option value="">Tous les matériels</option><option value="disponible">Disponible</option><option value="emprunte">Emprunté</option></select></div>
+        <div class="col-12 col-sm-6 col-md-3"><select id="materielStatut" class="form-select" [(ngModel)]="statut"><option value="">Tous les matériels</option><option value="disponible">Disponible</option><option value="emprunte">Emprunté</option><option value="a-venir">Emprunt à venir</option></select></div>
       </div>
-      <ul class="materiel-grid" aria-label="Matériel référencé, emplacement et emprunts en cours">
+      <ul class="materiel-grid" aria-label="Matériel référencé, photos et emplacement">
         @for (materiel of materielsFiltres; track materiel.id) {
           <li class="materiel-card">
             <h2 class="h5 mb-3">{{materiel.nom}}</h2>
             <div class="materiel-etat">
-              @if ((materiel.quantiteEmpruntee ?? 0) > 0) { <span class="badge text-bg-warning">{{materiel.quantiteEmpruntee}} emprunté(s)</span> }
+              @let quantiteEnCours = statutEmprunt.quantite(materiel, 'En cours');
+              @let quantiteAVenir = statutEmprunt.quantite(materiel, 'À venir');
+              @if (quantiteEnCours > 0) { <span class="badge text-bg-warning">{{quantiteEnCours}} emprunté(s)</span> }
+              @if (quantiteAVenir > 0) { <span class="badge text-bg-info">{{quantiteAVenir}} à venir</span> }
               @if ((materiel.quantiteDisponible ?? 0) > 0) { <span class="badge text-bg-success">{{materiel.quantiteDisponible}} disponible(s)</span> }
               @else { <span class="badge text-bg-secondary">Aucun disponible</span> }
               <button type="button" class="btn btn-sm" [class.btn-secondary]="!materiel.horsService" [class.btn-danger]="materiel.horsService" [id]="'materielHS' + materiel.id" [attr.aria-pressed]="materiel.horsService" [attr.aria-label]="'Hors service : ' + materiel.nom" title="Gérer la quantité hors service" [disabled]="!administrateur || actionEnCours !== null" (click)="changerHorsService(materiel)">HS : {{materiel.quantiteHorsService ?? 0}}</button>
@@ -41,10 +45,16 @@
                 <div><dt>Problème</dt><dd style="white-space: pre-wrap; overflow-wrap: anywhere">{{materiel.probleme}}</dd></div>
               }
               <div><dt>Zonage du stock</dt><dd><span class="zone-label"><span class="zone-colour" [style.background-color]="materiel.zonage.couleur" aria-hidden="true"></span><span class="zone-name" [title]="materiel.zonage.nom">{{materiel.zonage.nom}}</span></span></dd></div>
-              @for (emprunt of materiel.emprunts ?? []; track emprunt.id) {
-                <div><dt>{{emprunt.emprunteurNom}}</dt><dd>{{(emprunt.quantite ?? 1) - (emprunt.quantiteRetournee ?? 0)}} à rendre · {{emprunt.dateEmprunt | date:'dd/MM/yyyy HH:mm'}}</dd></div>
-              }
             </dl>
+            <div class="materiel-photo">
+              @if (materiel.image) {
+                <img [src]="materiel.image" [alt]="'Photo de ' + materiel.nom" loading="lazy" decoding="async">
+              } @else if (gestionMateriel) {
+                <button type="button" class="btn btn-outline-secondary" (click)="modifier(materiel)" [disabled]="actionEnCours !== null" [attr.aria-label]="'Ajouter une photo de ' + materiel.nom">Ajouter une photo</button>
+              } @else {
+                <span class="text-body-secondary">Photo à venir</span>
+              }
+            </div>
             <div class="materiel-actions">
               @if (peutEmprunter && (materiel.quantiteDisponible ?? 0) > 0) {
                 <button type="button" class="materiel-primary-action btn btn-primary" [disabled]="actionEnCours !== null" (click)="emprunter(materiel)" [attr.aria-label]="'Emprunter ' + materiel.nom">{{actionEnCours === materiel.id ? 'Enregistrement…' : 'Emprunter'}}</button>
