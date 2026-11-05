@@ -73,6 +73,7 @@ export class BoardAdminComponent implements OnInit {
   salleMessage = '';
   salleErreur = '';
   usersLite: UserLite[] = [];
+  rechercheImpersonnalisation = '';
   utilisateursSelectionnables: UtilisateurSelectionnable[] = [];
   selectionsRoles: Record<RoleUtilisateur, UtilisateurSelectionnable[]> = {
     [ERole.ROLE_ADMIN]: [],
@@ -200,17 +201,31 @@ export class BoardAdminComponent implements OnInit {
   }
 
 
+  get utilisateursImpersonnalisation(): UserLite[] {
+    const normaliser = (valeur: string) => valeur.normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '').toLocaleLowerCase('fr');
+    const recherche = normaliser(this.rechercheImpersonnalisation.trim());
+    return this.usersLite.filter(user => !recherche
+      || normaliser(user.adherent || '').includes(recherche)
+      || normaliser(user.username).includes(recherche));
+  }
+
   impersonate(email: string) {
     this.authService.impersonate(email).subscribe(
       data => {
-        console.log(data)
         this.tokenStorage.saveToken(data.token);
         this.tokenStorage.saveUser(data);
+        this.rechargerInscription();
       },
       err => {
         ;
       }
     );
+  }
+
+  protected rechargerInscription(): void {
+    window.location.hash = '/inscription';
+    window.location.reload();
   }
 
   updateParamText(param: ParamText) {

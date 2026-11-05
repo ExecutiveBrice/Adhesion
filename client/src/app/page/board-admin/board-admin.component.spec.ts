@@ -1,4 +1,4 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
 import { BoardAdminComponent } from './board-admin.component';
 import { MailService, NewsletterSyncProgress } from '../../_services/mail.service';
@@ -8,9 +8,12 @@ import { AdherentService } from '../../_services/adherent.service';
 import { AuthService } from '../../_services/auth.service';
 import { TokenStorageService } from '../../_services/token-storage.service';
 
-describe('Administration contacts Brevo', () => {
+describe('Administration', () => {
   let component: BoardAdminComponent;
+  let fixture: ComponentFixture<BoardAdminComponent>;
   let mail: jasmine.SpyObj<MailService>;
+  let auth: jasmine.SpyObj<AuthService>;
+  let storage: jasmine.SpyObj<TokenStorageService>;
   const progress = (running: boolean): NewsletterSyncProgress => ({
     running, total: 3, processed: running ? 1 : 3, subscribed: 1,
     resubscribed: 1, alreadySubscribed: 1, unresolved: 0, ignored: 2, error: ''
@@ -18,12 +21,85 @@ describe('Administration contacts Brevo', () => {
 
   beforeEach(() => {
     mail = jasmine.createSpyObj('MailService', ['synchronizeNewsletterContacts', 'getNewsletterContactSyncStatus']);
+    auth = jasmine.createSpyObj('AuthService', ['impersonate']);
+    storage = jasmine.createSpyObj('TokenStorageService', ['saveToken', 'saveUser']);
     TestBed.configureTestingModule({ imports: [BoardAdminComponent], providers: [
       { provide: MailService, useValue: mail },
-      ...[UserService, ParamService, AdherentService, AuthService, TokenStorageService]
+      { provide: AuthService, useValue: auth },
+      { provide: TokenStorageService, useValue: storage },
+      ...[UserService, ParamService, AdherentService]
         .map(provide => ({ provide, useValue: {} }))
     ] });
-    component = TestBed.createComponent(BoardAdminComponent).componentInstance;
+    fixture = TestBed.createComponent(BoardAdminComponent);
+    component = fixture.componentInstance;
+  });
+
+  it('filtre les adhérents depuis le champ de recherche, sans tenir compte des accents et de la casse', fakeAsync(() => {
+    spyOn(component, 'getAllBoolean');
+    spyOn(component, 'getAllText');
+    spyOn(component, 'getAllNumber');
+    spyOn(component, 'getAgendasGoogle');
+    spyOn(component, 'getSalles');
+    spyOn(component, 'fillLists');
+    spyOn(component, 'actualiserSynchronisationNewsletter');
+    component.usersLite = [
+      { id: 1, adherent: 'Élodie Martin', username: 'elodie@example.fr', roles: [] },
+      { id: 2, adherent: 'Paul Dupont', username: 'paul@example.fr', roles: [] }
+    ];
+    fixture.detectChanges();
+    fixture.nativeElement.querySelector('[ngbAccordionItem="utilisateurs"] [ngbAccordionButton]').click();
+    fixture.detectChanges();
+    const toggle = fixture.nativeElement.querySelector('#dropdownImpersonate');
+    toggle.click();
+    fixture.detectChanges();
+    tick();
+    const menu = document.querySelector('[aria-labelledby="dropdownImpersonate"]')!;
+    const input = menu.querySelector('input')!;
+    const rechercher = (valeur: string) => {
+      input.value = valeur;
+      input.dispatchEvent(new Event('input'));
+      tick();
+      fixture.detectChanges();
+    };
+
+    rechercher(' ELODIE ');
+    expect(menu.querySelectorAll('button').length).toBe(1);
+    expect(menu.querySelector('button')!.textContent).toContain('Élodie Martin');
+    rechercher('PAUL@EXAMPLE');
+    expect(menu.querySelector('button')!.textContent).toContain('Paul Dupont');
+    rechercher('inexistant');
+    expect(menu.querySelectorAll('button').length).toBe(0);
+    expect(menu.textContent).toContain('Aucun adhérent trouvé');
+    rechercher('');
+    expect(menu.querySelectorAll('button').length).toBe(2);
+    toggle.click();
+    fixture.detectChanges();
+    tick();
+  }));
+
+  it('enregistre la nouvelle session avant de recharger la page inscription', () => {
+    const session = { token: 'token-adherent', username: 'elodie@example.fr' };
+    const rechargement = spyOn<any>(component, 'rechargerInscription').and.callFake(() => {
+      expect(storage.saveToken).toHaveBeenCalledWith(session.token);
+      expect(storage.saveUser).toHaveBeenCalledWith(session);
+    });
+    const reponse = new Subject<typeof session>();
+    auth.impersonate.and.returnValue(reponse);
+
+    component.impersonate(session.username);
+    expect(auth.impersonate).toHaveBeenCalledWith(session.username);
+    expect(rechargement).not.toHaveBeenCalled();
+    reponse.next(session);
+    expect(rechargement).toHaveBeenCalledTimes(1);
+  });
+
+  it('conserve la session et la page courantes en cas de refus de l’impersonnalisation', () => {
+    const rechargement = spyOn<any>(component, 'rechargerInscription');
+    auth.impersonate.and.returnValue(throwError(() => new Error('refus')));
+    component.impersonate('elodie@example.fr');
+    expect(storage.saveToken).not.toHaveBeenCalled();
+    expect(storage.saveUser).not.toHaveBeenCalled();
+    expect(rechargement).not.toHaveBeenCalled();
   });
 
   it('confirms global unblocking and prevents duplicate requests', () => {

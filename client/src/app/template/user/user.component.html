@@ -101,12 +101,12 @@
             }
           </div>
         }
-        <div class="col-12 header">
-          Documents :
-          @if (showSecretaire) {
-            <fa-icon
-            class="pointer green" [icon]="faRefresh" (click)="regenerate(adherent)" container="body"></fa-icon>
-          }
+        <div class="col-12 d-flex flex-wrap align-items-center justify-content-between gap-2">
+          <span class="header">Documents :</span>
+          <button type="button" class="btn btn-regenerate-attestation btn-sm d-inline-flex align-items-center gap-2 text-decoration-none" (click)="regenerate(adherent)">
+            <fa-icon [icon]="faRefresh" aria-hidden="true"></fa-icon>
+            Recréer mon attestation
+          </button>
         </div>
         @for (document of adherent.documents | orderBy:'id':false ; track document) {
           <div class="col-12 ligne pointer">
@@ -263,6 +263,18 @@
                 </div>
               }
             </div>
+            @if (accordsLoading) {
+              <p role="status">Chargement des accords…</p>
+            }
+            @if (accordsError) {
+              <div class="alert alert-danger" role="alert">
+                Les accords n'ont pas pu être chargés.
+                <button type="button" class="btn btn-link" (click)="initialiserAccords()">Réessayer</button>
+              </div>
+            }
+            @if (!accordsAdherentEnregistres(adherent)) {
+              <p class="orange">Enregistrez la fiche adhérent pour valider vos choix concernant les données personnelles et le droit à l'image avant d'ajouter une activité.</p>
+            }
             @for (accord of adherent.accords | orderBy:'id':false ; track accord) {
               <div class="high-row">
                 @if (accord.datePassage == null) {
@@ -492,13 +504,13 @@
                   }
                 </div>
               }
-              @if (!isAllAccordsDone(adherent.accords) || !isAdherentComplet(adherent)) {
+              @if (!accordsAdherentRenseignes(adherent) || !isAdherentComplet(adherent)) {
                 <div class="orange">
                   <span class="orange">* champs obligatoires</span>
                 </div>
               }
               <div class="form-group fullSize">
-                <button [disabled]="!isAllAccordsDone(adherent.accords) || !isAdherentComplet(adherent)"
+                <button [disabled]="!accordsAdherentRenseignes(adherent) || !isAdherentComplet(adherent)"
                 class="btn btn-primary btn-block col-12 ">Enregistrer</button>
               </div>
               @if (!isRepresentant) {
@@ -527,7 +539,7 @@
 
 
 
-  @if (adherent.completAdhesion) {
+  @if (adherent.completAdhesion && accordsAdherentEnregistres(adherent)) {
     <div class="col-12 col-sm-6">
       <div class="row">
         <div class="col-12 ">
@@ -549,61 +561,63 @@
               <div class="col-12 ">
                 <div class="cadrePermanent ">
                   <div class="row">
-                    <div class="col-8 header">
-                      {{adhesion.activite.nom}}
-                      @if (adhesion.statutActuel != 'Validée' || adhesion.statutActuel != 'Licence générée' || adhesion.statutActuel != 'Licence T' ) {
-                        <fa-icon
-                          class="pointer" [icon]="faSquareMinus" (click)="suppressionAdhesionModal(adhesion)"
-                        container="body"></fa-icon>
-                      }
-                      @if (showAdmin || showSecretaire) {
-                        <div  ngbDropdown>
-                          <div id="dropdownBasic1" ngbDropdownToggle>
-                            <fa-icon [icon]="faSquarePlus" container="body"></fa-icon>
+                    <div class="col-12 d-flex align-items-center gap-2">
+                      <div class="header activity-name">{{adhesion.activite.nom}}</div>
+                      <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                        @if (adhesion.statutActuel != 'Validée' || adhesion.statutActuel != 'Licence générée' || adhesion.statutActuel != 'Licence T' ) {
+                          <button type="button" class="btn btn-danger btn-sm" (click)="suppressionAdhesionModal(adhesion)">
+                            supprimer
+                          </button>
+                        }
+                        @if (showAdmin || showSecretaire) {
+                          <div  ngbDropdown>
+                            <button type="button" class="btn btn-change-activity btn-sm" id="dropdownBasic1" ngbDropdownToggle>
+                              Changer
+                            </button>
+                            @if (activites.length > 0) {
+                              <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+                                @for (activite of activitesListe  | orderBy:'nom':false; track activite) {
+                                  <div class="ligne pointer">
+                                    <b>{{activite.nom}}</b>
+                                    @for (horaire of activite.horaires; track horaire) {
+                                      <div>
+                                        <a ngbDropdownItem (click)="changeActivite(adhesion, horaire.id)">
+                                        {{horaire.nom}}</a>
+                                      </div>
+                                    }
+                                  </div>
+                                }
+                              </div>
+                            }
                           </div>
-                          @if (activites.length > 0) {
-                            <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-                              @for (activite of activitesListe  | orderBy:'nom':false; track activite) {
-                                <div class="ligne pointer">
-                                  <b>{{activite.nom}}</b>
-                                  @for (horaire of activite.horaires; track horaire) {
-                                    <div>
-                                      <a ngbDropdownItem (click)="changeActivite(adhesion, horaire.id)">
-                                      {{horaire.nom}}</a>
-                                    </div>
-                                  }
-                                </div>
-                              }
-                            </div>
-                          }
-                        </div>
-                      }
-                    </div>
-                    <div class="col-4 ">
-                      @if (adhesion.statutActuel == 'Validée' || adhesion.statutActuel == 'Licence générée' || adhesion.statutActuel == 'Licence T') {
-                        <fa-icon
-                        class="green fa-xl" [icon]="faCircleCheck"></fa-icon>
-                      }
-                      @if (adhesion.statutActuel == 'Sur liste d\'attente') {
-                        <fa-icon class="gris fa-xl"
-                        [icon]="faCirclePause"></fa-icon>
-                      }
-                      @if (adhesion.statutActuel == 'Attente validation adhérent') {
-                        <fa-icon class="jaune fa-xl"
-                        [icon]="faClock"></fa-icon>
-                      }
-                      @if (adhesion.statutActuel == 'Attente validation secrétariat') {
-                        <fa-icon class="pomme fa-xl"
-                        [icon]="faClock"></fa-icon>
-                      }
-                      @if (adhesion.statutActuel == 'Attente création licence') {
-                        <fa-icon class="orange fa-xl"
-                        [icon]="faClock"></fa-icon>
-                      }
-                      @if (adhesion.statutActuel == 'Annulée') {
-                        <fa-icon class="orange fa-xl"
-                        [icon]="faCircleXmark"></fa-icon>
-                      }
+                        }
+                      </div>
+                      <div class="flex-shrink-0">
+                        @if (adhesion.statutActuel == 'Validée' || adhesion.statutActuel == 'Licence générée' || adhesion.statutActuel == 'Licence T') {
+                          <fa-icon
+                          class="green fa-xl" [icon]="faCircleCheck"></fa-icon>
+                        }
+                        @if (adhesion.statutActuel == 'Sur liste d\'attente') {
+                          <fa-icon class="gris fa-xl"
+                          [icon]="faCirclePause"></fa-icon>
+                        }
+                        @if (adhesion.statutActuel == 'Attente validation adhérent') {
+                          <fa-icon class="jaune fa-xl"
+                          [icon]="faClock"></fa-icon>
+                        }
+                        @if (adhesion.statutActuel == 'Attente validation secrétariat') {
+                          <fa-icon class="pomme fa-xl"
+                          [icon]="faClock"></fa-icon>
+                        }
+                        @if (adhesion.statutActuel == 'Attente création licence') {
+                          <fa-icon class="orange fa-xl"
+                          [icon]="faClock"></fa-icon>
+                        }
+                        @if (adhesion.statutActuel == 'Annulée') {
+                          <fa-icon class="orange fa-xl"
+                          [icon]="faCircleXmark"></fa-icon>
+                        }
+                      </div>
                     </div>
                     <div class="col-12 ">
                       <i>Statut : {{ adhesion.statutActuel }}</i>

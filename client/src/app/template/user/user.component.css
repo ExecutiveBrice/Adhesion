@@ -18,6 +18,26 @@
   margin-right: 0;
 }
 
+.activity-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.btn-change-activity,
+.btn-regenerate-attestation {
+  --bs-btn-color: #000;
+  --bs-btn-bg: #fdda4d;
+  --bs-btn-border-color: #fdda4d;
+  --bs-btn-hover-color: #000;
+  --bs-btn-hover-bg: #e4c445;
+  --bs-btn-hover-border-color: #e4c445;
+  --bs-btn-active-color: #000;
+  --bs-btn-active-bg: #e4c445;
+  --bs-btn-active-border-color: #e4c445;
+  --bs-btn-focus-shadow-rgb: 253, 218, 77;
+}
+
 .cadrePermanent{
   margin-bottom: 10px;
 padding: 10px;

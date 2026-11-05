@@ -133,7 +133,7 @@ public class AdherentController {
     }
 
     @PostMapping("/regenerate")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> regenerate(Authentication principal, @PathParam("adherentId") Long adherentId) {
         log.warn("AUDIT action=regenerate actor={} adherentId={}", principal.getName(), adherentId);
         adherentServices.regenerate(adherentId);

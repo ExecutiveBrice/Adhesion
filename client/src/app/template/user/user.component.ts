@@ -96,6 +96,9 @@ export class UserComponent implements OnInit {
   showSecretaire: boolean = false;
   roleEnCours: string | null = null;
   canChangeEmail: boolean = false;
+  accordsLoading = false;
+  accordsError = false;
+  private readonly accordsObligatoires = ['RGPD', 'DroitImage'];
 
   activites: Activite[] = []
 
@@ -114,6 +117,7 @@ export class UserComponent implements OnInit {
 
   windows_width: number = 0;
   ngOnInit(): void {
+    this.initialiserAccords();
 
     this.paramService.getAllBoolean().subscribe({
       next: (data) => {
@@ -146,6 +150,58 @@ export class UserComponent implements OnInit {
     console.log(this.activites)
     this.fillFiles();
     this.chargerNewsletter();
+  }
+
+  initialiserAccords(): void {
+    this.adherent.accords ??= [];
+    if (!this.accordsAdherentEnregistres(this.adherent)) {
+      this.adherent.completAdhesion = false;
+      this.adherent.edit = true;
+    }
+    const manquants = this.accordsObligatoires.filter(nom =>
+      !this.adherent.accords.some(accord => accord.nom === nom));
+    if (manquants.length === 0 || this.accordsLoading) return;
+
+    this.accordsLoading = true;
+    this.accordsError = false;
+    this.paramService.getAllText().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: textes => {
+        this.accordsLoading = false;
+        if (manquants.some(nom => !textes.some(texte => texte.paramName === nom && texte.paramValue))) {
+          this.accordsError = true;
+          return;
+        }
+        for (const nom of manquants) {
+          if (this.adherent.accords.some(accord => accord.nom === nom)) continue;
+          const image = nom === 'DroitImage';
+          this.adherent.accords = [...this.adherent.accords, Object.assign(new Accord(), {
+            nom,
+            title: image ? "Droit à l'image" : "Autorisation d'utilisation des données personnelles",
+            text: textes.find(texte => texte.paramName === nom)!.paramValue,
+            etat: true,
+            refusable: image,
+            valide: image ? "J'accepte l'utilisation de mon image" : "J'accepte l'utilisation de mes données personnelles",
+            refus: image ? "Je refuse l'utilisation de mon image" : undefined,
+            datePassage: null
+          })];
+        }
+      },
+      error: () => {
+        this.accordsLoading = false;
+        this.accordsError = true;
+      }
+    });
+  }
+
+  accordsAdherentRenseignes(adherent: Adherent): boolean {
+    return !this.accordsLoading && !this.accordsError && this.accordsObligatoires.every(nom =>
+      adherent.accords?.some(accord => accord.nom === nom && accord.etat != null
+        && (nom !== 'RGPD' || accord.etat === true)));
+  }
+
+  accordsAdherentEnregistres(adherent: Adherent): boolean {
+    return this.accordsAdherentRenseignes(adherent) && this.accordsObligatoires.every(nom =>
+      adherent.accords.some(accord => accord.nom === nom && accord.datePassage != null));
   }
 
   get newsletterAvecEmailRepresentant(): boolean {
@@ -303,6 +359,7 @@ export class UserComponent implements OnInit {
   }
 
   choixActivites(adherent: Adherent) {
+    if (!adherent.completAdhesion || !this.accordsAdherentEnregistres(adherent)) return;
     console.log(this.activitesListe)
     this.utilService.openModalChoixActivite(this.activitesListe, this.showAdmin, this.showSecretaire).then((data) => {
       console.log(data)
@@ -329,6 +386,7 @@ export class UserComponent implements OnInit {
   }
 
   onSubmit(adherent: Adherent): void {
+    if (!this.accordsAdherentRenseignes(adherent)) return;
     console.log(adherent)
     if(adherent.mineur && this.tribu.adherents.length == 1){
       this.toastr.error("Le premier adhérent doit être majeur", 'Erreur')
@@ -405,6 +463,7 @@ export class UserComponent implements OnInit {
 
 
   choisir(adherent: Adherent, activiteId: number) {
+    if (!adherent.completAdhesion || !this.accordsAdherentEnregistres(adherent)) return;
     this.adhesionService.add(adherent.id, activiteId).subscribe(
       adhesionBdd => {
         this.showSuccess("L'adhésion à bien été ajoutée, veuillez valider les accords en enregistrant l'adhésion")
