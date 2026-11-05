@@ -1,7 +1,7 @@
 package com.wild.corp.adhesion.models.resources;
 
 import com.wild.corp.adhesion.models.Activite;
-import com.wild.corp.adhesion.models.PlanificationHebdomadaire;
+import com.wild.corp.adhesion.models.Equipe;
 import com.wild.corp.adhesion.models.Seance;
 import org.junit.jupiter.api.Test;
 
@@ -26,14 +26,11 @@ class SeanceCalendrierResponseTest {
         assertThat(response.activiteNom()).isEqualTo("Basket – Équipe U15");
         assertThat(response.causeAnnulation()).isEqualTo("Gymnase indisponible");
 
-        PlanificationHebdomadaire planification = new PlanificationHebdomadaire();
-        planification.setJour(seance.getDebut().getDayOfWeek());
-        planification.setHoraireDebut(seance.getDebut().toLocalTime());
-        planification.setDescriptif("  Entraînement U15  ");
-        activite.getPlanificationsHebdomadaires().add(planification);
+        Equipe team = new Equipe(); team.setId(2L); team.setNom("U15 A"); team.setActivite(activite);
+        seance.getEquipes().add(team);
         response = SeanceCalendrierResponse.from(seance);
-        assertThat(response.descriptif()).isEqualTo("Entraînement U15");
+        assertThat(response.descriptif()).isEqualTo("U15 A");
         assertThat(response.activiteNomCourt()).isEqualTo("Basket");
-        assertThat(response.activiteNom()).isEqualTo("Basket – Entraînement U15");
+        assertThat(response.activiteNom()).isEqualTo("Basket – U15 A");
     }
 }

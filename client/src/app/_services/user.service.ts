@@ -19,7 +19,7 @@ export class UserService {
   }
 
   getSeancesDuJour(): Observable<SeanceDuJour[]> {
-    return this.http.get<SeanceDuJour[]>(API_URL + 'seancesDuJour', { responseType: 'json' });
+    return this.http.get<SeanceDuJour[]>(API_URL + 'evenementsDuJour', { responseType: 'json' });
   }
 
   isReferentActivite(): Observable<boolean> {
@@ -28,39 +28,39 @@ export class UserService {
 
   getSeancesDuJourPourLeSecretariat(date: string): Observable<SeanceDuJour[]> {
     const params = new HttpParams().set('date', date);
-    return this.http.get<SeanceDuJour[]>(API_URL + 'secretariat/seances', { params, responseType: 'json' });
+    return this.http.get<SeanceDuJour[]>(API_URL + 'secretariat/evenements', { params, responseType: 'json' });
   }
 
   getPresencesPourLeSecretariat(seanceId: number): Observable<PresenceSeance[]> {
-    return this.http.get<PresenceSeance[]>(API_URL + 'secretariat/seances/' + seanceId + '/presences', { responseType: 'json' });
+    return this.http.get<PresenceSeance[]>(API_URL + 'secretariat/evenements/' + seanceId + '/presences', { responseType: 'json' });
   }
 
   updatePresencePourLeSecretariat(seanceId: number, presenceId: number, presence: boolean): Observable<PresenceSeance> {
-    return this.http.patch<PresenceSeance>(API_URL + 'secretariat/seances/' + seanceId + '/presences/' + presenceId,
+    return this.http.patch<PresenceSeance>(API_URL + 'secretariat/evenements/' + seanceId + '/presences/' + presenceId,
       { presence }, { responseType: 'json' });
   }
 
   updateCommentaireSeancePourLeSecretariat(seanceId: number, commentaire: string | null): Observable<SeanceDuJour> {
-    return this.http.patch<SeanceDuJour>(API_URL + 'secretariat/seances/' + seanceId + '/commentaire',
+    return this.http.patch<SeanceDuJour>(API_URL + 'secretariat/evenements/' + seanceId + '/commentaire',
       { commentaire }, { responseType: 'json' });
   }
 
   getPresences(seanceId: number): Observable<PresenceSeance[]> {
-    return this.http.get<PresenceSeance[]>(API_URL + 'seances/' + seanceId + '/presences', { responseType: 'json' });
+    return this.http.get<PresenceSeance[]>(API_URL + 'evenements/' + seanceId + '/presences', { responseType: 'json' });
   }
 
   updatePresence(seanceId: number, presenceId: number, presence: boolean): Observable<PresenceSeance> {
-    return this.http.patch<PresenceSeance>(API_URL + 'seances/' + seanceId + '/presences/' + presenceId,
+    return this.http.patch<PresenceSeance>(API_URL + 'evenements/' + seanceId + '/presences/' + presenceId,
       { presence }, { responseType: 'json' });
   }
 
   updateCommentaireSeance(seanceId: number, commentaire: string | null): Observable<SeanceDuJour> {
-    return this.http.patch<SeanceDuJour>(API_URL + 'seances/' + seanceId + '/commentaire',
+    return this.http.patch<SeanceDuJour>(API_URL + 'evenements/' + seanceId + '/commentaire',
       { commentaire }, { responseType: 'json' });
   }
 
   ajouterNouvelAdherentSeance(seanceId: number, email: string): Observable<PresenceSeance> {
-    return this.http.post<PresenceSeance>(API_URL + 'seances/' + seanceId + '/adherents',
+    return this.http.post<PresenceSeance>(API_URL + 'evenements/' + seanceId + '/adherents',
       { email }, { responseType: 'json' });
   }
   getUserByMail(userEmail: String): Observable<User> {

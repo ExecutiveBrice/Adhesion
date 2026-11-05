@@ -5,7 +5,7 @@
 <div class="modal-body evenement-detail">
   <dl>
     @if (evenement.activiteNom) { <dt>Activité</dt><dd>{{evenement.activiteNom}}</dd> }
-    @if (evenement.descriptif) { <dt>Description de la séance</dt><dd>{{evenement.descriptif}}</dd> }
+    @if (evenement.descriptif) { <dt>Équipes</dt><dd>{{evenement.descriptif}}</dd> }
     @if (evenement.sectionNom) { <dt>Section</dt><dd>{{evenement.sectionNom}}</dd> }
     @if (evenement.sectionType) {
       <dt>Type de section</dt><dd>{{evenement.sectionType === 'COMPETITION' ? 'Compétitive' : 'Non compétitive'}}</dd>
@@ -20,7 +20,6 @@
     <dd>@if (evenement.journeeEntiere) { Toute la journée } @else {
       {{evenement.debut | date:'HH:mm'}} – {{evenement.fin | date:'HH:mm'}}
     }</dd>
-    @if (evenement.horaireActivite) { <dt>Horaire habituel de l’activité</dt><dd>{{evenement.horaireActivite}}</dd> }
     @if (evenement.etatSeance) { <dt>État</dt><dd>{{etatLibelle}}</dd> }
     @if (evenement.causeAnnulation && evenement.etatSeance === 'ANNULEE') {
       <dt>Motif d’annulation</dt><dd>{{evenement.causeAnnulation}}</dd>
@@ -48,38 +47,8 @@
   @if (evenement.commentaire) {
     <h3 class="fs-6">Commentaires</h3><div class="evenement-commentaire" [innerHTML]="evenement.commentaire"></div>
   }
-  @if (peutVoirPresences) {
-    <section class="mb-3" aria-label="Présences prévues">
-      <h3 class="fs-6">Présences prévues</h3>
-      <div class="seance-presences-totaux" aria-live="polite" aria-label="Totaux des présences prévues à cette séance">
-        @if (evenement.chargementPresences) { <span class="text-body-secondary">Chargement des présences…</span> }
-        @else if (evenement.presences) {
-          <span class="badge text-bg-success">Présents : {{nombrePresences(true)}}</span>
-          <span class="badge text-bg-secondary">Absents : {{nombrePresences(false)}}</span>
-        }
-      </div>
-      @if (peutRenseignerPresence) {
-        <div class="btn-group btn-group-sm mt-2" role="group" aria-label="Votre présence prévue">
-          <button type="button" class="btn" [class.btn-success]="maPresence?.presencePrevue === true" [class.btn-outline-success]="maPresence?.presencePrevue !== true"
-            [attr.aria-pressed]="maPresence?.presencePrevue === true" [disabled]="!maPresence || evenement.chargementPresences || evenement.enregistrementPresence" (click)="definirPresence(true)">Présent</button>
-          <button type="button" class="btn" [class.btn-secondary]="maPresence?.presencePrevue === false" [class.btn-outline-secondary]="maPresence?.presencePrevue !== false"
-            [attr.aria-pressed]="maPresence?.presencePrevue === false" [disabled]="!maPresence || evenement.chargementPresences || evenement.enregistrementPresence" (click)="definirPresence(false)">Absent</button>
-        </div>
-      }
-      @if (evenement.enregistrementPresence) { <p class="small mt-2" role="status">Enregistrement…</p> }
-      @if (evenement.erreurPresence) {
-        <div class="alert alert-danger py-2 mt-2" role="alert">{{evenement.erreurPresence}}
-          @if (!evenement.presences) { <button type="button" class="btn btn-link btn-sm" [disabled]="evenement.chargementPresences" (click)="chargerPresences()">Réessayer</button> }
-        </div>
-      }
-      @if (evenement.presences?.length) {
-        <ul class="evenement-participants mt-2">
-          @for (presence of evenement.presences; track presence.id) {
-            <li>{{presence.prenom}} {{presence.nom}} : {{presence.presencePrevue === true ? 'Présent' : presence.presencePrevue === false ? 'Absent' : 'Sans réponse'}}</li>
-          }
-        </ul>
-      }
-    </section>
+  @if (evenement.source === 'SEANCE') {
+    <p><a routerLink="/equipes" (click)="modal.close()">Consulter les convocations et répondre dans Mes équipes</a></p>
   }
   <div class="evenement-liens">
     @if (lienActivite; as lien) { <a [href]="lien" target="_blank" rel="noopener noreferrer">Voir l’activité</a> }

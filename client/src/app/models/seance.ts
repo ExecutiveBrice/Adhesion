@@ -40,6 +40,9 @@ export interface PresenceSeance {
 
 export interface SeanceCalendrier {
   id: number;
+  nomEvenement?: string | null;
+  typeEvenement?: string;
+  adversaire?: string | null;
   responsabilites?: ResponsabiliteSeance[];
   activiteId: number;
   sectionType?: string | null;
@@ -61,13 +64,7 @@ export interface SeanceCalendrier {
   etatSeance: 'PROGRAMMEE' | 'REALISEE' | 'ANNULEE' | 'MODIFIEE';
 }
 
-export interface PresencePrevue {
-  id: number;
-  adherentId: number;
-  nom: string;
-  prenom: string;
-  presencePrevue: boolean | null;
-}
+
 
 export interface EvenementGoogleAgenda {
   id: string;

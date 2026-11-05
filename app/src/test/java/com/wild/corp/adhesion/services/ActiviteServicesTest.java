@@ -3,12 +3,12 @@ package com.wild.corp.adhesion.services;
 import com.wild.corp.adhesion.models.Activite;
 import com.wild.corp.adhesion.models.Adhesion;
 import com.wild.corp.adhesion.models.ESeance;
-import com.wild.corp.adhesion.models.PlanificationHebdomadaire;
+
 import com.wild.corp.adhesion.models.Seance;
 import com.wild.corp.adhesion.models.Section;
 import com.wild.corp.adhesion.models.Adherent;
 import com.wild.corp.adhesion.models.ERole;
-import com.wild.corp.adhesion.models.resources.MiseAJourSeanceRequest;
+import com.wild.corp.adhesion.models.Equipe;
 import com.wild.corp.adhesion.models.resources.ResponsabiliteSeanceRequest;
 import com.wild.corp.adhesion.models.resources.SeanceResponse;
 import com.wild.corp.adhesion.repository.SectionRepository;
@@ -31,6 +31,8 @@ import org.springframework.data.jpa.domain.Specification;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.Optional;
 
@@ -45,6 +47,12 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class ActiviteServicesTest {
 
+    @org.junit.jupiter.api.BeforeEach
+    void activityLockUsesTheSameFixtureAsNormalReads() {
+        org.mockito.Mockito.lenient().when(activiteRepository.findForTeamUpdate(any()))
+                .thenAnswer(call -> activiteRepository.findById(call.getArgument(0)));
+    }
+
     @Mock
     private ActiviteRepository activiteRepository;
 
@@ -52,10 +60,16 @@ class ActiviteServicesTest {
     private SectionRepository sectionRepository;
 
     @Mock
+    private com.wild.corp.adhesion.repository.UserRepository userRepository;
+
+    @Mock
+    private com.wild.corp.adhesion.repository.EquipeRepository equipeRepository;
+
+    @Mock
     private AdherentRepository adherentRepository;
 
     @Mock
-    private SeanceServices seanceServices;
+    private ActivityTeamService activityTeams;
 
     @Mock
     private SeanceRepository seanceRepository;
@@ -72,9 +86,10 @@ class ActiviteServicesTest {
         activite.setSection(Section.builder().id(7L).nom("Nom envoyé").type("COMPETITION").build());
         Section section = Section.builder().id(7L).nom("Yoga").type("NON_COMPETITIVE").build();
         when(sectionRepository.findById(7L)).thenReturn(Optional.of(section));
-        when(activiteRepository.save(activite)).thenReturn(activite);
+        when(activiteRepository.saveAndFlush(activite)).thenReturn(activite);
 
         Activite resultat = activiteServices.save(activite);
+        verify(activityTeams).ensureFirstTeam(resultat);
 
         assertThat(resultat.getSection()).isSameAs(section);
         assertThat(resultat.getGroupeFiltre()).isEqualTo("Yoga");
@@ -121,9 +136,9 @@ class ActiviteServicesTest {
         Activite newManaged = new Activite();
         newManaged.setSection(Section.builder().id(7L).build());
         when(sectionRepository.findById(7L)).thenReturn(Optional.of(managed));
-        when(activiteRepository.save(newManaged)).thenReturn(newManaged);
+        when(activiteRepository.saveAndFlush(newManaged)).thenReturn(newManaged);
         assertThat(activiteServices.saveManaged("referent@example.org", newManaged).getSection()).isSameAs(managed);
-        verify(activiteRepository).save(newManaged);
+        verify(activiteRepository).saveAndFlush(newManaged);
     }
 
     @Test
@@ -141,6 +156,39 @@ class ActiviteServicesTest {
     }
 
     @Test
+    void detailReturnsAnActivityWithCountersAndRejectsMissingIds() {
+        Activite activity = new Activite();
+        activity.setId(21L);
+        activity.getAdhesions().add(adhesionAvecStatut(Status.VALIDEE));
+        when(activiteRepository.findById(21L)).thenReturn(Optional.of(activity));
+
+        assertThat(activiteServices.getDetail(21L)).isSameAs(activity);
+        assertThat(activity.getNbAdhesionsCompletes()).isEqualTo(1);
+        assertThatThrownBy(() -> activiteServices.getDetail(99L))
+                .isInstanceOf(org.springframework.web.server.ResponseStatusException.class)
+                .hasMessageContaining("404");
+    }
+
+    @Test
+    void managedDetailOnlyReturnsActivitiesInAssignedSections() {
+        Section managed = Section.builder().id(7L).nom("Yoga").build();
+        when(sectionRepository.findManagedByUsername("referent@example.org")).thenReturn(List.of(managed));
+        Activite activity = new Activite();
+        activity.setId(21L);
+        activity.setSection(managed);
+        when(activiteRepository.findById(21L)).thenReturn(Optional.of(activity));
+
+        assertThat(activiteServices.getManagedDetail("referent@example.org", 21L)).isSameAs(activity);
+        activity.setSection(Section.builder().id(8L).build());
+        assertThatThrownBy(() -> activiteServices.getManagedDetail("referent@example.org", 21L))
+                .isInstanceOf(org.springframework.web.server.ResponseStatusException.class)
+                .hasMessageContaining("403");
+        assertThatThrownBy(() -> activiteServices.getManagedDetail("membre@example.org", 21L))
+                .isInstanceOf(org.springframework.web.server.ResponseStatusException.class)
+                .hasMessageContaining("403");
+    }
+
+    @Test
     void managedPageRejectsAnAccountWithoutAssignedSections() {
         when(sectionRepository.findManagedByUsername("membre@example.org")).thenReturn(List.of());
 
@@ -149,6 +197,22 @@ class ActiviteServicesTest {
                 .isInstanceOf(org.springframework.web.server.ResponseStatusException.class)
                 .hasMessageContaining("403");
         org.mockito.Mockito.verifyNoInteractions(activiteRepository);
+    }
+
+    @Test
+    void coachWithoutManagedSectionsCanReadAnEmptyScopedPageButCannotSaveActivities() {
+        var coach = new com.wild.corp.adhesion.models.User("coach@example.org", "password");
+        coach.getRoles().add(ERole.ROLE_ENCADRANT);
+        when(userRepository.findByUsername(coach.getUsername())).thenReturn(Optional.of(coach));
+        when(activiteRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(Page.empty(PageRequest.of(0, 20)));
+
+        assertThat(activiteServices.getManagedPage(coach.getUsername(), "Danse", null, null,
+                null, null, "", PageRequest.of(0, 20)).getTotalElements()).isZero();
+        verify(activiteRepository, never()).findAll(any(Pageable.class));
+        assertThatThrownBy(() -> activiteServices.saveManaged(coach.getUsername(), new Activite()))
+                .isInstanceOf(org.springframework.web.server.ResponseStatusException.class)
+                .hasMessageContaining("403");
     }
 
     @Test
@@ -169,82 +233,6 @@ class ActiviteServicesTest {
     }
 
     @Test
-    void managedSessionCreationChecksActivitySectionBeforeAdding() {
-        Section managed = Section.builder().id(7L).build();
-        when(sectionRepository.findManagedByUsername("referent@example.org")).thenReturn(List.of(managed));
-        Activite outside = new Activite();
-        outside.setSection(Section.builder().id(8L).build());
-        when(activiteRepository.findById(21L)).thenReturn(Optional.of(outside));
-
-        assertThatThrownBy(() -> activiteServices.addSeancesManaged("referent@example.org", 21L, 3L,
-                4, LocalDate.of(2026, 10, 12)))
-                .isInstanceOf(org.springframework.web.server.ResponseStatusException.class)
-                .hasMessageContaining("403");
-        verify(seanceServices, never()).addSeances(any(), any(PlanificationHebdomadaire.class),
-                org.mockito.ArgumentMatchers.anyInt(), any(LocalDate.class));
-
-        Activite assigned = new Activite();
-        assigned.setSection(managed);
-        PlanificationHebdomadaire planification = new PlanificationHebdomadaire();
-        planification.setId(3L);
-        assigned.getPlanificationsHebdomadaires().add(planification);
-        when(activiteRepository.findById(22L)).thenReturn(Optional.of(assigned));
-        Seance nouvelle = new Seance();
-        nouvelle.setActivite(assigned);
-        Seance persistee = new Seance();
-        persistee.setId(90L);
-        persistee.setActivite(assigned);
-        when(seanceServices.addSeances(assigned, planification, 4, LocalDate.of(2026, 10, 12)))
-                .thenReturn(List.of(nouvelle));
-        when(seanceRepository.findByActivite_IdOrderByDebutAsc(22L)).thenReturn(List.of(persistee));
-
-        assertThat(activiteServices.addSeancesManaged("referent@example.org", 22L, 3L,
-                4, LocalDate.of(2026, 10, 12))).extracting(SeanceResponse::id).containsExactly(90L);
-        verify(seanceServices).addSeances(eq(assigned), eq(planification), eq(4), eq(LocalDate.of(2026, 10, 12)));
-        verify(seanceRepository).saveAllAndFlush(List.of(nouvelle));
-        assertThat(activiteServices.getSeances(22L)).extracting(SeanceResponse::id).containsExactly(90L);
-    }
-
-    @Test
-    void managedSessionsAndResponsibilitiesStayWithinAssignedSections() {
-        Section managed = Section.builder().id(7L).build();
-        when(sectionRepository.findManagedByUsername("referent@example.org")).thenReturn(List.of(managed));
-        Activite outside = new Activite();
-        outside.setSection(Section.builder().id(8L).build());
-        when(activiteRepository.findById(21L)).thenReturn(Optional.of(outside));
-        MiseAJourSeanceRequest update = new MiseAJourSeanceRequest(ESeance.REALISEE, null, null,
-                null, null, null, null, null);
-
-        assertThatThrownBy(() -> activiteServices.getManagedSeances("referent@example.org", 21L))
-                .hasMessageContaining("403");
-        assertThatThrownBy(() -> activiteServices.getManagedResponsabiliteCandidates("referent@example.org", 21L))
-                .hasMessageContaining("403");
-        assertThatThrownBy(() -> activiteServices.updateManagedSeance("referent@example.org", 21L, 9L, update))
-                .hasMessageContaining("403");
-        assertThatThrownBy(() -> activiteServices.deleteManagedSeance("referent@example.org", 21L, 9L))
-                .hasMessageContaining("403");
-        org.mockito.Mockito.verifyNoInteractions(seanceServices, responsabiliteSeanceServices);
-
-        Activite assigned = new Activite();
-        assigned.setSection(managed);
-        when(activiteRepository.findById(22L)).thenReturn(Optional.of(assigned));
-        assertThat(activiteServices.getManagedSeances("referent@example.org", 22L)).isEmpty();
-        assertThat(activiteServices.getManagedResponsabiliteCandidates("referent@example.org", 22L)).isEmpty();
-        var responsabilites = List.of(new ResponsabiliteSeanceRequest(3L, 12L));
-        MiseAJourSeanceRequest updateResponsabilites = new MiseAJourSeanceRequest(null, null, null,
-                null, null, null, null, null, responsabilites);
-        Seance seance = new Seance();
-        seance.setId(9L);
-        when(seanceServices.updateSeance(22L, 9L, null, null, false, null, null, false,
-                null, false, responsabilites)).thenReturn(seance);
-        assertThat(activiteServices.updateManagedSeance("referent@example.org", 22L, 9L, updateResponsabilites).id())
-                .isEqualTo(9L);
-        activiteServices.deleteManagedSeance("referent@example.org", 22L, 9L);
-        verify(responsabiliteSeanceServices).getCandidats(22L);
-        verify(seanceServices).deleteSeance(22L, 9L);
-    }
-
-    @Test
     void requiresASectionBeforeCreatingOrUpdatingAnActivity() {
         for (Long id : new Long[]{null, 12L}) {
             for (Section section : new Section[]{null, new Section(), Section.builder().id(0L).build()}) {
@@ -258,7 +246,7 @@ class ActiviteServicesTest {
                                 .getStatusCode().value()).isEqualTo(400));
             }
         }
-        org.mockito.Mockito.verifyNoInteractions(activiteRepository, sectionRepository, seanceServices);
+        org.mockito.Mockito.verifyNoInteractions(activiteRepository, sectionRepository, activityTeams);
     }
 
     @InjectMocks
@@ -285,8 +273,8 @@ class ActiviteServicesTest {
         assertThat(activite.getNbAdhesionsCompletes()).isEqualTo(1);
         assertThat(activite.getNbAdhesionsEnCours()).isEqualTo(1);
         assertThat(activite.getNbAdhesionsAttente()).isEqualTo(1);
-        assertThat(activite.getNbSeancesRealisees()).isEqualTo(1);
-        assertThat(activite.getNbSeancesTotal()).isEqualTo(2);
+        assertThat(activite.getNbEvenementsRealises()).isEqualTo(1);
+        assertThat(activite.getNbEvenementsTotal()).isEqualTo(2);
 
         var pageableCaptor = org.mockito.ArgumentCaptor.forClass(Pageable.class);
         verify(activiteRepository).findAll(pageableCaptor.capture());
@@ -300,6 +288,50 @@ class ActiviteServicesTest {
     }
 
     @Test
+    void listingIncludesOnlyNextCalendarWeekEventsInChronologicalOrder() {
+        Activite activity = new Activite();
+        activity.setId(21L);
+        activity.setNom("Basket");
+        Equipe team = new Equipe();
+        team.setId(3L);
+        team.setNom("U15");
+        team.setActivite(activity);
+        Equipe otherTeam = new Equipe();
+        otherTeam.setId(4L);
+        otherTeam.setNom("U18");
+        otherTeam.setActivite(activity);
+        var monday = LocalDate.now(ZoneId.of("Europe/Paris"))
+                .with(TemporalAdjusters.next(DayOfWeek.MONDAY)).atStartOfDay();
+        var starts = List.of(monday.minusSeconds(1), monday, monday.plusDays(6).plusHours(23),
+                monday.plusWeeks(1), monday.plusDays(2));
+        for (int index = 0; index < starts.size(); index++) {
+            Seance event = new Seance();
+            event.setId((long) index + 1);
+            event.setActivite(activity);
+            event.setDebut(starts.get(index));
+            event.setFin(starts.get(index).plusHours(1));
+            event.setEtatSeance(index == 4 ? ESeance.ANNULEE : ESeance.PROGRAMMEE);
+            event.setTypeEvenement("RENCONTRE");
+            event.setAdversaire("Club voisin");
+            event.setDescriptif("Championnat");
+            event.getEquipes().addAll(List.of(otherTeam, team));
+            activity.getSeances().add(0, event);
+        }
+        activity.getSeances().add(seanceAvecEtat(ESeance.PROGRAMMEE));
+        when(activiteRepository.findAll(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(activity)));
+
+        var result = activiteServices.getPage("", null, null, null, null, "", PageRequest.of(0, 20))
+                .getContent().getFirst().getEvenementsSemaineProchaine();
+
+        assertThat(result).extracting(event -> event.id()).containsExactly(2L, 3L);
+        assertThat(result.getFirst().descriptif()).isEqualTo("U15 / U18");
+        assertThat(result.getFirst().nomEvenement()).isEqualTo("Championnat");
+        assertThat(result.getFirst().typeEvenement()).isEqualTo("RENCONTRE");
+        assertThat(result.getFirst().adversaire()).isEqualTo("Club voisin");
+    }
+
+    @Test
     void searchesByAllActivityFields() {
         Pageable pageable = PageRequest.of(0, 20);
         when(activiteRepository.findAll(any(Specification.class), any(Pageable.class)))
@@ -310,62 +342,6 @@ class ActiviteServicesTest {
         verify(activiteRepository)
                 .findAll(any(Specification.class), eq(PageRequest.of(0, 20,
                         Sort.by(Sort.Direction.ASC, "nom", "id"))));
-    }
-
-    @Test
-    void associatesSessionCountersWithTheirWeeklyCategory() {
-        Activite activite = new Activite();
-        PlanificationHebdomadaire lundi = planification(1L);
-        PlanificationHebdomadaire mercredi = planification(2L);
-        activite.getPlanificationsHebdomadaires().addAll(List.of(lundi, mercredi));
-        activite.getSeances().add(seanceAvecEtatEtPlanification(ESeance.PROGRAMMEE, lundi));
-        activite.getSeances().add(seanceAvecEtatEtPlanification(ESeance.REALISEE, lundi));
-        activite.getSeances().add(seanceAvecEtatEtPlanification(ESeance.ANNULEE, lundi));
-        activite.getSeances().add(seanceAvecEtatEtPlanification(ESeance.REALISEE, mercredi));
-
-        when(activiteRepository.findAll(any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(activite)));
-
-        activiteServices.getPage("", null, null, null, null, "", PageRequest.of(0, 20));
-
-        assertThat(lundi.getNbSeancesTotal()).isEqualTo(2);
-        assertThat(lundi.getNbSeancesRealisees()).isEqualTo(1);
-        assertThat(mercredi.getNbSeancesTotal()).isEqualTo(1);
-        assertThat(mercredi.getNbSeancesRealisees()).isEqualTo(1);
-    }
-
-    @Test
-    void updatesAnActivityWithoutReplacingOrDeletingItsSessions() {
-        Activite activiteInDB = new Activite();
-        activiteInDB.setId(12L);
-        activiteInDB.setNom("Ancien nom");
-        activiteInDB.setJour(DayOfWeek.TUESDAY);
-
-        Seance seance = new Seance();
-        seance.setId(31L);
-        seance.setActivite(activiteInDB);
-        seance.setDebut(LocalDateTime.of(2026, 9, 1, 8, 15));
-        seance.setFin(LocalDateTime.of(2026, 9, 1, 9, 0));
-        activiteInDB.getSeances().add(seance);
-
-        Activite modification = new Activite();
-        modification.setId(12L);
-        modification.setNom("Nouveau nom");
-        modification.setJour(DayOfWeek.WEDNESDAY);
-        Section section = Section.builder().id(7L).nom("Yoga").type("NON_COMPETITIVE").build();
-        modification.setSection(section);
-        when(sectionRepository.findById(7L)).thenReturn(Optional.of(section));
-
-        when(activiteRepository.findById(12L)).thenReturn(Optional.of(activiteInDB));
-        when(activiteRepository.save(activiteInDB)).thenReturn(activiteInDB);
-
-        Activite resultat = activiteServices.save(modification);
-
-        assertThat(resultat.getNom()).isEqualTo("Nouveau nom");
-        assertThat(resultat.getJour()).isEqualTo(DayOfWeek.WEDNESDAY);
-        assertThat(resultat.getSeances()).containsExactly(seance);
-        verify(seanceServices, never()).modifyDay(activiteInDB);
-        verify(activiteRepository).save(activiteInDB);
     }
 
     private Adhesion adhesionAvecStatut(Status status) {
@@ -382,15 +358,4 @@ class ActiviteServicesTest {
         return seance;
     }
 
-    private Seance seanceAvecEtatEtPlanification(ESeance etat, PlanificationHebdomadaire planification) {
-        Seance seance = seanceAvecEtat(etat);
-        seance.setPlanification(planification);
-        return seance;
-    }
-
-    private PlanificationHebdomadaire planification(Long id) {
-        PlanificationHebdomadaire planification = new PlanificationHebdomadaire();
-        planification.setId(id);
-        return planification;
-    }
 }

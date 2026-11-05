@@ -1,10 +1,12 @@
 <section class="activites-page">
-  @if (scopedToManagedSections) { <p class="text-body-secondary">Activités des sections qui vous sont confiées</p> }
+  @if (scopedToManagedSections) {
+    <p class="text-body-secondary">{{showEncadrant ? 'Activités dont vous encadrez une équipe' : 'Activités des sections qui vous sont confiées'}}{{showEncadrant && managedSections.length ? ' et des sections qui vous sont confiées' : ''}}</p>
+  }
   <div class="filter-panel">
     <div class="filter-field search-field">
       <label for="activite-search">Recherche</label>
       <input id="activite-search" type="search" class="form-control" [(ngModel)]="searchTerm"
-        (ngModelChange)="onSearchChange($event)" placeholder="Nom, catégorie ou horaire">
+        (ngModelChange)="onSearchChange($event)" placeholder="Nom ou section">
     </div>
 
     <div class="filter-field">
@@ -96,10 +98,11 @@
 
   <div class="activities-header">
     <h2>Activités</h2>
-    <button type="button" class="btn btn-primary" (click)="openActivite(newActivite)"
-      [disabled]="scopedToManagedSections && managedSections.length === 0">
+    @if (canCreateActivity) {
+    <a class="btn btn-primary" routerLink="/activites/nouvelle">
       <fa-icon [icon]="faCartPlus"></fa-icon> Ajouter une activité
-    </button>
+    </a>
+    }
   </div>
 
   @if (loading && activites.length === 0) {
@@ -123,13 +126,22 @@
       @for (activite of activites; track $index) {
         <article class="activity-card">
           <header class="activity-card-header">
-            <div>
-              <span class="activity-category">{{activite.section?.nom}}</span>
-              <h3>{{activite.nom}}</h3>
-            </div>
-            <button type="button" class="icon-action" title="Modifier l'activité" (click)="openActivite(activite)">
-              <fa-icon [icon]="faPencilSquare"></fa-icon>
-            </button>
+            @if (canEditActivity(activite)) {
+            <a class="activity-card-link" [routerLink]="['/activites', activite.id]" [attr.aria-label]="'Ouvrir les équipes de ' + activite.nom">
+              <div>
+                <span class="activity-category">{{activite.section?.nom}}</span>
+                <h3>{{activite.nom}}</h3>
+              </div>
+              <span class="icon-action" aria-hidden="true">
+                <fa-icon [icon]="faPencilSquare"></fa-icon>
+              </span>
+            </a>
+            } @else {
+              <div>
+                <span class="activity-category">{{activite.section?.nom}}</span>
+                <h3>{{activite.nom}}</h3>
+              </div>
+            }
           </header>
           <h4 class="activity-details-title">Places</h4>
           <dl class="activity-details">
@@ -138,27 +150,23 @@
             <div><dt>En cours</dt><dd>{{activite.nbAdhesionsEnCours}} </dd></div>
             <div><dt>En attente</dt><dd><span class="waiting">{{activite.nbAdhesionsAttente}}</span> </dd></div>
           </dl>
-          <h4 class="activity-details-title">Catégories</h4>
-          @if (activite.planificationsHebdomadaires.length) {
-            <div class="activity-categories">
-              @for (planification of activite.planificationsHebdomadaires; track planification.id; let index = $index) {
-                <section class="activity-category-details">
-                  <h5 class="category-heading">
-                    <strong>{{jourLibelle(planification.jour)}} · {{heureLibelle(planification.horaireDebut)}}</strong>
-                    <span>— {{planification.descriptif || 'Catégorie ' + (index + 1)}}</span>
-                  </h5>
-                  <dl>
-                    <div><dt>Profs</dt><dd>{{nomsUtilisateurs(planification.profs)}}</dd></div>
-                    <div><dt>Référents</dt><dd>{{nomsUtilisateurs(planification.referents)}}</dd></div>
-                    <div><dt>Séances</dt><dd>{{planification.nbSeancesTotal ?? 0}}</dd></div>
-                    <div><dt>Réalisées</dt><dd>{{planification.nbSeancesRealisees ?? 0}}</dd></div>
-                  </dl>
-                </section>
-              }
-            </div>
-          } @else {
-            <p class="category-empty">Aucune catégorie renseignée.</p>
+          <h4 class="activity-details-title">Équipes et événements</h4>
+          @for (equipe of activite.equipes ?? []; track equipe.id) {
+            <p class="mb-1"><strong>{{equipe.nom}}</strong> · {{equipe.membres}} membre(s)</p>
           }
+          <p class="text-muted">{{activite.nbEvenementsTotal}} événement(s), dont {{activite.nbEvenementsRealises}} réalisé(s)</p>
+          <p class="activity-week-title">La semaine prochaine</p>
+          <div class="activity-events">
+            @for (evenement of activite.evenementsSemaineProchaine ?? []; track evenement.id) {
+              <button type="button" class="btn btn-outline-primary activity-event" (click)="ouvrirEvenement(evenement)">
+                <strong>{{evenement.descriptif || 'Équipe non renseignée'}}</strong>
+                <time [attr.datetime]="evenement.debut">{{evenement.debut | date:'EEEE dd/MM/yyyy à HH:mm':'':'fr-FR'}}</time>
+                <span>{{nomEvenement(evenement)}}</span>
+              </button>
+            } @empty {
+              <p class="text-muted small">Aucun événement la semaine prochaine.</p>
+            }
+          </div>
           <footer class="activity-statuses">
             <span><fa-icon [ngClass]="activite.complete ? 'green' : 'orange'" [icon]="activite.complete ? faCircleCheck : faCircleXmark"></fa-icon> Complète</span>
             <span><fa-icon [ngClass]="activite.reinscription ? 'green' : 'orange'" [icon]="activite.reinscription ? faCircleCheck : faCircleXmark"></fa-icon> Réinscription</span>

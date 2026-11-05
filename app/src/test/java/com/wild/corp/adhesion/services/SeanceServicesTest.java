@@ -5,7 +5,7 @@ import com.wild.corp.adhesion.models.Adherent;
 import com.wild.corp.adhesion.models.Adhesion;
 import com.wild.corp.adhesion.models.ESeance;
 import com.wild.corp.adhesion.models.Presence;
-import com.wild.corp.adhesion.models.PlanificationHebdomadaire;
+
 import com.wild.corp.adhesion.models.Salle;
 import com.wild.corp.adhesion.models.Seance;
 import com.wild.corp.adhesion.models.Section;
@@ -48,10 +48,6 @@ class SeanceServicesTest {
         section.setType("NON_COMPETITIVE");
         section.setCouleur("#AB47BC");
         activite.setSection(section);
-        PlanificationHebdomadaire planification = new PlanificationHebdomadaire();
-        planification.setJour(DayOfWeek.TUESDAY);
-        planification.setHoraireDebut(LocalTime.of(19, 30));
-        activite.getPlanificationsHebdomadaires().add(planification);
         activite.setSalle(Salle.builder().id(4L).nom("Salle des sports").adresse("1 rue des Sports")
                 .couleur("#4285F4").build());
 
@@ -100,53 +96,6 @@ class SeanceServicesTest {
             assertThat(evenement.couleurSalle()).isEqualTo("#4285F4");
             assertThat(evenement.debut()).isEqualTo(LocalDateTime.of(2026, 9, 1, 19, 30));
         });
-    }
-
-    @Test
-    void createsWeeklySessionsAtActivityStartAndSkipsVacationsAndPublicHolidays() {
-        DatasetApi vacancesApi = mock(DatasetApi.class);
-        DatasetApi joursFeriesApi = mock(DatasetApi.class);
-        Records vacations = new Records().results(List.of(new Record()
-                .putAdditionalProperty("start_date", "2026-09-12T00:00:00+02:00")
-                .putAdditionalProperty("end_date", "2026-09-15T00:00:00+02:00")));
-        Records holidays = new Records().results(List.of(new Record()
-                .putAdditionalProperty("date", "2026-09-21")));
-
-        when(vacancesApi.getRecords(eq("vacances"), nullable(String.class), nullable(String.class),
-                nullable(String.class), nullable(String.class), eq(100), eq(0), nullable(String.class),
-                nullable(String.class), eq("fr"), eq("Europe/Paris"), eq(false), eq(false)))
-                .thenReturn(ResponseEntity.ok(vacations));
-        when(joursFeriesApi.getRecords(eq("feries"), nullable(String.class), nullable(String.class),
-                nullable(String.class), nullable(String.class), eq(100), eq(0), nullable(String.class),
-                nullable(String.class), eq("fr"), eq("Europe/Paris"), eq(false), eq(false)))
-                .thenReturn(ResponseEntity.ok(holidays));
-
-        SeanceServices service = new SeanceServices(vacancesApi, joursFeriesApi, "C", "vacances", "feries");
-        service.presenceServices = mock(PresenceServices.class);
-        Activite activite = activity();
-        service.fillSeances(activite, 4, "C", LocalDate.of(2026, 9, 8));
-
-        assertThat(activite.getSeances()).extracting("debut").containsExactly(
-                LocalDateTime.of(2026, 9, 28, 18, 30),
-                LocalDateTime.of(2026, 10, 5, 18, 30));
-        assertThat(activite.getSeances().getFirst().getFin())
-                .isEqualTo(LocalDateTime.of(2026, 9, 28, 20, 0));
-        verify(joursFeriesApi).getRecords(eq("feries"), nullable(String.class),
-                argThat(where -> where.contains("statut=\"férié\"")), nullable(String.class), nullable(String.class),
-                eq(100), eq(0), nullable(String.class), nullable(String.class), eq("fr"),
-                eq("Europe/Paris"), eq(false), eq(false));
-    }
-
-    @Test
-    void initializesEachSessionWithTheActivityRoom() {
-        SeanceServices service = serviceWithRepository(mock(SeanceRepository.class));
-        Activite activite = activity();
-        Salle salle = Salle.builder().id(8L).nom("Gymnase").adresse("1 rue du Gymnase").couleur("#123456").build();
-        activite.setSalle(salle);
-
-        Seance seance = service.addFirstSeance(activite, LocalDate.of(2026, 9, 7));
-
-        assertThat(seance.getSalle()).isSameAs(salle);
     }
 
     @Test
@@ -246,120 +195,11 @@ class SeanceServicesTest {
                 List.of(ESeance.PROGRAMMEE, ESeance.MODIFIEE), ESeance.REALISEE);
     }
 
-    @Test
-    void addsTheRequestedNumberOfSessionsAndSkipsExistingDates() {
-        DatasetApi vacancesApi = mock(DatasetApi.class);
-        DatasetApi joursFeriesApi = mock(DatasetApi.class);
-        Records vacations = new Records().results(List.of(new Record()
-                .putAdditionalProperty("start_date", "2026-09-12T00:00:00+02:00")
-                .putAdditionalProperty("end_date", "2026-09-15T00:00:00+02:00")));
-        Records holidays = new Records().results(List.of(new Record()
-                .putAdditionalProperty("date", "2026-09-21")));
-
-        when(vacancesApi.getRecords(eq("vacances"), nullable(String.class), nullable(String.class),
-                nullable(String.class), nullable(String.class), eq(100), eq(0), nullable(String.class),
-                nullable(String.class), eq("fr"), eq("Europe/Paris"), eq(false), eq(false)))
-                .thenReturn(ResponseEntity.ok(vacations));
-        when(joursFeriesApi.getRecords(eq("feries"), nullable(String.class), nullable(String.class),
-                nullable(String.class), nullable(String.class), eq(100), eq(0), nullable(String.class),
-                nullable(String.class), eq("fr"), eq("Europe/Paris"), eq(false), eq(false)))
-                .thenReturn(ResponseEntity.ok(holidays));
-
-        SeanceServices service = new SeanceServices(vacancesApi, joursFeriesApi, "C", "vacances", "feries");
-        service.presenceServices = mock(PresenceServices.class);
-        Activite activite = activity();
-        activite.getSeances().add(service.addFirstSeance(activite, LocalDate.of(2026, 9, 28)));
-
-        List<Seance> created = service.addSeances(activite, 2, "C", LocalDate.of(2026, 9, 8));
-
-        assertThat(created).extracting("debut").containsExactly(
-                LocalDateTime.of(2026, 10, 5, 18, 30),
-                LocalDateTime.of(2026, 10, 12, 18, 30));
-        assertThat(activite.getSeances()).hasSize(3);
-    }
-
-    @Test
-    void updatesTheStateAndCommentForTheRequestedActivitySession() {
-        SeanceRepository repository = mock(SeanceRepository.class);
-        Seance seance = new Seance();
-        seance.setId(7L);
-        seance.setEtatSeance(ESeance.PROGRAMMEE);
-        seance.setCommentaire("Commentaire conservé");
-        when(repository.updateEtat(7L, 3L, ESeance.REALISEE)).thenAnswer(invocation -> {
-            seance.setEtatSeance(ESeance.REALISEE);
-            return 1;
-        });
-        when(repository.updateCommentaire(7L, 3L, "Présents au complet")).thenAnswer(invocation -> {
-            seance.setCommentaire("Présents au complet");
-            return 1;
-        });
-        when(repository.findByIdAndActivite_Id(7L, 3L)).thenReturn(Optional.of(seance));
-        SeanceServices service = serviceWithRepository(repository);
-
-        Seance updated = service.updateSeance(
-                3L, 7L, ESeance.REALISEE, null, false, null, null, false, null, false);
-
-        assertThat(updated.getEtatSeance()).isEqualTo(ESeance.REALISEE);
-        assertThat(updated.getCommentaire()).isEqualTo("Commentaire conservé");
-        service.updateSeance(
-                3L, 7L, null, "  Présents au complet  ", true, null, null, false, null, false);
-        assertThat(updated.getCommentaire()).isEqualTo("Présents au complet");
-        verify(repository).updateEtat(7L, 3L, ESeance.REALISEE);
-        verify(repository).updateCommentaire(7L, 3L, "Présents au complet");
-    }
-
-    @Test
-    void updatesTheDateAndStartTimeWhileKeepingTheSessionDuration() {
-        SeanceRepository repository = mock(SeanceRepository.class);
-        Seance seance = new Seance();
-        seance.setId(11L);
-        seance.setDebut(LocalDateTime.of(2026, 9, 1, 8, 15));
-        seance.setFin(LocalDateTime.of(2026, 9, 1, 9, 0));
-        LocalDateTime nouveauDebut = LocalDateTime.of(2026, 9, 8, 10, 30);
-        LocalDateTime nouvelleFin = LocalDateTime.of(2026, 9, 8, 11, 15);
-        when(repository.findByIdAndActivite_Id(11L, 3L)).thenReturn(Optional.of(seance));
-        when(repository.updateHoraire(11L, 3L, nouveauDebut, nouvelleFin)).thenAnswer(invocation -> {
-            seance.setDebut(nouveauDebut);
-            seance.setFin(nouvelleFin);
-            return 1;
-        });
-        SeanceServices service = serviceWithRepository(repository);
-
-        Seance updated = service.updateSeance(
-                3L, 11L, null, null, false,
-                LocalDate.of(2026, 9, 8), LocalTime.of(10, 30), true, null, false);
-
-        assertThat(updated.getDebut()).isEqualTo(nouveauDebut);
-        assertThat(updated.getFin()).isEqualTo(nouvelleFin);
-        verify(repository).updateHoraire(11L, 3L, nouveauDebut, nouvelleFin);
-    }
-
-    @Test
-    void deletesOnlyTheRequestedActivitySession() {
-        SeanceRepository repository = mock(SeanceRepository.class);
-        Seance seance = new Seance();
-        seance.setId(9L);
-        when(repository.findByIdAndActivite_Id(9L, 4L)).thenReturn(Optional.of(seance));
-        SeanceServices service = serviceWithRepository(repository);
-
-        service.deleteSeance(4L, 9L);
-
-        verify(repository).delete(seance);
-    }
-
     private SeanceServices serviceWithRepository(SeanceRepository repository) {
-        SeanceServices service = new SeanceServices(
-                mock(DatasetApi.class), mock(DatasetApi.class), "C", "vacances", "feries");
+        SeanceServices service = new SeanceServices();
         service.seanceRepository = repository;
         service.presenceServices = mock(PresenceServices.class);
         return service;
     }
 
-    private Activite activity() {
-        Activite activite = new Activite();
-        activite.setJour(DayOfWeek.MONDAY);
-        activite.setHoraireDebut(LocalTime.of(18, 30));
-        activite.setDuree(90L);
-        return activite;
-    }
 }

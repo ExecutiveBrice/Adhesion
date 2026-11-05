@@ -45,7 +45,7 @@ class UserRoleAuthorizationMvcTest {
 
     @Test
     void encadrantCanReadTheirSessions() throws Exception {
-        mockMvc.perform(get("/user/seancesDuJour")
+        mockMvc.perform(get("/user/evenementsDuJour")
                 .with(user("encadrant@example.test").roles("ENCADRANT")))
                 .andExpect(status().isOk());
         verify(userServices).getSeancesDuJourForUser("encadrant@example.test");
@@ -53,7 +53,7 @@ class UserRoleAuthorizationMvcTest {
 
     @Test
     void sessionListUsesAssignmentsRatherThanAReferentRole() throws Exception {
-        mockMvc.perform(get("/user/seancesDuJour")
+        mockMvc.perform(get("/user/evenementsDuJour")
                 .with(user("prof@example.test").roles("PROF")))
                 .andExpect(status().isOk());
         verify(userServices).getSeancesDuJourForUser("prof@example.test");

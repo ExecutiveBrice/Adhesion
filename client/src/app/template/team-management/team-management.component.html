@@ -1,0 +1,44 @@
+<section class="team-management" role="tabpanel" [id]="creating ? 'activity-panel-add-team' : 'activity-panel-team-' + selectedTeamId"
+  [attr.aria-labelledby]="creating ? 'activity-tab-add-team' : 'activity-tab-team-' + selectedTeamId" tabindex="0">
+  @if (!activityId) { <p class="text-muted">Enregistrez d’abord l’activité dans l’onglet Options pour créer sa première équipe et pouvoir en ajouter d’autres.</p> }
+  @if (error) { <div class="alert alert-danger" role="alert">{{error}}</div> }
+  @if (message) { <div class="alert alert-success" role="status">{{message}}</div> }
+  @if (state) {
+    @if (selectedTeam; as t) {
+      <header class="team-summary" [hidden]="creating">
+        <div>
+          <h5 class="mb-1">{{t.nom}} @if (t.principale) { <span class="badge text-bg-primary">Première équipe</span> } <span class="badge text-bg-light">{{t.membres}} membre(s)</span></h5>
+          @if (t.description) { <p class="small mb-2">{{t.description}}</p> }
+          <p class="small mb-1"><strong>Encadrants :</strong> {{names(t.encadrants)}}</p>
+          <p class="small mb-0"><strong>Référents :</strong> {{names(t.referents)}}</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-start">
+          <button type="button" class="btn btn-sm btn-primary" (click)="openRoster(t)" [disabled]="busy">Effectif</button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" (click)="openTeam(t)" [disabled]="busy">Modifier l’équipe</button>
+          <button type="button" class="btn btn-sm btn-outline-danger" (click)="archive(t)" [disabled]="busy || t.principale">Archiver</button>
+        </div>
+      </header>
+    }
+    @if (editor; as edit) {
+      <section class="editor mb-3" aria-label="Édition d’équipe"><h6>{{edit.id ? 'Modifier l’équipe' : 'Nouvelle équipe'}}</h6>
+        <div class="row g-3"><label class="col-md-6">Nom<input class="form-control" maxlength="100" [(ngModel)]="edit.nom"></label><label class="col-md-6">Description<input class="form-control" maxlength="500" [(ngModel)]="edit.description"></label>
+          <fieldset class="col-md-6"><legend class="fs-6">Encadrants</legend><div class="people-list">@for (p of state.intervenants; track p.id) { <label class="d-block"><input type="checkbox" [checked]="edit.encadrants.includes(p.id)" (change)="toggleStaff(p.id, 'encadrants', $any($event.target).checked)"> {{p.prenom}} {{p.nom}}</label> }</div></fieldset>
+          <fieldset class="col-md-6"><legend class="fs-6">Référents</legend><div class="people-list">@for (p of state.intervenants; track p.id) { <label class="d-block"><input type="checkbox" [checked]="edit.referents.includes(p.id)" (change)="toggleStaff(p.id, 'referents', $any($event.target).checked)"> {{p.prenom}} {{p.nom}}</label> }</div></fieldset>
+        </div><div class="d-flex gap-2 mt-3"><button type="button" class="btn btn-primary" (click)="saveTeam()" [disabled]="busy || !edit.nom.trim()">Enregistrer l’équipe</button><button type="button" class="btn btn-outline-secondary" (click)="closeEditor()" [disabled]="busy">{{creating ? 'Réinitialiser' : 'Fermer'}}</button></div>
+      </section>
+    }
+    @if (!creating && rosterTeam) {
+      <section class="editor mb-3" aria-label="Répartition des adhérents"><h6>Effectif · {{rosterTeam.nom}}</h6><p class="small">Un adhérent peut appartenir à plusieurs équipes. Les affectations prennent effet aujourd’hui.</p>
+        <input class="form-control mb-2" placeholder="Rechercher un adhérent" aria-label="Rechercher un adhérent" [(ngModel)]="search">
+        <label class="d-block mb-2"><input type="checkbox" [(ngModel)]="onlyUnassigned"> Afficher seulement les adhérents sans équipe</label>
+        <div class="people-list">@for (p of filteredPeople; track p.adhesionId) { <label class="d-block py-1"><input type="checkbox" [checked]="selected.includes(p.adhesionId)" (change)="togglePerson(p.adhesionId, $any($event.target).checked)"> {{p.prenom}} {{p.nom}} <small class="text-muted">{{p.statut}}</small></label> } @empty { <p>Aucun adhérent à proposer.</p> }</div>
+        <label class="d-block mt-3"><input type="checkbox" [(ngModel)]="applyToFuture"> Actualiser aussi les événements futurs sans convocation publiée, réponse ou pointage</label>
+        <div class="d-flex gap-2 mt-3"><button type="button" class="btn btn-primary" (click)="saveRoster()" [disabled]="busy">Enregistrer les {{selected.length}} membre(s)</button><button type="button" class="btn btn-outline-secondary" (click)="rosterTeam = undefined" [disabled]="busy">Fermer</button></div>
+      </section>
+    }
+    @if (selectedTeam) {
+      <div class="team-events-panel" [hidden]="creating"><app-team-events [team]="selectedTeam" [teams]="activeTeams" [collapsibleParticipants]="true" /></div>
+    }
+    <p class="small text-muted mt-3 mb-0">Les équipes, effectifs et événements sont enregistrés immédiatement. Les paramètres généraux s’enregistrent dans l’onglet Options.</p>
+  }
+</section>

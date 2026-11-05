@@ -14,6 +14,8 @@ export interface AdherentResponsabilite {
 export interface ResponsabiliteSeance {
   tache: TacheSeanceConfiguration;
   adherent: AdherentResponsabilite;
+  equipeId?: number | null;
+  equipeNom?: string | null;
 }
 
 export interface ResponsabiliteSeanceEdition {

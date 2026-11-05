@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.spec.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/teams-spec"
+  },
+  "include": [
+    "src/app/_helpers/activites-access.guard.spec.ts",
+    "src/app/_helpers/section-listing-access.guard.spec.ts",
+    "src/app/template/team-*/**/*.spec.ts",
+    "src/app/page/activite/*.spec.ts",
+    "src/app/template/evenement-detail/evenement-detail.component.spec.ts",
+    "src/app/template/calendrier/calendrier.component.spec.ts",
+    "src/app/page/agenda/agenda.component.spec.ts",
+    "src/**/*.d.ts"
+  ]
+}

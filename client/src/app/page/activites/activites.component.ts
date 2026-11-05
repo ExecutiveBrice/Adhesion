@@ -1,7 +1,6 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { ActivitePageQuery, ActiviteService } from 'src/app/_services/activite.service';
 import { ParamService } from 'src/app/_services/param.service';
@@ -9,12 +8,14 @@ import { TokenStorageService } from 'src/app/_services/token-storage.service';
 import { ManagedSection, SectionManagementService } from 'src/app/_services/section-management.service';
 import { Activite } from 'src/app/models';
 import { UtilisateurSelectionnable } from 'src/app/models/utilisateurSelectionnable';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { faCircleCheck, faCircleXmark, faCartPlus, faPencilSquare } from '@fortawesome/free-solid-svg-icons';
-import { ModalActivite } from 'src/app/template/modal-activite/modal.activite';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgClass } from '@angular/common';
+import { DatePipe, NgClass } from '@angular/common';
+import { SeanceCalendrier } from '../../models/seance';
+import { evenementSeance } from '../../models/evenement';
+import { EvenementModalService } from '../../_services/evenement-modal.service';
 
 @Component({
     selector: 'ngbd-modal-component',
@@ -24,6 +25,8 @@ import { NgClass } from '@angular/common';
         FormsModule,
         FaIconComponent,
         NgClass,
+        RouterLink,
+        DatePipe,
     ],
 })
 export class ActivitesComponent implements OnInit {
@@ -33,13 +36,13 @@ export class ActivitesComponent implements OnInit {
   private sectionManagement = inject(SectionManagementService);
   private tokenStorageService = inject(TokenStorageService);
   router = inject(Router);
+  private readonly modales = inject(EvenementModalService);
 
   faCircleXmark = faCircleXmark;
   faCircleCheck = faCircleCheck;
   faPencilSquare = faPencilSquare;
   faCartPlus = faCartPlus;
 
-  newActivite: Activite = new Activite();
   activites: Activite[] = [];
   page = 1;
   pageSize = 20;
@@ -58,17 +61,18 @@ export class ActivitesComponent implements OnInit {
 
   showAdmin = false;
   showSecretaire = false;
+  showEncadrant = false;
   scopedToManagedSections = false;
   managedSections: ManagedSection[] = [];
 
   private readonly searchChanges = new Subject<string>();
   private readonly destroyRef = inject(DestroyRef);
-  private readonly modalService = inject(NgbModal);
 
   ngOnInit(): void {
     if (this.tokenStorageService.getUser().roles) {
       this.showAdmin = this.tokenStorageService.getUser().roles.includes('ROLE_ADMIN');
       this.showSecretaire = this.tokenStorageService.getUser().roles.includes('ROLE_SECRETAIRE');
+      this.showEncadrant = this.tokenStorageService.getUser().roles.includes('ROLE_ENCADRANT');
       this.scopedToManagedSections = !this.showAdmin && !this.showSecretaire;
     } else {
       this.router.navigate(['login']);
@@ -88,24 +92,6 @@ export class ActivitesComponent implements OnInit {
         error: () => this.errorMessage = 'Les sections confiées n’ont pas pu être chargées.'
       });
     }
-  }
-
-  openActivite(activite: Activite): void {
-    if (this.scopedToManagedSections && (this.managedSections.length === 0
-      || (activite.id != null && !this.managedSections.some(section => section.id === activite.section?.id)))) return;
-    const modalRef = this.modalService.open(ModalActivite, {
-      size: 'xl',
-      centered: true,
-      backdrop: 'static',
-      scrollable: true
-    });
-    modalRef.componentInstance.activite = activite.id == null ? new Activite() : activite;
-    modalRef.componentInstance.scopedToManagedSections = this.scopedToManagedSections;
-    modalRef.componentInstance.managedSections = this.managedSections;
-    modalRef.result.then(
-      () => this.getActivites(),
-      () => undefined
-    );
   }
 
   getActivites(resetPage = false): void {
@@ -200,6 +186,26 @@ export class ActivitesComponent implements OnInit {
 
   trackByActivite(index: number, activite: Activite): number {
     return activite.id;
+  }
+
+  get canCreateActivity(): boolean {
+    return this.showAdmin || this.showSecretaire || this.managedSections.length > 0;
+  }
+
+  canEditActivity(activite: Activite): boolean {
+    return this.showAdmin || this.showSecretaire
+      || this.managedSections.some(section => section.id === activite.section?.id);
+  }
+
+  nomEvenement(evenement: SeanceCalendrier): string {
+    const types: Record<string, string> = { ACTIVITE: 'Activité', RENCONTRE: 'Rencontre', TOURNOI: 'Tournoi', AUTRE: 'Autre' };
+    const nom = evenement.nomEvenement?.trim() || types[evenement.typeEvenement ?? ''] || 'Événement';
+    return evenement.typeEvenement === 'RENCONTRE' && evenement.adversaire?.trim()
+      ? `${nom} contre ${evenement.adversaire.trim()}` : nom;
+  }
+
+  ouvrirEvenement(evenement: SeanceCalendrier): void {
+    this.modales.ouvrir({ ...evenementSeance(evenement, false), titre: this.nomEvenement(evenement) });
   }
 
   lienActivite(activite: Activite): string | null {

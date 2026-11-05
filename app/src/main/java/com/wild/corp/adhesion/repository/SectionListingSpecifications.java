@@ -3,6 +3,7 @@ package com.wild.corp.adhesion.repository;
 import com.wild.corp.adhesion.models.Adherent;
 import com.wild.corp.adhesion.models.Adhesion;
 import com.wild.corp.adhesion.models.Activite;
+import com.wild.corp.adhesion.models.Equipe;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.Set;
@@ -17,6 +18,19 @@ public final class SectionListingSpecifications {
 
     public static Specification<Activite> activites(Set<Long> sectionIds) {
         return (root, query, builder) -> root.get("section").get("id").in(sectionIds);
+    }
+
+    public static Specification<Activite> activitesEncadrees(String username) {
+        return (root, query, builder) -> {
+            var staff = query.subquery(Long.class);
+            var team = staff.from(Equipe.class);
+            var coach = team.join("encadrants");
+            staff.select(team.get("id"));
+            staff.where(builder.equal(team.get("activite"), root),
+                    builder.isFalse(team.get("archivee")),
+                    builder.equal(coach.get("user").get("username"), username));
+            return builder.exists(staff);
+        };
     }
 
     public static Specification<Adherent> membresDesTribus(Set<Long> sectionIds) {

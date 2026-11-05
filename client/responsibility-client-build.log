@@ -1,0 +1,53 @@
+npm notice run asso@1.0.0 build
+npm notice run node scripts/angular-cli.cjs build
+> Building...
+√ Building...
+Initial chunk files   | Names                     |  Raw size | Estimated transfer size
+styles-KM75Y3ZB.css   | styles                    | 233.61 kB |                23.18 kB
+chunk-D59FXftm.js     | -                         | 196.74 kB |                57.73 kB
+main-DR5OSICJ.js      | main                      | 152.16 kB |                37.86 kB
+chunk-DYX0Dc7Y.js     | -                         | 146.03 kB |                35.91 kB
+chunk-BZ7fDevC.js     | -                         |  79.23 kB |                19.76 kB
+chunk-BCMXZZtN.js     | -                         |  51.10 kB |                14.84 kB
+polyfills-OMGXLRKZ.js | polyfills                 |  36.38 kB |                11.86 kB
+chunk-Dfm8jM0m.js     | -                         |  28.81 kB |                 9.81 kB
+chunk-xpNAbJur.js     | -                         |  13.65 kB |                 4.33 kB
+chunk-CnKWulFc.js     | -                         |   1.93 kB |               803 bytes
+chunk-C2eR4-Eo.js     | -                         |   1.48 kB |               455 bytes
+chunk-CIDypGv9.js     | -                         |   1.26 kB |               547 bytes
+chunk-BLV7JK7g.js     | -                         | 218 bytes |               218 bytes
+
+                      | Initial total             | 942.60 kB |               217.28 kB
+
+Lazy chunk files      | Names                     |  Raw size | Estimated transfer size
+chunk-C1Sp9cjZ.js     | modal-pdf-component       | 944.94 kB |               118.63 kB
+chunk-Dii0mhkJ.js     | reporting-component       | 500.91 kB |               143.70 kB
+chunk-C-G6dFEX.js     | mailling-component        | 229.88 kB |                52.10 kB
+chunk-B2D97LaS.js     | shop-management-component | 101.55 kB |                20.13 kB
+chunk-BW8cn9wz.js     | profil-component          |  73.49 kB |                15.62 kB
+chunk-_mhYZBm5.js     | board-admin-component     |  71.98 kB |                15.27 kB
+chunk-BcnS5bOY.js     | publicites-component      |  66.28 kB |                15.10 kB
+chunk-C344kBYg.js     | compta-component          |  53.77 kB |                14.32 kB
+chunk-RVo5MIZR.js     | materiel-component        |  52.64 kB |                 9.98 kB
+chunk-DCS-mc0d.js     | -                         |  51.60 kB |                10.61 kB
+chunk-hx-SIFZF.js     | chat-component            |  39.08 kB |                 9.35 kB
+chunk-9d_6Dmf9.js     | adhesions-component       |  38.40 kB |                 8.85 kB
+chunk-nRBcDdoj.js     | -                         |  35.51 kB |                 8.71 kB
+chunk-BA6w2GOl.js     | activite-component        |  31.72 kB |                 7.84 kB
+chunk-DHx3M12a.js     | -                         |  29.65 kB |                 7.63 kB
+...and 36 more lazy chunks files. Use "--verbose" to show all the files.
+
+Application bundle generation complete. [6.722 seconds] - 2026-11-04T13:28:12.299Z
+
+▲ [WARNING] NG8113: NgClass is not used within the template of MaillingComponent [plugin angular-compiler]
+
+    E:/Dev/IdeaProjects/Adhesion/client/src/app/page/mailling/mailling.component.ts:23:62:
+      23 │ ...odule, ReactiveFormsModule, NgClass, AngularEditorModule, DateP...
+         ╵                                ~~~~~~~
+
+
+▲ [WARNING] bundle initial exceeded maximum budget. Budget 600.00 kB was not met by 342.60 kB with a total of 942.60 kB.
+
+
+Output location: E:\Dev\IdeaProjects\Adhesion\client\dist
+

@@ -5,16 +5,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.DayOfWeek;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 
 @Getter
@@ -71,20 +65,6 @@ public class Activite {
     private boolean charteAmicale;
 
 
-    private DayOfWeek jour;
-
-    private LocalTime horaireDebut;
-
-    private Long duree;
-
-    /**
-     * Weekly schedules. The legacy day/time/duration fields above are kept so
-     * existing exports and integrations remain compatible.
-     */
-    @OneToMany(mappedBy = "activite", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("jour ASC, horaireDebut ASC")
-    private List<PlanificationHebdomadaire> planificationsHebdomadaires = new ArrayList<>();
-
     private boolean certificatMedical;
 
     private boolean complete;
@@ -107,10 +87,20 @@ public class Activite {
     private Long nbAdhesionsAttente;
 
     @Transient
-    private Long nbSeancesRealisees;
+    private Long nbEvenementsRealises;
 
     @Transient
-    private Long nbSeancesTotal;
+    private Long nbEvenementsTotal;
+
+    public record EquipeResume(Long id, String nom, long membres) { }
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.READ_ONLY)
+    private List<EquipeResume> equipes = new ArrayList<>();
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.READ_ONLY)
+    private List<com.wild.corp.adhesion.models.resources.SeanceCalendrierResponse> evenementsSemaineProchaine = new ArrayList<>();
 
     @OneToMany(mappedBy="activite")
     @JsonIgnore
@@ -136,30 +126,7 @@ public class Activite {
         return salle != null ? salle.getNom() : salleTexte;
     }
 
-    /**
-     * Compatibility label derived from the weekly schedules. It is no longer
-     * persisted as a free-text activity field.
-     */
-    public String getHoraire() {
-        if (planificationsHebdomadaires == null) {
-            return "";
-        }
-        return planificationsHebdomadaires.stream()
-                .filter(planification -> planification.getJour() != null || planification.getHoraireDebut() != null
-                        || (planification.getDescriptif() != null && !planification.getDescriptif().isBlank()))
-                .map(planification -> {
-                    String jour = planification.getJour() == null ? "" : planification.getJour()
-                            .getDisplayName(TextStyle.FULL, Locale.FRENCH);
-                    String heure = planification.getHoraireDebut() == null ? "" : planification.getHoraireDebut()
-                            .format(DateTimeFormatter.ofPattern("HH:mm"));
-                    String descriptif = planification.getDescriptif() == null ? "" : planification.getDescriptif().trim();
-                    return List.of(jour, heure, descriptif).stream()
-                            .filter(element -> !element.isBlank())
-                            .collect(Collectors.joining(" · "));
-                })
-                .collect(Collectors.joining(" / "));
-    }
-
+    /** Compatibility names derived from the section for older exports. */
     @JsonIgnore
     public String getGroupe() {
         return section != null ? section.getType() : null;
@@ -169,5 +136,8 @@ public class Activite {
     public String getGroupeFiltre() {
         return section != null ? section.getNom() : null;
     }
+
+    /** Compatibility label for previous-year exports; dates now belong to events. */
+    public String getHoraire() { return ""; }
 
 }

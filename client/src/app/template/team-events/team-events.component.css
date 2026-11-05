@@ -1,0 +1,10 @@
+:host { display: block; }
+.event-card, .event-editor { border: 1px solid #d9e2e1; border-radius: .7rem; padding: 1rem; background: #fff; }
+.event-editor { background: #f3f8f7; }
+.event-card.cancelled { opacity: .7; border-left: 4px solid #b02a37; }
+.people-list { max-height: 18rem; overflow: auto; }
+.practical { white-space: pre-wrap; }
+label { font-size: .92rem; }
+input[type=checkbox] { margin-right: .3rem; }
+.event-participants summary { cursor: pointer; font-weight: 600; padding: .5rem 0; }
+.event-participants[open] summary { margin-bottom: .5rem; }

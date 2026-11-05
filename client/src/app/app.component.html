@@ -27,11 +27,27 @@
                   </a>
                 </li>
                 <li class="nav-item">
+                  <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="equipes" aria-label="Mes équipes" title="Mes équipes">
+                    <fa-icon [icon]="faPeopleGroup" aria-hidden="true"></fa-icon>
+                    <span class="nav-label">Mes équipes</span>
+                  </a>
+                </li>
+                <li class="nav-item">
                   <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="profil" aria-label="Mon profil" title="Mon profil">
                     <fa-icon [icon]="faUser" aria-hidden="true"></fa-icon>
                     <span class="nav-label">Mon profil</span>
                   </a>
                 </li>
+              }
+              @if (showProf || showReferent) {
+                <li class="nav-item"><a class="nav-link" routerLinkActive="active" routerLink="pointage" title="Pointage des événements">
+                  <fa-icon [icon]="faCalendarDays" aria-hidden="true"></fa-icon><span class="nav-label">Pointage</span>
+                </a></li>
+              }
+              @if (showSecretaire) {
+                <li class="nav-item"><a class="nav-link" routerLinkActive="active" routerLink="pointage-secretariat" title="Pointage des événements">
+                  <fa-icon [icon]="faCalendarDays" aria-hidden="true"></fa-icon><span class="nav-label">Pointage secrétariat</span>
+                </a></li>
               }
               @if (showShopManager) {
                 <li class="nav-item">
@@ -49,7 +65,7 @@
                   </a>
                 </li>
               }
-              @if (showAdmin || showSecretaire || showManagedSections) {
+              @if (showAdmin || showSecretaire || showManagedSections || showProf) {
                 <li class="nav-item">
                   <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="activites" aria-label="Activités" title="Activités">
                     <fa-icon [icon]="faPersonRunning" aria-hidden="true"></fa-icon>
@@ -131,22 +147,8 @@
                   </a>
                 </li>
               }
-              @if (showSeances) {
-                <li class="nav-item">
-                  <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="seances" aria-label="Séances" title="Séances">
-                    <fa-icon [icon]="faCalendarCheck" aria-hidden="true"></fa-icon>
-                    <span class="nav-label">Séances</span>
-                  </a>
-                </li>
-              }
-              @if (showSecretaire) {
-                <li class="nav-item">
-                  <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="seances-secretariat" aria-label="Séances (secrétariat)" title="Séances (secrétariat)">
-                    <fa-icon [icon]="faClipboardList" aria-hidden="true"></fa-icon>
-                    <span class="nav-label">Séances (secrétariat)</span>
-                  </a>
-                </li>
-              }
+
+
             </ul>
 
             @if (!isLoggedIn || showShop) {

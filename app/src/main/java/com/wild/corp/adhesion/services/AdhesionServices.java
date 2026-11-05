@@ -47,6 +47,7 @@ public class AdhesionServices {
     PaiementRepository paiementRepository;
     @Autowired
     PresenceServices presenceServices;
+    @Autowired ActivityTeamService activityTeams;
     @Autowired
     NotificationRepository notificationRepository;
     @Autowired
@@ -246,7 +247,7 @@ public class AdhesionServices {
         Adhesion adhesion = adhesionRepository.findById(adhesionId).get();
         Activite surClassement = activiteServices.getById(surClassementId);
         adhesion.setSurClassement(surClassement);
-        adhesionRepository.save(adhesion);
+        saveMembership(adhesion);
         return adhesion;
     }
 
@@ -277,7 +278,7 @@ public class AdhesionServices {
             paiements.add(paiement);
         }
 
-        return adhesionRepository.save(adhesion);
+        return saveMembership(adhesion);
     }
 
 
@@ -291,7 +292,7 @@ public class AdhesionServices {
     public Adhesion updateDejaLicencie(boolean dejaLicencie, Long adhesionId) {
         Adhesion dataAdhesion = adhesionRepository.findById(adhesionId).get();
         dataAdhesion.setDejaLicencie(dejaLicencie);
-        adhesionRepository.save(dataAdhesion);
+        saveMembership(dataAdhesion);
         return dataAdhesion;
     }
 
@@ -306,7 +307,7 @@ public class AdhesionServices {
             selectedAccord.setEtat(accord.getEtat());
         });
 
-        adhesionRepository.save(dataAdhesion);
+        saveMembership(dataAdhesion);
         return choisirStatut(dataAdhesion.getId(), Status.ATTENTE_SECRETARIAT.label);
     }
 
@@ -347,12 +348,12 @@ public class AdhesionServices {
         }
 
         dataAdhesion.setDejaLicencie(frontAdhesion.getDejaLicencie());
-        adhesionRepository.save(dataAdhesion);
+        saveMembership(dataAdhesion);
         return choisirStatut(dataAdhesion.getId(), Status.ATTENTE_SECRETARIAT.label);
     }
 
     public Adhesion saveUnique(Adhesion adhesion) {
-        return adhesionRepository.save(adhesion);
+        return saveMembership(adhesion);
     }
 
     public Adhesion save(Principal principal, Long adherentId, Long activiteId) {
@@ -409,8 +410,7 @@ public class AdhesionServices {
             emailService.sendMessage(mess);
         }
 
-        newAdhesion = adhesionRepository.save(newAdhesion);
-        presenceServices.fillPresences(newAdhesion);
+        newAdhesion = saveMembership(newAdhesion);
         newAdhesion.getAccords().add(accordServices.createAccord(REGLEMENT_INTERIEUR, null, newAdhesion));
 
         if (activite.isCertificatMedical() && activite.getDureeVieCertif() > 1) {
@@ -432,32 +432,32 @@ public class AdhesionServices {
         if (activite.isPriseEnCharge() && newAdhesion.getAdherent().getMineur()) {
             newAdhesion.getAccords().add(accordServices.createAccord(PRISE_EN_CHARGE, null, newAdhesion));
         }
-        return adhesionRepository.save(newAdhesion);
+        return saveMembership(newAdhesion);
     }
 
     public Adhesion updateDocumentsSecretariat(Long adhesionId, Boolean statut) {
         Adhesion adhesion = adhesionRepository.findById(adhesionId).get();
         adhesion.setValidDocumentSecretariat(statut);
-        return adhesionRepository.save(adhesion);
+        return saveMembership(adhesion);
     }
 
     public Adhesion updatePaiementSecretariat(Long adhesionId, Boolean statut) {
         Adhesion adhesion = adhesionRepository.findById(adhesionId).get();
 
         adhesion.setValidPaiementSecretariat(statut);
-        return adhesionRepository.save(adhesion);
+        return saveMembership(adhesion);
     }
 
     public Adhesion updateFlag(Long adhesionId, Boolean statut) {
         Adhesion adhesion = adhesionRepository.findById(adhesionId).get();
         adhesion.setFlag(statut);
-        return adhesionRepository.save(adhesion);
+        return saveMembership(adhesion);
     }
 
     public Adhesion enregistrerRemarque(Long adhesionId, String remarqueSecretariat) {
         Adhesion adhesion = adhesionRepository.findById(adhesionId).get();
         adhesion.setRemarqueSecretariat(remarqueSecretariat);
-        return adhesionRepository.save(adhesion);
+        return saveMembership(adhesion);
     }
 
     public Adhesion choisirStatut(Long adhesionId, String nouveauStatut) {
@@ -478,8 +478,7 @@ public class AdhesionServices {
             adhesion.setInscrit(true);
             adhesion.setStatutActuel(nouveauStatut);
             adhesion.setDateChangementStatut(now());
-            adhesionRepository.save(adhesion);
-            presenceServices.fillPresences(adhesion);
+            saveMembership(adhesion);
 
             byte[] attestation = pdfService.generateSynthese(adhesion.getAdherent());
             Path prePath = this.imageStorageDir.resolve(String.valueOf(adhesion.getAdherent().getId()));
@@ -514,7 +513,7 @@ public class AdhesionServices {
 
         adhesion.setStatutActuel(nouveauStatut);
         adhesion.setDateChangementStatut(now());
-        return adhesionRepository.save(adhesion);
+        return saveMembership(adhesion);
     }
 
 
@@ -522,7 +521,7 @@ public class AdhesionServices {
         Adhesion inscription = adhesionRepository.findById(adhesionId).get();
         Activite activite = activiteServices.getById(activiteId);
         inscription.setActivite(activite);
-        return adhesionRepository.save(inscription).getActivite();
+        return saveMembership(inscription).getActivite();
     }
 
     public Adhesion addAccord(Long adhesionId, String nomAccord) {
@@ -532,7 +531,7 @@ public class AdhesionServices {
             inscription.setStatutActuel(Status.ATTENTE_ADHERENT.label);
         }
 
-        return adhesionRepository.save(inscription);
+        return saveMembership(inscription);
     }
 
     public List<Accord> removeAccord(Long adhesionId, String nomAccord) {
@@ -541,13 +540,11 @@ public class AdhesionServices {
             inscription.getAccords().remove(inscription.getAccords().stream().filter(accord -> nomAccord.equals(accord.getNom())).findFirst().get());
         }
 
-        return adhesionRepository.save(inscription).getAccords();
+        return saveMembership(inscription).getAccords();
     }
 
     public void deleteAdhesion(Long adhesionId) {
-        Adhesion adhesion = adhesionRepository.findById(adhesionId).get();
-
-        adhesionRepository.delete(adhesion);
+        activityTeams.deleteMembership(adhesionId);
     }
 
     public Adhesion addModification(String userEmail, Long adhesionId, String raison) {
@@ -562,7 +559,7 @@ public class AdhesionServices {
         nouvelleModif.setRaison(raison);
         adhesion.getDerniereModifs().add(nouvelleModif);
 
-        adhesionRepository.save(adhesion);
+        saveMembership(adhesion);
 
         return addVisite(userEmail, adhesionId);
     }
@@ -583,7 +580,10 @@ public class AdhesionServices {
             visites.forEach(notification -> notification.setDate(LocalDateTime.now()));
         }
 
-        return adhesionRepository.save(adhesion);
+        return saveMembership(adhesion);
 
+    }
+    private Adhesion saveMembership(Adhesion membership) {
+        return activityTeams.saveMembership(membership);
     }
 }

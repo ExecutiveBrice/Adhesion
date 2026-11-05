@@ -27,7 +27,10 @@ public record SeanceCalendrierResponse(
         List<ResponsabiliteSeance> responsabilites,
         String activiteNomCourt,
         String descriptif,
-        String causeAnnulation
+        String causeAnnulation,
+        String nomEvenement,
+        String typeEvenement,
+        String adversaire
 ) {
     public static SeanceCalendrierResponse from(Seance seance) {
         var activite = seance.getActivite();
@@ -37,7 +40,7 @@ public record SeanceCalendrierResponse(
                 activite.getId(),
                 nomActivite(seance),
                 activite.getHoraire(),
-                salle != null ? salle.getNom() : null,
+                salle != null ? salle.getNom() : seance.getLieuExterieur(),
                 salle != null ? salle.getAdresse() : null,
                 salle != null ? salle.getCouleur() : null,
                 seance.getCommentaire(),
@@ -52,7 +55,10 @@ public record SeanceCalendrierResponse(
                 List.copyOf(seance.getResponsabilites()),
                 activite.getNom(),
                 descriptifSeance(seance),
-                seance.getCauseAnnulation()
+                seance.getCauseAnnulation(),
+                seance.getDescriptif(),
+                seance.getTypeEvenement(),
+                seance.getAdversaire()
         );
     }
 
@@ -62,16 +68,10 @@ public record SeanceCalendrierResponse(
                 : seance.getActivite().getNom() + " – " + descriptif;
     }
 
-    private static String descriptifSeance(Seance seance) {
-        String descriptif = seance.getActivite().getPlanificationsHebdomadaires().stream()
-                .filter(planification -> planification.getJour() != null && planification.getHoraireDebut() != null)
-                .filter(planification -> seance.getDebut() != null
-                        && planification.getJour().equals(seance.getDebut().getDayOfWeek())
-                        && planification.getHoraireDebut().equals(seance.getDebut().toLocalTime()))
-                .map(planification -> planification.getDescriptif())
-                .filter(valeur -> valeur != null && !valeur.isBlank())
-                .findFirst()
-                .orElse(seance.getDescriptif());
-        return descriptif == null || descriptif.isBlank() ? null : descriptif.trim();
+    private static String descriptifSeance(Seance event) {
+        String teams = event.getEquipes().stream().map(t -> t.getNom()).sorted().collect(java.util.stream.Collectors.joining(" / "));
+        String description = event.getDescriptif();
+        return teams.isBlank() ? (description == null || description.isBlank() ? null : description.trim()) : teams;
     }
+
 }

@@ -428,7 +428,7 @@ export class BoardAdminComponent implements OnInit {
   private afficherErreurTacheSeance(response: any): void {
     this.tacheSeanceEnregistrement = false;
     this.tacheSeanceErreur = response?.error?.message || response?.error?.detail
-      || 'Les tâches des séances n’ont pas pu être enregistrées ou chargées.';
+      || 'Les tâches des événements n’ont pas pu être enregistrées ou chargées.';
   }
 
   ajouterSalle(): void {

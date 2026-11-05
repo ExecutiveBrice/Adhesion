@@ -15,6 +15,7 @@
       }
     </div>
     <div class="agenda-navigation">
+      <button type="button" class="btn btn-primary" (click)="ajouterEvenement()">Ajouter un événement</button>
       <button type="button" class="btn btn-outline-secondary" aria-label="Mois précédent" (click)="changerMois(-1)" [disabled]="chargement">‹</button>
       <h2 class="agenda-mois" aria-live="polite">{{ titreMois }}</h2>
       <button type="button" class="btn btn-outline-secondary" aria-label="Mois suivant" (click)="changerMois(1)" [disabled]="chargement">›</button>
@@ -25,8 +26,8 @@
 
   <ul class="agenda-legende" aria-label="Légende des évènements">
     <li><fa-icon class="agenda-picto agenda-picto-personnel" [icon]="faUser" aria-hidden="true"></fa-icon>Mes activités</li>
-    <li><fa-icon class="agenda-picto agenda-picto-modifie" [icon]="faTriangleExclamation" aria-hidden="true"></fa-icon>Séance modifiée</li>
-    <li><fa-icon class="agenda-picto agenda-picto-annule" [icon]="faXmark" aria-hidden="true"></fa-icon>Séance annulée</li>
+    <li><fa-icon class="agenda-picto agenda-picto-modifie" [icon]="faTriangleExclamation" aria-hidden="true"></fa-icon>Événement modifié</li>
+    <li><fa-icon class="agenda-picto agenda-picto-annule" [icon]="faXmark" aria-hidden="true"></fa-icon>Événement annulé</li>
   </ul>
   @for (erreur of erreurs; track $index) {
     <div class="alert alert-warning" role="alert">{{ erreur }}</div>

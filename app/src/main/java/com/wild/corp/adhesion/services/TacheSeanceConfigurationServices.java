@@ -52,7 +52,7 @@ public class TacheSeanceConfigurationServices {
         TacheSeance tache = trouver(id);
         if (repository.isUsed(id)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Cette tâche est associée à une séance. Retirez ses responsabilités avant de la supprimer.");
+                    "Cette tâche est associée à un événement. Retirez ses responsabilités avant de la supprimer.");
         }
         repository.delete(tache);
     }

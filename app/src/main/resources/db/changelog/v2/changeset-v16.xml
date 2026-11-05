@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  <changeSet id="v16-team-management" author="adhesion">
+    <addColumn tableName="activites"><column name="team_management" type="boolean" defaultValueBoolean="false"><constraints nullable="false"/></column></addColumn>
+    <createTable tableName="equipes">
+      <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="activite_id" type="bigint"><constraints nullable="false" foreignKeyName="fk_equipe_activity" references="activites(id)"/></column>
+      <column name="nom" type="varchar(100)"><constraints nullable="false"/></column>
+      <column name="description" type="varchar(500)"/>
+      <column name="archivee" type="boolean" defaultValueBoolean="false"><constraints nullable="false"/></column>
+    </createTable>
+    <addUniqueConstraint tableName="equipes" columnNames="activite_id,nom" constraintName="uk_equipe_activity_nom"/>
+    <createTable tableName="equipe_encadrants">
+      <column name="equipe_id" type="bigint"><constraints nullable="false" foreignKeyName="fk_equipe_encadrants_equipe" references="equipes(id)"/></column>
+      <column name="adherent_id" type="bigint"><constraints nullable="false" foreignKeyName="fk_equipe_encadrants_person" references="adherents(id)"/></column>
+    </createTable>
+    <addPrimaryKey tableName="equipe_encadrants" columnNames="equipe_id,adherent_id"/>
+    <createTable tableName="equipe_referents">
+      <column name="equipe_id" type="bigint"><constraints nullable="false" foreignKeyName="fk_equipe_referents_equipe" references="equipes(id)"/></column>
+      <column name="adherent_id" type="bigint"><constraints nullable="false" foreignKeyName="fk_equipe_referents_person" references="adherents(id)"/></column>
+    </createTable>
+    <addPrimaryKey tableName="equipe_referents" columnNames="equipe_id,adherent_id"/>
+    <createTable tableName="affectations_equipe">
+      <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="equipe_id" type="bigint"><constraints nullable="false" foreignKeyName="fk_affectation_equipe" references="equipes(id)"/></column>
+      <column name="adhesion_id" type="bigint"><constraints nullable="false" foreignKeyName="fk_affectation_adhesion" references="adhesions(id)"/></column>
+      <column name="debut" type="date"><constraints nullable="false"/></column>
+      <column name="fin" type="date"/>
+    </createTable>
+    <createIndex tableName="affectations_equipe" indexName="idx_affectation_team_dates"><column name="equipe_id"/><column name="debut"/><column name="fin"/></createIndex>
+    <createTable tableName="planification_equipes">
+      <column name="planification_id" type="bigint"><constraints nullable="false" foreignKeyName="fk_plan_team_slot" references="planifications_hebdomadaires(id)"/></column>
+      <column name="equipe_id" type="bigint"><constraints nullable="false" foreignKeyName="fk_plan_team_equipe" references="equipes(id)"/></column>
+    </createTable>
+    <addPrimaryKey tableName="planification_equipes" columnNames="planification_id,equipe_id"/>
+    <addColumn tableName="seance">
+      <column name="team_managed" type="boolean" defaultValueBoolean="false"><constraints nullable="false"/></column>
+      <column name="type_evenement" type="varchar(20)" defaultValue="SEANCE"><constraints nullable="false"/></column>
+      <column name="lieu_exterieur" type="varchar(200)"/>
+      <column name="rendez_vous" type="timestamp"/>
+      <column name="adversaire" type="varchar(100)"/>
+      <column name="team_revision" type="integer" defaultValueNumeric="0"><constraints nullable="false"/></column>
+    </addColumn>
+    <createTable tableName="seance_equipes">
+      <column name="seance_id" type="bigint"><constraints nullable="false" foreignKeyName="fk_session_team_session" references="seance(id)"/></column>
+      <column name="equipe_id" type="bigint"><constraints nullable="false" foreignKeyName="fk_session_team_equipe" references="equipes(id)"/></column>
+    </createTable>
+    <addPrimaryKey tableName="seance_equipes" columnNames="seance_id,equipe_id"/>
+    <createTable tableName="convocations_equipe">
+      <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="seance_id" type="bigint"><constraints nullable="false" foreignKeyName="fk_convocation_session" references="seance(id)"/></column>
+      <column name="adherent_id" type="bigint"><constraints nullable="false" foreignKeyName="fk_convocation_person" references="adherents(id)"/></column>
+      <column name="adhesion_id" type="bigint"><constraints nullable="false" foreignKeyName="fk_convocation_adhesion" references="adhesions(id)"/></column>
+      <column name="selectionnee" type="boolean" defaultValueBoolean="true"><constraints nullable="false"/></column>
+      <column name="publication" type="timestamp"/>
+      <column name="reponse" type="boolean"/>
+      <column name="date_reponse" type="timestamp"/>
+      <column name="repondu_par" type="bigint"/>
+    </createTable>
+    <addUniqueConstraint tableName="convocations_equipe" columnNames="seance_id,adherent_id" constraintName="uk_convocation_person_session"/>
+    <createTable tableName="convocation_reponses">
+      <column name="convocation_id" type="bigint"><constraints nullable="false" foreignKeyName="fk_response_invitation" references="convocations_equipe(id)"/></column>
+      <column name="date_reponse" type="timestamp"/>
+      <column name="reponse" type="boolean"/>
+      <column name="auteur_id" type="bigint"/>
+      <column name="revision" type="integer"><constraints nullable="false"/></column>
+    </createTable>
+    <createTable tableName="team_mails">
+      <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="seance_id" type="bigint"><constraints nullable="false" foreignKeyName="fk_team_mail_session" references="seance(id)"/></column>
+      <column name="cle" type="varchar(64)"><constraints nullable="false" unique="true"/></column>
+      <column name="revision" type="integer"><constraints nullable="false"/></column>
+      <column name="destinataire" type="varchar(255)"><constraints nullable="false"/></column>
+      <column name="sujet" type="varchar(200)"><constraints nullable="false"/></column>
+      <column name="contenu" type="text"><constraints nullable="false"/></column>
+      <column name="etat" type="varchar(20)" defaultValue="PENDING"><constraints nullable="false"/></column>
+      <column name="annulation" type="boolean" defaultValueBoolean="false"><constraints nullable="false"/></column>
+      <column name="type" type="varchar(20)"><constraints nullable="false"/></column>
+    </createTable>
+    <createIndex tableName="team_mails" indexName="idx_team_mail_pending"><column name="etat"/><column name="id"/></createIndex>
+    <createTable tableName="team_mail_convocations">
+      <column name="mail_id" type="bigint"><constraints nullable="false" foreignKeyName="fk_team_mail_link" references="team_mails(id)"/></column>
+      <column name="convocation_id" type="bigint"><constraints nullable="false"/></column>
+    </createTable>
+    <addPrimaryKey tableName="team_mail_convocations" columnNames="mail_id,convocation_id"/>
+  </changeSet>
+</databaseChangeLog>

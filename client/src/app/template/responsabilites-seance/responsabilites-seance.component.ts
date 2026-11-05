@@ -32,6 +32,7 @@ export class ResponsabilitesSeanceComponent {
   readonly couleurTache = couleurTache;
 
   libelle(responsabilite: ResponsabiliteSeance): string {
-    return `${responsabilite.tache.nom} : ${responsabilite.adherent.prenom} ${responsabilite.adherent.nom}`;
+    const equipe = responsabilite.equipeNom ? ` · ${responsabilite.equipeNom}` : '';
+    return `${responsabilite.tache.nom}${equipe} : ${responsabilite.adherent.prenom} ${responsabilite.adherent.nom}`;
   }
 }

@@ -1,35 +1,26 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, Input, OnInit, inject, output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCalendarPlus, faFileArrowDown } from '@fortawesome/free-solid-svg-icons';
-import { finalize } from 'rxjs';
-import { PresencePrevueService } from '../../_services/presence-prevue.service';
 import { Evenement } from '../../models/evenement';
 import { ResponsabilitesSeanceComponent } from '../responsabilites-seance/responsabilites-seance.component';
 
 @Component({
   selector: 'app-evenement-detail',
-  imports: [DatePipe, FaIconComponent, ResponsabilitesSeanceComponent],
+  imports: [DatePipe, FaIconComponent, ResponsabilitesSeanceComponent, RouterLink],
   templateUrl: './evenement-detail.component.html',
   styleUrl: './evenement-detail.component.css',
   changeDetection: ChangeDetectionStrategy.Default
 })
-export class EvenementDetailComponent implements OnInit {
+export class EvenementDetailComponent {
   readonly modal = inject(NgbActiveModal);
-  private readonly presencesService = inject(PresencePrevueService);
-  private readonly destroyRef = inject(DestroyRef);
   private readonly changeDetector = inject(ChangeDetectorRef);
   @Input() evenement!: Evenement;
   @Input() adherentId?: number;
-  readonly presenceChange = output<void>();
   readonly faCalendarPlus = faCalendarPlus;
   readonly faFileArrowDown = faFileArrowDown;
-
-  ngOnInit(): void {
-    if (this.peutVoirPresences && !this.evenement.presences && !this.evenement.erreurPresence) this.chargerPresences();
-  }
 
   get dernierJour(): string {
     const e = this.evenement;
@@ -60,67 +51,7 @@ export class EvenementDetailComponent implements OnInit {
     return /^[\w.-]+\.[a-z]{2,}(?:[/:?#]|$)/i.test(lien) ? `https://${lien}` : null;
   }
 
-  get peutVoirPresences(): boolean {
-    return this.adherentId != null && this.evenement.personnelle === true
-      && this.evenement.seanceId != null && this.evenement.sectionType === 'COMPETITION';
-  }
-
-  get peutRenseignerPresence(): boolean {
-    return this.peutVoirPresences
-      && (this.evenement.etatSeance === 'PROGRAMMEE' || this.evenement.etatSeance === 'MODIFIEE')
-      && new Date(this.evenement.debut).getTime() > Date.now();
-  }
-
-  get maPresence() { return this.evenement.presences?.find(p => p.adherentId === this.adherentId); }
-  nombrePresences(valeur: boolean): number { return this.evenement.presences?.filter(p => p.presencePrevue === valeur).length ?? 0; }
-
-  chargerPresences(): void {
-    const e = this.evenement;
-    if (!this.peutVoirPresences || e.chargementPresences) return;
-    e.chargementPresences = true;
-    e.erreurPresence = '';
-    this.actualiserPresence();
-    this.presencesService.getPresences(e.seanceId!).pipe(
-      takeUntilDestroyed(this.destroyRef), finalize(() => { e.chargementPresences = false; })
-    ).subscribe({
-      next: presences => { e.presences = presences; e.chargementPresences = false; this.actualiserPresence(); },
-      error: error => {
-        e.erreurPresence = error.error?.detail || 'Impossible de charger les présences prévues.';
-        e.chargementPresences = false;
-        this.actualiserPresence();
-      }
-    });
-  }
-
-  definirPresence(valeur: boolean): void {
-    const e = this.evenement;
-    if (!this.peutRenseignerPresence || !this.maPresence || e.chargementPresences || e.enregistrementPresence
-      || this.maPresence.presencePrevue === valeur) return;
-    e.enregistrementPresence = true;
-    e.erreurPresence = '';
-    this.actualiserPresence();
-    this.presencesService.updatePresence(e.seanceId!, valeur).pipe(
-      takeUntilDestroyed(this.destroyRef),
-      finalize(() => {
-        // Une fermeture pendant l'enregistrement impose de relire la réponse du serveur.
-        if (e.enregistrementPresence) { e.enregistrementPresence = false; e.presences = undefined; }
-      })
-    ).subscribe({
-      next: presence => {
-        e.presences = e.presences?.map(p => p.id === presence.id ? presence : p);
-        e.enregistrementPresence = false;
-        this.chargerPresences();
-      },
-      error: error => {
-        e.erreurPresence = error.error?.detail || 'Impossible d’enregistrer votre présence prévue.';
-        e.enregistrementPresence = false;
-        this.actualiserPresence();
-      }
-    });
-  }
-
   actualiser(): void { this.changeDetector.markForCheck(); }
-  private actualiserPresence(): void { this.presenceChange.emit(); this.actualiser(); }
 
   get lienGoogleAgenda(): string | null {
     const e = this.evenement;

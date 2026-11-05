@@ -1,23 +1,22 @@
 import { Adherent } from "./adherent";
 import { Adhesion } from "./adhesion";
 import { SalleConfiguration } from './salle';
-import { PlanificationHebdomadaire } from './planificationHebdomadaire';
 import { SectionConfiguration } from './section';
+import { SeanceCalendrier } from './seance';
 
 export class Activite {
 
+
+  equipes?: { id: number; nom: string; membres: number }[];
+  evenementsSemaineProchaine?: SeanceCalendrier[];
   id!: number;
   nom!: string;
   section?: SectionConfiguration;
   tarif!: number;
-  jour!: string;
-  horaireDebut!: string;
-  duree!: number;
-  planificationsHebdomadaires!: PlanificationHebdomadaire[];
   ageMin!: number;
   ageMax!: number;
   genre!: string;
-  /** Libellé calculé par l'API depuis les créneaux planifiés. */
+  /** Champ de compatibilité pour les exports des années précédentes. */
   horaire?: string;
   lien!: string;
   salle?: SalleConfiguration;
@@ -27,8 +26,8 @@ export class Activite {
   nbAdhesionsEnCours!: number;
   nbAdhesionsCompletes!: number;
   nbAdhesionsAttente!: number;
-  nbSeancesRealisees!: number;
-  nbSeancesTotal!: number;
+  nbEvenementsRealises!: number;
+  nbEvenementsTotal!: number;
   montantCollecte!: number;
   adhesions!: Adhesion[];
   priseEnCharge!: boolean;
@@ -48,7 +47,6 @@ export class Activite {
     this.profs = [];
     this.referents = [];
     this.adhesions = [];
-    this.planificationsHebdomadaires = [];
 
     this.nom = 'nouvelle activité'
     this.tarif = 200

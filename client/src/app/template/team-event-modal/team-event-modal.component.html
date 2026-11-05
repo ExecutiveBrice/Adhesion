@@ -1,0 +1,45 @@
+<div class="modal-header">
+  <h2 class="modal-title fs-5" id="event-modal-title">{{event ? 'Modifier l’événement' : 'Ajouter un événement'}}</h2>
+  <button type="button" class="btn-close" aria-label="Fermer" [disabled]="busy" (click)="modal.dismiss()"></button>
+</div>
+<form (ngSubmit)="save()" aria-label="Édition d’événement">
+  <div class="modal-body">
+    @if (loading) { <p role="status">Chargement…</p> }
+    @if (error) { <div class="alert alert-danger" role="alert">{{error}}</div><button type="button" class="btn btn-link" (click)="loadOptions()" [disabled]="busy || loading">Recharger les choix</button> }
+    <fieldset [disabled]="busy || loading">
+      <div class="row g-3">
+        <label class="col-md-4">Type<select class="form-select" name="type" [(ngModel)]="form.type"><option value="ACTIVITE">Activité</option><option value="RENCONTRE">Rencontre</option><option value="TOURNOI">Tournoi</option><option value="AUTRE">Autre</option></select></label>
+        <label class="col-md-4">Début<input type="datetime-local" class="form-control" name="debut" [ngModel]="form.debut" (ngModelChange)="startChanged($event)" required></label>
+        <label class="col-md-4">Fin<input type="datetime-local" class="form-control" name="fin" [min]="form.debut" [(ngModel)]="form.fin" required></label>
+        <label class="col-md-6">Salle<select class="form-select" name="salle" [(ngModel)]="form.salleId"><option [ngValue]="null">Lieu libre</option>@for (r of rooms; track r.id) { <option [ngValue]="r.id">{{r.nom}}</option> }</select></label>
+        @if (!form.salleId) { <label class="col-md-6">Adresse ou lieu extérieur<input class="form-control" name="lieu" maxlength="200" [(ngModel)]="form.lieu"></label> }
+        <label class="col-md-6">Rendez-vous<input type="datetime-local" class="form-control" name="rendezVous" [max]="form.debut" [ngModel]="form.rendezVous" (ngModelChange)="meetingChanged($event)"><small class="text-body-secondary">Par défaut, une heure avant le début.</small></label>
+        @if (form.type === 'RENCONTRE') { <label class="col-md-6">Adversaire<input class="form-control" name="adversaire" maxlength="100" [(ngModel)]="form.adversaire"></label> }
+        <label class="col-12">Informations pratiques<textarea class="form-control" name="commentaire" maxlength="2000" [(ngModel)]="form.commentaire"></textarea></label>
+        @if (!event) {
+          <fieldset class="col-12"><legend class="fs-6">Équipes concernées</legend>
+            @for (t of teams; track t.id) { <label class="d-block"><input type="checkbox" [checked]="form.equipes.includes(t.id)" (change)="toggleTeam(t.id, $any($event.target).checked)" [disabled]="team?.id === t.id"> {{t.activiteNom}} · {{t.nom}}</label> }
+          </fieldset>
+          @if (sections.length) {
+            <fieldset class="col-12"><legend class="fs-6">Sections concernées</legend>
+              <p class="small text-body-secondary">Toutes les équipes des sections cochées seront concernées.</p>
+              @for (s of sections; track s.id) { <label class="d-block"><input type="checkbox" [checked]="selectedSections.includes(s.id)" (change)="toggleSection(s.id, $any($event.target).checked)"> {{s.nom}}</label> }
+            </fieldset>
+          }
+          <div class="col-12">
+            <label><input type="checkbox" name="repeat" [(ngModel)]="repeat"> Répéter chaque semaine</label>
+            @if (repeat) {
+              <label class="d-block mt-2">Nombre de semaines<input type="number" class="form-control" name="weeks" min="2" max="104" step="1" [(ngModel)]="weeks"></label>
+              <p class="small text-body-secondary mb-0">La première date est incluse dans cette période. Les dates pendant les vacances scolaires et les jours fériés sont ignorées.</p>
+            }
+          </div>
+        }
+      </div>
+    </fieldset>
+    @if (validationError && !loading) { <div class="alert alert-warning mt-3 mb-0" role="alert">{{validationError}}</div> }
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()" [disabled]="busy">Fermer</button>
+    <button type="submit" class="btn btn-primary" [disabled]="busy || loading || !!validationError">{{busy ? 'Enregistrement…' : 'Enregistrer'}}</button>
+  </div>
+</form>

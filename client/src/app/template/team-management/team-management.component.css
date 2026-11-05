@@ -1,0 +1,7 @@
+:host { display: block; }
+.team-summary { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; padding-bottom: 1rem; margin-bottom: 1rem; border-bottom: 1px solid #d8e5e2; }
+.editor { border: 1px solid #d8e5e2; border-radius: .6rem; padding: 1rem; background: #fff; }
+.editor { background: #eef6f4; }
+.team-summary[hidden], .team-events-panel[hidden] { display: none !important; }
+.people-list { max-height: 15rem; overflow: auto; }
+input[type=checkbox] { margin-right: .3rem; }

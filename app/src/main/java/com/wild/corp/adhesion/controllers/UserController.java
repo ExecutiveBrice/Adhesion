@@ -60,7 +60,7 @@ SeanceRepository seanceRepository;
 	AdherentRepository adherentRepository;
 
 
-	@GetMapping("/seancesDuJour")
+	@GetMapping("/evenementsDuJour")
 	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<?> getSeancesDuJour(Authentication principal) {
 		log.info("getAllCours by " + principal.getName() );
@@ -73,27 +73,27 @@ SeanceRepository seanceRepository;
 		return ResponseEntity.ok(userServices.isReferentActivite(principal.getName()));
 	}
 
-	@GetMapping("/secretariat/seances")
+	@GetMapping("/secretariat/evenements")
 	@PreAuthorize("hasRole('SECRETAIRE')")
 	public ResponseEntity<?> getSeancesDuJourPourLeSecretariat(
 			@RequestParam @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) LocalDate date) {
 		return ResponseEntity.ok(userServices.getSeancesDuJourForSecretary(date));
 	}
 
-	@GetMapping("/secretariat/seances/{seanceId}/presences")
+	@GetMapping("/secretariat/evenements/{seanceId}/presences")
 	@PreAuthorize("hasRole('SECRETAIRE')")
 	public ResponseEntity<?> getPresencesPourLeSecretariat(@PathVariable Long seanceId) {
 		return ResponseEntity.ok(presenceServices.getPresencesForSecretary(seanceId));
 	}
 
-	@PatchMapping("/secretariat/seances/{seanceId}/presences/{presenceId}")
+	@PatchMapping("/secretariat/evenements/{seanceId}/presences/{presenceId}")
 	@PreAuthorize("hasRole('SECRETAIRE')")
 	public ResponseEntity<?> updatePresencePourLeSecretariat(@PathVariable Long seanceId, @PathVariable Long presenceId,
 			@RequestBody PresenceUpdateRequest request) {
 		return ResponseEntity.ok(presenceServices.updatePresenceForSecretary(seanceId, presenceId, request.presence()));
 	}
 
-	@PatchMapping("/secretariat/seances/{seanceId}/commentaire")
+	@PatchMapping("/secretariat/evenements/{seanceId}/commentaire")
 	@PreAuthorize("hasRole('SECRETAIRE')")
 	public ResponseEntity<?> updateCommentairePourLeSecretariat(@PathVariable Long seanceId,
 			@RequestBody CommentaireSeanceRequest request) {
@@ -101,20 +101,20 @@ SeanceRepository seanceRepository;
 				seanceServices.updateCommentaireForSecretary(seanceId, request.commentaire())));
 	}
 
-	@GetMapping("/seances/{seanceId}/presences")
+	@GetMapping("/evenements/{seanceId}/presences")
 	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<?> getPresences(@PathVariable Long seanceId, Authentication principal) {
 		return ResponseEntity.ok(presenceServices.getPresences(seanceId, principal.getName()));
 	}
 
-	@PatchMapping("/seances/{seanceId}/presences/{presenceId}")
+	@PatchMapping("/evenements/{seanceId}/presences/{presenceId}")
 	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<?> updatePresence(@PathVariable Long seanceId, @PathVariable Long presenceId,
 			@RequestBody PresenceUpdateRequest request, Authentication principal) {
 		return ResponseEntity.ok(presenceServices.updatePresence(seanceId, presenceId, request.presence(), principal.getName()));
 	}
 
-	@PatchMapping("/seances/{seanceId}/commentaire")
+	@PatchMapping("/evenements/{seanceId}/commentaire")
 	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<?> updateCommentaire(@PathVariable Long seanceId,
 			@RequestBody CommentaireSeanceRequest request, Authentication principal) {
@@ -122,7 +122,7 @@ SeanceRepository seanceRepository;
 				seanceServices.updateCommentaireForManager(seanceId, request.commentaire(), principal.getName())));
 	}
 
-	@PostMapping("/seances/{seanceId}/adherents")
+	@PostMapping("/evenements/{seanceId}/adherents")
 	@PreAuthorize("isAuthenticated()")
 	@Transactional
 	public ResponseEntity<PresenceSeanceResponse> ajouterNouvelAdherent(
@@ -131,18 +131,18 @@ SeanceRepository seanceRepository;
 			Authentication principal) {
 		String email = request.email().trim().toLowerCase();
 		Seance seance = seanceRepository.findByIdAndManagerUsername(seanceId, principal.getName())
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Séance introuvable"));
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Événement introuvable"));
 		if (userServices.existsByEmail(email)) {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "Cette adresse e-mail est déjà utilisée");
 		}
 
 		Adherent adherent = userServices.createUserAnonymous(email);
 		Adhesion adhesion = adhesionServices.save(principal::getName, adherent.getId(), seance.getActivite().getId());
-		// Un ajout depuis une séance doit toujours rester à compléter par l'adhérent,
+		// Un ajout depuis un événement doit toujours rester à compléter par l'adhérent,
 		// y compris lorsque l'activité est complète.
 		adhesion = adhesionServices.choisirStatut(adhesion.getId(), Status.ATTENTE_ADHERENT.label);
 		Presence presence = presenceServices.addPresenceForSeance(adhesion, seance, true);
-		adhesionServices.addModification(principal.getName(), adhesion.getId(), "Ajout à la séance " + seanceId);
+		adhesionServices.addModification(principal.getName(), adhesion.getId(), "Ajout à l’événement " + seanceId);
 		return ResponseEntity.status(HttpStatus.CREATED).body(PresenceSeanceResponse.from(presence));
 	}
 

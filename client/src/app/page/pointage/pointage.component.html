@@ -1,0 +1,37 @@
+<section class="seances-page">
+  <h2>Événements du {{ today | date:'fullDate':'':'fr-FR' }}</h2>
+
+
+  @if (isFailed) {
+    <div class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+  }
+
+  @if (!isFailed && seances.length === 0) {
+    <div class="alert alert-info">
+      Aucun événement prévu aujourd’hui.
+    </div>
+  }
+
+  @for (seance of seances; track seance) {
+    <article class="card seance-card" role="button" tabindex="0"
+      (click)="ouvrirPresences(seance)"
+      (keydown.enter)="ouvrirPresences(seance)">
+      <div class="card-body">
+        <h3 class="card-title">{{ seance.activite }}</h3>
+        <dl>
+          <div><dt>Horaire</dt><dd>{{ seance.debut | date:'HH:mm' }} – {{ seance.fin | date:'HH:mm' }}</dd></div>
+          <div><dt>Lieu</dt><dd>{{ seance.lieu || 'Lieu non renseigné' }}@if (seance.adresse) {
+          <span>, {{ seance.adresse }}</span>
+        }</dd></div>
+        <div><dt>Statut</dt><dd class="etat-seance" [ngClass]="'etat-' + seance.etatSeance.toLowerCase()">
+        @if (iconeEtat(seance.etatSeance)) {
+          <fa-icon [icon]="iconeEtat(seance.etatSeance)!"></fa-icon>
+        }
+        {{ libelleEtat(seance.etatSeance) }}
+      </dd></div>
+      <div><dt>Participants</dt><dd>{{ seance.nombreParticipants }}</dd></div>
+    </dl>
+  </div>
+</article>
+}
+</section>

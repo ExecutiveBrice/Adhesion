@@ -1,9 +1,8 @@
 package com.wild.corp.adhesion.services;
 
 import com.wild.corp.adhesion.models.*;
-import com.wild.corp.adhesion.models.resources.SeanceResponse;
 import com.wild.corp.adhesion.models.resources.AdherentResponsabiliteResponse;
-import com.wild.corp.adhesion.models.resources.MiseAJourSeanceRequest;
+import com.wild.corp.adhesion.models.resources.SeanceCalendrierResponse;
 import com.wild.corp.adhesion.repository.ActiviteNm1Repository;
 import com.wild.corp.adhesion.repository.ActiviteRepository;
 import com.wild.corp.adhesion.repository.AdherentRepository;
@@ -27,15 +26,15 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
+import java.time.DayOfWeek;
+import java.time.ZoneId;
+import java.time.temporal.TemporalAdjusters;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 
 @Service
 @Transactional
@@ -55,7 +54,7 @@ public class ActiviteServices {
     @Autowired
     ActiviteNm1Repository activiteNm1Repository;
     @Autowired
-    SeanceServices seanceServices;
+    ActivityTeamService activityTeams;
     @Autowired
     SeanceRepository seanceRepository;
     @Autowired
@@ -66,38 +65,12 @@ public class ActiviteServices {
     @Autowired
     SectionRepository sectionRepository;
 
-    public List<Seance> getSeancesDuJour(Long activiteId) {
+    @Autowired
+    com.wild.corp.adhesion.repository.UserRepository userRepository;
 
-        Activite activite = getById(activiteId);
-        LocalDate now = LocalDate.now();
-        return activite.getSeances().stream().filter(seance -> now.equals(seance.getDebut())).toList();
-    }
+    @Autowired
+    com.wild.corp.adhesion.repository.EquipeRepository equipeRepository;
 
-    public List<SeanceResponse> getSeances(Long activiteId) {
-        getById(activiteId);
-        return seanceRepository.findByActivite_IdOrderByDebutAsc(activiteId).stream()
-                .map(SeanceResponse::from)
-                .toList();
-    }
-
-    public List<SeanceResponse> addSeances(Long activiteId, int nombreSeances, LocalDate dateDebut) {
-        Activite activite = getById(activiteId);
-        List<Seance> created = seanceServices.addSeances(activite, nombreSeances, dateDebut);
-        seanceRepository.saveAllAndFlush(created);
-        return getSeances(activiteId);
-    }
-
-    public List<SeanceResponse> addSeances(Long activiteId, Long planificationId, int nombreSemaines,
-                                            LocalDate dateDebut) {
-        Activite activite = getById(activiteId);
-        PlanificationHebdomadaire planification = activite.getPlanificationsHebdomadaires().stream()
-                .filter(element -> planificationId.equals(element.getId()))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("La planification sélectionnée est introuvable"));
-        List<Seance> created = seanceServices.addSeances(activite, planification, nombreSemaines, dateDebut);
-        seanceRepository.saveAllAndFlush(created);
-        return getSeances(activiteId);
-    }
     public List<ActiviteNm1> getAllNm1() {
         List<ActiviteNm1> activites = activiteNm1Repository.findAll();
 
@@ -114,11 +87,19 @@ public class ActiviteServices {
         return uniques;
     }
 
-
     public List<Activite> getAll() {
         List<Activite> activites = activiteRepository.findAll();
         activites.forEach(this::completerCompteurs);
         return activites;
+    }
+
+    public Activite getDetail(Long activiteId) {
+        return completerCompteurs(activiteRepository.findById(activiteId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Activité introuvable")));
+    }
+
+    public Activite getManagedDetail(String username, Long activiteId) {
+        return completerCompteurs(requireManagedActivity(username, activiteId));
     }
 
     public Page<Activite> getPage(String search, Integer tarif, Boolean complete, Boolean reinscription,
@@ -128,18 +109,27 @@ public class ActiviteServices {
 
     public Page<Activite> getManagedPage(String username, String search, Integer tarif, Boolean complete,
                                          Boolean reinscription, Integer age, String genre, Pageable pageable) {
-        return getPage(search, tarif, complete, reinscription, age, genre, pageable, managedSectionIds(username));
+        Set<Long> sectionIds = sectionRepository.findManagedByUsername(username).stream()
+                .map(Section::getId).collect(Collectors.toSet());
+        boolean encadrant = userRepository.findByUsername(username)
+                .map(user -> user.getRoles().contains(ERole.ROLE_ENCADRANT)).orElse(false);
+        if (sectionIds.isEmpty() && !encadrant) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Aucune section ne vous est confiée");
+        }
+        Specification<Activite> scope = SectionListingSpecifications.activites(sectionIds);
+        if (encadrant) scope = scope.or(SectionListingSpecifications.activitesEncadrees(username));
+        return getPage(search, tarif, complete, reinscription, age, genre, pageable, scope);
     }
 
     private Page<Activite> getPage(String search, Integer tarif, Boolean complete, Boolean reinscription,
-                                  Integer age, String genre, Pageable pageable, Set<Long> allowedSectionIds) {
+                                  Integer age, String genre, Pageable pageable, Specification<Activite> scope) {
         Pageable activitePageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), ACTIVITE_SORT);
         Specification<Activite> filters = specificationFiltre(search, tarif, complete, reinscription, age, genre);
-        if (allowedSectionIds != null) {
-            filters = filters.and(SectionListingSpecifications.activites(allowedSectionIds));
+        if (scope != null) {
+            filters = filters.and(scope);
         }
         Page<Activite> activites;
-        if (allowedSectionIds != null || StringUtils.hasText(search) || tarif != null || complete != null
+        if (scope != null || StringUtils.hasText(search) || tarif != null || complete != null
                 || reinscription != null || age != null || StringUtils.hasText(genre)) {
             activites = activiteRepository.findAll(filters, activitePageable);
         } else {
@@ -158,7 +148,7 @@ public class ActiviteServices {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cette section ne vous est pas confiée");
         }
         if (activite.getId() != null) {
-            Activite existing = activiteRepository.findById(activite.getId())
+            Activite existing = activiteRepository.findForTeamUpdate(activite.getId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Activité introuvable"));
             if (existing.getSection() == null || !sectionId.equals(existing.getSection().getId())) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "L’activité n’appartient pas à cette section");
@@ -178,44 +168,19 @@ public class ActiviteServices {
                 .toList();
     }
 
-    public List<SeanceResponse> addSeancesManaged(String username, Long activiteId, Long planificationId,
-                                                   int nombreSemaines, LocalDate dateDebut) {
-        requireManagedActivity(username, activiteId);
-        return addSeances(activiteId, planificationId, nombreSemaines, dateDebut);
-    }
-
-    public List<SeanceResponse> getManagedSeances(String username, Long activiteId) {
-        requireManagedActivity(username, activiteId);
-        return getSeances(activiteId);
-    }
-
     public List<AdherentResponsabiliteResponse> getManagedResponsabiliteCandidates(String username, Long activiteId) {
         requireManagedActivity(username, activiteId);
         return responsabiliteSeanceServices.getCandidats(activiteId);
     }
 
-    public SeanceResponse updateManagedSeance(String username, Long activiteId, Long seanceId,
-                                              MiseAJourSeanceRequest request) {
-        requireManagedActivity(username, activiteId);
-        return SeanceResponse.from(seanceServices.updateSeance(
-                activiteId, seanceId, request.etatSeance(), request.commentaire(),
-                Boolean.TRUE.equals(request.commentairePresent()), request.date(), request.heureDebut(),
-                Boolean.TRUE.equals(request.horairePresent()), request.salleId(),
-                Boolean.TRUE.equals(request.sallePresente()), request.responsabilites()));
-    }
-
-    public void deleteManagedSeance(String username, Long activiteId, Long seanceId) {
-        requireManagedActivity(username, activiteId);
-        seanceServices.deleteSeance(activiteId, seanceId);
-    }
-
-    private void requireManagedActivity(String username, Long activiteId) {
+    private Activite requireManagedActivity(String username, Long activiteId) {
         Set<Long> allowedSectionIds = managedSectionIds(username);
         Activite activite = activiteRepository.findById(activiteId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Activité introuvable"));
         if (activite.getSection() == null || !allowedSectionIds.contains(activite.getSection().getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cette activité ne vous est pas confiée");
         }
+        return activite;
     }
 
     private Set<Long> managedSectionIds(String username) {
@@ -268,235 +233,30 @@ public class ActiviteServices {
     }
 
     private Activite completerCompteurs(Activite activite) {
+        var debutSemaine = LocalDate.now(ZoneId.of("Europe/Paris"))
+                .with(TemporalAdjusters.next(DayOfWeek.MONDAY)).atStartOfDay();
+        var finSemaine = debutSemaine.plusWeeks(1);
+        activite.setEvenementsSemaineProchaine(activite.getSeances().stream()
+                .filter(seance -> seance.getDebut() != null && !seance.getDebut().isBefore(debutSemaine)
+                        && seance.getDebut().isBefore(finSemaine))
+                .filter(seance -> !ESeance.ANNULEE.equals(seance.getEtatSeance()))
+                .sorted(Comparator.comparing(Seance::getDebut).thenComparing(Seance::getId))
+                .map(SeanceCalendrierResponse::from).toList());
+        activite.setEquipes(equipeRepository.findByActivite_IdOrderByIdAsc(activite.getId()).stream()
+                .filter(team -> !team.isArchivee())
+                .map(team -> new Activite.EquipeResume(team.getId(), team.getNom(), team.getAffectations().stream()
+                        .filter(a -> TeamRoster.active(a, LocalDate.now()) && TeamRoster.eligible(a.getAdhesion(), activite))
+                        .map(a -> a.getAdhesion().getAdherent().getId()).distinct().count())).toList());
         activite.setNbAdhesionsCompletes(activite.getAdhesions().stream().filter(Adhesion::isValide).count());
         activite.setNbAdhesionsEnCours(activite.getAdhesions().stream().filter(Adhesion::isEnCours).count());
         activite.setNbAdhesionsAttente(activite.getAdhesions().stream().filter(Adhesion::isEnAttente).count());
-        activite.setNbSeancesRealisees(activite.getSeances().stream()
+        activite.setNbEvenementsRealises(activite.getSeances().stream()
                 .filter(seance -> ESeance.REALISEE.equals(seance.getEtatSeance()))
                 .count());
-        activite.setNbSeancesTotal(activite.getSeances().stream()
+        activite.setNbEvenementsTotal(activite.getSeances().stream()
                 .filter(seance -> !ESeance.ANNULEE.equals(seance.getEtatSeance()))
                 .count());
-        activite.getPlanificationsHebdomadaires().forEach(planification -> {
-            long nbSeancesTotal = activite.getSeances().stream()
-                    .filter(seance -> appartientAPlanification(seance, planification))
-                    .filter(seance -> !ESeance.ANNULEE.equals(seance.getEtatSeance()))
-                    .count();
-            long nbSeancesRealisees = activite.getSeances().stream()
-                    .filter(seance -> appartientAPlanification(seance, planification))
-                    .filter(seance -> ESeance.REALISEE.equals(seance.getEtatSeance()))
-                    .count();
-            planification.setNbSeancesTotal(nbSeancesTotal);
-            planification.setNbSeancesRealisees(nbSeancesRealisees);
-        });
         return activite;
-    }
-
-    private boolean appartientAPlanification(Seance seance, PlanificationHebdomadaire planification) {
-        return seance.getPlanification() != null
-                && seance.getPlanification().getId() != null
-                && seance.getPlanification().getId().equals(planification.getId());
-    }
-
-    public Activite save(Activite activite) {
-        if (activite.getSection() == null || activite.getSection().getId() == null
-                || activite.getSection().getId() <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sélectionnez une section existante");
-        }
-        activite.setSection(sectionRepository.findById(activite.getSection().getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Section introuvable")));
-        List<PlanificationHebdomadaire> planifications = normaliserPlanifications(activite);
-        if (planifications.isEmpty()) {
-            if (activite.getPlanificationsHebdomadaires() != null && !activite.getPlanificationsHebdomadaires().isEmpty()) {
-                activite.setJour(null);
-                activite.setHoraireDebut(null);
-                activite.setDuree(null);
-                activite.setSalle(null);
-            } else {
-                activite.setSalle(trouverSalle(activite.getSalle()));
-            }
-        }
-        synchroniserChampsHistoriques(activite, planifications);
-        if (activite.getId() != null) {
-            Activite activiteInDB = activiteRepository.findById(activite.getId()).orElseThrow();
-            activiteInDB.getProfs().forEach(adherent -> adherent.getCours().remove(activiteInDB));
-            activiteInDB.getReferents().forEach(adherent -> adherent.getActivitesReferent().remove(activiteInDB));
-
-            BeanUtils.copyProperties(activite, activiteInDB,
-                    "id", "adhesions", "sousClassement", "profs", "referents", "seances",
-                    "nbAdhesionsEnCours", "nbAdhesionsCompletes", "nbAdhesionsAttente", "nbSeancesRealisees",
-                    "nbSeancesTotal", "montantCollecte", "salle", "planificationsHebdomadaires");
-            activiteInDB.setSalle(activite.getSalle());
-            remplacerPlanifications(activiteInDB, planifications);
-            associerSeancesHistoriquesAuxPlanifications(activiteInDB);
-            synchroniserIntervenantsPlanifications(activiteInDB);
-
-            return activiteRepository.save(activiteInDB);
-        }
-
-        remplacerPlanifications(activite, planifications);
-        synchroniserIntervenantsPlanifications(activite);
-        if (!planifications.isEmpty()) {
-            seanceServices.fillSeances(activite, 29);
-        }
-        return activiteRepository.save(activite);
-    }
-
-    private List<PlanificationHebdomadaire> normaliserPlanifications(Activite activite) {
-        List<PlanificationHebdomadaire> planifications = activite.getPlanificationsHebdomadaires();
-        if (planifications == null) {
-            return List.of();
-        }
-
-        List<PlanificationHebdomadaire> planificationsNormalisees = planifications.stream()
-                .filter(this::estValide)
-                .map(planification -> {
-                    PlanificationHebdomadaire copie = new PlanificationHebdomadaire();
-                    copie.setJour(planification.getJour());
-                    copie.setHoraireDebut(planification.getHoraireDebut());
-                    copie.setDuree(planification.getDuree());
-                    copie.setDescriptif(normaliserDescriptif(planification.getDescriptif()));
-                    copie.setSalle(trouverSalle(planification.getSalle()));
-                    copie.setId(planification.getId());
-                    copie.setProfs(resoudreAdherents(planification.getProfs()));
-                    copie.setReferents(resoudreAdherents(planification.getReferents()));
-                    return copie;
-                }).toList();
-        long creneauxDistincts = planificationsNormalisees.stream()
-                .map(planification -> planification.getJour() + "-" + planification.getHoraireDebut())
-                .distinct()
-                .count();
-        if (creneauxDistincts != planificationsNormalisees.size()) {
-            throw new IllegalArgumentException("Deux séances hebdomadaires ne peuvent pas avoir le même jour et le même horaire");
-        }
-        return planificationsNormalisees;
-    }
-
-    private boolean estValide(PlanificationHebdomadaire planification) {
-        return planification.getJour() != null && planification.getHoraireDebut() != null
-                && planification.getDuree() != null && planification.getDuree() > 0;
-    }
-
-    private String normaliserDescriptif(String descriptif) {
-        if (descriptif == null || descriptif.isBlank()) {
-            return null;
-        }
-        String valeur = descriptif.trim();
-        if (valeur.length() > 100) {
-            throw new IllegalArgumentException("Le descriptif d'une séance ne peut pas dépasser 100 caractères");
-        }
-        return valeur;
-    }
-
-    private void remplacerPlanifications(Activite activite, List<PlanificationHebdomadaire> planifications) {
-        Map<Long, PlanificationHebdomadaire> existantesParId = activite.getPlanificationsHebdomadaires().stream()
-                .filter(planification -> planification.getId() != null)
-                .collect(Collectors.toMap(PlanificationHebdomadaire::getId, planification -> planification));
-        Set<Long> idsConservees = planifications.stream()
-                .map(PlanificationHebdomadaire::getId)
-                .filter(java.util.Objects::nonNull)
-                .collect(Collectors.toSet());
-        if (!existantesParId.keySet().containsAll(idsConservees)) {
-            throw new IllegalArgumentException("Une catégorie de séance est introuvable pour cette activité");
-        }
-        activite.getSeances().stream()
-                .filter(seance -> seance.getPlanification() != null
-                        && seance.getPlanification().getId() != null
-                        && !idsConservees.contains(seance.getPlanification().getId()))
-                .forEach(seance -> seance.setPlanification(null));
-        activite.getPlanificationsHebdomadaires().removeIf(planification -> planification.getId() != null
-                && !idsConservees.contains(planification.getId()));
-        for (PlanificationHebdomadaire planification : planifications) {
-            PlanificationHebdomadaire cible = planification.getId() == null ? null
-                    : existantesParId.get(planification.getId());
-            if (cible == null) {
-                planification.setActivite(activite);
-                activite.getPlanificationsHebdomadaires().add(planification);
-            } else {
-                cible.setJour(planification.getJour());
-                cible.setHoraireDebut(planification.getHoraireDebut());
-                cible.setDuree(planification.getDuree());
-                cible.setDescriptif(planification.getDescriptif());
-                cible.setSalle(planification.getSalle());
-                cible.setProfs(planification.getProfs());
-                cible.setReferents(planification.getReferents());
-            }
-        }
-    }
-
-    /**
-     * Keeps the former activity-level relations as an aggregate for legacy screens
-     * and inverse mappings. Assignments themselves are stored per session category.
-     */
-    private void synchroniserIntervenantsPlanifications(Activite activite) {
-        activite.getPlanificationsHebdomadaires().forEach(planification -> planification
-                .setReferents(resoudreReferentsValides(activite, planification.getReferents())));
-        Set<Adherent> profs = activite.getPlanificationsHebdomadaires().stream()
-                .flatMap(planification -> planification.getProfs().stream())
-                .collect(Collectors.toSet());
-        activite.setProfs(profs);
-        profs.forEach(adherent -> adherent.getCours().add(activite));
-
-        Set<Adherent> referents = activite.getPlanificationsHebdomadaires().stream()
-                .flatMap(planification -> planification.getReferents().stream())
-                .collect(Collectors.toSet());
-        activite.setReferents(referents);
-        referents.forEach(adherent -> adherent.getActivitesReferent().add(activite));
-    }
-
-    private void associerSeancesHistoriquesAuxPlanifications(Activite activite) {
-        activite.getSeances().stream()
-                .filter(seance -> seance.getPlanification() == null && seance.getDebut() != null)
-                .forEach(seance -> activite.getPlanificationsHebdomadaires().stream()
-                        .filter(planification -> planification.getJour() == seance.getDebut().getDayOfWeek()
-                                && planification.getHoraireDebut().equals(seance.getDebut().toLocalTime()))
-                        .findFirst()
-                        .ifPresent(seance::setPlanification));
-    }
-
-    private Set<Adherent> resoudreAdherents(Set<Adherent> adherents) {
-        if (adherents == null) {
-            return new HashSet<>();
-        }
-        return adherents.stream()
-                .map(adherent -> adherentServices.getById(adherent.getId()))
-                .collect(Collectors.toSet());
-    }
-
-    private void synchroniserChampsHistoriques(Activite activite, List<PlanificationHebdomadaire> planifications) {
-        if (planifications.isEmpty()) {
-            return;
-        }
-        PlanificationHebdomadaire premierePlanification = planifications.getFirst();
-        activite.setJour(premierePlanification.getJour());
-        activite.setHoraireDebut(premierePlanification.getHoraireDebut());
-        activite.setDuree(premierePlanification.getDuree());
-        activite.setSalle(premierePlanification.getSalle());
-    }
-
-    private Salle trouverSalle(Salle salle) {
-        if (salle == null || salle.getId() == null) {
-            return null;
-        }
-        return salleRepository.findById(salle.getId())
-                .orElseThrow(() -> new IllegalArgumentException("La salle sélectionnée n'existe plus"));
-    }
-
-    private Set<Adherent> resoudreReferentsValides(Activite activite, Set<Adherent> referents) {
-        if (referents == null) {
-            return new HashSet<>();
-        }
-        Set<Long> adherentsValides = adherentRepository.findReferentCandidates(
-                        activite.getSection().getId(), STATUTS_REFERENTS_EXCLUS).stream()
-                .map(Adherent::getId)
-                .collect(Collectors.toSet());
-        Set<Adherent> referentsResolus = referents.stream()
-                .map(referent -> adherentServices.getById(referent.getId()))
-                .collect(Collectors.toSet());
-        if (!referentsResolus.stream().allMatch(referent -> adherentsValides.contains(referent.getId()))) {
-            throw new IllegalArgumentException("Un référent doit appartenir à une tribu inscrite dans cette section");
-        }
-        return referentsResolus;
     }
 
     public List<com.wild.corp.adhesion.models.resources.AdherentLite> getReferentsCandidates(Long activiteId) {
@@ -514,11 +274,9 @@ public class ActiviteServices {
         return activiteRepository.save(activiteDB);
     }
 
-
     public List<Activite> findByNom(String nom) {
         return activiteRepository.findByNom(nom);
     }
-
 
     public List<ActiviteNm1> findNm1ByNom(String nom) {
         return activiteNm1Repository.findByNom(nom);
@@ -529,6 +287,22 @@ public class ActiviteServices {
     }
     public List<ActiviteNm1> getNm1ById(Long activiteId) {
         return activiteNm1Repository.findByActiviteId(activiteId);
+    }
+
+    public Activite save(Activite activite) {
+        if (activite == null || activite.getSection() == null || activite.getSection().getId() == null || activite.getSection().getId() <= 0)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sélectionnez une section existante");
+        activite.setSection(sectionRepository.findById(activite.getSection().getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Section introuvable")));
+        Activite target = activite;
+        if (activite.getId() != null) {
+            target = activiteRepository.findForTeamUpdate(activite.getId()).orElseThrow();
+            BeanUtils.copyProperties(activite, target, "id", "adhesions", "sousClassement", "profs", "referents", "seances",
+                    "nbAdhesionsEnCours", "nbAdhesionsCompletes", "nbAdhesionsAttente", "nbEvenementsRealises", "nbEvenementsTotal", "montantCollecte", "equipes", "evenementsSemaineProchaine");
+        }
+        target = activiteRepository.saveAndFlush(target);
+        activityTeams.ensureFirstTeam(target);
+        return target;
     }
 
 }

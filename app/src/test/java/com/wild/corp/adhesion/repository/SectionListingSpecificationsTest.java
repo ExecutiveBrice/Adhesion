@@ -48,6 +48,53 @@ class SectionListingSpecificationsTest {
                 .extracting(Activite::getId).containsExactly(basket.getId());
     }
 
+    @Test
+    void coachedActivitiesAreDistinctPaginatedAndLimitedToTheAccountsActiveTeams() {
+        User account = new User("coach@example.org", "password");
+        account.getRoles().add(ERole.ROLE_ENCADRANT);
+        em.persist(account);
+        Adherent coach = member("Encadrant", tribe());
+        coach.setUser(account);
+        Adherent represented = member("Enfant", coach.getTribu());
+        represented.setRepresentant(coach);
+        Section section = section("Basket");
+        Activite coached = activity(section);
+        Activite sameSection = activity(section);
+        Activite archived = activity(section);
+        Activite referred = activity(section);
+        Activite childsTeam = activity(section);
+        team(coached, coach, false);
+        team(coached, coach, false);
+        team(sameSection, represented, false);
+        team(archived, coach, true);
+        Equipe referredTeam = team(referred, represented, false);
+        referredTeam.getReferents().add(coach);
+        team(childsTeam, represented, false);
+        em.flush();
+        em.clear();
+
+        var scope = SectionListingSpecifications.activitesEncadrees(account.getUsername());
+        var page = activites.findAll(scope, org.springframework.data.domain.PageRequest.of(0, 1));
+        assertThat(page.getTotalElements()).isEqualTo(1);
+        assertThat(page.getContent()).extracting(Activite::getId).containsExactly(coached.getId());
+        assertThat(activites.findAll(scope.and((root, query, builder) ->
+                builder.equal(root.get("id"), sameSection.getId())))).isEmpty();
+        assertThat(activites.findAll(SectionListingSpecifications.activitesEncadrees("other@example.org"))).isEmpty();
+        assertThat(activites.findAll(SectionListingSpecifications.activites(Set.of(section.getId())).or(scope)))
+                .extracting(Activite::getId).containsExactlyInAnyOrder(coached.getId(), sameSection.getId(),
+                        archived.getId(), referred.getId(), childsTeam.getId());
+    }
+
+    private Equipe team(Activite activity, Adherent coach, boolean archived) {
+        Equipe team = new Equipe();
+        team.setActivite(activity);
+        team.setNom(UUID.randomUUID().toString());
+        team.setArchivee(archived);
+        team.getEncadrants().add(coach);
+        em.persist(team);
+        return team;
+    }
+
     private Section section(String name) {
         Section section = Section.builder().nom(name).type("NON_COMPETITIVE").build();
         em.persist(section);

@@ -1,0 +1,98 @@
+<div class="team-events">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h5 class="mb-0">Événements · {{team.nom}}</h5>
+    <div class="d-flex gap-2 align-items-center">
+      <label><input type="checkbox" [(ngModel)]="showPast"> Afficher le passé</label>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="load()" [disabled]="busy || loading">Actualiser</button>
+      @if (team.canManage && !team.archivee) { <button type="button" class="btn btn-sm btn-primary" (click)="open()" [disabled]="busy">Ajouter un événement</button> }
+    </div>
+  </div>
+  @if (error) { <div class="alert alert-danger" role="alert">{{error}}</div> }
+  @if (message) { <div class="alert alert-success" role="status">{{message}}</div> }
+  @if (selectionEvent) {
+    <section class="event-editor mb-3" aria-label="Sélection des participants">
+      <h6>Participants · {{selectionEvent.debut | date:'dd/MM/yyyy HH:mm'}}</h6>
+      <input class="form-control mb-2" aria-label="Rechercher un participant" placeholder="Rechercher un participant" [(ngModel)]="search">
+      <div class="people-list">@for (p of filteredCandidates; track p.adhesionId) {
+        <label class="d-block py-1"><input type="checkbox" [checked]="selected.includes(p.adhesionId)" (change)="togglePerson(p.adhesionId, $any($event.target).checked)"> {{p.prenom}} {{p.nom}} <small class="text-muted">{{p.statut}}</small></label>
+      }</div>
+      <div class="d-flex gap-2 mt-3"><button type="button" class="btn btn-primary" (click)="saveSelection()" [disabled]="busy">Enregistrer la sélection</button><button type="button" class="btn btn-outline-secondary" (click)="selectionEvent = undefined" [disabled]="busy">Fermer</button></div>
+    </section>
+  }
+  @if (loading) { <p role="status">Chargement des événements…</p> }
+  @for (e of visibleEvents; track e.id) {
+    <article class="event-card mb-3" [class.cancelled]="e.etat === 'ANNULEE'">
+      <header class="d-flex flex-wrap justify-content-between gap-2">
+        <div><strong>{{e.debut | date:'EEEE d MMMM yyyy, HH:mm'}} – {{e.fin | date:'HH:mm'}}</strong><div class="text-muted">{{e.type === 'ACTIVITE' ? 'Activité' : e.type === 'RENCONTRE' ? 'Rencontre' : e.type === 'TOURNOI' ? 'Tournoi' : 'Événement'}} · {{e.equipes.join(' / ')}} @if (e.etat === 'ANNULEE') { <span class="badge text-bg-danger">Annulé</span> }</div></div>
+        @if (e.canManage && upcoming(e)) { <div class="d-flex flex-wrap gap-1"><button type="button" class="btn btn-sm btn-outline-primary" (click)="editSelection(e)" [disabled]="busy">Modifier les participants</button><button type="button" class="btn btn-sm btn-primary" (click)="publish(e)" [disabled]="busy">Publier les convocations</button><button type="button" class="btn btn-sm btn-outline-primary" (click)="remind(e)" [disabled]="busy">Relancer</button><button type="button" class="btn btn-sm btn-outline-secondary" (click)="open(e)" [disabled]="busy">Modifier</button><button type="button" class="btn btn-sm btn-outline-danger" (click)="cancel(e)" [disabled]="busy">Annuler</button></div> }
+      </header>
+      @if (e.lieu) { <p class="mt-2 mb-1">{{e.lieu}}</p> }
+      @if (e.rendezVous) { <p class="mb-1">Rendez-vous : {{e.rendezVous | date:'dd/MM HH:mm'}}</p> }
+      @if (e.adversaire) { <p class="mb-1">Adversaire : {{e.adversaire}}</p> }
+      @if (e.commentaire) { <p class="practical mb-1">{{e.commentaire}}</p> }
+      @if (e.responsabilites?.length) { <app-responsabilites-seance [responsabilites]="e.responsabilites" [details]="true" /> }
+      @if (e.canManage) { <button type="button" class="btn btn-sm btn-outline-secondary mt-2" (click)="editResponsibilities(e)" [disabled]="busy">Responsabilités</button> }
+      @if (e.canManage) { <p class="small mt-2 mb-2">Réponses : {{count(e, true)}} acceptée(s), {{count(e, false)}} refusée(s), {{count(e, null)}} sans réponse.</p> }
+      @if (e.convocations.length) {
+        @if (collapsibleParticipants) {
+          <details class="event-participants">
+            <summary>Participants ({{selectedInvites(e).length}})</summary>
+            <ng-container [ngTemplateOutlet]="participantsTable" />
+          </details>
+        } @else {
+          <ng-container [ngTemplateOutlet]="participantsTable" />
+        }
+        <ng-template #participantsTable>
+        <div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>Participant</th><th>Convocation</th><th>Réponse</th>@if (e.canManage) { <th>Présence réelle</th> }</tr></thead><tbody>
+          @for (c of selectedInvites(e); track c.id) {
+            <tr><td>{{c.nom}}</td><td>{{c.publication ? 'Publiée' : 'Brouillon'}}</td><td>
+              <span>{{c.reponse === true ? 'Acceptée' : c.reponse === false ? 'Refusée' : 'Sans réponse'}}</span>
+              @if (c.canReply) { <div class="d-flex gap-1 mt-1"><button type="button" class="btn btn-sm btn-outline-success" (click)="reply(e, c.id, true)" [disabled]="busy">Accepter</button><button type="button" class="btn btn-sm btn-outline-danger" (click)="reply(e, c.id, false)" [disabled]="busy">Refuser</button></div> }
+            </td>@if (e.canManage) { <td><span>{{c.presence === true ? 'Présent' : c.presence === false ? 'Absent' : 'Non pointée'}}</span>@if (e.etat !== 'ANNULEE') { <div class="d-flex gap-1 mt-1"><button type="button" class="btn btn-sm btn-outline-success" (click)="point(e, c.id, true)" [disabled]="busy">Présent</button><button type="button" class="btn btn-sm btn-outline-danger" (click)="point(e, c.id, false)" [disabled]="busy">Absent</button></div> }</td> }</tr>
+          }
+        </tbody></table></div>
+        </ng-template>
+      } @else { <p class="small text-muted mt-2">{{e.canManage ? 'Aucun participant proposé. Choisissez les participants avant de publier.' : 'Aucune convocation publiée à votre nom pour cet événement.'}}</p> }
+      @if (e.canManage) { <div class="small text-muted mt-2" aria-label="Suivi des emails">@for (m of e.emails | keyvalue; track m.key) { <span class="me-3">{{m.value}} email(s) : {{mailLabel(m.key)}}</span> }</div> }
+    </article>
+  } @empty { @if (!loading) { <p class="text-muted">Aucun événement sur cette période.</p> } }
+</div>
+
+<ng-template #responsibilitiesModal>
+  <div class="modal-header">
+    <h5 class="modal-title" id="responsibilities-title">Responsabilités · {{responsibilityEvent?.debut | date:'dd/MM/yyyy HH:mm'}}</h5>
+    <button type="button" class="btn-close" aria-label="Fermer" (click)="closeResponsibilities()" [disabled]="busy"></button>
+  </div>
+  <div class="modal-body">
+    <p>Choisissez une responsabilité et une équipe de la section. Elle sera attribuée automatiquement au premier référent de l’équipe, ou à son premier adhérent en l’absence de référent.</p>
+    @if (error) { <div class="alert alert-danger" role="alert">{{error}}</div> }
+    @if (responsibilitiesLoading) { <p role="status">Chargement des responsabilités et des équipes…</p> }
+    @else {
+      @if (!responsibilityTeams.length) { <p class="alert alert-warning">Aucune équipe disponible dans cette section.</p> }
+      @for (row of responsibilityRows; track $index; let i = $index) {
+        <div class="row g-2 mb-3">
+          <label class="col-md-5">Responsabilité
+            <select class="form-select" aria-label="Responsabilité" [(ngModel)]="row.tacheId" [disabled]="busy">
+              <option [ngValue]="undefined">Choisir une responsabilité</option>
+              @for (task of tasks; track task.id) { <option [ngValue]="task.id">{{task.nom}}</option> }
+            </select>
+          </label>
+          <label class="col-md-5">Équipe
+            <select class="form-select" aria-label="Équipe de la section" [(ngModel)]="row.equipeId" [disabled]="busy">
+              <option [ngValue]="undefined">Choisir une équipe</option>
+              @for (t of responsibilityTeams; track t.id) { <option [ngValue]="t.id">{{t.activiteNom}} · {{t.nom}}</option> }
+            </select>
+          </label>
+          <div class="col-md-2 d-flex align-items-end"><button type="button" class="btn btn-outline-danger" aria-label="Retirer cette responsabilité" (click)="responsibilityRows.splice(i, 1)" [disabled]="busy">Retirer</button></div>
+          @if (responsibilityAssignee(row); as person) { <div class="col-12 small text-muted">Attribuée à {{person.prenom}} {{person.nom}}</div> }
+        </div>
+      }
+      @if (responsibilityValidationError) { <p class="text-danger" role="alert">{{responsibilityValidationError}}</p> }
+      <button type="button" class="btn btn-outline-primary" (click)="responsibilityRows.push({})" [disabled]="busy">Ajouter une responsabilité</button>
+    }
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-outline-secondary" (click)="closeResponsibilities()" [disabled]="busy">Fermer</button>
+    <button type="button" class="btn btn-primary" (click)="saveResponsibilities()" [disabled]="busy || responsibilitiesLoading || !!responsibilityValidationError">Enregistrer les responsabilités</button>
+  </div>
+</ng-template>

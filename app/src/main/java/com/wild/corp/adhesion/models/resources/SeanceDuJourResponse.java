@@ -22,11 +22,11 @@ public record SeanceDuJourResponse(
                 seance.getActivite().getNom(),
                 seance.getDebut(),
                 seance.getFin(),
-                seance.getSalle() == null ? seance.getActivite().getNomSalle() : seance.getSalle().getNom(),
+                seance.getSalle() == null ? seance.getLieuExterieur() : seance.getSalle().getNom(),
                 seance.getSalle() == null ? null : seance.getSalle().getAdresse(),
                 seance.getCommentaire(),
                 seance.getEtatSeance(),
-                seance.getActivite().getAdhesions().stream().filter(adhesion -> adhesion.isValide()).count()
+                seance.getPresences().size()
         );
     }
 }

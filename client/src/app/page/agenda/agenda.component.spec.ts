@@ -1,3 +1,4 @@
+import { provideRouter } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
@@ -10,9 +11,9 @@ import { TokenStorageService } from '../../_services/token-storage.service';
 import { SeanceCalendrier } from '../../models/seance';
 import { AgendaComponent } from './agenda.component';
 import { AgendaPreferences, AgendaPreferencesService } from '../../_services/agenda-preferences.service';
-import { PresencePrevueService } from '../../_services/presence-prevue.service';
 import { EvenementDetailComponent } from '../../template/evenement-detail/evenement-detail.component';
 import { CalendrierComponent } from '../../template/calendrier/calendrier.component';
+import { TeamEventModalComponent } from '../../template/team-event-modal/team-event-modal.component';
 
 describe('AgendaComponent', () => {
   let fixture: ComponentFixture<AgendaComponent>;
@@ -24,6 +25,14 @@ describe('AgendaComponent', () => {
     id, activiteId: id, activiteNom: `Activité ${id}`, horaireActivite: '', salle: 'Salle',
     adresseSalle: null, couleurSalle: null, commentaire: null, lien: null,
     debut, fin, etatSeance: 'PROGRAMMEE', sectionId: 10, sectionNom: 'Sports'
+  });
+
+  it('ouvre la modale commune et actualise le calendrier après une création', async () => {
+    activites.getCalendrier.calls.reset();
+    component.ajouterEvenement();
+    expect(modales.open).toHaveBeenCalledWith(TeamEventModalComponent, jasmine.objectContaining({ size: 'lg', backdrop: 'static' }));
+    await Promise.resolve();
+    expect(activites.getCalendrier).toHaveBeenCalledTimes(1);
   });
 
   beforeEach(() => {
@@ -42,10 +51,10 @@ describe('AgendaComponent', () => {
     }], erreurs: [] }));
     TestBed.configureTestingModule({
       imports: [AgendaComponent, CalendrierComponent],
-      providers: [
+      providers: [provideRouter([]),
         { provide: ActiviteService, useValue: activites },
         { provide: NgbModal, useValue: modales },
-        { provide: PresencePrevueService, useValue: { getPresences: () => of([]) } },
+
         { provide: AgendaPreferencesService, useValue: preferences },
         { provide: ParamService, useValue: {
           getAgendasGoogle: () => of([
@@ -298,8 +307,6 @@ describe('AgendaComponent', () => {
       commentaire: '<p>Prévoir une gourde</p>', lien: 'example.org/basket',
       responsabilites: [{ tache: { nom: 'Matériel', icone: 'box-open', couleur: '#4285F4' }, adherent: { id: 42, prenom: 'Alice', nom: 'Dupont' } }]
     };
-    const reponses = [{ id: 9, adherentId: 42, prenom: 'Alice', nom: 'Dupont', presencePrevue: true }];
-    TestBed.inject(PresencePrevueService).getPresences = () => of(reponses);
     activites.getCalendrier.and.returnValue(of([commune]));
     activites.getCalendrierAdherent.and.returnValue(of([commune]));
     activites.getCalendrierGoogle.and.returnValue(of({ evenements: [], erreurs: [] }));
@@ -317,14 +324,14 @@ describe('AgendaComponent', () => {
       accueil.componentInstance.adherentId = 42;
       accueil.componentInstance.affichage = 'liste';
       accueil.componentInstance.joursVisibles = 15;
-      accueil.componentInstance.presencesPrevues = true;
+
       accueil.detectChanges();
       accueil.nativeElement.querySelector('.evenement-ouvrir').click();
       await accueil.whenStable();
       expect(document.querySelector('.modal-body')!.innerHTML).toBe(detailAgenda);
       expect(modales.open.calls.allArgs().map(args => args[0])).toEqual([EvenementDetailComponent, EvenementDetailComponent]);
       const detail = document.querySelector('.modal-body')!;
-      for (const texte of ['Entraînement', 'Sports', '19:30', 'Prévoir une gourde', 'Matériel : Alice Dupont', 'Présents : 1', 'Waze']) {
+      for (const texte of ['Entraînement', 'Sports', '19:30', 'Prévoir une gourde', 'Matériel : Alice Dupont', 'Consulter les convocations', 'Waze']) {
         expect(detail.textContent).toContain(texte);
       }
     } finally {

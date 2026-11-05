@@ -45,29 +45,12 @@ export class ActiviteService {
   };
 
 
-  getSeancesDuJour(): Observable<Seance[]> {
-    return this.http.get<Seance[]>(API_URL + 'seancesDuJour', { responseType: 'json' });
-  }
-
-  getSeances(activiteId: number, managed = false): Observable<Seance[]> {
-    return this.http.get<Seance[]>(API_URL + (managed ? 'managed/' : '') + activiteId + '/seances', { responseType: 'json' });
-  }
-
   getReferentsCandidates(activiteId: number): Observable<AdherentLite[]> {
     return this.http.get<AdherentLite[]>(API_URL + activiteId + '/referents/candidats', { responseType: 'json' });
   }
 
   getManagedEncadrants(): Observable<UtilisateurSelectionnable[]> {
     return this.http.get<UtilisateurSelectionnable[]>(API_URL + 'managed/encadrants');
-  }
-
-  getResponsabiliteCandidates(activiteId: number, managed = false): Observable<AdherentResponsabilite[]> {
-    return this.http.get<AdherentResponsabilite[]>(API_URL + (managed ? 'managed/' : '') + activiteId + '/responsabilites/candidats');
-  }
-
-  modifierResponsabilitesSeance(activiteId: number, seanceId: number,
-                               responsabilites: ResponsabiliteSeanceEdition[], managed = false): Observable<Seance> {
-    return this.http.patch<Seance>(API_URL + (managed ? 'managed/' : '') + activiteId + '/seances/' + seanceId, { responsabilites });
   }
 
   getCalendrier(dateDebut: string, dateFin: string, tribuUuid?: string): Observable<SeanceCalendrier[]> {
@@ -90,59 +73,15 @@ export class ActiviteService {
     return this.http.get<CalendrierGoogle>(API_URL + 'calendrier/google', { params, responseType: 'json' });
   }
 
-  ajouterSeances(activiteId: number, nombreSeances: number, dateDebut: string): Observable<Seance[]> {
-    return this.http.post<Seance[]>(API_URL + activiteId + '/seances', {
-      nombreSeances,
-      dateDebut
-    }, { responseType: 'json' });
-  }
-
-  ajouterSeancesPlanification(activiteId: number, planificationId: number, nombreSemaines: number,
-    dateDebut: string, managed = false): Observable<Seance[]> {
-    return this.http.post<Seance[]>(
-      API_URL + (managed ? 'managed/' : '') + activiteId + '/planifications/' + planificationId + '/seances',
-      { nombreSeances: nombreSemaines, dateDebut },
-      { responseType: 'json' }
-    );
-  }
-
-  modifierEtatSeance(activiteId: number, seance: Seance, managed = false): Observable<Seance> {
-    return this.http.patch<Seance>(API_URL + (managed ? 'managed/' : '') + activiteId + '/seances/' + seance.id, {
-      etatSeance: seance.etatSeance
-    }, { responseType: 'json' });
-  }
-
-  modifierCommentaireSeance(activiteId: number, seance: Seance, managed = false): Observable<Seance> {
-    return this.http.patch<Seance>(API_URL + (managed ? 'managed/' : '') + activiteId + '/seances/' + seance.id, {
-      commentaire: seance.commentaire,
-      commentairePresent: true
-    }, { responseType: 'json' });
-  }
-
-  modifierHoraireSeance(activiteId: number, seance: Seance, managed = false): Observable<Seance> {
-    return this.http.patch<Seance>(API_URL + (managed ? 'managed/' : '') + activiteId + '/seances/' + seance.id, {
-      date: seance.dateEdition,
-      heureDebut: seance.heureEdition,
-      horairePresent: true
-    }, { responseType: 'json' });
-  }
-
-  modifierSalleSeance(activiteId: number, seance: Seance, managed = false): Observable<Seance> {
-    return this.http.patch<Seance>(API_URL + (managed ? 'managed/' : '') + activiteId + '/seances/' + seance.id, {
-      salleId: seance.salle?.id ?? null,
-      sallePresente: true
-    }, { responseType: 'json' });
-  }
-
-  supprimerSeance(activiteId: number, seanceId: number, managed = false): Observable<void> {
-    return this.http.delete<void>(API_URL + (managed ? 'managed/' : '') + activiteId + '/seances/' + seanceId);
-  }
-
   getAllNm1(): Observable<ActiviteNm1[]> {
     return this.http.get<ActiviteNm1[]>(API_URL + 'allNm1', { responseType: 'json' });
   }
   getAll(): Observable<Activite[]> {
     return this.http.get<Activite[]>(API_URL + 'all', { responseType: 'json' });
+  }
+
+  getById(id: number, managed = false): Observable<Activite> {
+    return this.http.get<Activite>(API_URL + (managed ? 'managed/' : '') + id);
   }
 
   getPage(query: ActivitePageQuery, managed = false): Observable<ActivitePage> {
@@ -178,18 +117,13 @@ export class ActiviteService {
   }
 
   save(activite: Activite, managed = false): Observable<Activite> {
-    // Les intervenants sont associés aux catégories de séance. L'API attend
+    // Les relations existantes sont transmises sous forme d'identifiants. L'API attend
     // uniquement leurs identifiants, afin d'éviter d'envoyer les sous-objets
     // des DTO « lite ».
     const activiteAEnregistrer = {
       ...activite,
       profs: activite.profs.map(({ id }) => ({ id })),
-      referents: activite.referents.map(({ id }) => ({ id })),
-      planificationsHebdomadaires: activite.planificationsHebdomadaires.map(planification => ({
-        ...planification,
-        profs: (planification.profs ?? []).map(({ id }) => ({ id })),
-        referents: (planification.referents ?? []).map(({ id }) => ({ id }))
-      }))
+      referents: activite.referents.map(({ id }) => ({ id }))
     };
     return this.http.post<Activite>(API_URL + (managed ? 'managed/save' : 'save'), activiteAEnregistrer, { responseType: 'json' });
   }
@@ -230,7 +164,7 @@ export class ActiviteService {
 
               let horaireDropDown = new HoraireDropDown
               horaireDropDown.id = act.id
-              horaireDropDown.nom = this.libelleCategories(act)
+              horaireDropDown.nom = `${act.genre} · ${act.ageMin}–${act.ageMax} ans`
 
               //Gerer la possiblité de reinscrire
               if(!act.reinscription){
@@ -253,19 +187,4 @@ export class ActiviteService {
     );
   }
 
-  private libelleCategories(activite: Activite): string {
-    const categories = activite.planificationsHebdomadaires ?? [];
-
-    if (categories.length === 0) {
-      return '';
-    }
-
-    return categories
-      .map(categorie => [
-        this.libellesJours[categorie.jour] ?? categorie.jour,
-        categorie.horaireDebut,
-        categorie.descriptif
-      ].filter(Boolean).join(' · '))
-      .join(' / ');
-  }
 }

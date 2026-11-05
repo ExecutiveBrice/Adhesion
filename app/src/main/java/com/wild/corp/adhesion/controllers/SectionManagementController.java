@@ -4,7 +4,7 @@ import com.wild.corp.adhesion.models.Activite;
 import com.wild.corp.adhesion.models.Adhesion;
 import com.wild.corp.adhesion.models.Chat;
 import com.wild.corp.adhesion.models.ChatTarget;
-import com.wild.corp.adhesion.models.PlanificationHebdomadaire;
+
 import com.wild.corp.adhesion.models.Section;
 import com.wild.corp.adhesion.models.resources.ChatConfiguration;
 import com.wild.corp.adhesion.repository.ActiviteRepository;
@@ -68,8 +68,7 @@ public class SectionManagementController {
     public record ActivityChanges(String nom, Integer tarif, Integer nbPlaces, Boolean complete,
                                   Boolean reinscription, String lien) { }
     public record ActivityCreation(String nom, Integer tarif, Integer nbPlaces, Integer ageMin,
-                                   Integer ageMax, String genre, DayOfWeek jour, LocalTime horaireDebut,
-                                   Long duree) { }
+                                   Integer ageMax, String genre) { }
     public record MembershipSummary(Long id, String adherent, Long activiteId, String activite,
                                     String statut, LocalDate dateChangementStatut,
                                     Boolean paiementValide, Boolean documentsValides) { }
@@ -95,7 +94,7 @@ public class SectionManagementController {
     public ActivitySummary updateActivity(Principal principal, @PathVariable Long sectionId,
                                          @PathVariable Long activityId, @RequestBody ActivityChanges changes) {
         requireManaged(principal, sectionId);
-        Activite activity = activites.findById(activityId)
+        Activite activity = activites.findForTeamUpdate(activityId)
                 .filter(item -> item.getSection() != null && sectionId.equals(item.getSection().getId()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Activité introuvable dans cette section"));
         if (changes == null || changes.nom() == null || changes.nom().trim().isEmpty()
@@ -125,9 +124,7 @@ public class SectionManagementController {
                 || request.ageMin() == null || request.ageMin() < 0 || request.ageMax() == null
                 || request.ageMax() < request.ageMin() || request.ageMax() > 120
                 || (request.genre() != null && !request.genre().isBlank()
-                    && !List.of("Non genrée", "Féminine", "Masculine").contains(request.genre().trim()))
-                || request.jour() == null
-                || request.horaireDebut() == null || request.duree() == null || request.duree() < 1) {
+                    && !List.of("Non genrée", "Féminine", "Masculine").contains(request.genre().trim()))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Les informations de l’activité sont invalides");
         }
         Activite activity = new Activite();
@@ -140,11 +137,6 @@ public class SectionManagementController {
         activity.setGenre(request.genre() == null || request.genre().isBlank() ? "Non genrée" : request.genre().trim());
         activity.setComplete(false);
         activity.setReinscription(false);
-        PlanificationHebdomadaire schedule = new PlanificationHebdomadaire();
-        schedule.setJour(request.jour());
-        schedule.setHoraireDebut(request.horaireDebut());
-        schedule.setDuree(request.duree());
-        activity.getPlanificationsHebdomadaires().add(schedule);
         return activitySummary(activiteServices.save(activity));
     }
 

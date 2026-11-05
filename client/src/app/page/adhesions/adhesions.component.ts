@@ -144,7 +144,7 @@ export class AdhesionsComponent implements OnInit {
         this.visuelselection = 'Mes sections';
       } else if (this.tokenStorageService.getUser().username == "alodbasket@free.fr" || this.tokenStorageService.getUser().username == "laurence.basket@yahoo.com" || this.tokenStorageService.getUser().username == "xlcharonnat@yahoo.fr" || this.tokenStorageService.getUser().username == "c.rullie@free.fr") {
         this.choixSection = "groupe#Basket"
-        this.visuelselection = "Basket · Toutes les catégories"
+        this.visuelselection = "Basket"
       } else {
         this.choixSection = "Toutes"
         this.visuelselection = "Toutes les adhésions"
@@ -324,7 +324,7 @@ export class AdhesionsComponent implements OnInit {
           if (this.activites.filter(activiteDropDown => activiteDropDown.nom == act.nom).length > 0) {
             let horaireDropDown = new HoraireDropDown
             horaireDropDown.id = act.id
-            horaireDropDown.nom = this.libelleCategories(act)
+            horaireDropDown.nom = act.nom
             this.activites.filter(activiteDropDown => activiteDropDown.nom == act.nom)[0].horaires.push(horaireDropDown)
           } else {
             let activiteDropDown = new ActiviteDropDown()
@@ -332,7 +332,7 @@ export class AdhesionsComponent implements OnInit {
             activiteDropDown.groupeFiltre = act.section?.nom ?? ''
             let horaireDropDown = new HoraireDropDown
             horaireDropDown.id = act.id
-            horaireDropDown.nom = this.libelleCategories(act)
+            horaireDropDown.nom = act.nom
             activiteDropDown.horaires.push(horaireDropDown)
             this.activites.push(activiteDropDown)
           }
@@ -343,33 +343,6 @@ export class AdhesionsComponent implements OnInit {
         this.showError(error.error.message)
       }
     });
-  }
-
-  private libelleCategories(activite: { planificationsHebdomadaires?: Array<{
-    jour?: string;
-    horaireDebut?: string;
-    descriptif?: string;
-  }> }): string {
-    const libellesJours: Record<string, string> = {
-      MONDAY: 'Lundi',
-      TUESDAY: 'Mardi',
-      WEDNESDAY: 'Mercredi',
-      THURSDAY: 'Jeudi',
-      FRIDAY: 'Vendredi',
-      SATURDAY: 'Samedi',
-      SUNDAY: 'Dimanche'
-    };
-
-    const libelle = (activite.planificationsHebdomadaires ?? [])
-      .map(categorie => [
-        categorie.jour ? (libellesJours[categorie.jour] ?? categorie.jour) : '',
-        categorie.horaireDebut,
-        categorie.descriptif
-      ].filter(Boolean).join(' · '))
-      .filter(Boolean)
-      .join(' / ');
-
-    return libelle || 'Catégorie non renseignée';
   }
 
   getStatuses() {

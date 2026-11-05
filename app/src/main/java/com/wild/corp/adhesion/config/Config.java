@@ -62,7 +62,7 @@ public class Config {
 
     private void rattraperSeancesPassees() {
         int seancesRealisees = seanceServices.realiserSeancesAvant(LocalDate.now(PARIS));
-        log.info("{} séance(s) antérieure(s) à aujourd'hui passée(s) au statut réalisée", seancesRealisees);
+        log.info("{} événement(s) antérieure(s) à aujourd'hui passée(s) au statut réalisée", seancesRealisees);
     }
 
     private void annulation(){

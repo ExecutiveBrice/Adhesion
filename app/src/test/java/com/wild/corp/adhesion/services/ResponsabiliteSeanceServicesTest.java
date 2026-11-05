@@ -18,7 +18,8 @@ class ResponsabiliteSeanceServicesTest {
     private final AdherentRepository adherents = mock(AdherentRepository.class);
     private final TacheSeanceRepository taches = mock(TacheSeanceRepository.class);
     private final ActiviteRepository activites = mock(ActiviteRepository.class);
-    private final ResponsabiliteSeanceServices service = new ResponsabiliteSeanceServices(adherents, taches, activites);
+    private final EquipeRepository equipes = mock(EquipeRepository.class);
+    private final ResponsabiliteSeanceServices service = new ResponsabiliteSeanceServices(adherents, taches, activites, equipes);
     private final Seance seance = new Seance();
     private final TacheSeance tache = new TacheSeance();
     private final Adherent adherent = new Adherent();

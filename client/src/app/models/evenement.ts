@@ -1,6 +1,6 @@
 import { AgendaGoogleConfiguration } from './agendaGoogle';
 import { ResponsabiliteSeance } from './responsabiliteSeance';
-import { EvenementGoogleAgenda, PresencePrevue, SeanceCalendrier } from './seance';
+import { EvenementGoogleAgenda, SeanceCalendrier } from './seance';
 
 /** Données de détail communes aux événements de l'accueil et de l'agenda. */
 export interface Evenement {
@@ -29,10 +29,7 @@ export interface Evenement {
   causeAnnulation?: string | null;
   personnelle?: boolean;
   responsabilites?: ResponsabiliteSeance[];
-  presences?: PresencePrevue[];
-  chargementPresences?: boolean;
-  enregistrementPresence?: boolean;
-  erreurPresence?: string;
+
 }
 
 export function evenementSeance(s: SeanceCalendrier, personnelle: boolean): Evenement {

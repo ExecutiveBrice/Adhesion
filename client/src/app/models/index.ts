@@ -1,4 +1,4 @@
-﻿export * from './activite';
+export * from './activite';
 export * from './activiteNm1';
 export * from './adherent';
 export * from './adhesion';
@@ -27,7 +27,6 @@ export * from './notification';
 export * from './activiteDropDown';
 export * from './agendaGoogle';
 export * from './salle';
-export * from './planificationHebdomadaire';
 export * from './utilisateurSelectionnable';
 
 export * from './chat';

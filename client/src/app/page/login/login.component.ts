@@ -213,7 +213,7 @@ export class LoginComponent implements OnInit {
     const dateDebut = this.dateIso(debut);
     const dateFin = this.dateIso(fin);
     const seances$ = this.activiteService.getCalendrier(dateDebut, dateFin).pipe(catchError(() => {
-      this.erreurCalendrier = "Le calendrier des séances n'est pas disponible pour le moment.";
+      this.erreurCalendrier = "Le calendrier des événements n'est pas disponible pour le moment.";
       return of([] as SeanceCalendrier[]);
     }));
     const google$ = this.googleAgendaIds.length > 0

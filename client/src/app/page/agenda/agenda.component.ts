@@ -1,3 +1,5 @@
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TeamEventModalComponent } from '../../template/team-event-modal/team-event-modal.component';
 import { ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -41,6 +43,7 @@ interface JourAgenda {
   styleUrl: './agenda.component.css'
 })
 export class AgendaComponent implements OnInit {
+  private readonly creationModals = inject(NgbModal);
   private readonly apiViewRefresh = registerApiViewRefresh();
   private readonly activites = inject(ActiviteService);
   private readonly params = inject(ParamService);
@@ -204,7 +207,7 @@ export class AgendaComponent implements OnInit {
     const debut = this.dateIso(this.mois);
     const fin = this.dateIso(new Date(this.mois.getFullYear(), this.mois.getMonth() + 1, 0));
     const seances$ = this.activites.getCalendrier(debut, fin).pipe(catchError(() => {
-      this.erreurs.push('Impossible de charger les séances des activités.');
+      this.erreurs.push('Impossible de charger les événements des activités.');
       return of([] as SeanceCalendrier[]);
     }));
     const personnelles$ = this.adherentId == null ? of(null) : this.activites
@@ -247,6 +250,11 @@ export class AgendaComponent implements OnInit {
         this.appliquerSelection();
         this.chargement = false;
       });
+  }
+
+  ajouterEvenement(): void {
+    const modal = this.creationModals.open(TeamEventModalComponent, { size: 'lg', backdrop: 'static', ariaLabelledBy: 'event-modal-title' });
+    modal.result.then(() => this.chargerMois(), () => {});
   }
 
   ouvrirEvenement(evenement: EvenementAgenda): void {

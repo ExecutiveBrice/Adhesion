@@ -122,7 +122,7 @@
                       @for (activite of groupe.activites; track activite.nom) {
                         <div class="section-group">
                           <button ngbDropdownItem class="section-name"
-                            (click)="selectSection('activite#' + activite.nom, activite.nom + ' · Toutes les catégories')">
+                            (click)="selectSection('activite#' + activite.nom, activite.nom + '')">
                             {{activite.nom}}
                           </button>
                           @for (categorie of activite.horaires; track categorie.id) {

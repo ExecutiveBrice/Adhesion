@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  <changeSet id="v17-events-only" author="adhesion">
+    <customChange class="com.wild.corp.adhesion.migration.ActivityEventsDataMigration"/>
+    <dropForeignKeyConstraint baseTableName="affectations_equipe" constraintName="fk_affectation_adhesion"/>
+    <addForeignKeyConstraint baseTableName="affectations_equipe" baseColumnNames="adhesion_id" referencedTableName="adhesions" referencedColumnNames="id" constraintName="fk_affectation_adhesion" onDelete="CASCADE"/>
+    <dropForeignKeyConstraint baseTableName="convocations_equipe" constraintName="fk_convocation_adhesion"/>
+    <addForeignKeyConstraint baseTableName="convocations_equipe" baseColumnNames="adhesion_id" referencedTableName="adhesions" referencedColumnNames="id" constraintName="fk_convocation_adhesion" onDelete="CASCADE"/>
+    <dropForeignKeyConstraint baseTableName="convocation_reponses" constraintName="fk_response_invitation"/>
+    <addForeignKeyConstraint baseTableName="convocation_reponses" baseColumnNames="convocation_id" referencedTableName="convocations_equipe" referencedColumnNames="id" constraintName="fk_response_invitation" onDelete="CASCADE"/>
+    <dropColumn tableName="seance" columnName="planification_id"/>
+    <dropTable tableName="planification_equipes"/>
+    <dropTable tableName="planification_professeurs"/>
+    <dropTable tableName="planification_referents"/>
+    <dropTable tableName="planifications_hebdomadaires"/>
+    <dropColumn tableName="activites" columnName="team_management"/>
+    <dropColumn tableName="activites" columnName="jour"/>
+    <dropColumn tableName="activites" columnName="horaire_debut"/>
+    <dropColumn tableName="activites" columnName="duree"/>
+    <dropColumn tableName="seance" columnName="team_managed"/>
+    <modifyDataType tableName="seance" columnName="commentaire" newDataType="varchar(2000)"/>
+    <!-- H2's native TEXT matches PostgreSQL TEXT; Liquibase otherwise creates a CLOB. -->
+    <sql dbms="h2">ALTER TABLE team_mails ALTER COLUMN contenu TYPE TEXT</sql>
+    <addDefaultValue tableName="seance" columnName="type_evenement" columnDataType="varchar(20)" defaultValue="ACTIVITE"/>
+  </changeSet>
+</databaseChangeLog>

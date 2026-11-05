@@ -513,23 +513,23 @@ public class AdherentServices {
             adherentExport.setMajorite(adherent.getMineur() ? "Mineur" : "Majeur");
 
             if (!tmpAdhesions.isEmpty()) {
-                adherentExport.setActivite1(tmpAdhesions.get(0).getActivite().getNom() + " " + tmpAdhesions.get(0).getActivite().getHoraire());
+                adherentExport.setActivite1(tmpAdhesions.get(0).getActivite().getNom());
                 adherentExport.setStatutAdhesion1(tmpAdhesions.get(0).getStatutActuel());
 
                 if (tmpAdhesions.size() > 1) {
-                    adherentExport.setActivite2(tmpAdhesions.get(1).getActivite().getNom() + " " + tmpAdhesions.get(1).getActivite().getHoraire());
+                    adherentExport.setActivite2(tmpAdhesions.get(1).getActivite().getNom());
                     adherentExport.setStatutAdhesion2(tmpAdhesions.get(1).getStatutActuel());
                 }
                 if (tmpAdhesions.size() > 2) {
-                    adherentExport.setActivite3(tmpAdhesions.get(2).getActivite().getNom() + " " + tmpAdhesions.get(2).getActivite().getHoraire());
+                    adherentExport.setActivite3(tmpAdhesions.get(2).getActivite().getNom());
                     adherentExport.setStatutAdhesion3(tmpAdhesions.get(2).getStatutActuel());
                 }
                 if (tmpAdhesions.size() > 3) {
-                    adherentExport.setActivite4(tmpAdhesions.get(3).getActivite().getNom() + " " + tmpAdhesions.get(3).getActivite().getHoraire());
+                    adherentExport.setActivite4(tmpAdhesions.get(3).getActivite().getNom());
                     adherentExport.setStatutAdhesion4(tmpAdhesions.get(3).getStatutActuel());
                 }
                 if (tmpAdhesions.size() > 4) {
-                    adherentExport.setActivite5(tmpAdhesions.get(4).getActivite().getNom() + " " + tmpAdhesions.get(4).getActivite().getHoraire());
+                    adherentExport.setActivite5(tmpAdhesions.get(4).getActivite().getNom());
                     adherentExport.setStatutAdhesion5(tmpAdhesions.get(4).getStatutActuel());
                 }
             }
@@ -580,10 +580,8 @@ public class AdherentServices {
                 String pattern = "%" + activite.trim().toLowerCase() + "%";
                 Join<Adherent, Adhesion> adhesions = root.join("adhesions", JoinType.LEFT);
                 Join<Adhesion, Activite> activites = adhesions.join("activite", JoinType.LEFT);
-                Join<Activite, PlanificationHebdomadaire> planifications = activites.join("planificationsHebdomadaires", JoinType.LEFT);
                 predicates.add(criteriaBuilder.or(
-                        criteriaBuilder.like(criteriaBuilder.lower(activites.get("nom")), pattern),
-                        criteriaBuilder.like(criteriaBuilder.lower(planifications.get("descriptif")), pattern)
+                        criteriaBuilder.like(criteriaBuilder.lower(activites.get("nom")), pattern)
                 ));
             }
             if (activiteNm1 != null && !activiteNm1.isBlank()) {

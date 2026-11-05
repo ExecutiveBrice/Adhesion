@@ -1,5 +1,13 @@
 http://localhost:8000/swagger-ui/index.html
 
+## Équipes et événements
+
+Chaque activité possède des équipes, quelle que soit sa section, sans option à activer. Tous ses adhérents sont associés par défaut à la première équipe. Les responsables peuvent ensuite les répartir dans d’autres équipes.
+
+La page **Activités** est accessible aux encadrants et affiche les activités dont le compte connecté encadre au moins une équipe non archivée. La recherche, les filtres et la pagination s’appliquent à cette liste limitée, sans doublon lorsqu’un encadrant suit plusieurs équipes d’une même activité. Les accès globaux de l’administration et du secrétariat, ainsi que les accès aux sections confiées, sont conservés. Le rôle d’encadrant seul ne donne pas le droit de créer ou de configurer une activité.
+
+Les catégories, créneaux et générations de séances sont supprimés. Les dates, lieux, participants, convocations, responsabilités et pointages se gèrent sur les événements. Le [guide fonctionnel](app/TEAM_MANAGEMENT.md) décrit les parcours et la migration des données existantes.
+
 ## Contacts newsletter Brevo
 
 `NewsletterContactService` est un service serveur distinct d’`EmailService`, qui continue à envoyer les emails transactionnels avec le SDK Brevo existant. Son client API est indépendant du client global transactionnel. Il ne crée aucun compte, rôle ou adhérent, notamment pour les personnes extérieures. Aucun état d’abonnement n’est enregistré localement : Brevo reste la référence.

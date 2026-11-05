@@ -61,15 +61,7 @@ class ResponsabiliteSeanceControllerTest {
         verify(tacheSeanceConfigurationServices).create(configuration);
     }
 
-    @Test
-    void rejectsIncompleteAssignmentsBeforeCallingTheSessionService() throws Exception {
-        for (String responsabilite : List.of("null", "{}", "{\"tacheId\":3}", "{\"tacheId\":0,\"adherentId\":12}")) {
-            mvc.perform(patch("/activite/5/seances/9").with(user("secretary").roles("SECRETAIRE"))
-                    .contentType(MediaType.APPLICATION_JSON).content("{\"responsabilites\":[" + responsabilite + "]}"))
-                    .andExpect(status().isBadRequest());
-        }
-        verifyNoInteractions(seanceServices);
-    }
+
 
     @Test
     void administratorCanSaveTaskPresentation() throws Exception {
@@ -84,48 +76,8 @@ class ResponsabiliteSeanceControllerTest {
         verify(tacheSeanceConfigurationServices).create(configuration);
     }
 
-    @Test
-    void patchesAssignmentsAndAcceptsAnEmptyListToRemoveThem() throws Exception {
-        var responsabilites = List.of(new ResponsabiliteSeanceRequest(3L, 12L));
-        when(seanceServices.updateSeance(5L, 9L, null, null, false, null, null, false, null, false, responsabilites))
-                .thenReturn(new Seance());
-        mvc.perform(patch("/activite/5/seances/9").with(user("secretary").roles("SECRETAIRE"))
-                .contentType(MediaType.APPLICATION_JSON).content("{\"responsabilites\":[{\"tacheId\":3,\"adherentId\":12}]}"))
-                .andExpect(status().isOk());
-        verify(seanceServices).updateSeance(5L, 9L, null, null, false, null, null, false, null, false, responsabilites);
-        when(seanceServices.updateSeance(5L, 9L, null, null, false, null, null, false, null, false, List.of()))
-                .thenReturn(new Seance());
-        mvc.perform(patch("/activite/5/seances/9").with(user("secretary").roles("SECRETAIRE"))
-                .contentType(MediaType.APPLICATION_JSON).content("{\"responsabilites\":[]}"))
-                .andExpect(status().isOk());
-        verify(seanceServices).updateSeance(5L, 9L, null, null, false, null, null, false, null, false, List.of());
-    }
 
-    @Test
-    void ordinaryMembersCannotUseUnscopedSessionRoutes() throws Exception {
-        mvc.perform(get("/activite/5/seances").with(user("member").roles("USER")))
-                .andExpect(status().isForbidden());
-        mvc.perform(get("/activite/5/responsabilites/candidats").with(user("member").roles("USER")))
-                .andExpect(status().isForbidden());
-        mvc.perform(patch("/activite/5/seances/9").with(user("member").roles("USER"))
-                .contentType(MediaType.APPLICATION_JSON).content("{\"responsabilites\":[]}"))
-                .andExpect(status().isForbidden());
-        mvc.perform(delete("/activite/5/seances/9").with(user("member").roles("USER")))
-                .andExpect(status().isForbidden());
-        verifyNoInteractions(seanceServices, responsabiliteSeanceServices);
-    }
 
-    @Test
-    void administratorCanReadSessionsAddedToAnActivity() throws Exception {
-        when(activiteServices.getSeances(38L)).thenReturn(List.of(new SeanceResponse(
-                3626L, ESeance.PROGRAMMEE, null,
-                LocalDateTime.of(2026, 11, 24, 20, 45), LocalDateTime.of(2026, 11, 24, 22, 0),
-                null, null, null, null)));
 
-        mvc.perform(get("/activite/38/seances").with(user("admin").roles("ADMIN")))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(3626))
-                .andExpect(jsonPath("$[0].debut").value("2026-11-24T20:45:00"));
-        verify(activiteServices).getSeances(38L);
-    }
+
 }

@@ -74,7 +74,7 @@ class SectionManagementControllerTest {
         Activite activity = new Activite();
         activity.setId(10L);
         activity.setSection(Section.builder().id(5L).build());
-        when(activites.findById(10L)).thenReturn(Optional.of(activity));
+        when(activites.findForTeamUpdate(10L)).thenReturn(Optional.of(activity));
 
         assertThatThrownBy(() -> controller.updateActivity(referent, 4L, 10L,
                 new SectionManagementController.ActivityChanges("Autre", 100, 20, false, false, null)))

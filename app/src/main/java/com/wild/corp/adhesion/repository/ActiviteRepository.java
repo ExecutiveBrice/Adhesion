@@ -14,13 +14,17 @@ import java.util.List;
 @Repository
 public interface ActiviteRepository extends JpaRepository<Activite, Long>, JpaSpecificationExecutor<Activite> {
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select a from Activite a where a.id = :id")
+    java.util.Optional<Activite> findForTeamUpdate(@Param("id") Long id);
+
     List<Activite> findByNom(String nom);
 
     List<Activite> findBySectionIdOrderByNomAsc(Long sectionId);
 
     boolean existsByNom(String nom);
 
-    @Query("select count(a) > 0 from Activite a join a.referents r where r.user.username = :username")
+    @Query("select count(t) > 0 from Equipe t join t.referents r where r.user.username = :username and t.archivee = false")
     boolean existsByReferentUsername(@Param("username") String username);
 
     @Query("""

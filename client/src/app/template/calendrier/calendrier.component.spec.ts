@@ -1,11 +1,11 @@
+import { provideRouter } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
 import { of, Subject, throwError } from 'rxjs';
 import { ActiviteService } from '../../_services/activite.service';
 import { ParamService } from '../../_services/param.service';
-import { PresencePrevue, SeanceCalendrier } from '../../models/seance';
-import { PresencePrevueService } from '../../_services/presence-prevue.service';
+import { SeanceCalendrier } from '../../models/seance';
 import { CalendrierComponent } from './calendrier.component';
 import { NgbConfig, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
@@ -26,10 +26,10 @@ describe('CalendrierComponent — présences prévues dans l’accueil', () => {
     };
     TestBed.configureTestingModule({
       imports: [CalendrierComponent],
-      providers: [
+      providers: [provideRouter([]),
         { provide: ActiviteService, useValue: { getCalendrierAdherent: () => of([seance]) } },
         { provide: ParamService, useValue: { getAgendasGoogle: () => of([]) } },
-        { provide: PresencePrevueService, useValue: {} }
+
       ]
     });
     const fixture = TestBed.createComponent(CalendrierComponent);
@@ -68,208 +68,6 @@ describe('CalendrierComponent — présences prévues dans l’accueil', () => {
     }
   });
 
-  it('propose les boutons directs uniquement pour les séances compétitives à venir', () => {
-    registerLocaleData(localeFr);
-    const debut = new Date();
-    debut.setDate(debut.getDate() + 1);
-    debut.setHours(18, 0, 0, 0);
-    const date = `${debut.getFullYear()}-${String(debut.getMonth() + 1).padStart(2, '0')}-${String(debut.getDate()).padStart(2, '0')}`;
-    const base: SeanceCalendrier = {
-      id: 15, activiteId: 1, activiteNom: 'Basket', sectionType: 'COMPETITION', horaireActivite: '',
-      salle: '', adresseSalle: null, couleurSalle: null, commentaire: null, lien: null,
-      debut: `${date}T18:00:00`, fin: `${date}T19:00:00`, etatSeance: 'PROGRAMMEE'
-    };
-    TestBed.configureTestingModule({
-      imports: [CalendrierComponent],
-      providers: [
-        { provide: ActiviteService, useValue: { getCalendrierAdherent: () => of([
-          base, { ...base, id: 16, sectionType: 'NON_COMPETITIVE' }, { ...base, id: 17, etatSeance: 'ANNULEE' }
-        ]) } },
-        { provide: ParamService, useValue: { getAgendasGoogle: () => of([]) } },
-        { provide: PresencePrevueService, useValue: { getPresences: () => of([]) } }
-      ]
-    });
-    const fixture = TestBed.createComponent(CalendrierComponent);
-    const component = fixture.componentInstance;
-    component.adherentId = 9;
-    component.affichage = 'liste';
-    component.joursVisibles = 15;
-    component.presencesPrevues = true;
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelectorAll('.seance-presences .btn-group button').length).toBe(2);
-    expect(fixture.nativeElement.querySelector('h3 button')).toBeNull();
-    expect(fixture.nativeElement.textContent).not.toContain('Voir les présences prévues');
-    const event = component.evenementsAVenir[0];
-    component.presencesPrevues = false;
-    expect(component.peutRenseignerPresence(event)).toBeFalse();
-    component.presencesPrevues = true;
-    expect(component.peutRenseignerPresence({ ...event, debut: '2000-01-01T18:00:00' })).toBeFalse();
-    component.adherentId = undefined;
-    expect(component.peutRenseignerPresence(event)).toBeFalse();
-  });
-});
-
-describe('CalendrierComponent : réponses et totaux sur les séances', () => {
-  let fixture: ComponentFixture<CalendrierComponent>;
-  let component: CalendrierComponent;
-  let service: jasmine.SpyObj<PresencePrevueService>;
-  let modales: NgbModal;
-  const presences = (): PresencePrevue[] => [
-    { id: 1, adherentId: 9, nom: 'Dupont', prenom: 'Alice', presencePrevue: null },
-    { id: 2, adherentId: 10, nom: 'Martin', prenom: 'Paul', presencePrevue: true },
-    { id: 3, adherentId: 11, nom: 'Bernard', prenom: 'Jean', presencePrevue: false },
-    { id: 4, adherentId: 12, nom: 'Durand', prenom: 'Marie', presencePrevue: null }
-  ];
-
-  beforeEach(() => {
-    registerLocaleData(localeFr);
-    const date = new Date();
-    date.setDate(date.getDate() + 1);
-    const iso = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-    const seance: SeanceCalendrier = {
-      id: 15, activiteId: 1, activiteNom: 'Basket', sectionType: 'COMPETITION', horaireActivite: '',
-      salle: '', adresseSalle: null, couleurSalle: null, commentaire: null, lien: null,
-      debut: `${iso}T18:00:00`, fin: `${iso}T19:00:00`, etatSeance: 'PROGRAMMEE'
-    };
-    service = jasmine.createSpyObj('PresencePrevueService', ['getPresences', 'updatePresence']);
-    service.getPresences.and.returnValue(of(presences()));
-    TestBed.configureTestingModule({
-      imports: [CalendrierComponent],
-      providers: [
-        { provide: ActiviteService, useValue: { getCalendrierAdherent: () => of([
-          seance, { ...seance, id: 16, sectionType: 'NON_COMPETITIVE' }, { ...seance, id: 17, etatSeance: 'ANNULEE' }
-        ]) } },
-        { provide: ParamService, useValue: { getAgendasGoogle: () => of([]) } },
-        { provide: PresencePrevueService, useValue: service }
-      ]
-    });
-    fixture = TestBed.createComponent(CalendrierComponent);
-    component = fixture.componentInstance;
-    component.adherentId = 9;
-    component.affichage = 'liste';
-    component.joursVisibles = 15;
-    component.presencesPrevues = true;
-    modales = TestBed.inject(NgbModal);
-    TestBed.inject(NgbConfig).animation = false;
-  });
-
-  afterEach(() => modales.dismissAll());
-
-  async function ouvrirDetails(): Promise<void> {
-    fixture.nativeElement.querySelector('.evenement-ouvrir').click();
-    await fixture.whenStable();
-  }
-
-  function totaux(): HTMLElement {
-    return document.querySelector('.modal-body .seance-presences-totaux') as HTMLElement;
-  }
-
-  function boutons(): NodeListOf<HTMLButtonElement> {
-    return fixture.nativeElement.querySelectorAll('.seance-presences .btn-group button');
-  }
-
-  it('affiche les deux boutons sur la carte et réserve les totaux à la modale', async () => {
-    fixture.detectChanges();
-    expect(service.getPresences).toHaveBeenCalledOnceWith(15);
-    expect(boutons().length).toBe(2);
-    expect(boutons()[0].textContent).toBe('Présent');
-    expect(boutons()[1].textContent).toBe('Absent');
-    expect(boutons()[0].getAttribute('aria-pressed')).toBe('false');
-    expect(boutons()[1].getAttribute('aria-pressed')).toBe('false');
-    expect(fixture.nativeElement.querySelector('.seance-presences-totaux')).toBeNull();
-    await ouvrirDetails();
-    expect(totaux().textContent).toContain('Présents : 1');
-    expect(totaux().textContent).toContain('Absents : 1');
-    component.adherentId = 10;
-    fixture.detectChanges();
-    expect(component.maPresence(component.evenementsAVenir[0])!.presencePrevue).toBeTrue();
-    expect(totaux().textContent).toContain('Présents : 1');
-    expect(totaux().textContent).toContain('Absents : 1');
-  });
-
-  it('enregistre depuis la carte et actualise les totaux pour chaque changement de réponse', () => {
-    const response = new Subject<PresencePrevue>();
-    service.updatePresence.and.returnValue(response);
-    fixture.detectChanges();
-    const event = component.evenementsAVenir[0];
-    boutons()[0].click();
-    fixture.detectChanges();
-    expect(boutons()[0].disabled).toBeTrue();
-    expect(boutons()[1].disabled).toBeTrue();
-    component.definirPresencePrevue(event, false);
-    expect(service.updatePresence).toHaveBeenCalledOnceWith(15, true);
-    expect(component.evenementSelectionne).toBeNull();
-    expect(component.nombrePresences(event, true)).toBe(1);
-    service.getPresences.and.returnValue(of(presences().map(presence => presence.id === 1 ? { ...presence, presencePrevue: true } : presence)));
-    response.next({ ...presences()[0], presencePrevue: true });
-    response.complete();
-    fixture.detectChanges();
-    expect(component.nombrePresences(event, true)).toBe(2);
-    expect(boutons()[0].getAttribute('aria-pressed')).toBe('true');
-    service.updatePresence.and.returnValue(of({ ...presences()[0], presencePrevue: false }));
-    service.getPresences.and.returnValue(of(presences().map(presence => presence.id === 1 ? { ...presence, presencePrevue: false } : presence)));
-    boutons()[1].click();
-    fixture.detectChanges();
-    expect(service.updatePresence).toHaveBeenCalledWith(15, false);
-    expect(component.nombrePresences(event, true)).toBe(1);
-    expect(component.nombrePresences(event, false)).toBe(2);
-    expect(boutons()[1].getAttribute('aria-pressed')).toBe('true');
-    boutons()[1].click();
-    expect(service.updatePresence).toHaveBeenCalledTimes(2);
-  });
-
-  it('conserve les totaux si l’enregistrement échoue et permet de réessayer', async () => {
-    service.updatePresence.and.returnValue(throwError(() => ({ error: { detail: 'Séance annulée' } })));
-    fixture.detectChanges();
-    boutons()[1].click();
-    fixture.detectChanges();
-    const event = component.evenementsAVenir[0];
-    expect(component.maPresence(event)!.presencePrevue).toBeNull();
-    expect(component.nombrePresences(event, false)).toBe(1);
-    await ouvrirDetails();
-    expect(document.querySelector('.modal-body')!.textContent).toContain('Séance annulée');
-    expect(boutons()[1].disabled).toBeFalse();
-    service.updatePresence.and.returnValue(of({ ...presences()[0], presencePrevue: false }));
-    service.getPresences.and.returnValue(of(presences().map(presence => presence.id === 1 ? { ...presence, presencePrevue: false } : presence)));
-    boutons()[1].click();
-    expect(component.nombrePresences(event, false)).toBe(2);
-    expect(event.erreurPresence).toBe('');
-  });
-
-  it('désactive les boutons pendant le chargement et permet de recharger après une erreur depuis la modale', async () => {
-    const response = new Subject<PresencePrevue[]>();
-    service.getPresences.and.returnValue(response);
-    fixture.detectChanges();
-    expect(boutons()[0].disabled).toBeTrue();
-    await ouvrirDetails();
-    expect(totaux().textContent).toContain('Chargement');
-    response.error(new Error('network'));
-    fixture.detectChanges();
-    await fixture.whenStable();
-    expect(totaux().textContent).not.toContain('Absents : 0');
-    expect(boutons()[0].disabled).toBeTrue();
-    service.getPresences.and.returnValue(of(presences()));
-    document.querySelector<HTMLButtonElement>('.modal-body .alert button')!.click();
-    fixture.detectChanges();
-    expect(boutons()[0].disabled).toBeFalse();
-    expect(component.nombrePresences(component.evenementsAVenir[0], true)).toBe(1);
-  });
-
-  it('recharge toutes les réponses de la séance après un choix pour inclure les changements des autres inscrits', () => {
-    fixture.detectChanges();
-    const event = component.evenementsAVenir[0];
-    service.updatePresence.and.returnValue(of({ ...presences()[0], presencePrevue: true }));
-    service.getPresences.and.returnValue(of(presences().map(presence =>
-      presence.id === 1 || presence.id === 4 ? { ...presence, presencePrevue: true } : presence)));
-    boutons()[0].click();
-    fixture.detectChanges();
-    expect(service.getPresences).toHaveBeenCalledTimes(2);
-    expect(service.getPresences.calls.mostRecent().args).toEqual([15]);
-    expect(component.nombrePresences(event, true)).toBe(3);
-    expect(component.nombrePresences(event, false)).toBe(1);
-    expect(boutons()[0].getAttribute('aria-pressed')).toBe('true');
-    expect(fixture.nativeElement.querySelector('.seance-presences-totaux')).toBeNull();
-  });
 });
 
 describe('CalendrierComponent : périmètre adhérent', () => {
@@ -287,10 +85,10 @@ describe('CalendrierComponent : périmètre adhérent', () => {
     params.getAgendasGoogle.and.returnValue(of([]));
     TestBed.configureTestingModule({
       imports: [CalendrierComponent],
-      providers: [
+      providers: [provideRouter([]),
         { provide: ActiviteService, useValue: activites },
         { provide: ParamService, useValue: params },
-        { provide: PresencePrevueService, useValue: {} }
+
       ]
     });
     fixture = TestBed.createComponent(CalendrierComponent);
@@ -335,10 +133,7 @@ describe('CalendrierComponent : périmètre adhérent', () => {
       component.adherentId = 42;
       component.affichage = 'liste';
       component.joursVisibles = 15;
-      component.presencesPrevues = true;
-      const presences = jasmine.createSpy('getPresences').and.returnValue(of([]));
-      TestBed.inject(PresencePrevueService).getPresences = presences;
-      fixture.detectChanges();
+        fixture.detectChanges();
 
       expect(activites.getCalendrierAdherent).toHaveBeenCalledOnceWith('2026-10-06', '2026-10-20', 42);
       expect(activites.getCalendrierGoogle).toHaveBeenCalledOnceWith('2026-10-06', '2026-10-20', ['agenda-public']);
@@ -351,7 +146,6 @@ describe('CalendrierComponent : périmètre adhérent', () => {
       expect(cartes[0].style.getPropertyValue('--agenda-color')).toBe('#123456');
       expect(cartes[0].querySelector('.seance-presences')).toBeNull();
       expect(cartes[1].textContent).toContain('Basket');
-      expect(presences).toHaveBeenCalledOnceWith(15);
     } finally {
       jasmine.clock().uninstall();
     }

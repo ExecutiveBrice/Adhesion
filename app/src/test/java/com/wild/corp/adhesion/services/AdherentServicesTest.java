@@ -3,7 +3,6 @@ package com.wild.corp.adhesion.services;
 import com.wild.corp.adhesion.models.Accord;
 import com.wild.corp.adhesion.models.Activite;
 import com.wild.corp.adhesion.models.ActiviteNm1;
-import com.wild.corp.adhesion.models.PlanificationHebdomadaire;
 import com.wild.corp.adhesion.models.Adherent;
 import com.wild.corp.adhesion.models.ERole;
 import com.wild.corp.adhesion.models.Adhesion;
@@ -51,12 +50,6 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.ArgumentMatchers.any;
 
 class AdherentServicesTest {
-
-    private PlanificationHebdomadaire planification(String descriptif) {
-        PlanificationHebdomadaire planification = new PlanificationHebdomadaire();
-        planification.setDescriptif(descriptif);
-        return planification;
-    }
 
     private final AdherentServices adherentServices = new AdherentServices();
 
@@ -314,7 +307,6 @@ class AdherentServicesTest {
     void includesPreviousSeasonActivitiesInTheExport() {
         Activite activite = new Activite();
         activite.setNom("Danse");
-        activite.getPlanificationsHebdomadaires().add(planification("Majeur"));
 
         Adhesion adhesion = new Adhesion();
         adhesion.setActivite(activite);
@@ -346,7 +338,7 @@ class AdherentServicesTest {
         List<AdherentExport> exports = adherentServices.getAllExportFlat();
 
         assertThat(exports).singleElement().satisfies(export -> {
-            assertThat(export.getActivite1()).isEqualTo("Danse Majeur");
+            assertThat(export.getActivite1()).isEqualTo("Danse");
             assertThat(export.getStatutAdhesion1()).isEqualTo("Validée");
             assertThat(export.getTelephone()).isEqualTo("0600000000");
             assertThat(export.getActivitesNm1()).isEqualTo("Yoga Majeur, Natation Mineur");
@@ -357,7 +349,6 @@ class AdherentServicesTest {
     void includesAdherentsWithCancelledOrNoAdhesionInTheExport() {
         Activite activite = new Activite();
         activite.setNom("Basket");
-        activite.getPlanificationsHebdomadaires().add(planification("Loisir"));
 
         Adhesion adhesionAnnulee = new Adhesion();
         adhesionAnnulee.setActivite(activite);
@@ -388,7 +379,7 @@ class AdherentServicesTest {
 
         assertThat(exports).hasSize(2);
         assertThat(exports).filteredOn(export -> export.getId().equals(1L)).singleElement().satisfies(export -> {
-            assertThat(export.getActivite1()).isEqualTo("Basket Loisir");
+            assertThat(export.getActivite1()).isEqualTo("Basket");
             assertThat(export.getStatutAdhesion1()).isEqualTo("Annulée");
         });
         assertThat(exports).filteredOn(export -> export.getId().equals(2L)).singleElement().satisfies(export -> {

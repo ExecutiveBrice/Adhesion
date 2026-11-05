@@ -12,7 +12,7 @@ export interface SectionActivity {
 }
 export interface SectionActivityCreation {
   nom: string; tarif: number; nbPlaces: number; ageMin: number; ageMax: number;
-  genre: string; jour: string; horaireDebut: string; duree: number;
+  genre: string;
 }
 export interface SectionMembership {
   id: number; adherent: string; activiteId: number; activite: string; statut: string;

@@ -23,6 +23,34 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true,  allowSetters = true)
 public class Seance {
 
+    @ManyToMany
+    @JoinTable(name = "seance_equipes", joinColumns = @JoinColumn(name = "seance_id"),
+            inverseJoinColumns = @JoinColumn(name = "equipe_id"))
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private java.util.Set<Equipe> equipes = new java.util.HashSet<>();
+
+    @Column(length = 20, nullable = false)
+    private String typeEvenement = "ACTIVITE";
+
+    @Column(length = 200)
+    private String lieuExterieur;
+
+    private LocalDateTime rendezVous;
+
+    @Column(length = 100)
+    private String adversaire;
+
+    @Column(nullable = false)
+    private int teamRevision;
+
+    @OneToMany(mappedBy = "seance", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private List<ConvocationEquipe> convocationsEquipe = new ArrayList<>();
+
+    @OneToMany(mappedBy = "seance", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private List<TeamMail> teamMails = new ArrayList<>();
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -31,17 +59,7 @@ public class Seance {
     @JsonIgnoreProperties({"adhesions", "profs"})
     private Activite activite;
 
-    /** Category from which this session was generated. Null for legacy sessions. */
-    @ManyToOne
-    @JoinColumn(name = "planification_id")
-    @JsonIgnoreProperties({"activite", "profs", "referents"})
-    private PlanificationHebdomadaire planification;
-
-    /**
-     * Salle effectivement prévue pour cette séance. Elle est initialisée avec
-     * la salle de l'activité lors de la planification, puis peut évoluer sans
-     * modifier les autres séances.
-     */
+    /** Room selected for this event. */
     @ManyToOne
     @JoinColumn(name = "salle_id")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
@@ -55,6 +73,7 @@ public class Seance {
 
     private LocalDateTime fin;
 
+    @Column(length = 2000)
     private String commentaire;
 
     /** Short label inherited from the weekly schedule for calendar display. */

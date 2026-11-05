@@ -5,7 +5,6 @@ import com.wild.corp.adhesion.models.Presence;
 import com.wild.corp.adhesion.models.resources.SeanceResponse;
 import com.wild.corp.adhesion.services.SeanceServices;
 import com.wild.corp.adhesion.services.PresenceServices;
-import com.wild.corp.adhesion.models.resources.PresencePrevueResponse;
 import org.springframework.http.MediaType;
 import com.wild.corp.adhesion.services.UserDetailsService;
 import org.junit.jupiter.api.Test;
@@ -33,8 +32,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = SeanceController.class)
-@ContextConfiguration(classes = {SeanceController.class, SeanceControllerTest.SecurityTestConfiguration.class})
+@WebMvcTest(controllers = EvenementController.class)
+@ContextConfiguration(classes = {EvenementController.class, SeanceControllerTest.SecurityTestConfiguration.class})
 class SeanceControllerTest {
 
     @Autowired
@@ -46,45 +45,13 @@ class SeanceControllerTest {
     @MockitoBean
     private PresenceServices presenceServices;
 
-    @Test
-    void returnsPlannedAttendanceWithoutPrivateRegistrationDetails() throws Exception {
-        when(presenceServices.getPresencesPrevues(15L, "member@example.org"))
-                .thenReturn(List.of(new PresencePrevueResponse(22L, 9L, "Dupont", "Alice", null)));
-        mockMvc.perform(get("/seance/15/presences-prevues").with(user("member@example.org").roles("USER")))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].adherentId").value(9))
-                .andExpect(jsonPath("$[0].presencePrevue").isEmpty())
-                .andExpect(jsonPath("$[0].email").doesNotExist())
-                .andExpect(jsonPath("$[0].paiementValide").doesNotExist());
-    }
 
-    @Test
-    void updatesAttendanceUsingAuthenticatedIdentity() throws Exception {
-        when(presenceServices.updatePresencePrevue(15L, false, "member@example.org"))
-                .thenReturn(new PresencePrevueResponse(22L, 9L, "Dupont", "Alice", false));
-        mockMvc.perform(patch("/seance/15/presence-prevue").with(user("member@example.org").roles("USER"))
-                        .contentType(MediaType.APPLICATION_JSON).content("{\"presencePrevue\":false}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.presencePrevue").value(false));
-        verify(presenceServices).updatePresencePrevue(15L, false, "member@example.org");
-    }
 
-    @Test
-    void rejectsMissingOrNullAttendance() throws Exception {
-        for (String body : List.of("{}", "{\"presencePrevue\":null}")) {
-            mockMvc.perform(patch("/seance/15/presence-prevue").with(user("member@example.org").roles("USER"))
-                            .contentType(MediaType.APPLICATION_JSON).content(body))
-                    .andExpect(status().isBadRequest());
-        }
-    }
 
-    @Test
-    void requiresAuthenticationForPlannedAttendance() throws Exception {
-        mockMvc.perform(get("/seance/15/presences-prevues")).andExpect(status().isUnauthorized());
-        mockMvc.perform(patch("/seance/15/presence-prevue")
-                        .contentType(MediaType.APPLICATION_JSON).content("{\"presencePrevue\":true}"))
-                .andExpect(status().isUnauthorized());
-    }
+
+
+
+
 
     @MockitoBean
     private UserDetailsService userDetailsService;
@@ -101,7 +68,7 @@ class SeanceControllerTest {
                         LocalDateTime.of(2026, 9, 8, 18, 0),
                         LocalDateTime.of(2026, 9, 8, 19, 0), null, null, presence, null)));
 
-        mockMvc.perform(get("/seance")
+        mockMvc.perform(get("/evenements")
                         .param("dateDebut", "2026-09-01")
                         .param("dateFin", "2026-09-30")
                         .param("adherentId", "9")
