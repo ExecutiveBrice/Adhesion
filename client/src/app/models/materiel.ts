@@ -5,6 +5,7 @@ export interface Zonage {
 }
 
 export interface Materiel {
+  image?: string | null;
   id: number;
   nom: string;
   zonage: Zonage;
@@ -22,6 +23,13 @@ export interface Materiel {
 
 export interface MembreCAMateriel { id: number; nom: string; }
 
+export interface EmpruntCalendrierMateriel {
+  materielId: number;
+  materielNom: string;
+  zonage: Zonage;
+  emprunt: EmpruntMateriel;
+}
+
 export interface EmpruntMateriel {
   quantite?: number;
   quantiteRetournee?: number;
@@ -32,6 +40,8 @@ export interface EmpruntMateriel {
   horsService?: boolean | null;
   commentaire?: string | null;
   dateEmprunt: string;
+  dateDebut?: string | null;
+  dateFinPrevue?: string | null;
   dateRetour: string | null;
   enregistreParNom: string | null;
   rapporteParNom: string | null;

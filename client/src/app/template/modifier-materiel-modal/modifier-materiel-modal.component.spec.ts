@@ -4,6 +4,8 @@ import { of, Subject, throwError } from 'rxjs';
 import { ModifierMaterielModalComponent } from './modifier-materiel-modal.component';
 import { MaterielService } from '../../_services/materiel.service';
 import { Materiel, Zonage } from '../../models/materiel';
+import { By } from '@angular/platform-browser';
+import { PhotoMaterielComponent } from '../photo-materiel/photo-materiel.component';
 
 describe('Modification du matériel', () => {
   let fixture: ComponentFixture<ModifierMaterielModalComponent>;
@@ -35,7 +37,7 @@ describe('Modification du matériel', () => {
     const resultat = { ...objet, nom: 'Enceinte', zonage: reserve };
     service.update.and.returnValue(of(resultat));
     component.enregistrer();
-    expect(service.update).toHaveBeenCalledWith(2, 'Enceinte', 6, 1);
+    expect(service.update).toHaveBeenCalledWith(2, 'Enceinte', 6, 1, undefined);
     expect(modal.close).toHaveBeenCalledWith({ materiel: resultat });
     expect(objet.nom).toBe('Projecteur');
   });
@@ -48,6 +50,20 @@ describe('Modification du matériel', () => {
     component.zonageId = null;
     component.enregistrer();
     expect(service.update).not.toHaveBeenCalled();
+  });
+
+  it('prévisualise la photo existante et transmet son retrait explicite', () => {
+    const component = fixture.componentInstance;
+    component.materiel = { ...objet, image: 'data:image/jpeg;base64,cGhvdG8=' };
+    fixture.detectChanges();
+    const photo = fixture.debugElement.query(By.directive(PhotoMaterielComponent)).componentInstance as PhotoMaterielComponent;
+    expect(photo.image).toBe('data:image/jpeg;base64,cGhvdG8=');
+    photo.imageChange.emit('');
+    fixture.detectChanges();
+    expect(photo.image).toBe('');
+    service.update.and.returnValue(new Subject<Materiel>());
+    component.enregistrer();
+    expect(service.update).toHaveBeenCalledWith(2, 'Projecteur', 1, 1, '');
   });
 
   it('conserve les saisies et permet de réessayer après une erreur sans requête en double', () => {

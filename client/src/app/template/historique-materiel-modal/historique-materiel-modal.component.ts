@@ -4,6 +4,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { EmpruntMateriel, Materiel } from '../../models/materiel';
 import { MaterielService } from '../../_services/materiel.service';
 import { registerApiViewRefresh } from '../../_services/api-render.service';
+import { StatutEmpruntService } from '../../_services/statut-emprunt.service';
 
 @Component({
   selector: 'app-historique-materiel-modal',
@@ -14,6 +15,7 @@ import { registerApiViewRefresh } from '../../_services/api-render.service';
 export class HistoriqueMaterielModalComponent implements OnInit {
   private readonly apiViewRefresh = registerApiViewRefresh();
   readonly activeModal = inject(NgbActiveModal);
+  readonly statutEmprunt = inject(StatutEmpruntService);
   private readonly service = inject(MaterielService);
   @Input() materiel!: Materiel;
   emprunts: EmpruntMateriel[] = [];

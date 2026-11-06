@@ -20,6 +20,7 @@
           @for (zone of zonages; track zone.id) { <option [ngValue]="zone.id">{{zone.nom}}</option> }
         </select>
       </div>
+      <app-photo-materiel [image]="image ?? objet.image" (imageChange)="image = $event" [disabled]="enregistrement" (chargementChange)="chargementImage = $event"></app-photo-materiel>
       @if ((objet.quantiteEmpruntee ?? (objet.emprunteurId !== null ? 1 : 0)) > 0) {
         <p class="text-body-secondary mt-3 mb-0">Ce matériel est emprunté. Il doit être restitué avant de pouvoir être supprimé.</p>
       }
@@ -31,9 +32,9 @@
       <button type="button" class="btn btn-outline-secondary" [disabled]="enregistrement" (click)="confirmationSuppression = false; erreur = ''">Retour</button>
       <button type="button" class="btn btn-danger" [disabled]="enregistrement" (click)="supprimer()">{{enregistrement ? 'Suppression…' : 'Confirmer la suppression'}}</button>
     } @else {
-      <button type="button" class="btn btn-outline-danger me-auto" [disabled]="enregistrement || (objet.quantiteEmpruntee ?? (objet.emprunteurId !== null ? 1 : 0)) > 0" (click)="confirmationSuppression = true; erreur = ''">Supprimer</button>
+      <button type="button" class="btn btn-outline-danger me-auto" [disabled]="enregistrement || chargementImage || (objet.quantiteEmpruntee ?? (objet.emprunteurId !== null ? 1 : 0)) > 0" (click)="confirmationSuppression = true; erreur = ''">Supprimer</button>
       <button type="button" class="btn btn-outline-secondary" [disabled]="enregistrement" (click)="activeModal.dismiss()">Annuler</button>
-      <button type="submit" class="btn btn-primary" [disabled]="enregistrement || form.invalid || !nom.trim() || zonages.length === 0">{{enregistrement ? 'Enregistrement…' : 'Enregistrer'}}</button>
+      <button type="submit" class="btn btn-primary" [disabled]="enregistrement || chargementImage || form.invalid || !nom.trim() || zonages.length === 0">{{enregistrement ? 'Enregistrement…' : 'Enregistrer'}}</button>
     }
   </div>
 </form>

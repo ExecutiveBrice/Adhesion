@@ -46,6 +46,21 @@ describe('Journal des emprunts', () => {
     expect(text).not.toContain('En cours');
   });
 
+  it('affiche un emprunt futur à venir plutôt qu’en cours', () => {
+    service.getHistorique.and.returnValue(of([{
+      id: 1, emprunteurId: 4, emprunteurNom: 'Alex Durand', dateEmprunt: '2026-10-10T10:00:00Z',
+      dateDebut: '9999-01-01', dateFinPrevue: '9999-01-02',
+      dateRetour: null, enregistreParNom: 'Camille Martin', rapporteParNom: null
+    }]));
+    fixture.detectChanges();
+    const text = fixture.nativeElement.textContent;
+    expect(text).toContain('À venir');
+    expect(text).toContain('1 prévu(s)');
+    expect(text).not.toContain('En cours');
+    expect(text).not.toContain('Début prévu');
+    expect(text).toContain('Début emprunt');
+  });
+
   it('affiche un état vide ou une erreur de chargement', () => {
     service.getHistorique.and.returnValue(of([]));
     fixture.detectChanges();

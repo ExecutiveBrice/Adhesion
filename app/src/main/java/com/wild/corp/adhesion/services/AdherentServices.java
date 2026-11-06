@@ -206,7 +206,7 @@ public class AdherentServices {
         dataAdherent.getUser().setUsername(email);
     }
 
-    /** Copies only the consent values supplied for the adherent's existing accords. */
+    /** Restores missing standard accords and copies the member's consent choices. */
     void updateAccords(AdherentLite frontAdherent, Adherent dataAdherent) {
         if (frontAdherent.getAccords() == null) {
             return;
@@ -217,9 +217,21 @@ public class AdherentServices {
                 .collect(Collectors.toMap(Accord::getId, accord -> accord));
 
         frontAdherent.getAccords().stream()
-                .filter(accord -> accord.getId() != null && accord.getEtat() != null)
+                .filter(accord -> accord.getEtat() != null)
                 .forEach(accordFront -> {
                     Accord accordEnBase = accordsEnBase.get(accordFront.getId());
+                    if (accordFront.getId() == null && (RGPD.equals(accordFront.getNom())
+                            || DROIT_IMAGE.equals(accordFront.getNom()))) {
+                        accordEnBase = dataAdherent.getAccords().stream()
+                                .filter(accord -> accordFront.getNom().equals(accord.getNom()))
+                                .findFirst().orElse(null);
+                        if (accordEnBase == null) {
+                            accordEnBase = accordServices.createAccord(accordFront.getNom(), dataAdherent, null);
+                            dataAdherent.getAccords().add(accordEnBase);
+                        } else if (accordEnBase.getDatePassage() != null) {
+                            return;
+                        }
+                    }
                     if (accordEnBase == null) {
                         return;
                     }
@@ -345,8 +357,7 @@ public class AdherentServices {
                 adherent.getNaissance() != null &&
                 adherent.getLieuNaissance() != null &&
                 adherent.getGenre() != null &&
-                adherent.getAccords().stream().anyMatch(accord -> "RGPD".equals(accord.getNom()) && accord.getEtat() != null) &&
-                adherent.getAccords().stream().anyMatch(accord -> "DroitImage".equals(accord.getNom()) && accord.getEtat() != null) &&
+                hasValidatedAccords(adherent) &&
                 (adherent.getAdresse() != null || adherent.getRepresentant() != null) &&
                 (adherent.getTelephone() != null || adherent.getRepresentant() != null)
         ) {
@@ -356,6 +367,14 @@ public class AdherentServices {
             adherent.setCompletAdhesion(false);
         }
 
+    }
+
+    public boolean hasValidatedAccords(Adherent adherent) {
+        return adherent.getAccords() != null
+                && adherent.getAccords().stream().anyMatch(accord -> RGPD.equals(accord.getNom())
+                    && Boolean.TRUE.equals(accord.getEtat()) && accord.getDatePassage() != null)
+                && adherent.getAccords().stream().anyMatch(accord -> DROIT_IMAGE.equals(accord.getNom())
+                    && accord.getEtat() != null && accord.getDatePassage() != null);
     }
 
 

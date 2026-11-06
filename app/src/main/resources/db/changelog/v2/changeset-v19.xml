@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  <property name="materiel.image.type" value="varchar" dbms="h2"/>
+  <property name="materiel.image.type" value="text"/>
+  <changeSet id="v19-materiel-image" author="adhesion">
+    <preConditions onFail="MARK_RAN" onError="HALT"><not><columnExists tableName="materiel" columnName="image"/></not></preConditions>
+    <addColumn tableName="materiel"><column name="image" type="${materiel.image.type}"/></addColumn>
+  </changeSet>
+  <changeSet id="v19-emprunt-date-debut" author="adhesion">
+    <preConditions onFail="MARK_RAN" onError="HALT"><not><columnExists tableName="emprunt_materiel" columnName="date_debut"/></not></preConditions>
+    <addColumn tableName="emprunt_materiel"><column name="date_debut" type="date"/></addColumn>
+  </changeSet>
+  <changeSet id="v19-emprunt-date-fin-prevue" author="adhesion">
+    <preConditions onFail="MARK_RAN" onError="HALT"><not><columnExists tableName="emprunt_materiel" columnName="date_fin_prevue"/></not></preConditions>
+    <addColumn tableName="emprunt_materiel"><column name="date_fin_prevue" type="date"/></addColumn>
+  </changeSet>
+</databaseChangeLog>

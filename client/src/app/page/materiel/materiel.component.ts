@@ -1,6 +1,5 @@
 import { RetourMaterielModalComponent } from '../../template/retour-materiel-modal/retour-materiel-modal.component';
-import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { ChangeDetectorRef, Component, ElementRef, inject, OnInit, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -9,17 +8,19 @@ import { forkJoin } from 'rxjs';
 import { MaterielService } from '../../_services/materiel.service';
 import { TokenStorageService } from '../../_services/token-storage.service';
 import { registerApiViewRefresh } from '../../_services/api-render.service';
-import { Materiel, Zonage } from '../../models/materiel';
+import { StatutEmpruntService } from '../../_services/statut-emprunt.service';
+import { EmpruntCalendrierMateriel, Materiel, Zonage } from '../../models/materiel';
 import { MaterielModalComponent } from '../../template/materiel-modal/materiel-modal.component';
 import { EmpruntMaterielModalComponent } from '../../template/emprunt-materiel-modal/emprunt-materiel-modal.component';
 import { HistoriqueMaterielModalComponent } from '../../template/historique-materiel-modal/historique-materiel-modal.component';
 import { ModificationMateriel, ModifierMaterielModalComponent } from '../../template/modifier-materiel-modal/modifier-materiel-modal.component';
 import { HorsServiceMaterielModalComponent } from '../../template/hors-service-materiel-modal/hors-service-materiel-modal.component';
 import { ZonagesModalComponent } from '../../template/zonages-modal/zonages-modal.component';
+import { CalendrierMaterielComponent } from '../../template/calendrier-materiel/calendrier-materiel.component';
 
 @Component({
   selector: 'app-materiel',
-  imports: [DatePipe, FormsModule, FaIconComponent],
+  imports: [FormsModule, FaIconComponent, CalendrierMaterielComponent],
   templateUrl: './materiel.component.html',
   styleUrls: ['./materiel.component.css']
 })
@@ -29,6 +30,8 @@ export class MaterielComponent implements OnInit {
   private readonly storage = inject(TokenStorageService);
   private readonly modal = inject(NgbModal);
   private readonly changeDetector = inject(ChangeDetectorRef);
+  private readonly rechercheMateriel = viewChild<ElementRef<HTMLInputElement>>('rechercheMateriel');
+  readonly statutEmprunt = inject(StatutEmpruntService);
   readonly administrateur = this.storage.getUser().roles?.includes('ROLE_ADMIN') ?? false;
   readonly gestionMateriel = this.administrateur || (this.storage.getUser().roles?.includes('ROLE_LOGISTIQUE') ?? false);
   readonly peutEmprunter = this.administrateur || (this.storage.getUser().roles?.includes('ROLE_MEMBRECA') ?? false);
@@ -68,8 +71,16 @@ export class MaterielComponent implements OnInit {
     return this.materiels.filter(materiel =>
       (!this.zonageId || materiel.zonage.id === this.zonageId)
       && (!this.statut || (this.statut === 'disponible' && (materiel.quantiteDisponible ?? 0) > 0)
-        || (this.statut === 'emprunte' && (materiel.quantiteEmpruntee ?? 0) > 0))
+        || (this.statut === 'emprunte' && this.statutEmprunt.quantite(materiel, 'En cours') > 0)
+        || (this.statut === 'a-venir' && this.statutEmprunt.quantite(materiel, 'À venir') > 0))
       && `${materiel.nom} ${materiel.zonage.nom} ${(materiel.emprunts ?? []).map(e => e.emprunteurNom).join(' ')}`.toLocaleLowerCase('fr').includes(recherche));
+  }
+
+  visualiserEmprunt(entree: EmpruntCalendrierMateriel): void {
+    this.recherche = entree.materielNom;
+    this.zonageId = null;
+    this.statut = '';
+    this.rechercheMateriel()?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   peutRestituer(materiel: Materiel): boolean {
@@ -90,6 +101,7 @@ export class MaterielComponent implements OnInit {
     this.actionEnCours = materiel.id;
     const reference = this.modal.open(retour ? RetourMaterielModalComponent : EmpruntMaterielModalComponent, {
       centered: true, backdrop: 'static', ariaLabelledBy: retour ? 'retour-materiel-title' : 'emprunt-materiel-title',
+      size: retour ? undefined : 'lg', scrollable: true,
       beforeDismiss: () => !reference.componentInstance.enregistrement
     });
     reference.componentInstance.materiel = materiel;
@@ -128,7 +140,7 @@ export class MaterielComponent implements OnInit {
   parametrer(): void {
     if (!this.gestionMateriel || this.chargement || this.actionEnCours !== null) return;
     const reference = this.modal.open(MaterielModalComponent, {
-      centered: true, backdrop: 'static', ariaLabelledBy: 'materiel-modal-title',
+      centered: true, scrollable: true, backdrop: 'static', ariaLabelledBy: 'materiel-modal-title',
       beforeDismiss: () => !reference.componentInstance.enregistrement
     });
     reference.componentInstance.zonages = this.zonages;
@@ -144,7 +156,7 @@ export class MaterielComponent implements OnInit {
     if (!this.gestionMateriel || this.chargement || this.actionEnCours !== null) return;
     this.actionEnCours = materiel.id;
     const reference = this.modal.open(ModifierMaterielModalComponent, {
-      centered: true, backdrop: 'static', ariaLabelledBy: 'modifier-materiel-title',
+      centered: true, scrollable: true, backdrop: 'static', ariaLabelledBy: 'modifier-materiel-title',
       beforeDismiss: () => !reference.componentInstance.enregistrement
     });
     reference.componentInstance.materiel = materiel;

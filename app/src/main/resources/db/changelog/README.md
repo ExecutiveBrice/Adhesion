@@ -70,6 +70,11 @@ fois HS et emprunté conserve son emprunt en priorité. Les emprunts terminés
 reçoivent leur quantité retournée. Ces migrations remplacent les scripts
 manuels correspondants pour une base suivie par ce changelog.
 
+La V19 ajoute la photo du matériel et les dates de début et de fin prévue des
+emprunts. Elle conserve les colonnes et les données déjà créées par les scripts
+manuels `migration-materiel-image.sql` et `migration-materiel-calendrier.sql`.
+Ces scripts ne sont pas nécessaires pour une base suivie par ce changelog.
+
 Ajouter les prochaines évolutions dans un nouveau changeset sous `v2/`, puis
 l'inclure à la fin de `v2/changeset-v2.xml`. Ne pas modifier un
 changeset déjà déployé : Liquibase vérifie son checksum. Ajouter un changeset

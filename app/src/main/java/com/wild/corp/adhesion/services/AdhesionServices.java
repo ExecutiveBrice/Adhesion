@@ -16,6 +16,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
@@ -357,8 +359,12 @@ public class AdhesionServices {
     }
 
     public Adhesion save(Principal principal, Long adherentId, Long activiteId) {
-        Activite activite = activiteServices.getById(activiteId);
         Adherent adherent = adherentServices.getById(adherentId);
+        if (!adherentServices.hasValidatedAccords(adherent)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Enregistrez les accords de l'adhérent avant d'ajouter une activité");
+        }
+        Activite activite = activiteServices.getById(activiteId);
 
         boolean dejaLicencie =  adherent.getActivitesNm1().stream().anyMatch(activiteNm1 -> "COMPETITION".equals(activiteNm1.getGroupe()) || (activite.getGroupeFiltre() != null && activite.getGroupeFiltre().equals(activiteNm1.getGroupeFiltre())));
 

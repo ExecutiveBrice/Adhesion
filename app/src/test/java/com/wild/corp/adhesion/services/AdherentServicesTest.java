@@ -221,6 +221,126 @@ class AdherentServicesTest {
     }
 
     @Test
+    void restoresMissingStandardAccordsOnSaveUsingCanonicalDefinitions() {
+        Adherent existing = existingAdherent();
+        repositoryFor(existing);
+        AccordServices accords = mock(AccordServices.class);
+        ReflectionTestUtils.setField(adherentServices, "accordServices", accords);
+        for (String nom : List.of("RGPD", "DroitImage")) {
+            Accord canonical = new Accord(nom, "Titre officiel", "Oui", "Non", true, "Texte officiel");
+            canonical.setAdherent(existing);
+            when(accords.createAccord(nom, existing, null)).thenReturn(canonical);
+        }
+        AdherentLite update = completeUpdate();
+        Accord rgpd = new Accord();
+        rgpd.setNom("RGPD");
+        rgpd.setEtat(true);
+        rgpd.setText("Texte modifié côté client");
+        Accord image = new Accord();
+        image.setNom("DroitImage");
+        image.setEtat(false);
+        update.setAccords(List.of(rgpd, image));
+
+        adherentServices.update(update);
+        // Replaying a form without IDs must not create duplicates or replace validated choices.
+        image.setEtat(true);
+        adherentServices.update(update);
+
+        assertThat(existing.getAccords()).hasSize(2).allSatisfy(accord -> {
+            assertThat(accord.getText()).isEqualTo("Texte officiel");
+            assertThat(accord.getDatePassage()).isEqualTo(LocalDate.now());
+            assertThat(accord.getAdherent()).isSameAs(existing);
+        });
+        assertThat(existing.getAccords().get(1).getEtat()).isFalse();
+        assertThat(existing.getCompletAdhesion()).isTrue();
+        verify(accords).createAccord("RGPD", existing, null);
+        verify(accords).createAccord("DroitImage", existing, null);
+    }
+
+    @Test
+    void restoresOnlyTheMissingAccordAndPreservesExistingConsent() {
+        Adherent existing = existingAdherent();
+        Accord image = new Accord();
+        image.setId(8L);
+        image.setNom("DroitImage");
+        image.setEtat(false);
+        image.setDatePassage(LocalDate.of(2026, 1, 1));
+        existing.getAccords().add(image);
+        AccordServices accords = mock(AccordServices.class);
+        ReflectionTestUtils.setField(adherentServices, "accordServices", accords);
+        when(accords.createAccord("RGPD", existing, null)).thenReturn(new Accord());
+        AdherentLite update = new AdherentLite();
+        Accord rgpd = new Accord();
+        rgpd.setNom("RGPD");
+        rgpd.setEtat(true);
+        update.setAccords(List.of(image, rgpd));
+
+        adherentServices.updateAccords(update, existing);
+
+        assertThat(existing.getAccords()).hasSize(2);
+        assertThat(image.getEtat()).isFalse();
+        assertThat(image.getDatePassage()).isEqualTo(LocalDate.of(2026, 1, 1));
+        verify(accords, never()).createAccord("DroitImage", existing, null);
+    }
+
+    @Test
+    void ignoresUnknownAccordsAndIdsBelongingToAnotherMember() {
+        Adherent existing = existingAdherent();
+        Accord unknown = new Accord();
+        unknown.setNom("Inconnu");
+        unknown.setEtat(true);
+        Accord foreign = new Accord();
+        foreign.setId(99L);
+        foreign.setNom("RGPD");
+        foreign.setEtat(true);
+        AdherentLite update = new AdherentLite();
+        update.setAccords(List.of(unknown, foreign));
+
+        adherentServices.updateAccords(update, existing);
+
+        assertThat(existing.getAccords()).isEmpty();
+    }
+
+    @Test
+    void requiresBothAccordsToBeSavedBeforeTheMemberIsComplete() {
+        Adherent existing = existingAdherent();
+        repositoryFor(existing);
+        Accord rgpd = new Accord("RGPD", "", "", "", false, "");
+        rgpd.setId(1L);
+        Accord image = new Accord("DroitImage", "", "", "", true, "");
+        image.setId(2L);
+        image.setEtat(false);
+        existing.getAccords().addAll(List.of(rgpd, image));
+        existing.setGenre("Féminin");
+        existing.setNaissance(LocalDate.of(2000, 1, 1));
+        existing.setLieuNaissance("44");
+        existing.setAdresse("1 rue des Fleurs");
+        existing.setTelephone("0600000000");
+
+        adherentServices.isComplet(existing);
+        assertThat(existing.getCompletAdhesion()).isFalse();
+        rgpd.setDatePassage(LocalDate.now());
+        adherentServices.isComplet(existing);
+        assertThat(existing.getCompletAdhesion()).isFalse();
+
+        AdherentLite update = completeUpdate();
+        update.setAccords(List.of(rgpd, image));
+        adherentServices.update(update);
+        assertThat(existing.getCompletAdhesion()).isTrue();
+        assertThat(image.getEtat()).isFalse();
+    }
+
+    private AdherentLite completeUpdate() {
+        AdherentLite update = emailUpdate("alice@example.test");
+        update.setGenre("Féminin");
+        update.setNaissance(LocalDate.of(2000, 1, 1));
+        update.setLieuNaissance("44");
+        update.setAdresse("1 rue des Fleurs");
+        update.setTelephone("0600000000");
+        return update;
+    }
+
+    @Test
     void ignoresAnIncompleteAccordWhenCheckingWhetherAnAdherentIsComplete() {
         Adherent adherent = new Adherent();
         adherent.setNom("MARTIN");
@@ -235,9 +355,11 @@ class AdherentServicesTest {
         Accord rgpd = new Accord();
         rgpd.setNom("RGPD");
         rgpd.setEtat(true);
+        rgpd.setDatePassage(LocalDate.now());
         Accord droitImage = new Accord();
         droitImage.setNom("DroitImage");
         droitImage.setEtat(true);
+        droitImage.setDatePassage(LocalDate.now());
         adherent.setAccords(List.of(accordSansNom, rgpd, droitImage));
 
         adherentServices.isComplet(adherent);

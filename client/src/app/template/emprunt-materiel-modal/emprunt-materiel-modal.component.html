@@ -11,8 +11,33 @@
     }
     <label for="quantiteEmprunt" class="form-label mt-3">Quantité à emprunter ({{materiel.quantiteDisponible ?? 1}} disponibles)</label>
     <input id="quantiteEmprunt" name="quantite" type="number" class="form-control" min="1" [max]="materiel.quantiteDisponible ?? 1" step="1" required [(ngModel)]="quantite" [disabled]="enregistrement">
+    <section class="period-selector mt-3" aria-labelledby="emprunt-period-title">
+      <h3 id="emprunt-period-title" class="h6">Période d’emprunt</h3>
+      <p id="emprunt-period-help" class="text-muted mb-2">Cliquez sur la date de début, puis sur la date de fin.</p>
+      <div class="period-calendar">
+        <ngb-datepicker class="emprunt-calendar" [displayMonths]="2" [startDate]="calendarStart"
+          [dayTemplate]="rangeDay" navigation="select" outsideDays="hidden" [firstDayOfWeek]="1"
+          [ngModel]="null" [ngModelOptions]="{standalone: true}" [disabled]="enregistrement"
+          (dateSelect)="onDateSelection($event)" aria-label="Sélection de la période d’emprunt"
+          aria-describedby="emprunt-period-help" />
+      </div>
+      <ng-template #rangeDay let-date let-focused="focused">
+        <span class="calendar-day" [class.range-boundary]="isRangeBoundary(date)"
+          [class.in-range]="isInRange(date)" [class.focused]="focused"
+          (mouseenter)="hoveredDate = calendarDate(date)" (mouseleave)="hoveredDate = null">
+          {{date.day}}
+        </span>
+      </ng-template>
+      <div class="period-dates mt-2" aria-live="polite">
+        <span><strong>Début emprunt :</strong> {{debutPlage | date:'dd/MM/yyyy'}}</span>
+        <span><strong>Fin :</strong> {{finPlage ? (finPlage | date:'dd/MM/yyyy') : 'À sélectionner'}}</span>
+      </div>
+      @if (!finPlage) {
+        <p class="text-muted mt-2 mb-0" role="status">Sélectionnez une date de fin égale ou postérieure au début. Une date antérieure redéfinit le début.</p>
+      }
+    </section>
     @if (administrateur && !chargement && membresCA.length === 0 && !erreur) { <p class="mt-3 mb-0">Aucun membre du CA disponible.</p> }
     @if (erreur) { <div class="alert alert-danger mt-3 mb-0" role="alert">{{erreur}}@if (administrateur) { <button type="button" class="btn btn-outline-danger btn-sm ms-2" (click)="charger()" [disabled]="enregistrement || chargement">Actualiser la liste</button> }</div> }
   </div>
-  <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" [disabled]="enregistrement" (click)="activeModal.dismiss()">Annuler</button><button type="submit" class="btn btn-primary" [disabled]="chargement || enregistrement || (administrateur && (emprunteurId === null || membresCA.length === 0)) || quantite < 1 || quantite > (materiel.quantiteDisponible ?? 1)">{{enregistrement ? 'Enregistrement…' : 'Confirmer l’emprunt'}}</button></div>
+  <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" [disabled]="enregistrement" (click)="activeModal.dismiss()">Annuler</button><button type="submit" class="btn btn-primary" [disabled]="chargement || enregistrement || !periodeValide || (administrateur && (emprunteurId === null || membresCA.length === 0)) || quantite < 1 || quantite > (materiel.quantiteDisponible ?? 1)">{{enregistrement ? 'Enregistrement…' : 'Confirmer l’emprunt'}}</button></div>
 </form>

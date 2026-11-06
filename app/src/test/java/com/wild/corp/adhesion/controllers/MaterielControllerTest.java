@@ -30,6 +30,21 @@ class MaterielControllerTest {
     @MockitoBean private MaterielServices service;
 
     @Test
+    void calendarUsesIsoDatesAndTheSameReadPermissionsAsMaterial() throws Exception {
+        for (String role : new String[] {"ADMIN", "MEMBRECA", "LOGISTIQUE"}) {
+            mvc.perform(get("/materiel/calendrier").param("debut", "2026-12-01").param("fin", "2027-01-31")
+                    .with(user("connected").roles(role))).andExpect(status().isOk());
+        }
+        verify(service, times(3)).getCalendrier(java.time.LocalDate.of(2026, 12, 1), java.time.LocalDate.of(2027, 1, 31));
+        mvc.perform(get("/materiel/calendrier").param("debut", "2026-12-01").param("fin", "2027-01-31")
+                .with(user("ordinary").roles("USER"))).andExpect(status().isForbidden());
+        mvc.perform(get("/materiel/calendrier").param("debut", "2026-12-01").param("fin", "2027-01-31"))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(get("/materiel/calendrier").param("debut", "incorrect").param("fin", "2027-01-31")
+                .with(user("connected").roles("MEMBRECA"))).andExpect(status().isBadRequest());
+    }
+
+    @Test
     void anonymousAndOrdinaryMembersCannotAccessMaterialOrZones() throws Exception {
         mvc.perform(get("/materiel")).andExpect(status().isUnauthorized());
         for (String role : new String[] {"USER", "BUREAU", "SECRETAIRE", "ENCADRANT", "COMPTABLE"}) {
@@ -50,8 +65,8 @@ class MaterielControllerTest {
                     .content("{\"username\":\"someone-else\"}")
                     .with(user("connected").roles(role))).andExpect(status().isOk());
         }
-        verify(service).emprunter(2L, "connected", null, false, 1);
-        verify(service).emprunter(2L, "connected", null, true, 1);
+        verify(service).emprunter(2L, "connected", null, false, 1, null, null);
+        verify(service).emprunter(2L, "connected", null, true, 1, null, null);
     }
 
     @Test
@@ -99,7 +114,7 @@ class MaterielControllerTest {
 
     @Test
     void conflictIncludesAUsefulMessageForTheUi() throws Exception {
-        when(service.emprunter(2L, "ca", null, false, 1))
+        when(service.emprunter(2L, "ca", null, false, 1, null, null))
                 .thenThrow(new ResponseStatusException(HttpStatus.CONFLICT, "Ce matériel est déjà emprunté"));
         mvc.perform(post("/materiel/2/emprunt").with(user("ca").roles("MEMBRECA")))
                 .andExpect(status().isConflict()).andExpect(jsonPath("$.detail").value("Ce matériel est déjà emprunté"));
@@ -127,7 +142,7 @@ class MaterielControllerTest {
         verify(service).getHistorique(2L);
         verify(service).getMembresCA();
         verify(service).updateHorsService(2L, new HorsServiceRequest(true, "Lampe cassée"), "admin");
-        verify(service).emprunter(2L, "admin", 4L, true, 1);
+        verify(service).emprunter(2L, "admin", 4L, true, 1, null, null);
     }
 
     @Test
@@ -135,7 +150,7 @@ class MaterielControllerTest {
         mvc.perform(post("/materiel/2/emprunt").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"quantite\":3}").with(user("ca").roles("MEMBRECA")))
                 .andExpect(status().isOk());
-        verify(service).emprunter(2L, "ca", null, false, 3);
+        verify(service).emprunter(2L, "ca", null, false, 3, null, null);
         mvc.perform(post("/materiel/2/retour").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"empruntId\":15,\"quantite\":2}").with(user("ca").roles("MEMBRECA")))
                 .andExpect(status().isOk());
@@ -143,13 +158,27 @@ class MaterielControllerTest {
     }
 
     @Test
+    void calendarDatesAreForwardedWithoutTimezoneConversion() throws Exception {
+        mvc.perform(post("/materiel/2/emprunt").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"quantite\":3,\"dateDebut\":\"2026-03-29\",\"dateFinPrevue\":\"2026-03-30\"}")
+                .with(user("ca").roles("MEMBRECA")))
+                .andExpect(status().isOk());
+        verify(service).emprunter(2L, "ca", null, false, 3,
+                java.time.LocalDate.of(2026, 3, 29), java.time.LocalDate.of(2026, 3, 30));
+        mvc.perform(post("/materiel/2/emprunt").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"dateDebut\":\"2026-02-30\",\"dateFinPrevue\":\"2026-03-01\"}")
+                .with(user("ca").roles("MEMBRECA")))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void selectedBorrowerCannotForgeTheAdminRole() throws Exception {
-        when(service.emprunter(2L, "ca", 4L, false, 1))
+        when(service.emprunter(2L, "ca", 4L, false, 1, null, null))
                 .thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Seul un administrateur peut choisir l’emprunteur"));
         mvc.perform(post("/materiel/2/emprunt").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"emprunteurId\":4,\"administrateur\":true}").with(user("ca").roles("MEMBRECA")))
                 .andExpect(status().isForbidden());
-        verify(service).emprunter(2L, "ca", 4L, false, 1);
+        verify(service).emprunter(2L, "ca", 4L, false, 1, null, null);
     }
 
     @Test

@@ -1,11 +1,14 @@
 package com.wild.corp.adhesion.controllers;
 
 import com.wild.corp.adhesion.repository.SectionRepository;
+import com.wild.corp.adhesion.models.ERole;
 import com.wild.corp.adhesion.services.AdherentServices;
 import com.wild.corp.adhesion.services.RappelServices;
 import com.wild.corp.adhesion.services.UserDetailsService;
 import com.wild.corp.adhesion.services.UserServices;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -14,12 +17,15 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -55,7 +61,33 @@ class MaintenanceAuthorizationMvcTest {
         mockMvc.perform(post("/adherent/cleanNotification").with(user)).andExpect(status().isForbidden());
         mockMvc.perform(post("/adherent/rappel").with(user)).andExpect(status().isForbidden());
         mockMvc.perform(delete("/adherent/cleanUserAlone").with(user)).andExpect(status().isForbidden());
-        mockMvc.perform(post("/adherent/regenerate").param("adherentId", "1").with(user)).andExpect(status().isForbidden());
+    }
+
+    @ParameterizedTest
+    @EnumSource(ERole.class)
+    void everyRoleCanRegenerateAttestation(ERole role) throws Exception {
+        mockMvc.perform(post("/adherent/regenerate").param("adherentId", "1")
+                        .with(user("member@example.org").authorities(new SimpleGrantedAuthority(role.name()))))
+                .andExpect(status().isOk());
+
+        verify(adherentServices).regenerate(1L);
+    }
+
+    @Test
+    void authenticatedUserWithoutRoleCanRegenerateAttestation() throws Exception {
+        mockMvc.perform(post("/adherent/regenerate").param("adherentId", "1")
+                        .with(user("member@example.org").roles()))
+                .andExpect(status().isOk());
+
+        verify(adherentServices).regenerate(1L);
+    }
+
+    @Test
+    void anonymousUserCannotRegenerateAttestation() throws Exception {
+        mockMvc.perform(post("/adherent/regenerate").param("adherentId", "1"))
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(adherentServices);
     }
 
     @Test

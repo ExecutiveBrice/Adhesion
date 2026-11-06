@@ -1,0 +1,72 @@
+<section class="calendrier-materiel" aria-label="Calendrier des emprunts" [attr.aria-busy]="chargement()">
+  <nav class="calendrier-navigation" aria-label="Navigation entre les mois">
+    <button type="button" class="btn btn-outline-secondary" aria-label="Mois précédent" (click)="changerMois(-1)">
+      <span aria-hidden="true">‹</span>
+    </button>
+    <h2 class="h5 mb-0" aria-live="polite" aria-atomic="true">{{mois()[0].libelle}}</h2>
+    <button type="button" class="btn btn-outline-secondary" aria-label="Mois suivant" (click)="changerMois(1)">
+      <span aria-hidden="true">›</span>
+    </button>
+  </nav>
+  @if (chargement()) {
+    <p class="p-3 mb-0" role="status">Chargement du calendrier…</p>
+  } @else if (erreur()) {
+    <div class="alert alert-warning m-3" role="alert">{{erreur()}} <button type="button" class="btn btn-outline-secondary btn-sm" (click)="charger()">Réessayer</button></div>
+  } @else {
+    <div class="calendrier-mois">
+      @for (periode of mois(); track periode.iso) {
+        <section class="mois" [attr.aria-label]="periode.libelle">
+          <h2 class="h5">{{periode.libelle}}</h2>
+          <div class="jours-semaine" aria-hidden="true">@for (jour of joursSemaine; track jour) { <span>{{jour}}</span> }</div>
+          <div class="jours-mois">
+            @for (jour of periode.jours; track $index) {
+              @if (jour) {
+                <button type="button" class="calendrier-jour" [class.aujourdhui]="jour.iso === statutEmprunt.dateCourante"
+                  [class.selectionne]="jour.iso === selection()" [attr.aria-pressed]="jour.iso === selection()"
+                  [attr.aria-current]="jour.iso === statutEmprunt.dateCourante ? 'date' : null"
+                  [attr.aria-label]="libelleJour(jour)" [attr.data-date]="jour.iso" (click)="selection.set(jour.iso)">
+                  <span class="jour-numero">{{jour.numero}}</span>
+                  @for (entree of jour.emprunts.slice(0, 2); track entree.emprunt.id) {
+                    @let statut = statutCalendrier(entree.emprunt);
+                    <span class="jour-emprunt" [class.en-cours]="statut === 'En cours'" [class.depassement]="statut === 'En dépassement'" [class.a-venir]="statut === 'Programmé'" [class.rapporte]="statut === 'Terminé'"
+                      [title]="entree.materielNom + ' · ' + (entree.emprunt.emprunteurNom || 'Emprunteur inconnu') + ' · ' + statut">
+                      {{entree.materielNom}}
+                    </span>
+                  }
+                  @if (jour.emprunts.length > 2) { <span class="jour-suite">+{{jour.emprunts.length - 2}}</span> }
+                </button>
+              } @else { <span class="jour-vide" aria-hidden="true"></span> }
+            }
+          </div>
+        </section>
+      }
+    </div>
+    @if (jourSelectionne(); as jour) {
+      <div class="calendrier-detail" aria-live="polite">
+        <h2 class="h6">{{jour.libelle}} <span class="text-body-secondary">· {{jour.emprunts.length}} emprunt(s)</span></h2>
+        <ul class="emprunts-jour">
+          @for (entree of jour.emprunts; track entree.emprunt.id) {
+            @let emprunt = entree.emprunt;
+            @let statut = statutCalendrier(emprunt);
+            <li>
+              <button type="button" class="emprunt-detail" (click)="empruntSelectionne.emit(entree)"
+                [attr.aria-label]="'Afficher ' + entree.materielNom + ' dans la liste du matériel'">
+                <span class="d-flex flex-wrap gap-2 align-items-center">
+                  <strong>{{entree.materielNom}} × {{emprunt.quantite ?? 1}}</strong>
+                  <span class="badge" [class.text-bg-warning]="statut === 'En cours'" [class.text-bg-danger]="statut === 'En dépassement'" [class.text-bg-primary]="statut === 'Programmé'" [class.text-bg-success]="statut === 'Terminé'">{{statut}}</span>
+                </span>
+                <span>{{emprunt.emprunteurNom || 'Emprunteur inconnu'}} · {{entree.zonage.nom}}</span>
+                <span class="text-body-secondary">Du {{(emprunt.dateDebut || emprunt.dateEmprunt) | date:'dd/MM/yyyy'}}
+                  @if (emprunt.dateFinPrevue) { au {{emprunt.dateFinPrevue | date:'dd/MM/yyyy'}} (prévu) }
+                  @else { · Fin non précisée }
+                </span>
+                @if (emprunt.dateRetour) { <span class="text-body-secondary">Rapporté le {{emprunt.dateRetour | date:'dd/MM/yyyy'}}</span> }
+                @else if (emprunt.quantiteRetournee) { <span>{{(emprunt.quantite ?? 1) - emprunt.quantiteRetournee}} restant(s) à rendre</span> }
+              </button>
+            </li>
+          } @empty { <li class="text-body-secondary">Aucun emprunt pour cette journée.</li> }
+        </ul>
+      </div>
+    }
+  }
+</section>

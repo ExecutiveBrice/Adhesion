@@ -3,6 +3,7 @@ package com.wild.corp.adhesion.models;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -48,6 +49,9 @@ public class EmpruntMateriel {
 
     @Column(nullable = false)
     private OffsetDateTime dateEmprunt;
+
+    private LocalDate dateDebut;
+    private LocalDate dateFinPrevue;
 
     private OffsetDateTime dateRetour;
     private Long enregistreParId;

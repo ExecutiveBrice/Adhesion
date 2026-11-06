@@ -26,7 +26,8 @@ describe('Adherent modal newsletter', () => {
     mail = jasmine.createSpyObj('MailService', ['getAdherentNewsletter', 'updateAdherentNewsletter']);
     TestBed.configureTestingModule({ imports: [UserComponent], providers: [provideRouter([]),
       { provide: MailService, useValue: mail },
-      ...[AdherentService, UserService, AdhesionService, ActiviteService, UtilService, TokenStorageService,
+      { provide: TokenStorageService, useValue: { getUser: () => ({ roles: ['ROLE_USER'] }) } },
+      ...[AdherentService, UserService, AdhesionService, ActiviteService, UtilService,
         ParamService, FileService, ToastService, NgbActiveModal].map(provide => ({ provide, useValue: {} }))
     ] });
     spyOn(UserComponent.prototype, 'ngOnInit').and.stub();

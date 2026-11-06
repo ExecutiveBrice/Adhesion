@@ -4,12 +4,13 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { MaterielService } from '../../_services/materiel.service';
 import { registerApiViewRefresh } from '../../_services/api-render.service';
 import { Materiel, Zonage } from '../../models/materiel';
+import { PhotoMaterielComponent } from '../photo-materiel/photo-materiel.component';
 
 export type ModificationMateriel = { materiel: Materiel } | { supprimeId: number };
 
 @Component({
   selector: 'app-modifier-materiel-modal',
-  imports: [FormsModule],
+  imports: [FormsModule, PhotoMaterielComponent],
   templateUrl: './modifier-materiel-modal.component.html'
 })
 export class ModifierMaterielModalComponent {
@@ -19,12 +20,15 @@ export class ModifierMaterielModalComponent {
   @Input() zonages: Zonage[] = [];
   @Input() set materiel(value: Materiel) {
     this.objet = value;
+    this.image = undefined;
     this.quantiteTotale = value.quantiteTotale ?? 1;
     this.nom = value.nom;
     this.zonageId = value.zonage.id;
   }
   objet!: Materiel;
   nom = '';
+  image: string | undefined;
+  chargementImage = false;
   quantiteTotale = 1;
   zonageId: number | null = null;
   enregistrement = false;
@@ -32,21 +36,21 @@ export class ModifierMaterielModalComponent {
   erreur = '';
 
   enregistrer(): void {
-    if (this.enregistrement || this.confirmationSuppression) return;
+    if (this.enregistrement || this.chargementImage || this.confirmationSuppression) return;
     if (!this.nom.trim() || this.nom.trim().length > 150 || this.zonageId === null || !Number.isInteger(this.quantiteTotale) || this.quantiteTotale < 1) {
       this.erreur = 'Saisissez le nom du matériel et choisissez un zonage.';
       return;
     }
     this.enregistrement = true;
     this.erreur = '';
-    this.service.update(this.objet.id, this.nom.trim(), this.zonageId, this.quantiteTotale).subscribe({
+    this.service.update(this.objet.id, this.nom.trim(), this.zonageId, this.quantiteTotale, this.image).subscribe({
       next: materiel => this.activeModal.close({ materiel } satisfies ModificationMateriel),
       error: response => this.echec(response, 'Le matériel n’a pas pu être modifié.')
     });
   }
 
   supprimer(): void {
-    if (this.enregistrement || !this.confirmationSuppression || (this.objet.quantiteEmpruntee ?? (this.objet.emprunteurId !== null ? 1 : 0)) > 0) return;
+    if (this.enregistrement || this.chargementImage || !this.confirmationSuppression || (this.objet.quantiteEmpruntee ?? (this.objet.emprunteurId !== null ? 1 : 0)) > 0) return;
     this.enregistrement = true;
     this.erreur = '';
     this.service.delete(this.objet.id).subscribe({

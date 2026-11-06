@@ -19,9 +19,11 @@
             <p class="mb-1">Retour de {{retour.quantite}} le {{retour.dateRetour | date:'dd/MM/yyyy HH:mm'}} · {{retour.rapporteParNom}}</p>
           }
           } @else {
-          <div class="d-flex flex-wrap justify-content-between gap-2"><h3 class="h6 mb-0">{{emprunt.emprunteurNom}} — {{(emprunt.quantite ?? 1) - (emprunt.quantiteRetournee ?? 0)}} à rendre</h3><span class="badge" [class.text-bg-warning]="!emprunt.dateRetour" [class.text-bg-success]="!!emprunt.dateRetour">{{emprunt.dateRetour ? 'Rapporté' : 'En cours'}}</span></div>
+          @let statut = statutEmprunt.statut(emprunt);
+          <div class="d-flex flex-wrap justify-content-between gap-2"><h3 class="h6 mb-0">{{emprunt.emprunteurNom}} — {{(emprunt.quantite ?? 1) - (emprunt.quantiteRetournee ?? 0)}} {{statut === 'À venir' ? 'prévu(s)' : 'à rendre'}}</h3><span class="badge" [class.text-bg-info]="statut === 'À venir'" [class.text-bg-warning]="statut === 'En cours'" [class.text-bg-success]="statut === 'Rapporté'">{{statut}}</span></div>
           <p class="mt-2 mb-0">Quantité : {{emprunt.quantite ?? 1}}</p><dl class="row mt-3 mb-0">
-            <dt class="col-5">Emprunt</dt><dd class="col-7">{{emprunt.dateEmprunt | date:'dd/MM/yyyy HH:mm'}}</dd>
+            <dt class="col-5">Début emprunt</dt><dd class="col-7">{{(emprunt.dateDebut || emprunt.dateEmprunt) | date:'dd/MM/yyyy'}}</dd>
+            @if (emprunt.dateFinPrevue) { <dt class="col-5">Fin prévue</dt><dd class="col-7">{{emprunt.dateFinPrevue | date:'dd/MM/yyyy'}}</dd> }
             <dt class="col-5">Enregistré par</dt><dd class="col-7">{{emprunt.enregistreParNom || 'Non renseigné'}}</dd>
             <dt class="col-5">Retour</dt><dd class="col-7">{{emprunt.dateRetour ? (emprunt.dateRetour | date:'dd/MM/yyyy HH:mm') : 'Non rapporté'}}</dd>
             @if (emprunt.dateRetour) { <dt class="col-5">Rapporté par</dt><dd class="col-7 mb-0">{{emprunt.rapporteParNom || 'Non renseigné'}}</dd> }
