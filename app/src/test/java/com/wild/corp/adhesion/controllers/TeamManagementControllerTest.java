@@ -22,6 +22,17 @@ class TeamManagementControllerTest {
     @Autowired MockMvc mvc;
     @MockitoBean TeamManagementService service;
 
+    @Test void loadsMemberDetailsInTheSelectedActivityForTheAuthenticatedUser() throws Exception {
+        var person = new TeamManagementService.Person(1L, "Alice", "Martin", 100L, "Validée", true, true, false);
+        when(service.memberDetails(7L, 100L, "manager@example.org"))
+                .thenReturn(new TeamManagementService.MemberDetails(person, null, "alice@example.org", null, null, null, null, null));
+        mvc.perform(get("/teams/activities/7/adhesions/100").with(user("manager@example.org").roles("USER")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.personne.prenom").value("Alice"))
+                .andExpect(jsonPath("$.email").value("alice@example.org"));
+        verify(service).memberDetails(7L, 100L, "manager@example.org");
+    }
+
     @Test void acceptsResponsibilityAndTeamWithoutChoosingAnAdherent() throws Exception {
         mvc.perform(put("/teams/events/20/responsibilities").with(user("coach@example.org").roles("ENCADRANT"))
                 .contentType(MediaType.APPLICATION_JSON).content("[{\"tacheId\":3,\"equipeId\":10}]"))

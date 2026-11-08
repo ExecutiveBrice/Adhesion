@@ -80,6 +80,12 @@ l'inclure à la fin de `v2/changeset-v2.xml`. Ne pas modifier un
 changeset déjà déployé : Liquibase vérifie son checksum. Ajouter un changeset
 correctif.
 
+La V20 corrige la contrainte historique `seance_etat_seance_check` pour accepter
+les quatre états de séance, dont `MODIFIEE` (valeur 3). Elle débloque la
+modification des événements sur les bases qui limitaient encore l’état aux
+valeurs 0 à 2, sans modifier les événements existants. Elle s’applique
+automatiquement au démarrage du serveur.
+
 ## Vérification
 
 `LiquibaseMigrationTest` vérifie la création complète, la validation de toutes

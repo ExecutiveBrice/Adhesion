@@ -1,22 +1,42 @@
-<div class="activity-header">
-  <div class="nav nav-tabs activity-tabs" role="tablist" aria-label="Paramètres et équipes de l’activité" (keydown)="navigateTabs($event)">
-    <button type="button" id="activity-tab-options" class="nav-link" role="tab" aria-controls="activity-panel-options"
-      [class.active]="activeTab === 'options'" [attr.aria-selected]="activeTab === 'options'" [tabIndex]="activeTab === 'options' ? 0 : -1"
-      [disabled]="teamsBusy" (click)="selectTab('options')">Options</button>
-    @if (canConfigureTeams) {
+<header class="activity-heading">
+  <h1 class="h3 mb-0">{{activite.nom || 'Nouvelle activité'}}</h1>
+  <button type="button" class="btn btn-outline-secondary activity-settings" aria-label="Options de l’activité"
+    title="Options de l’activité" aria-haspopup="dialog" (click)="openOptions()">
+    <fa-icon [icon]="faGear" aria-hidden="true" />
+  </button>
+</header>
+@if (canConfigureTeams && activite.id) {
+  <section class="activity-body">
+    <div class="activity-teams" role="group" aria-label="Équipes de l’activité">
       @for (team of teams; track team.id) {
-        <button type="button" [id]="'activity-tab-team-' + team.id" class="nav-link" role="tab" [attr.aria-controls]="'activity-panel-team-' + team.id"
-          [class.active]="activeTab === team.id" [attr.aria-selected]="activeTab === team.id" [tabIndex]="activeTab === team.id ? 0 : -1"
-          [title]="team.nom" [disabled]="teamsBusy" (click)="selectTab(team.id)">{{team.nom}}</button>
+        <button type="button" [id]="'activity-team-' + team.id" class="btn activity-team-button"
+          [class.btn-primary]="!creatingTeam && selectedTeamId === team.id"
+          [class.btn-outline-primary]="creatingTeam || selectedTeamId !== team.id"
+          [attr.aria-pressed]="!creatingTeam && selectedTeamId === team.id" aria-controls="activity-team-details"
+          [disabled]="teamsBusy" (click)="selectTeam(team.id)">{{team.nom}}</button>
       }
-      <button type="button" id="activity-tab-add-team" class="nav-link add-team-tab" role="tab" aria-controls="activity-panel-add-team"
-        [class.active]="activeTab === 'add-team'" [attr.aria-selected]="activeTab === 'add-team'" [tabIndex]="activeTab === 'add-team' ? 0 : -1"
-        [disabled]="teamsBusy" (click)="selectTab('add-team')"><span aria-hidden="true">＋</span> Ajouter une équipe</button>
-    }
+      <button type="button" class="btn btn-outline-secondary activity-add-team" [attr.aria-pressed]="creatingTeam"
+        aria-controls="activity-team-details" [disabled]="teamsBusy" (click)="addTeam()">
+        <span aria-hidden="true">＋</span> Ajouter une équipe
+      </button>
+      @if (!creatingTeam && selectedTeamId) {
+        <button type="button" class="btn btn-outline-secondary activity-edit-team" aria-haspopup="dialog"
+          [disabled]="teamsBusy || !canEditSelectedTeam" (click)="editTeam()">Modifier l’équipe</button>
+      }
+    </div>
+    <app-team-management id="activity-team-details" [activityId]="activite.id" [selectedTeamId]="selectedTeamId" [creating]="creatingTeam"
+      (stateChanged)="updateTeams($event)" (teamCreated)="teamCreated($event)" (busyChanged)="teamsBusy = $event" />
+  </section>
+}
+@if (!activite.id) {
+  <p class="text-muted">Enregistrez les options de l’activité pour créer sa première équipe et gérer son effectif.</p>
+}
+<ng-template #options let-modal>
+  <div class="modal-header">
+    <h2 class="modal-title fs-5" id="activity-options-title">Options de l’activité</h2>
+    <button type="button" class="btn-close" aria-label="Fermer" [disabled]="saving" (click)="modal.dismiss()"></button>
   </div>
-</div>
-<div class="activity-body">
-  <section id="activity-panel-options" class="activity-options" role="tabpanel" aria-labelledby="activity-tab-options" [hidden]="activeTab !== 'options'">
+  <div class="modal-body activity-options">
   <div class="row">
 
     <div class="col-12 col-sm-6">
@@ -217,12 +237,9 @@
 </div>
 </div>
 
-  </section>
-  @if (canConfigureTeams) {
-    <app-team-management class="activity-team-panel" [activityId]="activite.id" [selectedTeamId]="selectedTeamId" [creating]="activeTab === 'add-team'"
-      [hidden]="activeTab === 'options'" (stateChanged)="updateTeams($event)" (teamCreated)="teamCreated($event)" (busyChanged)="teamsBusy = $event" />
-  }
-</div>
-<div class="activity-footer" [hidden]="activeTab !== 'options'">
-  <button type="button" class="btn btn-success" (click)="enregistrer()" [disabled]="saving || !sectionSelectionnee">{{saving ? 'Enregistrement…' : 'Enregistrer'}}</button>
-</div>
+  </div>
+  <div class="modal-footer activity-footer">
+    <button type="button" class="btn btn-outline-secondary" [disabled]="saving" (click)="modal.dismiss()">Fermer</button>
+    <button type="button" class="btn btn-success" (click)="enregistrer()" [disabled]="saving || !sectionSelectionnee">{{saving ? 'Enregistrement…' : 'Enregistrer'}}</button>
+  </div>
+</ng-template>

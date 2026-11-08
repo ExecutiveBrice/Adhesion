@@ -23,4 +23,5 @@
   <include file="changeset-v17.xml" relativeToChangelogFile="true"/>
   <include file="changeset-v18.xml" relativeToChangelogFile="true"/>
   <include file="changeset-v19.xml" relativeToChangelogFile="true"/>
+  <include file="changeset-v20.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

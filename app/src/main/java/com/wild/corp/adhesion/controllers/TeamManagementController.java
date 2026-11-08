@@ -20,6 +20,9 @@ public class TeamManagementController {
     public record Reminder(String requestId) { }
     @GetMapping("/mine") public List<TeamView> mine(Principal p) { return service.mine(p.getName()); }
     @GetMapping("/activities/{id}") public State state(@PathVariable Long id, Principal p) { return service.state(id, p.getName()); }
+    @GetMapping("/activities/{id}/adhesions/{adhesionId}") public MemberDetails memberDetails(@PathVariable Long id, @PathVariable Long adhesionId, Principal p) {
+        return service.memberDetails(id, adhesionId, p.getName());
+    }
 
     @PostMapping("/activities/{id}/equipes") public TeamView create(@PathVariable Long id, @RequestBody TeamEdit body, Principal p) {
         return service.saveTeam(id, null, body, p.getName());

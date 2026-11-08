@@ -1,0 +1,38 @@
+<div class="modal-header">
+  <h2 class="modal-title fs-5" id="team-edit-title">Modifier l’équipe</h2>
+  <button type="button" class="btn-close" aria-label="Fermer" [disabled]="busy" (click)="modal.dismiss()"></button>
+</div>
+<div class="modal-body" aria-label="Édition d’équipe">
+  @if (error) { <div class="alert alert-danger" role="alert">{{error}}</div> }
+  <fieldset [disabled]="busy">
+    <div class="row g-3">
+      <label class="col-md-6">Nom<input class="form-control" maxlength="100" [(ngModel)]="form.nom"></label>
+      <label class="col-md-6">Description<input class="form-control" maxlength="500" [(ngModel)]="form.description"></label>
+      <fieldset class="col-md-6">
+        <legend class="fs-6">Encadrants</legend>
+        <div class="overflow-auto" style="max-height: 15rem">
+          @for (p of people; track p.id) {
+            <label class="d-block"><input type="checkbox" class="me-1" [checked]="form.encadrants.includes(p.id)"
+              (change)="toggleStaff(p.id, 'encadrants', $any($event.target).checked)"> {{p.prenom}} {{p.nom}}</label>
+          }
+        </div>
+      </fieldset>
+      <fieldset class="col-md-6">
+        <legend class="fs-6">Référents</legend>
+        <div class="overflow-auto" style="max-height: 15rem">
+          @for (p of people; track p.id) {
+            <label class="d-block"><input type="checkbox" class="me-1" [checked]="form.referents.includes(p.id)"
+              (change)="toggleStaff(p.id, 'referents', $any($event.target).checked)"> {{p.prenom}} {{p.nom}}</label>
+          }
+        </div>
+      </fieldset>
+    </div>
+  </fieldset>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-outline-danger me-auto" [disabled]="busy || team.principale || !team.canManage"
+    [title]="team.principale ? 'La première équipe ne peut pas être supprimée.' : 'Supprimer l’équipe'"
+    (click)="deleteTeam()">Supprimer l’équipe</button>
+  <button type="button" class="btn btn-outline-secondary" [disabled]="busy" (click)="modal.dismiss()">Fermer</button>
+  <button type="button" class="btn btn-primary" [disabled]="busy || !form.nom.trim() || !team.canManage" (click)="save()">{{busy ? 'Enregistrement…' : 'Enregistrer l’équipe'}}</button>
+</div>

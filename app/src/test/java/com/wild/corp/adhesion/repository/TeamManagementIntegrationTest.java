@@ -74,6 +74,82 @@ class TeamManagementIntegrationTest {
     }
     EventView event(TeamView t) { return service.createEvent(t.id(), edit(List.of(t.id())), login(admin)); }
 
+    @Test void rosterCandidatesExposePaymentValidationRegistrationAndFlagFromTheirMembership() {
+        aliceMembership.setValidPaiementSecretariat(true);
+        aliceMembership.setFlag(true);
+        bobMembership.setStatutActuel(Status.ATTENTE_SECRETARIAT.label);
+        bobMembership.setValidPaiementSecretariat(false);
+        em.flush(); em.clear();
+
+        assertThat(service.state(activity.getId(), login(admin)).candidats())
+                .extracting(Person::adhesionId, Person::paiementValide, Person::inscriptionValidee, Person::flag)
+                .containsExactlyInAnyOrder(tuple(aliceMembership.getId(), true, true, true),
+                        tuple(bobMembership.getId(), false, false, false));
+
+        Adhesion updated = em.find(Adhesion.class, bobMembership.getId());
+        updated.setStatutActuel(Status.LICENCE_GENEREE.label);
+        assertThat(service.state(activity.getId(), login(admin)).candidats())
+                .filteredOn(p -> p.adhesionId().equals(bobMembership.getId())).singleElement()
+                .satisfies(p -> assertThat(p.inscriptionValidee()).isTrue());
+        updated.setStatutActuel(null);
+        assertThat(service.state(activity.getId(), login(admin)).candidats())
+                .filteredOn(p -> p.adhesionId().equals(bobMembership.getId())).singleElement()
+                .satisfies(p -> assertThat(p.inscriptionValidee()).isFalse());
+    }
+
+    @Test void memberDetailsUseTheChosenContactAndIncludeOnlyTheActivityMembership() {
+        alice.setNaissance(LocalDate.of(2010, 5, 12)); alice.setTelephone("0600000001");
+        alice.setAdresse("Adresse personnelle"); alice.setCodePostal("44000"); alice.setVille("Nantes");
+        parent.setTelephone("0600000002"); parent.setAdresse("Adresse du représentant");
+        parent.setCodePostal("44100"); parent.setVille("Nantes");
+        alice.setTelephoneRepresentant(true); alice.setAdresseRepresentant(true);
+        aliceMembership.setValidPaiementSecretariat(true); aliceMembership.setFlag(true);
+        em.flush(); em.clear();
+        MemberDetails details = service.memberDetails(activity.getId(), aliceMembership.getId(), login(admin));
+        assertThat(details.personne().id()).isEqualTo(alice.getId());
+        assertThat(details.personne().adhesionId()).isEqualTo(aliceMembership.getId());
+        assertThat(details.personne().paiementValide()).isTrue();
+        assertThat(details.personne().flag()).isTrue();
+        assertThat(details.naissance()).isEqualTo(LocalDate.of(2010, 5, 12));
+        assertThat(details.email()).isEqualTo(login(parent));
+        assertThat(details.telephone()).isEqualTo("0600000002");
+        assertThat(details.adresse()).isEqualTo("Adresse du représentant");
+        assertThat(details.codePostal()).isEqualTo("44100");
+        assertThat(details.representant().prenom()).isEqualTo("parent");
+
+        Adherent updated = em.find(Adherent.class, alice.getId());
+        updated.setEmailRepresentant(false); updated.setTelephoneRepresentant(false); updated.setAdresseRepresentant(false);
+        details = service.memberDetails(activity.getId(), aliceMembership.getId(), login(admin));
+        assertThat(details.email()).isEqualTo(login(alice));
+        assertThat(details.telephone()).isEqualTo("0600000001");
+        assertThat(details.adresse()).isEqualTo("Adresse personnelle");
+    }
+
+    @Test void memberDetailsRequireActivityManagementAndAnEligibleMembershipInThatActivity() {
+        assertThatThrownBy(() -> service.memberDetails(activity.getId(), aliceMembership.getId(), login(outsider)))
+                .hasMessageContaining("403");
+        activity.getSection().getReferents().add(coach.getUser()); em.flush();
+        assertThat(service.memberDetails(activity.getId(), aliceMembership.getId(), login(coach)).personne().id())
+                .isEqualTo(alice.getId());
+        Activite other = new Activite(); other.setNom("Autre activité"); em.persist(other);
+        Adhesion foreign = membership(outsider, other); em.flush();
+        assertThatThrownBy(() -> service.memberDetails(activity.getId(), foreign.getId(), login(admin)))
+                .hasMessageContaining("404");
+        aliceMembership.setStatutActuel(Status.ANNULEE.label);
+        assertThatThrownBy(() -> service.memberDetails(activity.getId(), aliceMembership.getId(), login(admin)))
+                .hasMessageContaining("404");
+    }
+
+    @Test void memberDetailsHandleMissingContactsWithoutReturningAnAccount() {
+        Adhesion membership = membership(outsider, activity);
+        outsider.setUser(null); em.flush();
+        MemberDetails details = service.memberDetails(activity.getId(), membership.getId(), login(admin));
+        assertThat(details.email()).isNull();
+        assertThat(details.telephone()).isNull();
+        assertThat(details.naissance()).isNull();
+        assertThat(details.representant()).isNull();
+    }
+
     @Test void recurringEventsSkipExcludedWeeksAndKeepLocalTimesAndMeetingOffset() {
         start = LocalDateTime.of(2027, 3, 20, 18, 0);
         TeamView t = team("Récurrence", aliceMembership.getId());

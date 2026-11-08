@@ -6,5 +6,8 @@
 .practical { white-space: pre-wrap; }
 label { font-size: .92rem; }
 input[type=checkbox] { margin-right: .3rem; }
-.event-participants summary { cursor: pointer; font-weight: 600; padding: .5rem 0; }
-.event-participants[open] summary { margin-bottom: .5rem; }
+.participants-toggle { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+.attendance-count { display: inline-flex; align-items: center; gap: .25rem; }
+.attendance-present { color: #198754; }
+.attendance-absent { color: #dc3545; }
+.attendance-pending { color: #c05600; }

@@ -1,3 +1,4 @@
+import { NgbConfig, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -39,10 +40,11 @@ describe('Navigation vers la page d’activité', () => {
       { provide: ToastService, useValue: jasmine.createSpyObj('toast', ['warning', 'success', 'error']) },
       { provide: ParamService, useValue: { getSections: () => of([]), getSalles: () => of([]) } }
     ] });
+    TestBed.inject(NgbConfig).animation = false;
     http = TestBed.inject(HttpTestingController);
     harness = await RouterTestingHarness.create();
   });
-  afterEach(() => http.verify());
+  afterEach(() => { TestBed.inject(NgbModal).dismissAll(); http.verify(); });
 
   async function flushActivity() {
     http.expectOne(`${base}/activite/7`).flush(activity());
@@ -66,14 +68,14 @@ describe('Navigation vers la page d’activité', () => {
     await harness.fixture.whenStable();
     await flushActivity();
     expect(harness.routeNativeElement!.querySelector('h1')!.textContent).toBe('Danse');
-    expect(harness.routeNativeElement!.querySelector('#activity-tab-team-10')!.getAttribute('aria-selected')).toBe('true');
+    expect(harness.routeNativeElement!.querySelector('#activity-team-10')!.getAttribute('aria-pressed')).toBe('true');
     expect(document.querySelector('ngb-modal-window')).toBeNull();
   });
 
   it('charge une activité directement depuis son URL', async () => {
     await harness.navigateByUrl('/activites/7', ActiviteComponent);
     await flushActivity();
-    expect(harness.routeNativeElement!.textContent).toContain('Événements · Débutants');
+    expect(harness.routeNativeElement!.querySelector('app-team-events h5')!.textContent).toBe('Événements');
   });
 
   it('affiche les événements de la semaine prochaine et ouvre leur détail sans quitter le listing', async () => {
@@ -165,10 +167,11 @@ describe('Navigation vers la page d’activité', () => {
 
   it('ouvre Options pour la création puis redirige vers l’activité enregistrée', async () => {
     const component = await harness.navigateByUrl('/activites/nouvelle', ActiviteComponent);
-    expect(harness.routeNativeElement!.querySelector('#activity-tab-options')!.getAttribute('aria-selected')).toBe('true');
+    expect(document.querySelector('#activity-options-title')!.textContent).toBe('Options de l’activité');
+    expect(harness.routeNativeElement!.querySelector('[role="tablist"]')).toBeNull();
     component.onSaved(activity());
     await harness.fixture.whenStable();
     await flushActivity();
-    expect(harness.routeNativeElement!.querySelector('#activity-tab-team-10')!.getAttribute('aria-selected')).toBe('true');
+    expect(harness.routeNativeElement!.querySelector('#activity-team-10')!.getAttribute('aria-pressed')).toBe('true');
   });
 });

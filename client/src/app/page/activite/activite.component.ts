@@ -14,7 +14,7 @@ import { ActiviteEditorComponent } from './activite-editor.component';
   template: `
     <main class="container-fluid py-4 px-3 px-md-4">
       <a routerLink="/activites" class="btn btn-outline-secondary mb-3">← Retour aux activités</a>
-      <h1 class="h3 mb-4">{{activite()?.nom ?? 'Activité'}}</h1>
+      @if (!activite()) { <h1 class="h3 mb-4">Activité</h1> }
       @if (loading()) { <p role="status">Chargement de l’activité…</p> }
       @if (error()) { <div class="alert alert-danger" role="alert">{{error()}}</div> }
       @if (activite(); as activity) {

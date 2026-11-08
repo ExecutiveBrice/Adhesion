@@ -2,19 +2,23 @@ import { Component, inject, Input, OnChanges, OnDestroy, SimpleChanges, Template
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { DatePipe, KeyValuePipe, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faCircleCheck, faCircleExclamation, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { forkJoin, Observable } from 'rxjs';
 import { TeamService, Team, TeamEvent, TeamPerson, ResponsibilityTeam, TeamResponsibilityEdit, teamError } from '../../_services/team.service';
 import { ParamService } from '../../_services/param.service';
 import { TeamEventModalComponent } from '../team-event-modal/team-event-modal.component';
 import { registerApiViewRefresh } from '../../_services/api-render.service';
+import { ToastService } from '../../_services/toast.service';
 import { TacheSeanceConfiguration } from '../../models/responsabiliteSeance';
 import { ResponsabilitesSeanceComponent } from '../responsabilites-seance/responsabilites-seance.component';
 
-@Component({ selector: 'app-team-events', imports: [FormsModule, DatePipe, KeyValuePipe, NgTemplateOutlet, ResponsabilitesSeanceComponent],
+@Component({ selector: 'app-team-events', imports: [FormsModule, DatePipe, KeyValuePipe, NgTemplateOutlet, FaIconComponent, ResponsabilitesSeanceComponent],
   templateUrl: './team-events.component.html', styleUrls: ['./team-events.component.css'] })
 export class TeamEventsComponent implements OnChanges, OnDestroy {
   private refresh = registerApiViewRefresh();
   api = inject(TeamService);
+  private toasts = inject(ToastService);
   private params = inject(ParamService);
   private modals = inject(NgbModal);
   private responsibilityModal?: NgbModalRef;
@@ -23,13 +27,18 @@ export class TeamEventsComponent implements OnChanges, OnDestroy {
   @Input() teams: Team[] = [];
   @Input() collapsibleParticipants = false;
   events: TeamEvent[] = [];
-  error = ''; message = ''; busy = false; loading = false;
+  error = ''; busy = false; loading = false;
   private eventModal?: NgbModalRef;
   selectionEvent?: TeamEvent;
   candidates: TeamPerson[] = [];
   selected: number[] = [];
   search = '';
   showPast = false;
+  faCircleCheck = faCircleCheck;
+  faCircleExclamation = faCircleExclamation;
+  faTriangleExclamation = faTriangleExclamation;
+  expandedParticipants = new Set<number>();
+  expandedResponsibilities = new Set<number>();
   responsibilityEvent?: TeamEvent;
   responsibilityRows: TeamResponsibilityEdit[] = [];
   responsibilityTeams: ResponsibilityTeam[] = [];
@@ -43,7 +52,7 @@ export class TeamEventsComponent implements OnChanges, OnDestroy {
       if (team && !this.team.canManage) { this.closeEventModal(); this.selectionEvent = undefined; this.closeResponsibilities(); }
       return;
     }
-    this.closeEventModal(); this.selectionEvent = undefined; this.closeResponsibilities(); this.events = []; this.error = ''; this.load();
+    this.closeEventModal(); this.selectionEvent = undefined; this.closeResponsibilities(); this.expandedParticipants.clear(); this.expandedResponsibilities.clear(); this.events = []; this.error = ''; this.load();
   }
   ngOnDestroy() { this.closeEventModal(); this.closeResponsibilities(); }
   load() {
@@ -65,7 +74,7 @@ export class TeamEventsComponent implements OnChanges, OnDestroy {
     modal.result.then((result: any) => {
       if (this.eventModal !== modal) return;
       this.eventModal = undefined;
-      this.message = result.nombre ? `${result.nombre} événement(s) enregistré(s).` : 'Événement enregistré.';
+      this.toasts.success(result.nombre ? `${result.nombre} événement(s) enregistré(s).` : 'Événement enregistré.');
       this.load();
     }, () => { if (this.eventModal === modal) this.eventModal = undefined; });
   }
@@ -84,6 +93,14 @@ export class TeamEventsComponent implements OnChanges, OnDestroy {
   cancel(e: TeamEvent) { if (confirm('Annuler cet événement et prévenir les personnes convoquées ?')) this.run(this.api.cancel(e.id), 'Événement annulé.'); }
   reply(e: TeamEvent, id: number, value: boolean) { this.run(this.api.reply(e.id, id, value), 'Réponse enregistrée.'); }
   point(e: TeamEvent, id: number, value: boolean) { this.run(this.api.attendance(e.id, id, value), 'Présence enregistrée.'); }
+  toggleParticipants(eventId: number) {
+    if (this.expandedParticipants.has(eventId)) this.expandedParticipants.delete(eventId);
+    else this.expandedParticipants.add(eventId);
+  }
+  toggleResponsibilities(eventId: number) {
+    if (this.expandedResponsibilities.has(eventId)) this.expandedResponsibilities.delete(eventId);
+    else this.expandedResponsibilities.add(eventId);
+  }
   editResponsibilities(e: TeamEvent) {
     if (this.busy) return;
     this.closeResponsibilities();
@@ -126,12 +143,12 @@ export class TeamEventsComponent implements OnChanges, OnDestroy {
     this.run(this.api.responsibilities(this.responsibilityEvent.id, this.responsibilityRows), 'Responsabilités enregistrées.', () => this.closeResponsibilities());
   }
   selectedInvites(e: TeamEvent) { return e.convocations.filter(c => c.selectionnee); }
-  count(e: TeamEvent, value: boolean | null) { return e.convocations.filter(c => c.selectionnee && c.publication && c.reponse === value).length; }
+  presenceCount(e: TeamEvent, value: boolean | null) { return e.convocations.filter(c => c.selectionnee && c.presence === value).length; }
   mailLabel(state: string) { return ({ PENDING: 'en attente', SENDING: 'envoi engagé', SENT: 'accepté par le prestataire', UNKNOWN: 'résultat incertain', REJECTED: 'refusé', CANCELLED: 'devenu inutile', NO_ADDRESS: 'adresse absente' } as Record<string, string>)[state] ?? state; }
   run<T>(request: Observable<T>, message: string, after?: () => void) {
-    if (this.busy) return; this.busy = true; this.error = ''; this.message = '';
+    if (this.busy) return; this.busy = true; this.error = '';
     const id = this.team.id;
-    request.subscribe({ next: () => { this.busy = false; if (id === this.team.id) { this.message = message; after?.(); this.load(); } },
+    request.subscribe({ next: () => { this.busy = false; if (id === this.team.id) { this.toasts.success(message); after?.(); this.load(); } },
       error: e => { this.busy = false; this.error = teamError(e); } });
   }
 }

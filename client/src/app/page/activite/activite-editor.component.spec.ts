@@ -1,6 +1,6 @@
 import { NgbConfig, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { ActiviteService } from '../../_services/activite.service';
 import { AdherentService } from '../../_services/adherent.service';
 import { ParamService } from '../../_services/param.service';
@@ -36,6 +36,7 @@ describe('Fiche activité : section obligatoire', () => {
         { provide: ParamService, useValue: { getSections: () => of([section]), getSalles: () => of([]), getTachesSeance: () => of([]) } }
       ]
     });
+    TestBed.inject(NgbConfig).animation = false;
     fixture = TestBed.createComponent(ActiviteEditorComponent);
     component = fixture.componentInstance;
     component.activite = new Activite();
@@ -43,15 +44,17 @@ describe('Fiche activité : section obligatoire', () => {
     activites.save.and.callFake(activite => of(activite));
   });
 
+  afterEach(() => { TestBed.inject(NgbModal).dismissAll(); fixture.destroy(); });
+
   it('bloque le bouton tant qu’aucune section n’est choisie puis enregistre la section sélectionnée', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
-    const bouton = fixture.nativeElement.querySelector('.activity-footer .btn-success') as HTMLButtonElement;
-    const select = fixture.nativeElement.querySelector('#sectionActivite') as HTMLSelectElement;
+    const bouton = document.querySelector('.activity-footer .btn-success') as HTMLButtonElement;
+    const select = document.querySelector('#sectionActivite') as HTMLSelectElement;
     expect(bouton.disabled).toBeTrue();
     expect(select.required).toBeTrue();
     expect(select.options[0].disabled).toBeTrue();
-    expect(fixture.nativeElement.textContent).toContain('Choisissez une section pour enregistrer l’activité.');
+    expect(document.body.textContent).toContain('Choisissez une section pour enregistrer l’activité.');
     bouton.click();
     expect(activites.save).not.toHaveBeenCalled();
 
@@ -102,7 +105,7 @@ describe('Fiche activité : section obligatoire', () => {
   });
 });
 
-describe('Onglets de la fiche activité', () => {
+describe('Équipes et options de la fiche activité', () => {
   let fixture: ComponentFixture<ActiviteEditorComponent>;
   let http: HttpTestingController;
   const base = environment.server;
@@ -115,7 +118,7 @@ describe('Onglets de la fiche activité', () => {
       provideHttpClient(withInterceptors([apiChangeDetectionInterceptor])), provideHttpClientTesting(),
       { provide: TokenStorageService, useValue: { getUser: () => ({ roles: ['ROLE_ADMIN'] }) } },
       { provide: ToastService, useValue: jasmine.createSpyObj('toast', ['warning', 'success', 'error']) },
-      { provide: ParamService, useValue: { getSections: () => of([]), getSalles: () => of([]) } }
+      { provide: ParamService, useValue: { getSections: () => of([{ id: 3, nom: 'Culture' }]), getSalles: () => of([]) } }
     ] });
     TestBed.inject(NgbConfig).animation = false;
     http = TestBed.inject(HttpTestingController);
@@ -123,9 +126,9 @@ describe('Onglets de la fiche activité', () => {
     fixture.componentInstance.activite = Object.assign(new Activite(), { id: 7, nom: 'Danse', section: { id: 3, nom: 'Culture' } });
   });
   afterEach(() => { TestBed.inject(NgbModal).dismissAll(); fixture.destroy(); http.verify(); });
-  const tabs = () => Array.from(fixture.nativeElement.querySelectorAll('[role="tab"]') as NodeListOf<HTMLButtonElement>);
-  function clickTab(text: string) {
-    tabs().find(tab => tab.textContent?.trim().replace(/^＋\s*/, '') === text)!.click();
+  const teamButtons = () => Array.from(fixture.nativeElement.querySelectorAll('.activity-team-button') as NodeListOf<HTMLButtonElement>);
+  function selectTeam(text: string) {
+    teamButtons().find(button => button.textContent?.trim() === text)!.click();
     tick(); fixture.detectChanges();
   }
   function open(equipes = state().equipes) {
@@ -137,78 +140,143 @@ describe('Onglets de la fiche activité', () => {
     input.value = value; input.dispatchEvent(new Event('input', { bubbles: true })); tick(); fixture.detectChanges();
   }
   function button(text: string) {
-    return Array.from(fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>)
+    return Array.from(document.querySelectorAll('button') as NodeListOf<HTMLButtonElement>)
       .find(button => button.textContent?.trim() === text)!;
   }
+  function openOptions() { buttonBySelector('.activity-settings').click(); tick(); fixture.detectChanges(); }
+  function closeOptions() { document.querySelector<HTMLButtonElement>('ngb-modal-window .btn-close')!.click(); tick(); fixture.detectChanges(); }
+  function buttonBySelector(selector: string): HTMLButtonElement { return fixture.nativeElement.querySelector(selector); }
 
-  it('place Options, les équipes puis Ajouter une équipe dans l’entête et ouvre l’équipe principale', fakeAsync(() => {
+  it('remplace les onglets par des boutons et affiche l’équipe principale puis l’équipe choisie', fakeAsync(() => {
     open();
-    expect(tabs().map(tab => tab.textContent?.trim().replace(/^＋\s*/, ''))).toEqual(['Options', 'Débutants', 'Confirmés', 'Ajouter une équipe']);
-    expect(fixture.nativeElement.querySelector('.activity-header').textContent).not.toContain("Choix de l'activité");
-    expect(tabs()[1].getAttribute('aria-selected')).toBe('true');
-    expect(fixture.nativeElement.querySelector('app-team-events').textContent).toContain('Événements · Débutants');
-    http.expectNone(request => request.url.endsWith('/events'));
-    clickTab('Confirmés'); http.expectOne(`${base}/teams/equipes/11/events`).flush([]); tick(); fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('#activity-panel-options').hidden).toBeTrue();
-    expect(fixture.nativeElement.querySelector('#activity-panel-team-11')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('app-team-events').textContent).toContain('Événements · Confirmés');
-    expect(fixture.nativeElement.querySelector('.activity-footer').hidden).toBeTrue();
+    expect(fixture.nativeElement.querySelector('[role="tablist"], [role="tab"], [role="tabpanel"]')).toBeNull();
+    expect(teamButtons().map(button => button.textContent?.trim())).toEqual(['Débutants', 'Confirmés']);
+    expect(teamButtons()[0].getAttribute('aria-pressed')).toBe('true');
+    expect(button('Modifier l’équipe').parentElement).toBe(button('＋ Ajouter une équipe').parentElement);
+    expect(button('Modifier l’équipe').parentElement!.classList).toContain('activity-teams');
+    expect(button('Archiver')).toBeUndefined();
+    expect(fixture.nativeElement.querySelector('app-team-events h5').textContent).toBe('Événements');
+    expect(document.querySelector('ngb-modal-window')).toBeNull();
+    expect(fixture.nativeElement.querySelector('input[name="nom"]')).toBeNull();
+    selectTeam('Confirmés'); http.expectOne(`${base}/teams/equipes/11/events`).flush([]); tick(); fixture.detectChanges();
+    expect(teamButtons()[1].getAttribute('aria-pressed')).toBe('true');
+    expect(fixture.nativeElement.querySelector('app-team-events h5').textContent).toBe('Événements');
   }));
 
-  it('conserve les paramètres et le brouillon d’événement en passant par Options sans recharger les équipes', fakeAsync(() => {
-    open(); fill(fixture.nativeElement.querySelector('input[name="nom"]'), 'Danse adultes');
-    clickTab('Débutants');
-    button('Ajouter un événement').click(); tick(); fixture.detectChanges();
-    const date = document.querySelector<HTMLInputElement>('app-team-event-modal input[type="datetime-local"]')!;
-    fill(date, '2027-01-10T17:45');
-    clickTab('Options');
-    expect((fixture.nativeElement.querySelector('input[name="nom"]') as HTMLInputElement).value).toBe('Danse adultes');
-    clickTab('Débutants');
-    expect(document.querySelector<HTMLInputElement>('app-team-event-modal input[type="datetime-local"]')!.value).toBe('2027-01-10T17:45');
+  it('ouvre les options à côté du titre et conserve le brouillon à la fermeture sans recharger les équipes', fakeAsync(() => {
+    open();
+    expect(buttonBySelector('.activity-settings').parentElement!.querySelector('h1')!.textContent).toBe('Danse');
+    expect(buttonBySelector('.activity-settings').getAttribute('aria-haspopup')).toBe('dialog');
+    openOptions();
+    expect(document.querySelector('ngb-modal-window')!.getAttribute('aria-labelledby')).toBe('activity-options-title');
+    fill(document.querySelector<HTMLInputElement>('ngb-modal-window input[name="nom"]')!, 'Danse adultes');
+    closeOptions();
+    expect(document.querySelector('ngb-modal-window')).toBeNull();
+    expect(teamButtons()[0].getAttribute('aria-pressed')).toBe('true');
+    openOptions();
+    expect(document.querySelector<HTMLInputElement>('ngb-modal-window input[name="nom"]')!.value).toBe('Danse adultes');
+    document.querySelector<HTMLButtonElement>('ngb-modal-window .btn-success')!.click();
+    const save = http.expectOne(`${base}/activite/save`);
+    expect(save.request.body.nom).toBe('Danse adultes');
+    save.flush(fixture.componentInstance.activite); tick(); fixture.detectChanges();
+    expect(document.querySelector('ngb-modal-window')).toBeNull();
     http.expectNone(request => request.url.endsWith('/events') || request.url.endsWith('/teams/activities/7'));
   }));
 
-  it('conserve le brouillon d’équipe et ouvre son onglet après création', fakeAsync(() => {
-    open(); clickTab('Ajouter une équipe');
+  it('garde les options ouvertes si l’enregistrement échoue', fakeAsync(() => {
+    open(); openOptions();
+    document.querySelector<HTMLButtonElement>('ngb-modal-window .btn-success')!.click();
+    http.expectOne(`${base}/activite/save`).flush({ detail: 'Erreur' }, { status: 500, statusText: 'Server Error' });
+    tick(); fixture.detectChanges();
+    expect(document.querySelector('ngb-modal-window')).not.toBeNull();
+    expect(document.querySelector<HTMLButtonElement>('ngb-modal-window .btn-success')!.disabled).toBeFalse();
+  }));
+
+  it('conserve le brouillon d’équipe après consultation des options et sélectionne l’équipe créée', fakeAsync(() => {
+    open(); button('＋ Ajouter une équipe').click(); tick(); fixture.detectChanges();
     fill(fixture.nativeElement.querySelector('[aria-label="Édition d’équipe"] input'), 'Juniors');
-    clickTab('Options'); clickTab('Ajouter une équipe');
+    openOptions(); closeOptions();
     expect(fixture.nativeElement.querySelector('[aria-label="Édition d’équipe"] input').value).toBe('Juniors');
     button('Enregistrer l’équipe').click(); fixture.detectChanges();
-    expect(tabs().every(tab => tab.disabled)).toBeTrue();
+    expect(teamButtons().every(button => button.disabled)).toBeTrue();
     const request = http.expectOne(`${base}/teams/activities/7/equipes`);
     expect(request.request.body.nom).toBe('Juniors');
     const created = team(12, 'Juniors'); request.flush(created);
     http.expectOne(`${base}/teams/activities/7`).flush(state([...state().equipes, created])); tick(); fixture.detectChanges();
     http.expectOne(`${base}/teams/equipes/12/events`).flush([]); tick(); fixture.detectChanges();
-    expect(tabs().map(tab => tab.textContent?.trim().replace(/^＋\s*/, ''))).toEqual(['Options', 'Débutants', 'Confirmés', 'Juniors', 'Ajouter une équipe']);
-    expect(tabs().find(tab => tab.textContent?.trim() === 'Juniors')?.getAttribute('aria-selected')).toBe('true');
+    expect(teamButtons().map(button => button.textContent?.trim())).toEqual(['Débutants', 'Confirmés', 'Juniors']);
+    expect(teamButtons()[2].getAttribute('aria-pressed')).toBe('true');
   }));
 
-  it('met à jour le nom de l’onglet et revient à l’équipe principale après archivage', fakeAsync(() => {
-    open(); clickTab('Confirmés'); http.expectOne(`${base}/teams/equipes/11/events`).flush([]); tick(); fixture.detectChanges();
+  it('modifie dans une modale et revient à l’équipe principale après suppression depuis cette modale', fakeAsync(() => {
+    open(); selectTeam('Confirmés'); http.expectOne(`${base}/teams/equipes/11/events`).flush([]); tick(); fixture.detectChanges();
     button('Modifier l’équipe').click(); tick(); fixture.detectChanges();
-    fill(fixture.nativeElement.querySelector('[aria-label="Édition d’équipe"] input'), 'Avancés');
-    button('Enregistrer l’équipe').click(); http.expectOne(`${base}/teams/activities/7/equipes/11`).flush(team(11, 'Avancés'));
+    expect(document.querySelector('ngb-modal-window')!.getAttribute('aria-labelledby')).toBe('team-edit-title');
+    expect(fixture.nativeElement.querySelector('[aria-label="Édition d’équipe"]')).toBeNull();
+    fill(document.querySelector('[aria-label="Édition d’équipe"] input')!, 'Avancés');
+    button('Enregistrer l’équipe').click(); http.expectOne(`${base}/teams/activities/7/equipes/11`).flush(team(11, 'Avancés')); tick();
     http.expectOne(`${base}/teams/activities/7`).flush(state([team(10, 'Débutants'), team(11, 'Avancés')])); tick(); fixture.detectChanges();
-    expect(tabs()[2].textContent?.trim()).toBe('Avancés');
+    expect(teamButtons()[1].textContent?.trim()).toBe('Avancés');
+    expect(document.querySelector('app-team-edit-modal')).toBeNull();
     http.expectNone(request => request.url.endsWith('/events'));
-    spyOn(window, 'confirm').and.returnValue(true); button('Archiver').click();
-    http.expectOne(`${base}/teams/activities/7/equipes/11`).flush(null);
+    button('Modifier l’équipe').click(); tick(); fixture.detectChanges();
+    expect(document.querySelector('app-team-edit-modal')!.contains(button('Supprimer l’équipe'))).toBeTrue();
+    spyOn(window, 'confirm').and.returnValue(true); button('Supprimer l’équipe').click();
+    const deletion = http.expectOne(`${base}/teams/activities/7/equipes/11`);
+    expect(deletion.request.method).toBe('DELETE'); deletion.flush(null); tick();
     http.expectOne(`${base}/teams/activities/7`).flush(state([team(10, 'Débutants')])); tick(); fixture.detectChanges();
     http.expectOne(`${base}/teams/equipes/10/events`).flush([]); tick(); fixture.detectChanges();
-    expect(tabs()[1].getAttribute('aria-selected')).toBe('true');
-    expect(tabs().length).toBe(3);
+    expect(teamButtons()[0].getAttribute('aria-pressed')).toBe('true');
+    expect(teamButtons().length).toBe(1);
+    expect(document.querySelector('app-team-edit-modal')).toBeNull();
   }));
 
-  it('sélectionne l’équipe principale même si elle n’est pas la première de la liste', fakeAsync(() => {
+  it('protège la première équipe de la suppression et ferme la modale sans sauvegarder le brouillon', fakeAsync(() => {
+    open(); button('Modifier l’équipe').click(); tick(); fixture.detectChanges();
+    expect(button('Supprimer l’équipe').disabled).toBeTrue();
+    button('Supprimer l’équipe').click();
+    fill(document.querySelector('[aria-label="Édition d’équipe"] input')!, 'Brouillon');
+    button('Fermer').click(); tick(); fixture.detectChanges();
+    expect(teamButtons()[0].textContent?.trim()).toBe('Débutants');
+    expect(document.querySelector('app-team-edit-modal')).toBeNull();
+    http.expectNone(r => r.method === 'PUT' || r.method === 'DELETE');
+    button('Modifier l’équipe').click(); tick(); fixture.detectChanges();
+    expect(document.querySelector<HTMLInputElement>('[aria-label="Édition d’équipe"] input')!.value).toBe('Débutants');
+  }));
+
+  it('affiche les erreurs de modification et de suppression dans la modale et permet de réessayer', fakeAsync(() => {
+    open(); selectTeam('Confirmés'); http.expectOne(`${base}/teams/equipes/11/events`).flush([]); tick(); fixture.detectChanges();
+    button('Modifier l’équipe').click(); tick(); fixture.detectChanges();
+    const input = document.querySelector<HTMLInputElement>('[aria-label="Édition d’équipe"] input')!;
+    fill(input, 'Avancés'); button('Enregistrer l’équipe').click(); fixture.detectChanges();
+    expect(button('Supprimer l’équipe').disabled).toBeTrue();
+    expect(document.querySelector<HTMLButtonElement>('app-team-edit-modal .btn-close')!.disabled).toBeTrue();
+    http.expectOne(`${base}/teams/activities/7/equipes/11`).flush({ detail: 'Nom déjà utilisé' }, { status: 409, statusText: 'Conflict' }); tick(); fixture.detectChanges();
+    expect(document.querySelector('app-team-edit-modal')!.textContent).toContain('Nom déjà utilisé');
+    expect(input.value).toBe('Avancés');
+    const confirmation = spyOn(window, 'confirm').and.returnValue(false);
+    button('Supprimer l’équipe').click(); http.expectNone(r => r.method === 'DELETE');
+    confirmation.and.returnValue(true); button('Supprimer l’équipe').click();
+    http.expectOne(`${base}/teams/activities/7/equipes/11`).flush({ detail: 'Cette équipe a des événements à venir' }, { status: 409, statusText: 'Conflict' }); tick(); fixture.detectChanges();
+    expect(document.querySelector('app-team-edit-modal')!.textContent).toContain('Cette équipe a des événements à venir');
+    expect(button('Supprimer l’équipe').disabled).toBeFalse();
+    button('Enregistrer l’équipe').click();
+    http.expectOne(`${base}/teams/activities/7/equipes/11`).flush(team(11, 'Avancés')); tick();
+    http.expectOne(`${base}/teams/activities/7`).flush(state([team(10, 'Débutants'), team(11, 'Avancés')])); tick(); fixture.detectChanges();
+    expect(document.querySelector('app-team-edit-modal')).toBeNull();
+    expect(teamButtons()[1].textContent?.trim()).toBe('Avancés');
+  }));
+
+  it('sélectionne l’équipe principale même si elle n’est pas la première', fakeAsync(() => {
     open([team(11, 'Confirmés'), team(10, 'Débutants')]);
-    expect(tabs()[2].getAttribute('aria-selected')).toBe('true');
-    expect(fixture.componentInstance.selectedTeamId).toBe(10);
+    expect(teamButtons()[1].getAttribute('aria-pressed')).toBe('true');
   }));
 
-  it('conserve Options si aucune équipe n’existe', fakeAsync(() => {
+  it('propose l’ajout d’une équipe quand aucune équipe n’existe', fakeAsync(() => {
     open([]);
-    expect(tabs()[0].getAttribute('aria-selected')).toBe('true');
+    expect(teamButtons().length).toBe(0);
+    expect(fixture.nativeElement.textContent).toContain('Aucune équipe.');
+    expect(button('＋ Ajouter une équipe')).toBeDefined();
     http.expectNone(request => request.url.endsWith('/events'));
   }));
 });

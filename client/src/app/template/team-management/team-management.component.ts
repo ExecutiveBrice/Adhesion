@@ -1,17 +1,31 @@
-import { Component, EventEmitter, inject, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, inject, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faCircleCheck, faCircleXmark, faFlag, faPiggyBank } from '@fortawesome/free-solid-svg-icons';
 import { Observable } from 'rxjs';
-import { TeamService, Team, TeamState, teamError } from '../../_services/team.service';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { TeamService, Team, TeamPerson, TeamState, teamError } from '../../_services/team.service';
 import { TeamEventsComponent } from '../team-events/team-events.component';
+import { TeamMemberModalComponent } from './team-member-modal.component';
+import { TeamEditModalComponent, TeamEditResult } from './team-edit-modal.component';
 import { registerApiViewRefresh } from '../../_services/api-render.service';
+import { ToastService } from '../../_services/toast.service';
 
 type TeamEdit = { id?: number; nom: string; description: string; encadrants: number[]; referents: number[] };
 
-@Component({ selector: 'app-team-management', imports: [FormsModule, TeamEventsComponent],
+@Component({ selector: 'app-team-management', imports: [FormsModule, FaIconComponent, TeamEventsComponent],
   templateUrl: './team-management.component.html', styleUrls: ['./team-management.component.css'] })
-export class TeamManagementComponent implements OnChanges {
+export class TeamManagementComponent implements OnChanges, OnDestroy {
   private refresh = registerApiViewRefresh();
   private api = inject(TeamService);
+  private toasts = inject(ToastService);
+  private modals = inject(NgbModal);
+  private memberModal?: NgbModalRef;
+  private teamModal?: NgbModalRef;
+  readonly faPiggyBank = faPiggyBank;
+  readonly faCircleCheck = faCircleCheck;
+  readonly faCircleXmark = faCircleXmark;
+  readonly faFlag = faFlag;
   @Input() activityId?: number;
   @Input() selectedTeamId?: number;
   @Input() creating = false;
@@ -20,26 +34,53 @@ export class TeamManagementComponent implements OnChanges {
   @Output() busyChanged = new EventEmitter<boolean>();
   state?: TeamState;
   activeTeams: Team[] = [];
-  error = ''; message = ''; busy = false;
-  teamEdit?: TeamEdit;
+  error = ''; busy = false;
   newTeamDraft?: TeamEdit;
-  rosterTeam?: Team;
-  selected: number[] = [];
-  search = ''; onlyUnassigned = false; applyToFuture = false;
+  applyToFuture = false;
   selectedTeam?: Team;
-  get editor() { return this.creating ? this.newTeamDraft : this.teamEdit; }
+  get editor() { return this.creating ? this.newTeamDraft : undefined; }
   ngOnChanges(changes: SimpleChanges) {
     if (changes['selectedTeamId']) {
       this.selectedTeam = this.activeTeams.find(team => team.id === this.selectedTeamId);
-      this.teamEdit = undefined; this.rosterTeam = undefined;
+      this.closeTeamEditor(); this.applyToFuture = false;
     }
     if (changes['activityId']) {
+      this.closeMember();
+      this.closeTeamEditor();
       this.state = undefined; this.activeTeams = []; this.selectedTeam = undefined;
       this.newTeamDraft = undefined;
       if (this.activityId) this.load();
     }
     if (changes['creating'] && this.creating && this.state && !this.newTeamDraft) this.openTeam();
   }
+  ngOnDestroy() { this.closeMember(); this.closeTeamEditor(); }
+  editSelectedTeam() {
+    const team = this.selectedTeam;
+    if (!this.activityId || !team?.canManage || this.creating || this.busy || this.teamModal) return;
+    const modal = this.modals.open(TeamEditModalComponent, { size: 'lg', scrollable: true, backdrop: 'static', keyboard: false, ariaLabelledBy: 'team-edit-title' });
+    this.teamModal = modal;
+    modal.componentInstance.activityId = this.activityId;
+    modal.componentInstance.team = team;
+    modal.componentInstance.people = this.state?.intervenants ?? [];
+    modal.result.then((result: TeamEditResult) => {
+      if (this.teamModal !== modal) return;
+      this.teamModal = undefined;
+      this.toasts.success('deleted' in result ? 'Équipe supprimée.' : 'Équipe enregistrée.');
+      this.error = ''; this.load();
+    }, () => { if (this.teamModal === modal) this.teamModal = undefined; });
+  }
+  private closeTeamEditor() { this.teamModal?.dismiss(); this.teamModal = undefined; }
+  openMember(person: TeamPerson) {
+    if (!this.activityId || this.creating || !this.state?.candidats.some(p => p.adhesionId === person.adhesionId)) return;
+    this.closeMember();
+    const modal = this.modals.open(TeamMemberModalComponent, { scrollable: true, ariaLabelledBy: 'team-member-title' });
+    this.memberModal = modal;
+    modal.componentInstance.activityId = this.activityId;
+    modal.componentInstance.person = person;
+    const closed = () => { if (this.memberModal === modal) this.memberModal = undefined; };
+    modal.result.then(closed, closed);
+  }
+  private closeMember() { this.memberModal?.dismiss(); this.memberModal = undefined; }
   load(created?: Team) {
     if (!this.activityId) return;
     const activityId = this.activityId;
@@ -53,17 +94,13 @@ export class TeamManagementComponent implements OnChanges {
       if (created) this.teamCreated.emit(created);
     }, error: e => this.error = teamError(e) });
   }
-  get unassigned() { const assigned = new Set(this.activeTeams.flatMap(t => t.effectif)); return this.state?.candidats.filter(p => !assigned.has(p.adhesionId)) ?? []; }
-  get filteredPeople() { const q = this.search.toLocaleLowerCase('fr'); const list = this.onlyUnassigned ? this.unassigned : this.state?.candidats ?? [];
-    return list.filter(p => `${p.prenom} ${p.nom}`.toLocaleLowerCase('fr').includes(q)); }
-  openTeam(t?: Team) {
+  openTeam() {
     const teams = this.state?.equipes ?? [];
     let number = teams.length + 1;
     while (teams.some(team => team.nom.toLocaleLowerCase('fr') === `groupe ${number}`)) number++;
-    const draft = { id: t?.id, nom: t?.nom ?? `Groupe ${number}`, description: t?.description ?? '', encadrants: [...(t?.encadrants ?? [])], referents: [...(t?.referents ?? [])] };
-    if (t) this.teamEdit = draft; else this.newTeamDraft = draft;
+    this.newTeamDraft = { nom: `Groupe ${number}`, description: '', encadrants: [], referents: [] };
   }
-  closeEditor() { if (this.creating) this.openTeam(); else this.teamEdit = undefined; }
+  closeEditor() { this.openTeam(); }
   toggleStaff(personId: number, type: 'encadrants' | 'referents', checked: boolean) {
     const edit = this.editor;
     if (!edit) return; edit[type] = edit[type].filter(id => id !== personId); if (checked) edit[type].push(personId);
@@ -71,19 +108,33 @@ export class TeamManagementComponent implements OnChanges {
   saveTeam() {
     const edit = this.editor;
     if (this.activityId && edit) this.run(this.api.save(this.activityId, edit), 'Équipe enregistrée.', team => {
-      if (!edit.id) { this.newTeamDraft = undefined; return team; }
-      this.teamEdit = undefined; return undefined;
+      this.newTeamDraft = undefined; return team;
     });
   }
-  archive(t: Team) { if (this.activityId && confirm(`Archiver l’équipe ${t.nom} ? Son historique sera conservé.`)) this.run(this.api.archive(this.activityId, t.id), 'Équipe archivée.'); }
-  openRoster(t: Team) { this.rosterTeam = t; this.selected = [...t.effectif]; this.search = ''; this.onlyUnassigned = false; this.applyToFuture = false; }
-  togglePerson(id: number, checked: boolean) { this.selected = this.selected.filter(v => v !== id); if (checked) this.selected.push(id); }
-  saveRoster() { if (this.activityId && this.rosterTeam) this.run(this.api.roster(this.activityId, this.rosterTeam.id, this.selected, this.applyToFuture), 'Effectif enregistré. Les convocations déjà publiées et les pointages sont conservés.', () => this.rosterTeam = undefined); }
-  names(ids: number[]) { return this.state?.intervenants.filter(p => ids.includes(p.id)).map(p => `${p.prenom} ${p.nom}`).join(', ') || 'Non renseigné'; }
+  toggleRosterMember(adhesionId: number, event?: Event) {
+    const activityId = this.activityId, team = this.selectedTeam;
+    // The checked state follows the saved roster, including when the request fails.
+    if (event) (event.target as HTMLInputElement).checked = !!team?.effectif.includes(adhesionId);
+    if (!activityId || !team?.canManage || this.creating || this.busy
+      || !this.state?.candidats.some(person => person.adhesionId === adhesionId)) return;
+    const effectif = team.effectif.includes(adhesionId)
+      ? team.effectif.filter(id => id !== adhesionId) : [...team.effectif, adhesionId];
+    this.busy = true; this.busyChanged.emit(true); this.error = '';
+    this.api.roster(activityId, team.id, effectif, this.applyToFuture).subscribe({ next: updated => {
+      if (activityId === this.activityId && this.state) {
+        this.state = { ...this.state, equipes: this.state.equipes.map(t => t.id === updated.id ? updated : t) };
+        this.activeTeams = this.state.equipes.filter(t => !t.archivee);
+        this.selectedTeam = this.activeTeams.find(t => t.id === this.selectedTeamId);
+        this.toasts.success('Effectif enregistré.');
+        this.stateChanged.emit(this.state);
+      }
+      this.busy = false; this.busyChanged.emit(false);
+    }, error: e => { this.busy = false; this.busyChanged.emit(false); this.error = teamError(e); } });
+  }
   run<T>(request: Observable<T>, message: string, after?: (result: T) => Team | void) {
-    if (this.busy) return; this.busy = true; this.busyChanged.emit(true); this.error = ''; this.message = '';
+    if (this.busy) return; this.busy = true; this.busyChanged.emit(true); this.error = '';
     request.subscribe({ next: result => {
-      this.busy = false; this.busyChanged.emit(false); this.message = message;
+      this.busy = false; this.busyChanged.emit(false); this.toasts.success(message);
       const created = after?.(result); this.load(created || undefined);
     }, error: e => { this.busy = false; this.busyChanged.emit(false); this.error = teamError(e); } });
   }

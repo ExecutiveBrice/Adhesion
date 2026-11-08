@@ -1,0 +1,33 @@
+<div class="modal-header">
+  <h2 class="modal-title fs-5" id="team-member-title">{{person.prenom}} {{person.nom}}</h2>
+  <button type="button" class="btn-close" aria-label="Fermer" (click)="modal.dismiss()"></button>
+</div>
+<div class="modal-body" aria-label="Informations principales de l’adhérent">
+  @if (loading) { <p role="status">Chargement des informations…</p> }
+  @if (error) {
+    <div class="alert alert-danger" role="alert">{{error}}</div>
+    <button type="button" class="btn btn-outline-secondary" (click)="load()">Réessayer</button>
+  }
+  @if (details; as d) {
+    <dl class="row mb-0">
+      <dt class="col-sm-4">Date de naissance</dt><dd class="col-sm-8">{{d.naissance ? (d.naissance | date:'dd/MM/yyyy') : 'Non renseignée'}}</dd>
+      <dt class="col-sm-4">Email de contact</dt><dd class="col-sm-8 text-break">@if (d.email) { <a [href]="'mailto:' + d.email">{{d.email}}</a> } @else { Non renseigné }</dd>
+      <dt class="col-sm-4">Téléphone de contact</dt><dd class="col-sm-8">@if (d.telephone) { <a [href]="'tel:' + d.telephone">{{d.telephone}}</a> } @else { Non renseigné }</dd>
+      <dt class="col-sm-4">Adresse de contact</dt><dd class="col-sm-8 text-break">{{d.adresse}} @if (d.adresse && (d.codePostal || d.ville)) { <br> } {{d.codePostal}} {{d.ville}} @if (!d.adresse && !d.codePostal && !d.ville) { Non renseignée }</dd>
+    </dl>
+    @if (d.representant; as r) {
+      <h3 class="h6 mt-3">Représentant</h3>
+      <p class="mb-1">{{r.prenom}} {{r.nom}}</p>
+      @if (r.email) { <p class="mb-1 text-break"><a [href]="'mailto:' + r.email">{{r.email}}</a></p> }
+      @if (r.telephone) { <p class="mb-1"><a [href]="'tel:' + r.telephone">{{r.telephone}}</a></p> }
+    }
+    <h3 class="h6 mt-3">Adhésion</h3>
+    <dl class="row mb-0">
+      <dt class="col-sm-4">Statut</dt><dd class="col-sm-8">{{d.personne.statut || 'Non renseigné'}}</dd>
+      <dt class="col-sm-4">Paiement</dt><dd class="col-sm-8">{{d.personne.paiementValide ? 'Validé' : 'En attente'}}</dd>
+      <dt class="col-sm-4">Inscription</dt><dd class="col-sm-8">{{d.personne.inscriptionValidee ? 'Validée' : 'Non validée'}}</dd>
+      <dt class="col-sm-4">Signalement</dt><dd class="col-sm-8">{{d.personne.flag ? 'Adhésion signalée' : 'Aucun signalement'}}</dd>
+    </dl>
+  }
+</div>
+<div class="modal-footer"><button type="button" class="btn btn-outline-secondary" (click)="modal.close()">Fermer</button></div>

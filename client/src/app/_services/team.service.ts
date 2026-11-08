@@ -6,7 +6,11 @@ import { AdherentResponsabilite, ResponsabiliteSeance } from '../models/responsa
 export interface ResponsibilityTeam { id: number; nom: string; activiteNom: string; attributaire: AdherentResponsabilite | null; }
 export interface TeamResponsibilityEdit { tacheId?: number; equipeId?: number; }
 
-export interface TeamPerson { id: number; prenom: string; nom: string; adhesionId: number; statut: string; }
+export interface TeamPerson { id: number; prenom: string; nom: string; adhesionId: number; statut: string;
+  paiementValide?: boolean; inscriptionValidee?: boolean; flag?: boolean; }
+export interface TeamMemberDetails { personne: TeamPerson; naissance: string | null; email: string | null; telephone: string | null;
+  adresse: string | null; codePostal: string | null; ville: string | null;
+  representant: { prenom: string; nom: string; email: string | null; telephone: string | null } | null; }
 export interface Team { id: number; activiteId: number; activiteNom: string; nom: string; description: string; archivee: boolean;
   canManage: boolean; encadrants: number[]; referents: number[]; effectif: number[]; membres: number; principale?: boolean; }
 export interface TeamState { equipes: Team[]; candidats: TeamPerson[]; intervenants: TeamPerson[]; }
@@ -29,6 +33,7 @@ export class TeamService {
     return this.http.post<{ nombre: number; evenements: TeamEvent[] }>(this.url + '/events', { evenement, sections, semaines });
   }
   state(id: number) { return this.http.get<TeamState>(`${this.url}/activities/${id}`); }
+  memberDetails(id: number, adhesionId: number) { return this.http.get<TeamMemberDetails>(`${this.url}/activities/${id}/adhesions/${adhesionId}`); }
   save(id: number, team: { id?: number; nom: string; description: string; encadrants: number[]; referents: number[] }) {
     const url = `${this.url}/activities/${id}/equipes`;
     return team.id ? this.http.put<Team>(`${url}/${team.id}`, team) : this.http.post<Team>(url, team);

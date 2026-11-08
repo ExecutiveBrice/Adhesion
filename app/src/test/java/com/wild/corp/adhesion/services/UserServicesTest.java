@@ -3,6 +3,7 @@ package com.wild.corp.adhesion.services;
 import com.wild.corp.adhesion.models.Activite;
 import com.wild.corp.adhesion.models.Adhesion;
 import com.wild.corp.adhesion.models.ESeance;
+import com.wild.corp.adhesion.models.Presence;
 import com.wild.corp.adhesion.models.Seance;
 import com.wild.corp.adhesion.repository.SeanceRepository;
 import com.wild.corp.adhesion.utils.Status;
@@ -33,7 +34,16 @@ class UserServicesTest {
 
         Adhesion validatedAdhesion = new Adhesion();
         validatedAdhesion.setStatutActuel(Status.VALIDEE.label);
+        Adhesion secondAdhesion = new Adhesion();
+        secondAdhesion.setStatutActuel(Status.VALIDEE.label);
+        Adhesion unselectedAdhesion = new Adhesion();
+        unselectedAdhesion.setStatutActuel(Status.VALIDEE.label);
         activite.getAdhesions().add(validatedAdhesion);
+        activite.getAdhesions().add(secondAdhesion);
+        activite.getAdhesions().add(unselectedAdhesion);
+        participant(morning, validatedAdhesion);
+        participant(afternoon, validatedAdhesion);
+        participant(afternoon, secondAdhesion);
         when(seanceRepository.findTodayByProfessorUsername(
                 eq("prof@alod.fr"), eq(LocalDate.now().atStartOfDay()), eq(LocalDate.now().plusDays(1).atStartOfDay())))
                 .thenReturn(java.util.List.of(morning, afternoon));
@@ -44,8 +54,9 @@ class UserServicesTest {
                 .containsExactly(LocalTime.of(9, 0), LocalTime.of(18, 30));
         assertThat(sessions).allSatisfy(session -> {
             assertThat(session.activite()).isEqualTo("Pilates");
-            assertThat(session.nombreParticipants()).isEqualTo(1);
         });
+        assertThat(sessions).extracting(session -> session.nombreParticipants())
+                .containsExactly(1L, 2L);
         verify(seanceRepository).findTodayByProfessorUsername(
                 "prof@alod.fr", LocalDate.now().atStartOfDay(), LocalDate.now().plusDays(1).atStartOfDay());
     }
@@ -72,9 +83,17 @@ class UserServicesTest {
         assertThat(sessions).singleElement().satisfies(session -> {
             assertThat(session.activite()).isEqualTo("Yoga");
             assertThat(session.debut()).isEqualTo(morning.getDebut());
+            assertThat(session.nombreParticipants()).isZero();
         });
         verify(seanceRepository).findAllByDebutGreaterThanEqualAndDebutLessThanOrderByDebut(
                 selectedDay.atStartOfDay(), selectedDay.plusDays(1).atStartOfDay());
+    }
+
+    private void participant(Seance seance, Adhesion adhesion) {
+        Presence presence = new Presence();
+        presence.setSeance(seance);
+        presence.setAdhesion(adhesion);
+        seance.getPresences().add(presence);
     }
 
     private Seance seance(Activite activite, LocalTime heure) {

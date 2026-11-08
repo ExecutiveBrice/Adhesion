@@ -43,7 +43,11 @@ public class TeamManagementService {
         this.responsibilities = responsibilities;
     }
 
-    public record Person(Long id, String prenom, String nom, Long adhesionId, String statut) { }
+    public record Person(Long id, String prenom, String nom, Long adhesionId, String statut,
+                         boolean paiementValide, boolean inscriptionValidee, boolean flag) { }
+    public record Contact(String prenom, String nom, String email, String telephone) { }
+    public record MemberDetails(Person personne, LocalDate naissance, String email, String telephone,
+                                String adresse, String codePostal, String ville, Contact representant) { }
     public record TeamView(Long id, Long activiteId, String activiteNom, String nom, String description,
                            boolean archivee, boolean canManage, List<Long> encadrants, List<Long> referents,
                            List<Long> effectif, int membres, boolean principale) { }
@@ -93,8 +97,25 @@ public class TeamManagementService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Équipe introuvable dans cette activité"));
     }
     private Person person(Adherent p, Adhesion a) {
-        return new Person(p.getId(), p.getPrenom(), p.getNom(), a == null ? null : a.getId(), a == null ? null : a.getStatutActuel());
+        return new Person(p.getId(), p.getPrenom(), p.getNom(), a == null ? null : a.getId(), a == null ? null : a.getStatutActuel(),
+                a != null && Boolean.TRUE.equals(a.getValidPaiementSecretariat()),
+                a != null && a.getStatutActuel() != null && a.isValide(),
+                a != null && Boolean.TRUE.equals(a.getFlag()));
     }
+    public MemberDetails memberDetails(Long activityId, Long adhesionId, String name) {
+        Activite a = activity(activityId, actor(name), false);
+        Adhesion adhesion = candidates(a).stream().filter(h -> h.getId().equals(adhesionId)).findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Adhérent introuvable dans cette activité"));
+        Adherent p = adhesion.getAdherent(), representative = p.getRepresentant();
+        Adherent phoneContact = representative != null && Boolean.TRUE.equals(p.getTelephoneRepresentant()) ? representative : p;
+        Adherent emailContact = representative != null && Boolean.TRUE.equals(p.getEmailRepresentant()) ? representative : p;
+        Adherent addressContact = representative != null && Boolean.TRUE.equals(p.getAdresseRepresentant()) ? representative : p;
+        Contact contact = representative == null ? null : new Contact(representative.getPrenom(), representative.getNom(),
+                email(representative), representative.getTelephone());
+        return new MemberDetails(person(p, adhesion), p.getNaissance(), email(emailContact), phoneContact.getTelephone(),
+                addressContact.getAdresse(), addressContact.getCodePostal(), addressContact.getVille(), contact);
+    }
+    private String email(Adherent p) { return p.getUser() == null ? null : p.getUser().getUsername(); }
     private List<Adhesion> candidates(Activite a) {
         Map<Long, Adhesion> unique = new LinkedHashMap<>();
         java.util.stream.Stream.concat(a.getAdhesions().stream(), a.getSousClassement().stream())

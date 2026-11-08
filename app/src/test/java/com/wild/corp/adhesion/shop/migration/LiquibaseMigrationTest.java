@@ -94,6 +94,34 @@ class LiquibaseMigrationTest {
     }
 
     @Test
+    void allowsModifiedEventsOnDatabasesWithTheHistoricalStateConstraint() throws Exception {
+        var source = database();
+        isolatePostgres(source);
+        var jdbc = new JdbcTemplate(source);
+        jdbc.execute("""
+                CREATE TABLE seance (id bigint PRIMARY KEY, commentaire varchar(2000),
+                    etat_seance smallint CONSTRAINT seance_etat_seance_check CHECK (etat_seance BETWEEN 0 AND 2))
+                """);
+        jdbc.update("INSERT INTO seance (id, commentaire, etat_seance) VALUES (1, 'Événement existant', 0)");
+        assertThatThrownBy(() -> jdbc.update("UPDATE seance SET etat_seance = 3 WHERE id = 1"))
+                .isInstanceOf(org.springframework.dao.DataAccessException.class);
+
+        migrate(source, "db/changelog/v2/changeset-v20.xml");
+
+        for (var state : com.wild.corp.adhesion.models.ESeance.values()) {
+            jdbc.update("UPDATE seance SET etat_seance = ? WHERE id = 1", state.ordinal());
+        }
+        assertThat(jdbc.queryForObject("SELECT etat_seance FROM seance WHERE id = 1", Integer.class)).isEqualTo(3);
+        assertThat(jdbc.queryForObject("SELECT commentaire FROM seance WHERE id = 1", String.class)).isEqualTo("Événement existant");
+        assertThatThrownBy(() -> jdbc.update("UPDATE seance SET etat_seance = -1 WHERE id = 1"))
+                .isInstanceOf(org.springframework.dao.DataAccessException.class);
+        assertThatThrownBy(() -> jdbc.update("UPDATE seance SET etat_seance = 4 WHERE id = 1"))
+                .isInstanceOf(org.springframework.dao.DataAccessException.class);
+        migrate(source, "db/changelog/v2/changeset-v20.xml");
+        assertThat(jdbc.queryForObject("SELECT etat_seance FROM seance WHERE id = 1", Integer.class)).isEqualTo(3);
+    }
+
+    @Test
     void linksActivitiesToExistingSectionsAndCreatesMissingSections() throws Exception {
         var source = database();
         isolatePostgres(source);
@@ -158,7 +186,7 @@ class LiquibaseMigrationTest {
                         "v11-publicite-instagram-link", "v12-remove-referent-roles",
                         "v13-remove-section-communication-role", "v14-adhesion-rapprochement",
                         "v14-newsletter-campaign-unique", "v14-logistique-role", "v15-retour-materiel",
-                        "v15-reprise-quantites-materiel");
+                        "v15-reprise-quantites-materiel", "v20-seance-etat-modifiee");
     }
 
     @Test
