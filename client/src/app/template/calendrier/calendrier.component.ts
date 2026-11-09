@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, DestroyRef, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
 import { EvenementModalService } from '../../_services/evenement-modal.service';
+import { Router } from '@angular/router';
 import { Evenement, evenementSeance, evenementGoogle } from '../../models/evenement';
 import { catchError, forkJoin, of } from 'rxjs';
 import { ActiviteService } from 'src/app/_services/activite.service';
@@ -37,6 +38,7 @@ export class CalendrierComponent implements OnInit, OnChanges {
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly modales = inject(EvenementModalService);
+  private readonly router = inject(Router);
 
   @Input() tribuUuid?: string;
   @Input() adherentId?: number;
@@ -109,6 +111,11 @@ export class CalendrierComponent implements OnInit, OnChanges {
   fermerPopupJour(): void { this.popupJourOuverte = false; }
 
   ouvrirEvenement(evenement: EvenementCalendrier): void {
+    if (evenement.source === 'SEANCE' && evenement.seanceId != null) {
+      this.fermerPopupJour();
+      void this.router.navigate(['/evenements', evenement.seanceId]);
+      return;
+    }
     this.evenementSelectionne = evenement;
     const modale = this.modales.ouvrir(evenement, this.adherentId);
     const fermer = () => {

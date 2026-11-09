@@ -64,6 +64,9 @@
 }
 
 .evenement-ouvrir:focus-visible { outline: 3px solid var(--agenda-color, #176B4A); outline-offset: .2rem; border-radius: .25rem; }
+.seance-resume { width: 100%; border-top: 0; border-right: 0; border-bottom: 0; text-align: left; cursor: pointer; font-family: inherit; }
+.seance-resume:focus-visible, .detail-evenement-ouvrir:focus-visible { outline: 3px solid var(--agenda-color, #176B4A); outline-offset: 2px; }
+.detail-evenement-ouvrir { padding: 0; border: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; }
 .evenement-libelle { display: flex; flex-wrap: wrap; align-items: baseline; gap: .1rem .45rem; }
 .evenement-titre { font-size: 1rem; }
 .evenement-descriptif { color: var(--bs-secondary-color); font-size: .85rem; }

@@ -13,8 +13,12 @@ import { ActiviteEditorComponent } from './activite-editor.component';
   imports: [RouterLink, ActiviteEditorComponent],
   template: `
     <main class="container-fluid py-4 px-3 px-md-4">
-      <a routerLink="/activites" class="btn btn-outline-secondary mb-3">← Retour aux activités</a>
-      @if (!activite()) { <h1 class="h3 mb-4">Activité</h1> }
+      @if (!activite()) {
+        <header class="d-flex align-items-center gap-3 mb-4">
+          <h1 class="h3 mb-0 me-auto">Activité</h1>
+          <a routerLink="/activites" class="btn btn-outline-secondary flex-shrink-0 text-nowrap" aria-label="Retour aux activités" title="Retour aux activités"><span aria-hidden="true">←</span><span class="d-none d-sm-inline"> Retour aux activités</span></a>
+        </header>
+      }
       @if (loading()) { <p role="status">Chargement de l’activité…</p> }
       @if (error()) { <div class="alert alert-danger" role="alert">{{error()}}</div> }
       @if (activite(); as activity) {

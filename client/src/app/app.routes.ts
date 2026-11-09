@@ -14,6 +14,7 @@ const inscriptionTitle = () => inject(TokenStorageService).getUser().roles?.incl
   : 'Mes adhésions';
 
 export const routes: Routes = [
+  { path: 'evenements/:evenementId', canActivate: [memberAccessGuard], data: { roles: [] }, title: 'Événement', loadComponent: () => import('./page/evenement/evenement.component').then(m => m.EvenementComponent) },
   { path: 'equipes', canActivate: [memberAccessGuard], data: { roles: [] }, title: 'Mes équipes', loadComponent: () => import('./page/equipes/equipes.component').then(m => m.EquipesComponent) },
   { path: 'materiel', title: 'Matériel', canActivate: [materielGuard], loadComponent: () => import('./page/materiel/materiel.component').then((m) => m.MaterielComponent) },
   { path: 'publicites', canActivate: [memberAccessGuard], data: { roles: ['ROLE_COMMUNICATION_GLOBAL'] }, title: 'Gestion des publicités', loadComponent: () => import('./page/publicites/publicites.component').then(m => m.PublicitesComponent) },

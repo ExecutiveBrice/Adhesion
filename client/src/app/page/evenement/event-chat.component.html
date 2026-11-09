@@ -1,0 +1,24 @@
+<section class="event-chat" aria-label="Chat de l’événement">
+  <header class="mb-3"><h2 class="h5">Chat de l’événement</h2><p class="text-muted mb-0">Échangez avec les personnes ayant accès à cet événement.</p></header>
+  @if (error()) { <div class="alert alert-danger" role="alert">{{error()}}</div> }
+  @if (loading()) { <p role="status">Chargement des messages…</p> }
+  @if (hasOlder()) { <button type="button" class="btn btn-outline-secondary mb-3" (click)="older()" [disabled]="loadingOlder() || denied()">{{loadingOlder() ? 'Chargement…' : 'Voir les messages précédents'}}</button> }
+  <ol #messageList class="chat-messages" aria-label="Messages de l’événement" aria-live="polite" aria-relevant="additions">
+    @for (message of messages(); track message.id) {
+      <li class="chat-message" [class.own-message]="message.senderUserId === userId">
+        <div class="d-flex flex-wrap justify-content-between gap-2 mb-1"><strong>{{message.senderName}}</strong><time [attr.datetime]="message.createdAt">{{message.createdAt | date:'dd/MM/yyyy à HH:mm'}}</time></div>
+        <p class="mb-0">{{message.content}}</p>
+      </li>
+    } @empty { @if (!loading() && !denied() && !error()) { <li class="text-muted py-4">Aucun message pour le moment. Lancez la discussion !</li> } }
+  </ol>
+  <form (ngSubmit)="send()" class="chat-composer">
+    <label for="event-chat-message" class="form-label">Votre message</label>
+    <textarea id="event-chat-message" name="message" class="form-control" rows="3" maxlength="2000" required
+      [ngModel]="draft()" (ngModelChange)="draft.set($event)" [disabled]="denied()" aria-describedby="event-chat-limit"></textarea>
+    <div class="d-flex justify-content-between align-items-center gap-3 mt-2">
+      <span class="small text-muted" id="event-chat-limit">{{draft().length}} / 2 000 caractères</span>
+      <button type="submit" class="btn btn-primary" [disabled]="!draft().trim() || draft().length > 2000 || sending() || loading() || denied()">{{sending() ? 'Envoi…' : 'Envoyer'}}</button>
+    </div>
+    @if (sendError()) { <p class="text-danger mt-2 mb-0" role="alert">{{sendError()}}</p> }
+  </form>
+</section>

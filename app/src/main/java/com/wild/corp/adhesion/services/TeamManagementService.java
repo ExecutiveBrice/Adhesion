@@ -53,16 +53,41 @@ public class TeamManagementService {
                            List<Long> effectif, int membres, boolean principale) { }
     public record State(List<TeamView> equipes, List<Person> candidats, List<Person> intervenants) { }
     public record TeamEdit(String nom, String description, List<Long> encadrants, List<Long> referents) { }
-    public record RosterEdit(List<Long> adhesions, boolean applyToFuture) { }
+    public record RosterEdit(List<Long> adhesions) { }
     public record EventEdit(List<Long> equipes, String type, LocalDateTime debut, LocalDateTime fin,
                             Long salleId, String lieu, LocalDateTime rendezVous, String adversaire, String commentaire) { }
     public record InviteView(Long id, Long adherentId, Long adhesionId, String nom, boolean selectionnee,
                               LocalDateTime publication, Boolean reponse, LocalDateTime dateReponse,
-                              Boolean presence, boolean canReply) { }
+                              Boolean presence, boolean canReply, String prenom, String nomFamille, List<String> equipes) { }
     public record EventView(Long id, String type, LocalDateTime debut, LocalDateTime fin, String etat,
                              String lieu, Long salleId, LocalDateTime rendezVous, String adversaire, String commentaire,
                              List<String> equipes, boolean canManage, List<InviteView> convocations,
-                             Map<String, Long> emails, List<ResponsabiliteSeance> responsabilites) { }
+                             Map<String, Long> emails, List<ResponsibilityView> responsabilites) { }
+    public record ResponsibilityView(TacheSeance tache,
+            com.wild.corp.adhesion.models.resources.AdherentResponsabiliteResponse adherent,
+            Long equipeId, String equipeNom, InviteView invitation, List<String> equipes) { }
+    public record EventDetails(EventView evenement, Long activiteId, String activiteNom, String sectionNom,
+                               String adresse, String causeAnnulation, String lien, boolean canChat) { }
+
+    public EventDetails eventDetails(Long id, String name) {
+        User u = actor(name);
+        Seance s = event(id, u, false);
+        Activite a = s.getActivite();
+        return new EventDetails(eventView(s, u), a.getId(), a.getNom(),
+                a.getSection() == null ? null : a.getSection().getNom(),
+                s.getSalle() == null ? null : s.getSalle().getAdresse(), s.getCauseAnnulation(), a.getLien(), canChat(u, s));
+    }
+
+    public void checkChatAccess(Long id, String name) {
+        User u = actor(name);
+        if (!canChat(u, event(id, u, false))) throw forbidden();
+    }
+
+    private boolean canChat(User u, Seance s) {
+        return managesSession(u, s) || s.getEquipes().stream().anyMatch(t -> reads(u, t))
+                || invitations.findBySeance_IdOrderByIdAsc(s.getId()).stream()
+                    .anyMatch(c -> c.getPublication() != null && c.isSelectionnee() && represents(u, c.getAdherent()));
+    }
 
     private static ResponseStatusException bad(String message) { return new ResponseStatusException(HttpStatus.BAD_REQUEST, message); }
     private static ResponseStatusException forbidden() { return new ResponseStatusException(HttpStatus.FORBIDDEN, "Cette équipe ne vous est pas confiée"); }
@@ -173,6 +198,13 @@ public class TeamManagementService {
         Map<Long, Adhesion> allowed = candidates(a).stream().collect(Collectors.toMap(Adhesion::getId, h -> h));
         Set<Long> selected = new HashSet<>(edit.adhesions());
         if (!allowed.keySet().containsAll(selected)) throw bad("Un adhérent n'est pas inscrit ou surclassé dans cette activité");
+        Map<Seance, Set<Long>> previousRosters = new LinkedHashMap<>();
+        LocalDateTime now = LocalDateTime.now();
+        sessions.findByActivite_IdOrderByDebutAsc(activityId).stream()
+                .filter(s -> s.getEquipes().contains(t) && s.getDebut().isAfter(now)
+                        && s.getEtatSeance() != ESeance.ANNULEE)
+                .forEach(s -> previousRosters.put(s, TeamRoster.participants(s).stream()
+                        .map(h -> h.getAdherent().getId()).collect(Collectors.toSet())));
         LocalDate today = LocalDate.now();
         t.getAffectations().stream().filter(h -> TeamRoster.active(h, today) && !selected.contains(h.getAdhesion().getId()))
                 .forEach(h -> h.setFin(today));
@@ -183,17 +215,29 @@ public class TeamManagementService {
             t.getAffectations().add(h);
         });
         teams.saveAndFlush(t);
-        if (edit.applyToFuture()) sessions.findByActivite_IdOrderByDebutAsc(activityId).stream()
-                .filter(s -> s.getEquipes().contains(t) && s.getDebut().isAfter(LocalDateTime.now())
-                        && s.getEtatSeance() != ESeance.ANNULEE)
-                .filter(s -> invitations.findBySeance_IdOrderByIdAsc(s.getId()).stream().noneMatch(c -> c.getPublication() != null))
-                .filter(s -> s.getPresences().stream().noneMatch(p -> p.getPresence() != null || p.getPresencePrevue() != null))
-                .forEach(s -> {
-                    s.getConvocationsEquipe().clear();
-                    s.getPresences().clear(); sessions.flush(); presenceService.fillPresences(s);
-                    ensureDrafts(s);
-                });
+        previousRosters.forEach(this::refreshRoster);
         return view(t, u);
+    }
+
+    private void refreshRoster(Seance s, Set<Long> previous) {
+        List<Adhesion> current = TeamRoster.participants(s);
+        Set<Long> currentPeople = current.stream().map(h -> h.getAdherent().getId()).collect(Collectors.toSet());
+        Map<Long, Adhesion> selected = new LinkedHashMap<>();
+        invitations.findBySeance_IdOrderByIdAsc(s.getId()).stream().filter(ConvocationEquipe::isParticipant).filter(ConvocationEquipe::isSelectionnee)
+                .forEach(c -> selected.put(c.getAdherent().getId(), c.getAdhesion()));
+        previous.stream().filter(id -> !currentPeople.contains(id)).forEach(selected::remove);
+        current.stream().filter(h -> !previous.contains(h.getAdherent().getId()))
+                .forEach(h -> selected.put(h.getAdherent().getId(), h));
+        // Keep answers, attendance and explicit event selections for unchanged participants.
+        s.getPresences().removeIf(p -> {
+            boolean removed = previous.contains(p.getAdhesion().getAdherent().getId())
+                    && !currentPeople.contains(p.getAdhesion().getAdherent().getId())
+                    && p.getPresence() == null && p.getPresencePrevue() == null;
+            if (removed) p.getAdhesion().getPresences().remove(p);
+            return removed;
+        });
+        presenceService.fillPresences(s);
+        applySelection(s, List.copyOf(selected.values()));
     }
 
     private String text(String s, int max) { if (s != null && s.length() > max) throw bad("Texte trop long (" + max + " caractères maximum)"); return s; }
@@ -207,9 +251,13 @@ public class TeamManagementService {
 
     public List<TeamView> mine(String name) {
         User u = actor(name);
-        Set<Long> invitedTeams = invitations.findPublishedForUser(name).stream().flatMap(c -> c.getSeance().getEquipes().stream())
-                .map(Equipe::getId).collect(Collectors.toSet());
-        return teams.findAll().stream().filter(t -> reads(u, t) || invitedTeams.contains(t.getId()))
+        return teams.findAll().stream().filter(t -> onStaff(u, t))
+                .sorted(Comparator.comparing(Equipe::getNom)).map(t -> view(t, u)).toList();
+    }
+    public List<TeamView> managedTeams(String name) {
+        User u = actor(name);
+        return teams.findAll().stream().filter(t -> !t.isArchivee())
+                .filter(t -> manages(u, t.getActivite()) || onStaff(u, t))
                 .sorted(Comparator.comparing(Equipe::getNom)).map(t -> view(t, u)).toList();
     }
     private Seance event(Long id, User u, boolean write) {
@@ -219,44 +267,65 @@ public class TeamManagementService {
             activities.findForTeamUpdate(s.getActivite().getId()).orElseThrow();
            
             if (!managesSession(u, s)) throw forbidden();
-        } else if (!managesSession(u, s) && s.getEquipes().stream().noneMatch(t -> reads(u, t))
-                && invitations.findBySeance_IdOrderByIdAsc(id).stream().noneMatch(c -> c.getPublication() != null && c.isSelectionnee() && represents(u, c.getAdherent()))) {
-            throw forbidden();
         }
         return s;
     }
 
     public List<EventView> events(Long teamId, String name) {
         User u = actor(name); Equipe t = teams.findById(teamId).orElseThrow(() -> bad("Équipe introuvable"));
-        boolean fullRead = reads(u, t);
-        Set<Long> ownEvents = invitations.findPublishedForUser(name).stream().map(c -> c.getSeance().getId()).collect(Collectors.toSet());
-        if (!fullRead && invitations.findPublishedForUser(name).stream().noneMatch(c -> c.getSeance().getEquipes().contains(t))) throw forbidden();
         return sessions.findByActivite_IdOrderByDebutAsc(t.getActivite().getId()).stream()
-                .filter(s -> s.getEquipes().contains(t) && (fullRead || ownEvents.contains(s.getId())))
+                .filter(s -> s.getEquipes().contains(t))
                 .map(s -> eventView(s, u)).toList();
-    }
-    public List<Person> eventCandidates(Long sessionId, String name) {
-        User u = actor(name); Seance s = event(sessionId, u, true);
-        return candidates(s.getActivite()).stream().map(h -> person(h.getAdherent(), h)).toList();
     }
     private EventView eventView(Seance s, User u) {
         boolean manager = managesSession(u, s);
+        Map<Long, List<String>> personTeams = eventPersonTeams(s);
         Map<Long, Boolean> actual = new HashMap<>();
         s.getPresences().forEach(p -> actual.put(p.getAdhesion().getAdherent().getId(), p.getPresence()));
-        List<InviteView> list = invitations.findBySeance_IdOrderByIdAsc(s.getId()).stream()
+        List<ConvocationEquipe> all = invitations.findBySeance_IdOrderByIdAsc(s.getId());
+        List<InviteView> list = all.stream().filter(ConvocationEquipe::isParticipant)
                 .filter(c -> manager || (c.isSelectionnee() && c.getPublication() != null && represents(u, c.getAdherent())))
-                .map(c -> new InviteView(c.getId(), c.getAdherent().getId(), c.getAdhesion().getId(),
-                        c.getAdherent().getPrenom() + " " + c.getAdherent().getNom(), c.isSelectionnee(), c.getPublication(),
-                        c.getReponse(), c.getDateReponse(), actual.get(c.getAdherent().getId()),
-                        c.isSelectionnee() && c.getPublication() != null && represents(u, c.getAdherent())
-                                && s.getDebut().isAfter(LocalDateTime.now()) && s.getEtatSeance() != ESeance.ANNULEE
-                                && TeamRoster.eligible(c.getAdhesion(), s.getActivite()))).toList();
+                .map(c -> invitationView(s, c, u, manager, actual.get(c.getAdherent().getId()),
+                        personTeams.getOrDefault(c.getAdherent().getId(), List.of()))).toList();
+        List<ResponsibilityView> duties = s.getResponsabilites().stream().map(r -> {
+            ConvocationEquipe c = all.stream().filter(i -> i.isSelectionnee()
+                    && i.getObjet().equals(ConvocationEquipe.responsibilityKey(r))
+                    && i.getAdherent().getId().equals(r.getAdherent().getId())).findFirst().orElse(null);
+            InviteView invitation = c != null && (manager || (c.getPublication() != null && represents(u, c.getAdherent())))
+                    ? invitationView(s, c, u, manager, null, personTeams.getOrDefault(c.getAdherent().getId(), List.of())) : null;
+            return new ResponsibilityView(r.getTache(), r.getAdherentResponse(), r.getEquipeId(), r.getEquipeNom(), invitation,
+                    personTeams.getOrDefault(r.getAdherent().getId(), List.of()));
+        }).toList();
         Map<String, Long> mailStates = manager ? mails.findBySeance_Id(s.getId()).stream()
                 .collect(Collectors.groupingBy(TeamMail::getEtat, Collectors.counting())) : Map.of();
         return new EventView(s.getId(), s.getTypeEvenement(), s.getDebut(), s.getFin(), s.getEtatSeance().name(),
                 s.getLieuExterieur() != null ? s.getLieuExterieur() : (s.getSalle() == null ? null : s.getSalle().getNom()),
                 s.getSalle() == null ? null : s.getSalle().getId(), s.getRendezVous(), s.getAdversaire(), s.getCommentaire(), s.getEquipes().stream().map(Equipe::getNom).sorted().toList(),
-                manager, list, mailStates, List.copyOf(s.getResponsabilites()));
+                manager, list, mailStates, duties);
+    }
+    private Map<Long, List<String>> eventPersonTeams(Seance s) {
+        Activite activity = s.getActivite();
+        List<Equipe> sectionTeams = activity.getSection() == null
+                ? teams.findByActivite_IdOrderByNomAsc(activity.getId())
+                : teams.findByActivite_Section_IdAndArchiveeFalseOrderByActivite_NomAscNomAsc(activity.getSection().getId());
+        Map<Long, Set<String>> names = new HashMap<>();
+        LocalDate date = s.getDebut().toLocalDate();
+        for (Equipe team : sectionTeams) {
+            if (team.isArchivee()) continue;
+            Set<Long> members = java.util.stream.Stream.concat(team.getEncadrants().stream(), team.getReferents().stream())
+                    .map(Adherent::getId).collect(Collectors.toSet());
+            team.getAffectations().stream().filter(a -> TeamRoster.active(a, date))
+                    .map(AffectationEquipe::getAdhesion).filter(a -> TeamRoster.eligible(a, team.getActivite()))
+                    .map(a -> a.getAdherent().getId()).forEach(members::add);
+            members.forEach(id -> names.computeIfAbsent(id, ignored -> new TreeSet<>()).add(team.getNom()));
+        }
+        return names.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> List.copyOf(entry.getValue())));
+    }
+    private InviteView invitationView(Seance s, ConvocationEquipe c, User u, boolean manager, Boolean presence, List<String> teamNames) {
+        return new InviteView(c.getId(), c.getAdherent().getId(), c.getAdhesion() == null ? null : c.getAdhesion().getId(),
+                c.getAdherent().getPrenom() + " " + c.getAdherent().getNom(), c.isSelectionnee(), c.getPublication(),
+                c.getReponse(), c.getDateReponse(), presence, canReply(s, c, u, manager),
+                c.getAdherent().getPrenom(), c.getAdherent().getNom(), teamNames);
     }
     public List<com.wild.corp.adhesion.models.resources.AdherentResponsabiliteResponse> responsibilityCandidates(Long id, String name) {
         Seance s = event(id, actor(name), true);
@@ -269,6 +338,7 @@ public class TeamManagementService {
         if (requests == null) throw bad("Liste de responsabilités obligatoire");
         User u = actor(name); Seance s = event(id, u, true);
         responsibilities.remplacerParEquipes(s, requests);
+        syncResponsibilities(s);
         return eventView(s, u);
     }
     public EventView createEvent(Long teamId, EventEdit edit, String name) {
@@ -290,14 +360,38 @@ public class TeamManagementService {
         if (edit.fin() == null) throw bad("Renseignez une date et une heure de fin valides.");
         if (!edit.fin().isAfter(edit.debut())) throw bad("La fin de l’événement doit être postérieure à son début.");
         if (Duration.between(edit.debut(), edit.fin()).compareTo(Duration.ofHours(72)) > 0) throw bad("La durée de l’événement ne peut pas dépasser 72 heures.");
-        if (edit.type() == null || !List.of("ACTIVITE", "RENCONTRE", "TOURNOI", "AUTRE").contains(edit.type())) throw bad("Sélectionnez un type d’événement valide.");
+        if (edit.type() == null || !List.of("ACTIVITE", "ENTRAINEMENT", "RENCONTRE", "TOURNOI", "ANIMATION", "AUTRE").contains(edit.type())) throw bad("Sélectionnez un type d’événement valide.");
         if (edit.rendezVous() != null && edit.rendezVous().isAfter(edit.debut())) throw bad("Le rendez-vous ne peut pas être postérieur au début de l’événement.");
         s.setDebut(edit.debut()); s.setFin(edit.fin()); s.setTypeEvenement(edit.type()); s.setSalle(room(edit.salleId()));
         s.setLieuExterieur(text(edit.lieu(), 200)); s.setAdversaire(text(edit.adversaire(), 100));
         s.setCommentaire(text(edit.commentaire(), 2000)); s.setRendezVous(edit.rendezVous() == null ? edit.debut().minusHours(1) : edit.rendezVous());
     }
+    private void syncResponsibilities(Seance s) {
+        List<ConvocationEquipe> existing = invitations.findBySeance_IdOrderByIdAsc(s.getId()).stream()
+                .filter(c -> !c.isParticipant()).toList();
+        for (ConvocationEquipe c : existing) {
+            if (c.isSelectionnee() && !TeamRoster.eligible(c, s)) {
+                c.setSelectionnee(false);
+                if (c.getPublication() != null) queue(s, List.of(c), "RETRAIT", "retire-" + c.getId() + "-" + c.getPublication(), true);
+            }
+        }
+        for (ResponsabiliteSeance r : s.getResponsabilites()) {
+            String key = ConvocationEquipe.responsibilityKey(r);
+            ConvocationEquipe c = existing.stream().filter(i -> i.getObjet().equals(key)
+                    && i.getAdherent().getId().equals(r.getAdherent().getId())).findFirst().orElse(null);
+            if (c == null) {
+                c = new ConvocationEquipe(); c.setSeance(s); c.setAdherent(r.getAdherent()); c.setObjet(key);
+                s.getConvocationsEquipe().add(c); invitations.save(c);
+            }
+            if (!c.isSelectionnee()) { c.setPublication(null); c.setReponse(null); c.setDateReponse(null); c.setReponduPar(null); }
+            c.setResponsabilite(r.getTache().getNom() + (r.getEquipeNom() == null ? "" : " · " + r.getEquipeNom()));
+            c.setSelectionnee(true);
+        }
+        invitations.flush();
+    }
     private void ensureDrafts(Seance s) {
-        Set<Long> existing = invitations.findBySeance_IdOrderByIdAsc(s.getId()).stream().map(c -> c.getAdherent().getId()).collect(Collectors.toSet());
+        syncResponsibilities(s);
+        Set<Long> existing = invitations.findBySeance_IdOrderByIdAsc(s.getId()).stream().filter(ConvocationEquipe::isParticipant).map(c -> c.getAdherent().getId()).collect(Collectors.toSet());
         s.getPresences().stream().filter(p -> !existing.contains(p.getAdhesion().getAdherent().getId())).forEach(p -> {
             ConvocationEquipe c = new ConvocationEquipe(); c.setSeance(s); c.setAdhesion(p.getAdhesion());
             c.setAdherent(p.getAdhesion().getAdherent()); c.setSelectionnee(true); s.getConvocationsEquipe().add(c); invitations.save(c);
@@ -305,22 +399,18 @@ public class TeamManagementService {
         invitations.flush();
     }
 
-    public EventView select(Long sessionId, List<Long> adhesionIds, String name) {
-        User u = actor(name); Seance s = event(sessionId, u, true); requireUpcoming(s);
-        if (adhesionIds == null || adhesionIds.stream().anyMatch(Objects::isNull)) throw bad("Sélection invalide");
-        Map<Long, Adhesion> allowed = candidates(s.getActivite()).stream().collect(Collectors.toMap(Adhesion::getId, a -> a));
-        if (!allowed.keySet().containsAll(adhesionIds)) throw bad("Un participant n'est pas autorisé dans cette activité");
+    private void applySelection(Seance s, List<Adhesion> selected) {
         ensureDrafts(s);
-        Map<Long, ConvocationEquipe> existing = invitations.findBySeance_IdOrderByIdAsc(sessionId).stream().collect(Collectors.toMap(c -> c.getAdherent().getId(), c -> c));
-        Set<Long> selectedPeople = adhesionIds.stream().map(id -> allowed.get(id).getAdherent().getId()).collect(Collectors.toSet());
+        Map<Long, ConvocationEquipe> existing = invitations.findBySeance_IdOrderByIdAsc(s.getId()).stream().filter(ConvocationEquipe::isParticipant).collect(Collectors.toMap(c -> c.getAdherent().getId(), c -> c));
+        Set<Long> selectedPeople = selected.stream().map(a -> a.getAdherent().getId()).collect(Collectors.toSet());
         for (ConvocationEquipe c : existing.values()) {
             if (c.isSelectionnee() && !selectedPeople.contains(c.getAdherent().getId())) {
                 c.setSelectionnee(false);
                 if (c.getPublication() != null) queue(s, List.of(c), "RETRAIT", "retire-" + c.getId() + "-" + c.getPublication(), true);
             }
         }
-        for (Long id : new LinkedHashSet<>(adhesionIds)) {
-            Adhesion a = allowed.get(id); ConvocationEquipe c = existing.get(a.getAdherent().getId());
+        for (Adhesion a : selected) {
+            ConvocationEquipe c = existing.get(a.getAdherent().getId());
             if (c == null) {
                 c = new ConvocationEquipe(); c.setSeance(s); c.setAdherent(a.getAdherent()); c.setAdhesion(a);
                 s.getConvocationsEquipe().add(c); invitations.save(c); existing.put(a.getAdherent().getId(), c);
@@ -328,19 +418,25 @@ public class TeamManagementService {
             if (!c.isSelectionnee()) { c.setPublication(null); c.setReponse(null); c.setDateReponse(null); c.setReponduPar(null); }
             c.setSelectionnee(true);
         }
-        invitations.flush(); return eventView(s, u);
+        invitations.flush();
     }
     private void requireUpcoming(Seance s) {
         if (s.getEtatSeance() == ESeance.ANNULEE || !s.getDebut().isAfter(LocalDateTime.now())) throw conflict("L'événement doit être à venir et non annulé");
     }
     public EventView publish(Long sessionId, String name) {
+        return publish(sessionId, null, name);
+    }
+    public EventView publishInvitation(Long sessionId, Long invitationId, String name) {
+        return publish(sessionId, invitationId, name);
+    }
+    private EventView publish(Long sessionId, Long invitationId, String name) {
         User u = actor(name); Seance s = event(sessionId, u, true); requireUpcoming(s); ensureDrafts(s);
-        List<ConvocationEquipe> newly = invitations.findBySeance_IdOrderByIdAsc(sessionId).stream()
+        List<ConvocationEquipe> newly = invitationRecipients(s, invitationId).stream()
                 .filter(c -> c.isSelectionnee() && c.getPublication() == null).toList();
-        if (newly.stream().anyMatch(c -> !TeamRoster.eligible(c.getAdhesion(), s.getActivite()))) throw conflict("Un dossier a changé : vérifiez la sélection");
+        if (newly.stream().anyMatch(c -> !TeamRoster.eligible(c, s))) throw conflict("Un dossier a changé : vérifiez la sélection");
         for (ConvocationEquipe c : newly) {
             c.setPublication(LocalDateTime.now());
-            if (s.getPresences().stream().noneMatch(p -> p.getAdhesion().getAdherent().getId().equals(c.getAdherent().getId()))) {
+            if (c.isParticipant() && s.getPresences().stream().noneMatch(p -> p.getAdhesion().getAdherent().getId().equals(c.getAdherent().getId()))) {
                 Presence p = new Presence(); p.setSeance(s); p.setAdhesion(c.getAdhesion()); s.getPresences().add(p);
             }
         }
@@ -348,12 +444,24 @@ public class TeamManagementService {
         return eventView(s, u);
     }
     public EventView remind(Long sessionId, String requestId, String name) {
+        return remind(sessionId, null, requestId, name);
+    }
+    public EventView remindInvitation(Long sessionId, Long invitationId, String requestId, String name) {
+        return remind(sessionId, invitationId, requestId, name);
+    }
+    private EventView remind(Long sessionId, Long invitationId, String requestId, String name) {
         User u = actor(name); Seance s = event(sessionId, u, true); requireUpcoming(s);
         try { UUID.fromString(requestId); } catch (Exception ex) { throw bad("Identifiant de relance invalide"); }
-        queue(s, invitations.findBySeance_IdOrderByIdAsc(sessionId).stream()
-                .filter(c -> c.isSelectionnee() && c.getPublication() != null && c.getReponse() == null)
-                .filter(c -> TeamRoster.eligible(c.getAdhesion(), s.getActivite())).toList(), "RELANCE", requestId, false);
+        queue(s, invitationRecipients(s, invitationId).stream()
+                .filter(c -> c.isSelectionnee() && c.getPublication() != null && !c.hasReplied())
+                .filter(c -> TeamRoster.eligible(c, s)).toList(), "RELANCE", requestId, false);
         return eventView(s, u);
+    }
+    private List<ConvocationEquipe> invitationRecipients(Seance s, Long invitationId) {
+        if (invitationId == null) return invitations.findBySeance_IdOrderByIdAsc(s.getId());
+        return List.of(invitations.findById(invitationId)
+                .filter(c -> c.getSeance().getId().equals(s.getId()) && c.isSelectionnee())
+                .orElseThrow(() -> bad("Participant introuvable")));
     }
     public EventView cancel(Long sessionId, String name) {
         User u = actor(name); Seance s = event(sessionId, u, true);
@@ -371,20 +479,28 @@ public class TeamManagementService {
         published.forEach(c -> { c.setReponse(null); c.setDateReponse(null); c.setReponduPar(null); });
         queue(s, published, "MODIFICATION", "report", false); return eventView(s, u);
     }
-    public EventView reply(Long sessionId, Long invitationId, boolean response, String name) {
+    public EventView reply(Long sessionId, Long invitationId, Boolean response, String name) {
         User u = actor(name); Seance s = event(sessionId, u, false);
-        activities.findForTeamUpdate(s.getActivite().getId()).orElseThrow(); requireUpcoming(s);
+        activities.findForTeamUpdate(s.getActivite().getId()).orElseThrow();
+        boolean manager = managesSession(u, s);
+        if (s.getEtatSeance() == ESeance.ANNULEE) throw conflict("Événement annulé");
+        if (!manager) requireUpcoming(s);
         ConvocationEquipe c = invitations.findById(invitationId).filter(i -> i.getSeance().getId().equals(sessionId)
-                && i.isSelectionnee() && i.getPublication() != null).orElseThrow(TeamManagementService::forbidden);
-        if (!represents(u, c.getAdherent()) || !TeamRoster.eligible(c.getAdhesion(), s.getActivite())) throw forbidden();
+                && canReply(s, i, u, manager)).orElseThrow(TeamManagementService::forbidden);
         c.setReponse(response); c.setDateReponse(LocalDateTime.now()); c.setReponduPar(u.getId());
         c.getHistorique().add(new ReponseConvocation(c.getDateReponse(), response, u.getId(), s.getTeamRevision()));
         return eventView(s, u);
     }
+    private boolean canReply(Seance s, ConvocationEquipe c, User u, boolean manager) {
+        return c.isSelectionnee() && s.getEtatSeance() != ESeance.ANNULEE
+                && TeamRoster.eligible(c, s)
+                && (manager || (c.getPublication() != null && represents(u, c.getAdherent())
+                    && s.getDebut().isAfter(LocalDateTime.now())));
+    }
     public EventView attendance(Long sessionId, Long invitationId, boolean present, String name) {
         User u = actor(name); Seance s = event(sessionId, u, true);
         if (s.getEtatSeance() == ESeance.ANNULEE) throw conflict("Événement annulé");
-        ConvocationEquipe c = invitations.findById(invitationId).filter(i -> i.getSeance().getId().equals(sessionId) && i.isSelectionnee())
+        ConvocationEquipe c = invitations.findById(invitationId).filter(i -> i.getSeance().getId().equals(sessionId) && i.isSelectionnee() && i.isParticipant())
                 .orElseThrow(() -> bad("Participant introuvable"));
         Presence p = s.getPresences().stream().filter(v -> v.getAdhesion().getAdherent().getId().equals(c.getAdherent().getId())).findFirst().orElse(null);
         if (p == null) { p = new Presence(); p.setSeance(s); p.setAdhesion(c.getAdhesion()); s.getPresences().add(p); }
@@ -406,10 +522,10 @@ public class TeamManagementService {
             mail.getConvocations().addAll(list.stream().map(ConvocationEquipe::getId).toList());
             mail.setDestinataire(address); mail.setAnnulation(cancellation); mail.setSujet(kind + " · " + s.getActivite().getNom());
             mail.setContenu("<p>" + html(kind) + " : " + html(s.getActivite().getNom()) + "</p><p>"
-                    + list.stream().map(c -> html(c.getAdherent().getPrenom() + " " + c.getAdherent().getNom())).collect(Collectors.joining(", "))
+                    + list.stream().map(c -> html(c.recipientLabel())).collect(Collectors.joining(", "))
                     + "</p><p>" + html(s.getDebut().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")))
                     + "</p><p>" + html(s.getLieuExterieur() != null ? s.getLieuExterieur() : (s.getSalle() == null ? "" : s.getSalle().getNom()))
-                    + "</p><p><a href=\"" + html(frontend.replaceAll("/$", "") + "/equipes") + "\">Consulter Mes équipes et répondre</a></p>");
+                    + "</p><p><a href=\"" + html(frontend.replaceAll("/$", "") + "/evenements/" + s.getId()) + "\">Consulter l’événement</a></p>");
             if (address.isBlank() || address.endsWith("@sans-email.invalid") || !address.contains("@")) mail.setEtat("NO_ADDRESS");
             mails.save(mail);
         });

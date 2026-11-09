@@ -15,14 +15,18 @@ public interface SeanceRepository extends JpaRepository<Seance, Long> {
     List<Seance> findTodayByProfessorUsername(@Param("username") String username, @Param("debut") LocalDateTime debut, @Param("fin") LocalDateTime fin);
     @Query("select s from Seance s where s.id = :seanceId and " + MANAGER)
     Optional<Seance> findByIdAndManagerUsername(@Param("seanceId") Long id, @Param("username") String username);
-    @Query("select s from Seance s where s.debut >= :debut and s.debut < :fin and exists (select p.id from Presence p where p.seance = s "
+    @Query("select s from Seance s where s.debut >= :debut and s.debut < :fin and (exists (select p.id from Presence p where p.seance = s "
             + "and p.adhesion.adherent.tribu.uuid = :tribuUuid and p.adhesion.statutActuel not in :statutsExclus "
-            + "and not exists (select c.id from ConvocationEquipe c where c.seance = s and c.adherent = p.adhesion.adherent and c.selectionnee = false)) order by s.debut")
+            + "and not exists (select c.id from ConvocationEquipe c where c.seance = s and c.adherent = p.adhesion.adherent and c.objet = 'PARTICIPANT' and c.selectionnee = false)) "
+            + "or exists (select c.id from ConvocationEquipe c where c.seance = s and c.adherent.tribu.uuid = :tribuUuid "
+            + "and c.objet <> 'PARTICIPANT' and c.selectionnee = true and c.publication is not null)) order by s.debut")
     List<Seance> findAllByTribuAndStatutNonExcluAndDebutBetweenOrderByDebut(@Param("tribuUuid") UUID tribuUuid,
             @Param("statutsExclus") List<String> excluded, @Param("debut") LocalDateTime debut, @Param("fin") LocalDateTime fin);
-    @Query("select s from Seance s where s.debut >= :debut and s.debut < :fin and exists (select p.id from Presence p where p.seance = s "
+    @Query("select s from Seance s where s.debut >= :debut and s.debut < :fin and (exists (select p.id from Presence p where p.seance = s "
             + "and p.adhesion.adherent.id = :adherentId and p.adhesion.statutActuel not in :statutsExclus "
-            + "and not exists (select c.id from ConvocationEquipe c where c.seance = s and c.adherent = p.adhesion.adherent and c.selectionnee = false)) order by s.debut")
+            + "and not exists (select c.id from ConvocationEquipe c where c.seance = s and c.adherent = p.adhesion.adherent and c.objet = 'PARTICIPANT' and c.selectionnee = false)) "
+            + "or exists (select c.id from ConvocationEquipe c where c.seance = s and c.adherent.id = :adherentId "
+            + "and c.objet <> 'PARTICIPANT' and c.selectionnee = true and c.publication is not null)) order by s.debut")
     List<Seance> findAllByAdherentAndStatutNonExcluAndDebutBetweenOrderByDebut(@Param("adherentId") Long id,
             @Param("statutsExclus") List<String> excluded, @Param("debut") LocalDateTime debut, @Param("fin") LocalDateTime fin);
     @Modifying(clearAutomatically = true, flushAutomatically = true)

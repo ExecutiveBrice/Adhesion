@@ -1,3 +1,4 @@
+import { provideRouter } from '@angular/router';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -18,7 +19,7 @@ describe('Ajout d’événements depuis la fiche activité', () => {
     candidats: [], intervenants: [] });
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ imports: [TeamManagementComponent], providers: [
+    TestBed.configureTestingModule({ imports: [TeamManagementComponent], providers: [provideRouter([]),
       provideHttpClient(withInterceptors([apiChangeDetectionInterceptor])), provideHttpClientTesting()
     ] });
     TestBed.inject(NgbConfig).animation = false;
@@ -39,6 +40,9 @@ describe('Ajout d’événements depuis la fiche activité', () => {
     tick(); fixture.detectChanges();
     http.expectOne(`${base}/teams/equipes/10/events`).flush(events);
     tick(); fixture.detectChanges();
+    fixture.nativeElement.querySelector('[aria-controls="team-roster-7"]').click();
+    fixture.nativeElement.querySelector('[aria-controls="team-events-10"]').click();
+    fixture.detectChanges();
   }
 
   it('enregistre seulement les cases d’appartenance et rafraîchit leur état à la réponse du serveur', fakeAsync(() => {
@@ -51,10 +55,11 @@ describe('Ajout d’événements depuis la fiche activité', () => {
     checkbox.click(); fixture.detectChanges();
     const add = http.expectOne(`${base}/teams/activities/7/equipes/10/effectif`);
     expect(add.request.method).toBe('PUT');
-    expect(add.request.body).toEqual({ adhesions: [100], applyToFuture: false });
+    expect(add.request.body).toEqual({ adhesions: [100] });
     expect(checkbox.disabled).toBeTrue();
     expect(document.querySelector('app-team-member-modal')).toBeNull();
     add.flush({ ...data.equipes[0], effectif: [100], membres: 1 }); tick();
+    http.expectOne(`${base}/teams/equipes/10/events`).flush([]); tick();
     expect(checkbox.checked).toBeTrue();
     expect(card.classList).not.toContain('roster-member-unselected');
     expect(checkbox.disabled).toBeFalse();
@@ -120,6 +125,33 @@ describe('Ajout d’événements depuis la fiche activité', () => {
     http.expectNone(`${base}/teams/equipes/10/events`);
     click('Fermer'); tick(); fixture.detectChanges();
     expect(document.querySelector('[aria-label="Édition d’événement"]')).toBeNull();
+  }));
+
+  it('permet au gestionnaire de saisir les trois réponses depuis les participants sans modifier la présence réelle', fakeAsync(() => {
+    const event: TeamEvent = { id: 50, type: 'ACTIVITE', debut: '3000-01-01T18:00:00', fin: '3000-01-01T19:00:00',
+      rendezVous: '', salleId: null, lieu: 'Studio', adversaire: '', commentaire: '',
+      etat: 'PROGRAMMEE', equipes: ['Débutants'], canManage: true, emails: {},
+      convocations: [{ id: 30, adherentId: 1, adhesionId: 100, nom: 'Alice Martin', selectionnee: true,
+        publication: null, reponse: null, dateReponse: null, presence: false, canReply: true }] };
+    openTeam(state(), [event]);
+    fixture.nativeElement.querySelector('.participants-toggle').click(); fixture.detectChanges();
+    for (const [index, value] of [true, false, null].entries()) {
+      const group = fixture.nativeElement.querySelector('[aria-label="Réponse à l’invitation de Alice Martin"]');
+      const buttons = group.querySelectorAll('button') as NodeListOf<HTMLButtonElement>;
+      expect(buttons.length).toBe(3);
+      buttons[index].click(); fixture.detectChanges();
+      const request = http.expectOne(`${base}/teams/events/50/invitations/30/reply`);
+      expect(request.request.method).toBe('PATCH');
+      expect(request.request.body).toEqual({ value });
+      expect(buttons[index].disabled).toBeTrue();
+      event.convocations[0] = { ...event.convocations[0], reponse: value, dateReponse: '2026-11-09T12:00:00' };
+      request.flush(event); tick();
+      http.expectOne(`${base}/teams/equipes/10/events`).flush([event]); tick(); fixture.detectChanges();
+      const selected = fixture.nativeElement.querySelector('[aria-label="Réponse à l’invitation de Alice Martin"] [aria-pressed="true"]');
+      expect(selected.textContent.trim()).toBe(['Présent', 'Absent', 'Ne sais pas encore'][index]);
+      expect(fixture.nativeElement.querySelector('[aria-label="Présence réelle de Alice Martin"] [aria-pressed="true"]').textContent.trim()).toBe('Absent');
+      http.expectNone(r => r.url.endsWith('/attendance'));
+    }
   }));
 
   it('enregistre un événement puis permet d’en ajouter un autre sans bloquer les boutons', fakeAsync(() => {

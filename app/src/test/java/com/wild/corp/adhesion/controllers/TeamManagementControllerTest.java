@@ -22,6 +22,54 @@ class TeamManagementControllerTest {
     @Autowired MockMvc mvc;
     @MockitoBean TeamManagementService service;
 
+    @Test void loadsOneEventByIdWithTheAuthenticatedUser() throws Exception {
+        mvc.perform(get("/teams/events/20").with(user("member@example.org"))).andExpect(status().isOk());
+        verify(service).eventDetails(20L, "member@example.org");
+    }
+
+    @Test void acceptsRosterChangesWithoutAFutureEventsOption() throws Exception {
+        mvc.perform(put("/teams/activities/7/equipes/10/effectif").with(user("manager@example.org"))
+                .contentType(MediaType.APPLICATION_JSON).content("{\"adhesions\":[100,101]}"))
+                .andExpect(status().isOk());
+        verify(service).roster(7L, 10L, new TeamManagementService.RosterEdit(List.of(100L, 101L)), "manager@example.org");
+    }
+
+    @Test void acceptsAllThreeExplicitInvitationAnswers() throws Exception {
+        for (String value : List.of("true", "false", "null")) {
+            mvc.perform(patch("/teams/events/20/invitations/30/reply").with(user("member@example.org"))
+                    .contentType(MediaType.APPLICATION_JSON).content("{\"value\":" + value + "}"))
+                    .andExpect(status().isOk());
+        }
+        verify(service).reply(20L, 30L, true, "member@example.org");
+        verify(service).reply(20L, 30L, false, "member@example.org");
+        verify(service).reply(20L, 30L, null, "member@example.org");
+        verify(service, never()).attendance(anyLong(), anyLong(), anyBoolean(), anyString());
+    }
+
+    @Test void sendsIndividualCommandsWithTheEventAndInvitationIds() throws Exception {
+        mvc.perform(post("/teams/events/20/invitations/30/publish").with(user("coach@example.org")))
+                .andExpect(status().isOk());
+        mvc.perform(post("/teams/events/20/invitations/30/remind").with(user("coach@example.org"))
+                .contentType(MediaType.APPLICATION_JSON).content("{\"requestId\":\"request-key\"}"))
+                .andExpect(status().isOk());
+        verify(service).publishInvitation(20L, 30L, "coach@example.org");
+        verify(service).remindInvitation(20L, 30L, "request-key", "coach@example.org");
+        verify(service, never()).publish(anyLong(), anyString());
+        verify(service, never()).remind(anyLong(), anyString(), anyString());
+    }
+
+    @Test void rejectsAnOmittedAnswerAndAnUndecidedActualAttendance() throws Exception {
+        for (String route : List.of("reply", "attendance")) {
+            mvc.perform(patch("/teams/events/20/invitations/30/" + route).with(user("member@example.org"))
+                    .contentType(MediaType.APPLICATION_JSON).content("{}"))
+                    .andExpect(status().isBadRequest());
+        }
+        mvc.perform(patch("/teams/events/20/invitations/30/attendance").with(user("coach@example.org"))
+                .contentType(MediaType.APPLICATION_JSON).content("{\"value\":null}"))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(service);
+    }
+
     @Test void loadsMemberDetailsInTheSelectedActivityForTheAuthenticatedUser() throws Exception {
         var person = new TeamManagementService.Person(1L, "Alice", "Martin", 100L, "Validée", true, true, false);
         when(service.memberDetails(7L, 100L, "manager@example.org"))

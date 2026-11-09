@@ -23,6 +23,7 @@ export class TeamEventModalComponent implements OnInit {
   weeks = 2;
   loading = true;
   busy = false;
+  cancelling = false;
   error = '';
   private automaticMeeting = true;
   form: TeamEventEdit = { equipes: [], type: 'ACTIVITE', debut: '', fin: '', salleId: null, lieu: '', rendezVous: '', adversaire: '', commentaire: '' };
@@ -75,6 +76,17 @@ export class TeamEventModalComponent implements OnInit {
     }
     if (this.repeat && (!Number.isInteger(this.weeks) || this.weeks < 2 || this.weeks > 104)) return 'Choisissez un nombre entier de semaines entre 2 et 104.';
     return '';
+  }
+  get canCancel(): boolean {
+    return !!this.event?.canManage && this.event.etat !== 'ANNULEE' && new Date(this.event.debut).getTime() > Date.now();
+  }
+  cancel() {
+    if (this.busy || !this.canCancel || !confirm('Annuler cet événement et prévenir les personnes convoquées ?')) return;
+    this.busy = true; this.cancelling = true; this.error = '';
+    this.api.cancel(this.event!.id).subscribe({
+      next: result => this.modal.close(result),
+      error: e => { this.error = teamError(e); this.busy = false; this.cancelling = false; }
+    });
   }
   save() {
     if (this.busy || this.loading || this.validationError) return;

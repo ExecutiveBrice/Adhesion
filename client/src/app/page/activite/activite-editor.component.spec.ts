@@ -1,5 +1,6 @@
 import { NgbConfig, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { ActiviteService } from '../../_services/activite.service';
 import { AdherentService } from '../../_services/adherent.service';
@@ -29,6 +30,7 @@ describe('Fiche activité : section obligatoire', () => {
     TestBed.configureTestingModule({
       imports: [ActiviteEditorComponent],
       providers: [
+        provideRouter([]),
         provideHttpClient(), provideHttpClientTesting(),
         { provide: ActiviteService, useValue: activites },
         { provide: ToastService, useValue: toasts },
@@ -115,6 +117,7 @@ describe('Équipes et options de la fiche activité', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({ imports: [ActiviteEditorComponent], providers: [
+      provideRouter([]),
       provideHttpClient(withInterceptors([apiChangeDetectionInterceptor])), provideHttpClientTesting(),
       { provide: TokenStorageService, useValue: { getUser: () => ({ roles: ['ROLE_ADMIN'] }) } },
       { provide: ToastService, useValue: jasmine.createSpyObj('toast', ['warning', 'success', 'error']) },

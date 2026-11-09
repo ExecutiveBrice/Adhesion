@@ -1,9 +1,10 @@
 <header class="activity-heading">
   <h1 class="h3 mb-0">{{activite.nom || 'Nouvelle activité'}}</h1>
-  <button type="button" class="btn btn-outline-secondary activity-settings" aria-label="Options de l’activité"
-    title="Options de l’activité" aria-haspopup="dialog" (click)="openOptions()">
-    <fa-icon [icon]="faGear" aria-hidden="true" />
+  <button type="button" class="btn btn-outline-secondary activity-settings" aria-label="Modifier l’activité"
+    title="Modifier l’activité" aria-haspopup="dialog" (click)="openOptions()">
+    <fa-icon class="me-sm-1" [icon]="faGear" aria-hidden="true" /><span class="d-none d-sm-inline">Modifier l’activité</span>
   </button>
+  <a routerLink="/activites" class="btn btn-outline-secondary ms-auto flex-shrink-0 text-nowrap" aria-label="Retour aux activités" title="Retour aux activités"><span aria-hidden="true">←</span><span class="d-none d-sm-inline"> Retour aux activités</span></a>
 </header>
 @if (canConfigureTeams && activite.id) {
   <section class="activity-body">
@@ -16,12 +17,12 @@
           [disabled]="teamsBusy" (click)="selectTeam(team.id)">{{team.nom}}</button>
       }
       <button type="button" class="btn btn-outline-secondary activity-add-team" [attr.aria-pressed]="creatingTeam"
-        aria-controls="activity-team-details" [disabled]="teamsBusy" (click)="addTeam()">
-        <span aria-hidden="true">＋</span> Ajouter une équipe
+        aria-controls="activity-team-details" aria-label="Ajouter une équipe" title="Ajouter une équipe" [disabled]="teamsBusy" (click)="addTeam()">
+        <span aria-hidden="true">＋</span> <span class="d-none d-sm-inline">Ajouter une équipe</span>
       </button>
       @if (!creatingTeam && selectedTeamId) {
         <button type="button" class="btn btn-outline-secondary activity-edit-team" aria-haspopup="dialog"
-          [disabled]="teamsBusy || !canEditSelectedTeam" (click)="editTeam()">Modifier l’équipe</button>
+          aria-label="Modifier l’équipe" title="Modifier l’équipe" [disabled]="teamsBusy || !canEditSelectedTeam" (click)="editTeam()"><fa-icon class="me-sm-1" [icon]="faPen" aria-hidden="true" /><span class="d-none d-sm-inline">Modifier l’équipe</span></button>
       }
     </div>
     <app-team-management id="activity-team-details" [activityId]="activite.id" [selectedTeamId]="selectedTeamId" [creating]="creatingTeam"

@@ -8,7 +8,7 @@
     @if (error) { <div class="alert alert-danger" role="alert">{{error}}</div><button type="button" class="btn btn-link" (click)="loadOptions()" [disabled]="busy || loading">Recharger les choix</button> }
     <fieldset [disabled]="busy || loading">
       <div class="row g-3">
-        <label class="col-md-4">Type<select class="form-select" name="type" [(ngModel)]="form.type"><option value="ACTIVITE">Activité</option><option value="RENCONTRE">Rencontre</option><option value="TOURNOI">Tournoi</option><option value="AUTRE">Autre</option></select></label>
+        <label class="col-md-4">Type<select class="form-select" name="type" [(ngModel)]="form.type"><option value="ACTIVITE">Séance</option><option value="ENTRAINEMENT">Entrainement</option><option value="RENCONTRE">Match</option><option value="TOURNOI">Tournoi</option><option value="ANIMATION">Animation</option><option value="AUTRE">Autre</option></select></label>
         <label class="col-md-4">Début<input type="datetime-local" class="form-control" name="debut" [ngModel]="form.debut" (ngModelChange)="startChanged($event)" required></label>
         <label class="col-md-4">Fin<input type="datetime-local" class="form-control" name="fin" [min]="form.debut" [(ngModel)]="form.fin" required></label>
         <label class="col-md-6">Salle<select class="form-select" name="salle" [(ngModel)]="form.salleId"><option [ngValue]="null">Lieu libre</option>@for (r of rooms; track r.id) { <option [ngValue]="r.id">{{r.nom}}</option> }</select></label>
@@ -39,7 +39,10 @@
     @if (validationError && !loading) { <div class="alert alert-warning mt-3 mb-0" role="alert">{{validationError}}</div> }
   </div>
   <div class="modal-footer">
+    @if (canCancel) {
+      <button type="button" class="btn btn-outline-danger me-auto" (click)="cancel()" [disabled]="busy">{{cancelling ? 'Annulation…' : 'Annuler'}}</button>
+    }
     <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()" [disabled]="busy">Fermer</button>
-    <button type="submit" class="btn btn-primary" [disabled]="busy || loading || !!validationError">{{busy ? 'Enregistrement…' : 'Enregistrer'}}</button>
+    <button type="submit" class="btn btn-primary" [disabled]="busy || loading || !!validationError">{{busy && !cancelling ? 'Enregistrement…' : 'Enregistrer'}}</button>
   </div>
 </form>

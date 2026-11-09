@@ -1,0 +1,40 @@
+:host {
+  display: block;
+  min-height: calc(100vh - 64px);
+  background: #f4f7f6;
+}
+
+.equipes-page {
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  color: #18322b;
+}
+
+.team-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+}
+
+.team-button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .2rem;
+  max-width: 100%;
+  padding: .75rem 1rem;
+  border-radius: .75rem;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.team-activity {
+  font-size: .75rem;
+  text-transform: uppercase;
+}
+
+@media (max-width: 700px) {
+  .equipes-page { padding: 1rem .65rem; }
+  .team-button { flex: 1 1 140px; }
+}

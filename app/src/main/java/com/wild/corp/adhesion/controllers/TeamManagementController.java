@@ -15,8 +15,7 @@ import java.util.List;
 public class TeamManagementController {
     private final TeamManagementService service;
     public TeamManagementController(TeamManagementService service) { this.service = service; }
-    public record Selection(List<Long> adhesions) { }
-    public record Answer(Boolean value) { }
+    public record Answer(@com.fasterxml.jackson.annotation.JsonProperty(value = "value", required = true) Boolean value) { }
     public record Reminder(String requestId) { }
     @GetMapping("/mine") public List<TeamView> mine(Principal p) { return service.mine(p.getName()); }
     @GetMapping("/activities/{id}") public State state(@PathVariable Long id, Principal p) { return service.state(id, p.getName()); }
@@ -37,11 +36,16 @@ public class TeamManagementController {
         return service.roster(id, teamId, body, p.getName());
     }
     @GetMapping("/equipes/{teamId}/events") public List<EventView> events(@PathVariable Long teamId, Principal p) { return service.events(teamId, p.getName()); }
+    @GetMapping("/events/{id}") public EventDetails eventDetails(@PathVariable Long id, Principal p) { return service.eventDetails(id, p.getName()); }
     @PostMapping("/equipes/{teamId}/events") public EventView createEvent(@PathVariable Long teamId, @RequestBody EventEdit body, Principal p) { return service.createEvent(teamId, body, p.getName()); }
-    @GetMapping("/events/{id}/candidates") public List<Person> candidates(@PathVariable Long id, Principal p) { return service.eventCandidates(id, p.getName()); }
-    @PutMapping("/events/{id}/selection") public EventView select(@PathVariable Long id, @RequestBody Selection body, Principal p) { return service.select(id, body.adhesions(), p.getName()); }
     @PostMapping("/events/{id}/publish") public EventView publish(@PathVariable Long id, Principal p) { return service.publish(id, p.getName()); }
     @PostMapping("/events/{id}/remind") public EventView remind(@PathVariable Long id, @RequestBody Reminder body, Principal p) { return service.remind(id, body.requestId(), p.getName()); }
+    @PostMapping("/events/{id}/invitations/{invitationId}/publish") public EventView publishInvitation(@PathVariable Long id, @PathVariable Long invitationId, Principal p) {
+        return service.publishInvitation(id, invitationId, p.getName());
+    }
+    @PostMapping("/events/{id}/invitations/{invitationId}/remind") public EventView remindInvitation(@PathVariable Long id, @PathVariable Long invitationId, @RequestBody Reminder body, Principal p) {
+        return service.remindInvitation(id, invitationId, body.requestId(), p.getName());
+    }
     @PostMapping("/events/{id}/cancel") public EventView cancel(@PathVariable Long id, Principal p) { return service.cancel(id, p.getName()); }
     @PutMapping("/events/{id}") public EventView reschedule(@PathVariable Long id, @RequestBody EventEdit body, Principal p) { return service.reschedule(id, body, p.getName()); }
     @GetMapping("/events/{id}/responsibility-candidates") public List<com.wild.corp.adhesion.models.resources.AdherentResponsabiliteResponse> responsibilityCandidates(@PathVariable Long id, Principal p) {
@@ -55,7 +59,7 @@ public class TeamManagementController {
         return service.responsibilityTeams(id, p.getName());
     }
     @PatchMapping("/events/{id}/invitations/{invitationId}/reply") public EventView reply(@PathVariable Long id, @PathVariable Long invitationId, @RequestBody Answer body, Principal p) {
-        required(body); return service.reply(id, invitationId, body.value(), p.getName());
+        return service.reply(id, invitationId, body.value(), p.getName());
     }
     @PatchMapping("/events/{id}/invitations/{invitationId}/attendance") public EventView attendance(@PathVariable Long id, @PathVariable Long invitationId, @RequestBody Answer body, Principal p) {
         required(body); return service.attendance(id, invitationId, body.value(), p.getName());

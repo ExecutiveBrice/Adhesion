@@ -1,4 +1,5 @@
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { Router } from '@angular/router';
 import { TeamEventModalComponent } from '../../template/team-event-modal/team-event-modal.component';
 import { ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
@@ -50,6 +51,7 @@ export class AgendaComponent implements OnInit {
   private readonly tribus = inject(TribuService);
   private readonly storage = inject(TokenStorageService);
   private readonly modales = inject(EvenementModalService);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly preferencesService = inject(AgendaPreferencesService);
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
@@ -258,6 +260,10 @@ export class AgendaComponent implements OnInit {
   }
 
   ouvrirEvenement(evenement: EvenementAgenda): void {
+    if (evenement.source === 'SEANCE' && evenement.seanceId != null) {
+      void this.router.navigate(['/evenements', evenement.seanceId]);
+      return;
+    }
     this.evenementSelectionne = evenement;
     this.modales.ouvrir(evenement, this.adherentId);
   }

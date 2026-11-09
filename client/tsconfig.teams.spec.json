@@ -8,6 +8,8 @@
     "src/app/_helpers/section-listing-access.guard.spec.ts",
     "src/app/template/team-*/**/*.spec.ts",
     "src/app/page/activite/*.spec.ts",
+    "src/app/page/equipes/*.spec.ts",
+    "src/app/page/evenement/*.spec.ts",
     "src/app/template/evenement-detail/evenement-detail.component.spec.ts",
     "src/app/template/calendrier/calendrier.component.spec.ts",
     "src/app/page/agenda/agenda.component.spec.ts",

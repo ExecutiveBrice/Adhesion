@@ -4,10 +4,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Team, TeamPerson, TeamService, teamError } from '../../_services/team.service';
 import { registerApiViewRefresh } from '../../_services/api-render.service';
+import { UtilisateurSelectionnable } from '../../models/utilisateurSelectionnable';
+import { UserCheckboxDropdownComponent } from '../user-checkbox-dropdown/user-checkbox-dropdown.component';
 
 export type TeamEditResult = { deleted: true } | { team: Team };
 
-@Component({ selector: 'app-team-edit-modal', imports: [FormsModule], templateUrl: './team-edit-modal.component.html' })
+@Component({ selector: 'app-team-edit-modal', imports: [FormsModule, UserCheckboxDropdownComponent], templateUrl: './team-edit-modal.component.html' })
 export class TeamEditModalComponent implements OnInit {
   private refresh = registerApiViewRefresh();
   private api = inject(TeamService);
@@ -24,9 +26,11 @@ export class TeamEditModalComponent implements OnInit {
     this.form = { id: this.team.id, nom: this.team.nom, description: this.team.description ?? '',
       encadrants: [...this.team.encadrants], referents: [...this.team.referents] };
   }
-  toggleStaff(id: number, type: 'encadrants' | 'referents', checked: boolean) {
-    this.form[type] = this.form[type].filter(value => value !== id);
-    if (checked) this.form[type].push(id);
+  selectedStaff(type: 'encadrants' | 'referents') {
+    return this.people.filter(person => this.form[type].includes(person.id));
+  }
+  selectStaff(type: 'encadrants' | 'referents', selection: UtilisateurSelectionnable[]) {
+    this.form[type] = selection.map(person => person.id);
   }
   save() {
     if (this.busy || !this.team.canManage || !this.form.nom.trim()) return;

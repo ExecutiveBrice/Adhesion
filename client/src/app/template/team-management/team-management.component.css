@@ -1,17 +1,131 @@
 :host { display: block; }
 .editor { border: 1px solid #d8e5e2; border-radius: .6rem; padding: 1rem; background: #fff; }
 .editor { background: #eef6f4; }
-.team-events-panel[hidden] { display: none !important; }
-.people-list { max-height: 15rem; overflow: auto; }
-input[type=checkbox] { margin-right: .3rem; }
-.roster-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); gap: .75rem; }
-.roster-member { min-width: 0; width: 100%; color: var(--bs-body-color); border-color: var(--bs-border-color); font: inherit; transition: background-color .15s, border-color .15s; }
-.roster-member-name { overflow-wrap: anywhere; }
-.roster-member-unselected { background-color: var(--bs-tertiary-bg); }
-.roster-member:hover { border-color: var(--bs-secondary-color); }
-.roster-member-checkbox { position: absolute; top: .75rem; right: .75rem; margin: 0; z-index: 1; }
-.roster-member-details { width: 100%; padding-right: 2.75rem; border: 0; border-radius: inherit; background: transparent; color: inherit; font: inherit; cursor: pointer; }
-.roster-member-details:focus-visible { outline: 3px solid var(--bs-secondary-color); outline-offset: 3px; }
-.membership-status { display: flex; align-items: center; gap: .75rem; }
-.membership-status .status-valid { color: #146c43; }
-.membership-status .status-pending { color: #a04b00; }
+.team-roster[hidden], .team-events-panel[hidden] { display: none !important; }
+
+.roster-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 13rem), 1fr));
+  gap: .75rem;
+}
+
+.roster-member {
+  --roster-padding: 1rem;
+  position: relative;
+  min-width: 0;
+  color: #183b33;
+  background: linear-gradient(160deg, #fff 35%, #f0f8f5);
+  border: 1px solid #beddd2;
+  border-radius: 1rem;
+  box-shadow: 0 3px 12px rgba(24, 59, 51, .05);
+  transition: background-color .15s, border-color .15s, box-shadow .15s;
+}
+
+.roster-member-unselected {
+  color: #52615d;
+  background: #f5f7f6;
+  border-color: #e1e7e4;
+  box-shadow: none;
+}
+
+.roster-member:hover,
+.roster-member:focus-within {
+  border-color: #72ad99;
+  box-shadow: 0 5px 18px rgba(24, 59, 51, .1);
+}
+
+.roster-member-checkbox {
+  position: absolute;
+  top: var(--roster-padding);
+  right: var(--roster-padding);
+  z-index: 1;
+  width: 2rem;
+  height: 2rem;
+  margin: 0;
+  border: 2px solid #9aafa7;
+  border-radius: .5rem;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+.roster-member-checkbox:checked {
+  background-color: #218567;
+  border-color: #218567;
+}
+
+.roster-member-checkbox:focus {
+  background-image: var(--bs-form-check-bg-image);
+}
+
+.roster-member-checkbox:focus-visible,
+.roster-member-details:focus-visible {
+  outline: 3px solid #218567;
+  outline-offset: 3px;
+}
+
+.roster-member-checkbox:disabled { cursor: default; }
+
+.roster-member-details {
+  display: flex;
+  flex-direction: column;
+  gap: .875rem;
+  width: 100%;
+  height: 100%;
+  padding: var(--roster-padding);
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.roster-member-name {
+  display: flex;
+  align-items: center;
+  min-height: 2rem;
+  padding-right: 2.5rem;
+  font-size: .95rem;
+  font-weight: 650;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.membership-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-top: auto;
+}
+
+.membership-status > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: .65rem;
+  background: #e8eeeb;
+  color: #66766f;
+  font-size: 1rem;
+}
+
+.membership-status .status-valid { color: #146c43; background: #e0f2e8; }
+.membership-status .status-pending { color: #974600; background: #fff0da; }
+
+@media (max-width: 767.98px) {
+  .roster-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .5rem;
+  }
+
+  .roster-member { --roster-padding: .625rem; border-radius: .875rem; }
+  .roster-member-name { font-size: .875rem; }
+  .membership-status { gap: .375rem; }
+  .membership-status > span { width: 1.75rem; height: 1.75rem; font-size: .875rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .roster-member { transition: none; }
+}

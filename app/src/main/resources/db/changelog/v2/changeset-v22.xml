@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  <changeSet id="v22-responsibility-invitations" author="codex">
+    <dropNotNullConstraint tableName="convocations_equipe" columnName="adhesion_id" columnDataType="bigint"/>
+    <addColumn tableName="convocations_equipe">
+      <column name="objet" type="varchar(100)" defaultValue="PARTICIPANT"><constraints nullable="false"/></column>
+      <column name="responsabilite" type="varchar(255)"/>
+    </addColumn>
+    <dropUniqueConstraint tableName="convocations_equipe" constraintName="uk_convocation_person_session"/>
+    <addUniqueConstraint tableName="convocations_equipe" columnNames="seance_id,adherent_id,objet" constraintName="uk_convocation_person_session_objet"/>
+    <!-- Existing assignments become drafts; participant replies are preserved and no mail is queued. -->
+    <sql>
+      INSERT INTO convocations_equipe (seance_id, adherent_id, selectionnee, objet, responsabilite)
+      SELECT DISTINCT r.seance_id, r.adherent_id, true,
+        'RESPONSABILITE:' || CAST(r.tache_id AS VARCHAR) || ':' || COALESCE(CAST(r.equipe_id AS VARCHAR), '0'),
+        t.nom || CASE WHEN e.nom IS NULL THEN '' ELSE ' · ' || e.nom END
+      FROM responsabilites_seance r JOIN taches_seance t ON t.id = r.tache_id
+      LEFT JOIN equipes e ON e.id = r.equipe_id;
+    </sql>
+  </changeSet>
+</databaseChangeLog>

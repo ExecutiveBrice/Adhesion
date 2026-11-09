@@ -33,7 +33,7 @@ public class EventCreationService {
         return user.getRoles().contains(ERole.ROLE_ADMIN) ? sections.findAllByOrderByNomAsc() : sections.findManagedByUsername(name);
     }
     public Options options(String name) {
-        return new Options(management.mine(name).stream().filter(t -> t.canManage() && !t.archivee()).toList(),
+        return new Options(management.managedTeams(name),
                 managedSections(name).stream().map(s -> new SectionTarget(s.getId(), s.getNom())).toList());
     }
     public Created create(Creation request, String name) {
@@ -43,7 +43,7 @@ public class EventCreationService {
         int weeks = request.semaines() == null ? 1 : request.semaines();
         if (weeks < 1 || weeks > 104) throw bad("Le nombre de semaines doit être compris entre 1 et 104.");
         Set<Long> ids = new LinkedHashSet<>(edit.equipes() == null ? List.of() : edit.equipes());
-        Set<Long> allowed = management.mine(name).stream().filter(t -> t.canManage() && !t.archivee()).map(TeamView::id).collect(java.util.stream.Collectors.toSet());
+        Set<Long> allowed = management.managedTeams(name).stream().map(TeamView::id).collect(java.util.stream.Collectors.toSet());
         if (!allowed.containsAll(ids)) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Une équipe ne vous est pas confiée");
         Map<Long, Section> managed = new HashMap<>(); managedSections(name).forEach(s -> managed.put(s.getId(), s));
         for (Long id : new LinkedHashSet<>(request.sections() == null ? List.of() : request.sections())) {

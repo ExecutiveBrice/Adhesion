@@ -1,0 +1,83 @@
+<main class="container-fluid py-4 px-3 px-md-4 event-page">
+  @if (loading()) { <p role="status">Chargement de l’événement…</p> }
+  @if (error()) { <div class="alert alert-danger" role="alert">{{error()}}</div> }
+  @if (detail(); as d) {
+    @let e = d.evenement;
+    <ul ngbNav #nav="ngbNav" [activeId]="tab()" (activeIdChange)="selectTab($event)" [destroyOnHide]="false"
+      class="nav-tabs event-tabs" aria-label="Détails de l’événement">
+      <li ngbNavItem="informations">
+        <button ngbNavLink aria-label="Informations" title="Informations">
+          <fa-icon [icon]="faCircleInfo" aria-hidden="true" />
+          <span class="d-none d-sm-inline">Informations</span>
+        </button>
+        <ng-template ngbNavContent>
+          @if (replyError()) { <div class="alert alert-danger" role="alert">{{replyError()}}</div> }
+          @if (replyInvitations().length) {
+            <section class="event-invitations mb-4" aria-label="Réponse à l’invitation">
+              @for (row of replyInvitations(); track row.invitation.id) {
+                @let c = row.invitation;
+                <div class="event-invitation d-flex flex-wrap align-items-center justify-content-between gap-3">
+                  <div>
+                    <strong>{{c.nom}}@if (row.responsibility) { · {{row.responsibility}} }</strong>
+                    <div class="small text-muted">Réponse à l’invitation : {{c.reponse === true ? 'Présent' : c.reponse === false ? 'Absent' : c.dateReponse ? 'Ne sais pas encore' : 'Sans réponse'}}</div>
+                  </div>
+                  <div class="d-flex flex-wrap gap-2" role="group" [attr.aria-label]="'Réponse à l’invitation de ' + c.nom + (row.responsibility ? ' pour ' + row.responsibility : '')">
+                    <button type="button" class="btn btn-sm" [class.btn-success]="c.reponse === true" [class.btn-outline-success]="c.reponse !== true"
+                      [attr.aria-pressed]="c.reponse === true" (click)="reply(c, true)" [disabled]="replying()">Présent</button>
+                    <button type="button" class="btn btn-sm" [class.btn-danger]="c.reponse === false" [class.btn-outline-danger]="c.reponse !== false"
+                      [attr.aria-pressed]="c.reponse === false" (click)="reply(c, false)" [disabled]="replying()">Absent</button>
+                    <button type="button" class="btn btn-sm" [class.btn-secondary]="c.reponse === null && !!c.dateReponse" [class.btn-outline-secondary]="c.reponse !== null || !c.dateReponse"
+                      [attr.aria-pressed]="c.reponse === null && !!c.dateReponse" (click)="reply(c, null)" [disabled]="replying()">Ne sais pas encore</button>
+                  </div>
+                </div>
+              }
+            </section>
+          }
+          <section class="event-information" aria-label="Informations de l’événement">
+            <h2 class="h5 mb-3">Informations de l’événement</h2>
+            <dl class="event-facts">
+              <div><dt>Type</dt><dd>{{typeLabel(e.type)}}</dd></div>
+              <div><dt>Activité</dt><dd>{{d.activiteNom}}</dd></div>
+              <div><dt>Équipes</dt><dd>{{e.equipes.join(', ') || 'Non renseignées'}}</dd></div>
+              <div><dt>Section</dt><dd>{{d.sectionNom || 'Non renseignée'}}</dd></div>
+              <div><dt>Début</dt><dd>{{e.debut | date:'EEEE d MMMM yyyy à HH:mm'}}</dd></div>
+              <div><dt>Fin</dt><dd>{{e.fin | date:'EEEE d MMMM yyyy à HH:mm'}}</dd></div>
+              <div><dt>Rendez-vous</dt><dd>{{e.rendezVous ? (e.rendezVous | date:'EEEE d MMMM yyyy à HH:mm') : 'Non renseigné'}}</dd></div>
+              <div><dt>Adversaire</dt><dd>{{e.adversaire || 'Non renseigné'}}</dd></div>
+              <div><dt>Lieu</dt><dd>{{e.lieu || 'Non renseigné'}}</dd></div>
+              <div><dt>Adresse</dt><dd>{{d.adresse || 'Non renseignée'}}
+                @if (mapsLink; as link) { <div><a [href]="link" target="_blank" rel="noopener noreferrer">Voir l’itinéraire</a></div> }
+              </dd></div>
+              <div><dt>État</dt><dd>{{stateLabel(e.etat)}}</dd></div>
+              @if (e.etat === 'ANNULEE' && d.causeAnnulation) { <div><dt>Motif d’annulation</dt><dd>{{d.causeAnnulation}}</dd></div> }
+            </dl>
+            <h3 class="h6 mt-4">Informations pratiques</h3>
+            @if (e.commentaire) { <div class="event-comment" [innerHTML]="e.commentaire"></div> }
+            @else { <p class="text-muted">Aucune information complémentaire.</p> }
+            @if (activityLink; as link) { <a [href]="link" target="_blank" rel="noopener noreferrer">Site de l’activité</a> }
+          </section>
+        </ng-template>
+      </li>
+      <li ngbNavItem="participants">
+        <button ngbNavLink aria-label="Participants et responsabilités" title="Participants et responsabilités">
+          <fa-icon [icon]="faUsers" aria-hidden="true" />
+          <span class="d-none d-sm-inline">Participants et responsabilités</span>
+        </button>
+        <ng-template ngbNavContent>
+          @if (!e.canManage) { <p class="text-muted">Les convocations affichées sont celles que vous êtes autorisé à consulter.</p> }
+          <app-team-events [detailEvent]="e" [allowEventEditing]="false" (eventChanged)="eventChanged($event)" />
+        </ng-template>
+      </li>
+      @if (d.canChat) {
+        <li ngbNavItem="chat">
+          <button ngbNavLink aria-label="Chat de l’événement" title="Chat de l’événement">
+            <fa-icon [icon]="faComments" aria-hidden="true" />
+            <span class="d-none d-sm-inline">Chat de l’événement</span>
+          </button>
+          <ng-template ngbNavContent><app-event-chat [eventId]="e.id" [active]="tab() === 'chat'" /></ng-template>
+        </li>
+      }
+    </ul>
+    <div [ngbNavOutlet]="nav" class="event-tab-content pt-4"></div>
+  }
+</main>

@@ -51,8 +51,8 @@ public class TeamMailJob {
                         case "ANNULATION" -> s.getEtatSeance() == ESeance.ANNULEE;
                         case "RETRAIT" -> !c.isSelectionnee();
                         default -> c.isSelectionnee() && c.getPublication() != null
-                                && TeamRoster.eligible(c.getAdhesion(), s.getActivite())
-                                && (!"RELANCE".equals(m.getType()) || c.getReponse() == null);
+                                && TeamRoster.eligible(c, s)
+                                && (!"RELANCE".equals(m.getType()) || !c.hasReplied());
                     }).toList();
             boolean valid = m.getRevision() == s.getTeamRevision() && !validRecipients.isEmpty()
                     && (m.isAnnulation() || (s.getEtatSeance() != ESeance.ANNULEE
@@ -60,10 +60,10 @@ public class TeamMailJob {
             if (!valid) { m.setEtat("CANCELLED"); return null; }
             // Rebuild the names so a sibling withdrawn since publication is not included.
             m.setContenu("<p>" + html(m.getType()) + " : " + html(s.getActivite().getNom()) + "</p><p>"
-                    + validRecipients.stream().map(c -> html(c.getAdherent().getPrenom() + " " + c.getAdherent().getNom())).collect(java.util.stream.Collectors.joining(", "))
+                    + validRecipients.stream().map(c -> html(c.recipientLabel())).collect(java.util.stream.Collectors.joining(", "))
                     + "</p><p>" + html(s.getDebut().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")))
                     + "</p><p>" + html(s.getLieuExterieur() != null ? s.getLieuExterieur() : (s.getSalle() == null ? "" : s.getSalle().getNom()))
-                    + "</p><p><a href=\"" + html(frontend.replaceAll("/$", "") + "/equipes") + "\">Consulter Mes équipes et répondre</a></p>");
+                    + "</p><p><a href=\"" + html(frontend.replaceAll("/$", "") + "/evenements/" + s.getId()) + "\">Consulter l’événement</a></p>");
             m.setEtat("SENDING");
             return new Delivery(m.getId(), m.getDestinataire(), m.getSujet(), m.getContenu());
         });

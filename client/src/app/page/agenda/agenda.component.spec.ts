@@ -1,4 +1,4 @@
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
@@ -11,7 +11,6 @@ import { TokenStorageService } from '../../_services/token-storage.service';
 import { SeanceCalendrier } from '../../models/seance';
 import { AgendaComponent } from './agenda.component';
 import { AgendaPreferences, AgendaPreferencesService } from '../../_services/agenda-preferences.service';
-import { EvenementDetailComponent } from '../../template/evenement-detail/evenement-detail.component';
 import { CalendrierComponent } from '../../template/calendrier/calendrier.component';
 import { TeamEventModalComponent } from '../../template/team-event-modal/team-event-modal.component';
 
@@ -265,77 +264,51 @@ describe('AgendaComponent', () => {
     expect(component.jours.find(j => j.dansLeMois)!.iso).toBe('2026-11-01');
   });
 
-  it('ouvre les détails de chaque évènement dans une modale accessible', () => {
+  it('redirige vers la page de l’événement sans ouvrir de modale', () => {
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.returnValue(Promise.resolve(true));
     component.ngOnInit();
     const evenement = component.jours.find(j => j.iso === '2026-10-05')!.evenements[0];
     component.ouvrirEvenement(evenement);
-    expect(component.evenementSelectionne).toBe(evenement);
-    expect(modales.open).toHaveBeenCalledWith(EvenementDetailComponent, jasmine.objectContaining({ ariaLabelledBy: 'evenement-detail-titre', scrollable: true, centered: true }));
-    expect(modales.open.calls.mostRecent().returnValue.componentInstance.evenement).toBe(evenement);
-    expect(modales.open.calls.mostRecent().returnValue.componentInstance.adherentId).toBe(42);
+    expect(navigate).toHaveBeenCalledOnceWith(['/evenements', evenement.seanceId]);
+    expect(modales.open).not.toHaveBeenCalled();
   });
 
-  it('affiche la couleur de la salle dans la modale et la couleur de section dans le calendrier', async () => {
+  it('conserve la couleur de section et ouvre la fiche au clic dans l’agenda', () => {
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.returnValue(Promise.resolve(true));
     activites.getCalendrier.and.returnValue(of([{
       ...seance(1), couleurSection: '#AB47BC', couleurSalle: '#ef93ab', adresseSalle: '1 rue des Sports'
     }]));
     activites.getCalendrierAdherent.and.returnValue(of([]));
-    const modaleReelle = TestBed.runInInjectionContext(() => new NgbModal());
-    modales.open.and.callFake((contenu, options) => modaleReelle.open(contenu, options));
-    try {
-      fixture.detectChanges();
-      const bouton = fixture.nativeElement.querySelector('.agenda-evenement') as HTMLButtonElement;
-      expect(bouton.style.getPropertyValue('--couleur')).toBe('#AB47BC');
-      expect(bouton.querySelector('.agenda-lieu-salle')).toBeNull();
-      bouton.click();
-      await fixture.whenStable();
-      const salle = document.querySelector('.modal-body .agenda-lieu-salle') as HTMLElement;
-      expect(salle.textContent).toContain('Salle');
-      expect(salle.style.getPropertyValue('--couleur-salle')).toBe('#ef93ab');
-      expect((salle.querySelector('.agenda-couleur') as HTMLElement).style.backgroundColor).toBe('rgb(239, 147, 171)');
-      expect(document.querySelector('.modal-body')!.textContent).toContain('1 rue des Sports');
-    } finally {
-      modaleReelle.dismissAll();
-    }
+    fixture.detectChanges();
+    const bouton = fixture.nativeElement.querySelector('.agenda-evenement') as HTMLButtonElement;
+    expect(bouton.style.getPropertyValue('--couleur')).toBe('#AB47BC');
+    expect(bouton.querySelector('.agenda-lieu-salle')).toBeNull();
+    bouton.click();
+    expect(navigate).toHaveBeenCalledOnceWith(['/evenements', 1]);
+    expect(modales.open).not.toHaveBeenCalled();
   });
 
-  it('ouvre exactement le même composant et les mêmes détails depuis l’accueil et l’agenda', async () => {
-    const commune = {
-      ...seance(1, '2026-10-07T18:00:00', '2026-10-07T19:30:00'),
-      activiteNom: 'Basket – Entraînement', activiteNomCourt: 'Basket', descriptif: 'Entraînement',
-      sectionType: 'COMPETITION', couleurSalle: '#AB47BC', adresseSalle: '1 rue des Sports',
-      commentaire: '<p>Prévoir une gourde</p>', lien: 'example.org/basket',
-      responsabilites: [{ tache: { nom: 'Matériel', icone: 'box-open', couleur: '#4285F4' }, adherent: { id: 42, prenom: 'Alice', nom: 'Dupont' } }]
-    };
+  it('ouvre la même page depuis l’accueil et l’agenda', () => {
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.returnValue(Promise.resolve(true));
+    const commune = seance(1, '2026-10-07T18:00:00', '2026-10-07T19:30:00');
     activites.getCalendrier.and.returnValue(of([commune]));
     activites.getCalendrierAdherent.and.returnValue(of([commune]));
     activites.getCalendrierGoogle.and.returnValue(of({ evenements: [], erreurs: [] }));
-    const modaleReelle = TestBed.runInInjectionContext(() => new NgbModal());
-    modales.open.and.callFake((contenu, options) => modaleReelle.open(contenu, options));
     jasmine.clock().install();
+    const accueil = TestBed.createComponent(CalendrierComponent);
     try {
       jasmine.clock().mockDate(new Date(2026, 9, 6, 12));
       fixture.detectChanges();
       fixture.nativeElement.querySelector('.agenda-evenement').click();
-      await fixture.whenStable();
-      const detailAgenda = document.querySelector('.modal-body')!.innerHTML;
-      modaleReelle.dismissAll();
-      const accueil = TestBed.createComponent(CalendrierComponent);
       accueil.componentInstance.adherentId = 42;
       accueil.componentInstance.affichage = 'liste';
       accueil.componentInstance.joursVisibles = 15;
-
       accueil.detectChanges();
       accueil.nativeElement.querySelector('.evenement-ouvrir').click();
-      await accueil.whenStable();
-      expect(document.querySelector('.modal-body')!.innerHTML).toBe(detailAgenda);
-      expect(modales.open.calls.allArgs().map(args => args[0])).toEqual([EvenementDetailComponent, EvenementDetailComponent]);
-      const detail = document.querySelector('.modal-body')!;
-      for (const texte of ['Entraînement', 'Sports', '19:30', 'Prévoir une gourde', 'Matériel : Alice Dupont', 'Consulter les convocations', 'Waze']) {
-        expect(detail.textContent).toContain(texte);
-      }
+      expect(navigate.calls.allArgs()).toEqual([[['/evenements', 1]], [['/evenements', 1]]]);
+      expect(modales.open).not.toHaveBeenCalled();
     } finally {
-      modaleReelle.dismissAll();
+      accueil.destroy();
       jasmine.clock().uninstall();
     }
   });
@@ -356,7 +329,7 @@ describe('AgendaComponent', () => {
     }
   });
 
-  it('affiche uniquement les responsabilités personnelles dans l’agenda et toutes les responsabilités dans la modale', async () => {
+  it('affiche les responsabilités personnelles et ouvre la page de l’événement', () => {
     activites.getCalendrier.and.returnValue(of([{
       ...seance(1), couleurSection: '#5CBBAF', responsabilites: [
         { tache: { id: 3, nom: 'Accueil', icone: 'handshake', couleur: '#AB47BC' }, adherent: { id: 42, prenom: 'Alice', nom: 'Dupont' } },
@@ -364,29 +337,20 @@ describe('AgendaComponent', () => {
       ]
     }]));
     activites.getCalendrierAdherent.and.returnValue(of([]));
-    const modaleReelle = TestBed.runInInjectionContext(() => new NgbModal());
-    modales.open.and.callFake((contenu, options) => modaleReelle.open(contenu, options));
-    try {
-      fixture.detectChanges();
-      const bouton = fixture.nativeElement.querySelector('.agenda-evenement') as HTMLButtonElement;
-      const icones = bouton.querySelectorAll('.responsabilite-icone') as NodeListOf<HTMLElement>;
-      expect(icones.length).toBe(1);
-      expect(icones[0].querySelector('svg')?.getAttribute('data-icon')).toBe('handshake');
-      expect(icones[0].style.color).toBe('rgb(171, 71, 188)');
-      expect(bouton.getAttribute('aria-label')).toContain('Accueil : Alice Dupont');
-      expect(bouton.getAttribute('aria-label')).not.toContain('Matériel');
-      expect(bouton.getAttribute('title')).not.toContain('Bob Martin');
-      expect(bouton.style.getPropertyValue('--couleur')).toBe('#5CBBAF');
-      bouton.click();
-      await fixture.whenStable();
-      expect(document.querySelector('.modal-body')!.textContent).toContain('Accueil : Alice Dupont');
-      expect(document.querySelector('.modal-body')!.textContent).toContain('Matériel : Bob Martin');
-      expect(document.querySelectorAll('.modal-body .responsabilite-icone').length).toBe(2);
-      const detail = document.querySelector('.modal-body .responsabilite-icone') as HTMLElement;
-      expect(detail.style.color).toBe('rgb(171, 71, 188)');
-    } finally {
-      modaleReelle.dismissAll();
-    }
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.returnValue(Promise.resolve(true));
+    fixture.detectChanges();
+    const bouton = fixture.nativeElement.querySelector('.agenda-evenement') as HTMLButtonElement;
+    const icones = bouton.querySelectorAll('.responsabilite-icone') as NodeListOf<HTMLElement>;
+    expect(icones.length).toBe(1);
+    expect(icones[0].querySelector('svg')?.getAttribute('data-icon')).toBe('handshake');
+    expect(icones[0].style.color).toBe('rgb(171, 71, 188)');
+    expect(bouton.getAttribute('aria-label')).toContain('Accueil : Alice Dupont');
+    expect(bouton.getAttribute('aria-label')).not.toContain('Matériel');
+    expect(bouton.getAttribute('title')).not.toContain('Bob Martin');
+    expect(bouton.style.getPropertyValue('--couleur')).toBe('#5CBBAF');
+    bouton.click();
+    expect(navigate).toHaveBeenCalledOnceWith(['/evenements', 1]);
+    expect(modales.open).not.toHaveBeenCalled();
   });
 
   it('ne crée aucun picto de tâche si les responsabilités sont attribuées à d’autres adhérents', () => {
@@ -451,7 +415,9 @@ describe('AgendaComponent', () => {
       iframe.remove();
     }
     const bouton = fixture.nativeElement.querySelector('.agenda-evenement') as HTMLButtonElement;
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.returnValue(Promise.resolve(true));
     bouton.click();
-    expect(modales.open).toHaveBeenCalled();
+    expect(navigate).toHaveBeenCalledOnceWith(['/evenements', 1]);
+    expect(modales.open).not.toHaveBeenCalled();
   });
 });

@@ -1,0 +1,17 @@
+:host { display: block; }
+.event-page { max-width: 1400px; margin: auto; overflow-wrap: anywhere; }
+.event-information { background: #fff; border: 1px solid #dce6e2; border-radius: .85rem; padding: 1.5rem; }
+.event-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); gap: 1.25rem 2rem; margin: 0; }
+.event-facts dt { color: #526861; font-size: .85rem; margin-bottom: .25rem; }
+.event-facts dd { margin: 0; }
+.event-comment { white-space: pre-wrap; margin-bottom: 1rem; }
+.event-invitation { background: #fff; border: 1px solid #dce6e2; border-radius: .85rem; padding: 1rem; }
+.event-invitation + .event-invitation { margin-top: .75rem; }
+:host ::ng-deep .event-comment :is(img, video, iframe) { max-width: 100%; }
+.event-tabs { gap: .25rem; }
+.event-tabs .nav-link { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-height: 2.75rem; }
+@media (max-width: 575.98px) {
+  .event-information { padding: 1rem; }
+  .event-tabs .nav-item { flex: 1 1 0; }
+  .event-tabs .nav-link { width: 100%; padding: .65rem .5rem; }
+}

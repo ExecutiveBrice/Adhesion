@@ -10,10 +10,13 @@ import { TeamMemberModalComponent } from './team-member-modal.component';
 import { TeamEditModalComponent, TeamEditResult } from './team-edit-modal.component';
 import { registerApiViewRefresh } from '../../_services/api-render.service';
 import { ToastService } from '../../_services/toast.service';
+import { UtilisateurSelectionnable } from '../../models/utilisateurSelectionnable';
+import { UserCheckboxDropdownComponent } from '../user-checkbox-dropdown/user-checkbox-dropdown.component';
+import { filterByName } from '../../_helpers/name-search';
 
 type TeamEdit = { id?: number; nom: string; description: string; encadrants: number[]; referents: number[] };
 
-@Component({ selector: 'app-team-management', imports: [FormsModule, FaIconComponent, TeamEventsComponent],
+@Component({ selector: 'app-team-management', imports: [FormsModule, FaIconComponent, TeamEventsComponent, UserCheckboxDropdownComponent],
   templateUrl: './team-management.component.html', styleUrls: ['./team-management.component.css'] })
 export class TeamManagementComponent implements OnChanges, OnDestroy {
   private refresh = registerApiViewRefresh();
@@ -36,15 +39,22 @@ export class TeamManagementComponent implements OnChanges, OnDestroy {
   activeTeams: Team[] = [];
   error = ''; busy = false;
   newTeamDraft?: TeamEdit;
-  applyToFuture = false;
   selectedTeam?: Team;
+  rosterExpanded = false;
+  rosterSearch = '';
+  get visibleCandidates() {
+    return filterByName(this.state?.candidats ?? [], this.rosterSearch, person => `${person.prenom} ${person.nom}`);
+  }
   get editor() { return this.creating ? this.newTeamDraft : undefined; }
   ngOnChanges(changes: SimpleChanges) {
     if (changes['selectedTeamId']) {
+      this.rosterSearch = '';
       this.selectedTeam = this.activeTeams.find(team => team.id === this.selectedTeamId);
-      this.closeTeamEditor(); this.applyToFuture = false;
+      this.closeTeamEditor();
     }
     if (changes['activityId']) {
+      this.rosterSearch = '';
+      this.rosterExpanded = false;
       this.closeMember();
       this.closeTeamEditor();
       this.state = undefined; this.activeTeams = []; this.selectedTeam = undefined;
@@ -101,9 +111,12 @@ export class TeamManagementComponent implements OnChanges, OnDestroy {
     this.newTeamDraft = { nom: `Groupe ${number}`, description: '', encadrants: [], referents: [] };
   }
   closeEditor() { this.openTeam(); }
-  toggleStaff(personId: number, type: 'encadrants' | 'referents', checked: boolean) {
+  selectedStaff(type: 'encadrants' | 'referents') {
+    return this.state?.intervenants.filter(person => this.editor?.[type].includes(person.id)) ?? [];
+  }
+  selectStaff(type: 'encadrants' | 'referents', selection: UtilisateurSelectionnable[]) {
     const edit = this.editor;
-    if (!edit) return; edit[type] = edit[type].filter(id => id !== personId); if (checked) edit[type].push(personId);
+    if (edit) edit[type] = selection.map(person => person.id);
   }
   saveTeam() {
     const edit = this.editor;
@@ -120,7 +133,7 @@ export class TeamManagementComponent implements OnChanges, OnDestroy {
     const effectif = team.effectif.includes(adhesionId)
       ? team.effectif.filter(id => id !== adhesionId) : [...team.effectif, adhesionId];
     this.busy = true; this.busyChanged.emit(true); this.error = '';
-    this.api.roster(activityId, team.id, effectif, this.applyToFuture).subscribe({ next: updated => {
+    this.api.roster(activityId, team.id, effectif).subscribe({ next: updated => {
       if (activityId === this.activityId && this.state) {
         this.state = { ...this.state, equipes: this.state.equipes.map(t => t.id === updated.id ? updated : t) };
         this.activeTeams = this.state.equipes.filter(t => !t.archivee);

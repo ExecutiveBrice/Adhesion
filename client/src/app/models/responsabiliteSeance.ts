@@ -1,3 +1,5 @@
+import type { TeamInvitation } from '../_services/team.service';
+
 export interface TacheSeanceConfiguration {
   id?: number;
   nom: string;
@@ -16,6 +18,8 @@ export interface ResponsabiliteSeance {
   adherent: AdherentResponsabilite;
   equipeId?: number | null;
   equipeNom?: string | null;
+  equipes?: string[];
+  invitation?: TeamInvitation | null;
 }
 
 export interface ResponsabiliteSeanceEdition {

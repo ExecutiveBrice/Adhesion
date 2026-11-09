@@ -1,19 +1,21 @@
-import { Component, inject, Input, OnChanges, OnDestroy, SimpleChanges, TemplateRef, ViewChild } from '@angular/core';
+import { Component, EventEmitter, inject, Input, OnChanges, OnDestroy, Output, SimpleChanges, TemplateRef, ViewChild } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { DatePipe, KeyValuePipe, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCircleCheck, faCircleExclamation, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUpRightFromSquare, faArrowsRotate, faChevronDown, faChevronUp, faCircleCheck, faCircleExclamation, faCircleQuestion, faCircleXmark, faClock, faClockRotateLeft, faEnvelope, faHandHoldingMedical, faPen, faPlus, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { forkJoin, Observable } from 'rxjs';
-import { TeamService, Team, TeamEvent, TeamPerson, ResponsibilityTeam, TeamResponsibilityEdit, teamError } from '../../_services/team.service';
+import { TeamService, Team, TeamEvent, TeamInvitation, ResponsibilityTeam, TeamResponsibilityEdit, teamError } from '../../_services/team.service';
 import { ParamService } from '../../_services/param.service';
 import { TeamEventModalComponent } from '../team-event-modal/team-event-modal.component';
 import { registerApiViewRefresh } from '../../_services/api-render.service';
 import { ToastService } from '../../_services/toast.service';
 import { TacheSeanceConfiguration } from '../../models/responsabiliteSeance';
 import { ResponsabilitesSeanceComponent } from '../responsabilites-seance/responsabilites-seance.component';
+import { filterByName } from '../../_helpers/name-search';
 
-@Component({ selector: 'app-team-events', imports: [FormsModule, DatePipe, KeyValuePipe, NgTemplateOutlet, FaIconComponent, ResponsabilitesSeanceComponent],
+@Component({ selector: 'app-team-events', imports: [FormsModule, DatePipe, KeyValuePipe, NgTemplateOutlet, FaIconComponent, ResponsabilitesSeanceComponent, RouterLink],
   templateUrl: './team-events.component.html', styleUrls: ['./team-events.component.css'] })
 export class TeamEventsComponent implements OnChanges, OnDestroy {
   private refresh = registerApiViewRefresh();
@@ -23,48 +25,82 @@ export class TeamEventsComponent implements OnChanges, OnDestroy {
   private modals = inject(NgbModal);
   private responsibilityModal?: NgbModalRef;
   @ViewChild('responsibilitiesModal', { static: true }) responsibilitiesModal!: TemplateRef<unknown>;
-  @Input({ required: true }) team!: Team;
+  @Input() team!: Team;
+  @Input() detailEvent?: TeamEvent;
+  @Output() eventChanged = new EventEmitter<TeamEvent>();
+  get contextId() { return this.detailEvent?.id ?? this.team.id; }
   @Input() teams: Team[] = [];
   @Input() collapsibleParticipants = false;
+  @Input() collapsibleEvents = false;
+  @Input() summaryCards = false;
+  @Input() allowEventEditing = true;
+  eventsExpanded = false;
   events: TeamEvent[] = [];
   error = ''; busy = false; loading = false;
   private eventModal?: NgbModalRef;
-  selectionEvent?: TeamEvent;
-  candidates: TeamPerson[] = [];
-  selected: number[] = [];
-  search = '';
   showPast = false;
   faCircleCheck = faCircleCheck;
+  faCircleXmark = faCircleXmark;
+  faCircleQuestion = faCircleQuestion;
+  faClock = faClock;
   faCircleExclamation = faCircleExclamation;
   faTriangleExclamation = faTriangleExclamation;
+  faChevronDown = faChevronDown;
+  faChevronUp = faChevronUp;
+  faEnvelope = faEnvelope;
+  faPen = faPen;
+  faPlus = faPlus;
+  faArrowsRotate = faArrowsRotate;
+  faClockRotateLeft = faClockRotateLeft;
+  faHandHoldingMedical = faHandHoldingMedical;
+  faArrowUpRightFromSquare = faArrowUpRightFromSquare;
   expandedParticipants = new Set<number>();
-  expandedResponsibilities = new Set<number>();
+  participantSearch: Record<number, string> = {};
   responsibilityEvent?: TeamEvent;
   responsibilityRows: TeamResponsibilityEdit[] = [];
   responsibilityTeams: ResponsibilityTeam[] = [];
   responsibilitiesLoading = false;
   tasks: TacheSeanceConfiguration[] = [];
-  private reminders = new Map<number, string>();
+  private reminders = new Map<string, string>();
   ngOnChanges(changes: SimpleChanges) {
+    if (this.detailEvent) {
+      if (changes['detailEvent']?.previousValue?.id !== this.detailEvent.id) {
+        this.closeResponsibilities(); this.error = ''; this.participantSearch = {};
+      }
+      this.events = [this.detailEvent]; this.showPast = true;
+      return;
+    }
     const team = changes['team'];
     // Changes to the available teams must not reload HTTP data or erase a draft.
     if (!team || team.currentValue?.id === team.previousValue?.id) {
-      if (team && !this.team.canManage) { this.closeEventModal(); this.selectionEvent = undefined; this.closeResponsibilities(); }
+      if (team && !this.team.canManage) { this.closeEventModal(); this.closeResponsibilities(); }
+      if (team) {
+        const previous = team.previousValue.effectif as number[];
+        const current = this.team.effectif;
+        if (previous.length !== current.length || current.some(id => !previous.includes(id))) this.load();
+      }
       return;
     }
-    this.closeEventModal(); this.selectionEvent = undefined; this.closeResponsibilities(); this.expandedParticipants.clear(); this.expandedResponsibilities.clear(); this.events = []; this.error = ''; this.load();
+    this.closeEventModal(); this.closeResponsibilities(); this.expandedParticipants.clear(); this.participantSearch = {}; this.events = []; this.error = ''; this.load();
   }
   ngOnDestroy() { this.closeEventModal(); this.closeResponsibilities(); }
   load() {
+    if (this.detailEvent) {
+      const id = this.detailEvent.id; this.loading = true;
+      this.api.event(id).subscribe({ next: detail => {
+        if (this.detailEvent?.id === id) { this.events = [detail.evenement]; this.loading = false; this.eventChanged.emit(detail.evenement); }
+      }, error: e => { if (this.detailEvent?.id === id) { this.error = teamError(e); this.loading = false; } } });
+      return;
+    }
     const id = this.team.id; this.loading = true;
     this.api.events(id).subscribe({ next: list => { if (this.team.id === id) { this.events = list; this.loading = false; } },
       error: e => { if (this.team.id === id) { this.error = teamError(e); this.loading = false; } } });
   }
   get visibleEvents() { return this.events.filter(e => this.showPast || new Date(e.fin).getTime() >= Date.now()); }
+  get upcomingEventsCount() { return this.events.filter(e => this.upcoming(e)).length; }
   upcoming(e: TeamEvent) { return e.etat !== 'ANNULEE' && new Date(e.debut).getTime() > Date.now(); }
-  get filteredCandidates() { const q = this.search.toLocaleLowerCase('fr'); return this.candidates.filter(p => `${p.prenom} ${p.nom}`.toLocaleLowerCase('fr').includes(q)); }
   open(e?: TeamEvent) {
-    if (!this.team.canManage || this.team.archivee) return;
+    if (!this.allowEventEditing || !this.team.canManage || this.team.archivee) return;
     this.closeEventModal();
     const modal = this.modals.open(TeamEventModalComponent, { size: 'lg', backdrop: 'static', ariaLabelledBy: 'event-modal-title' });
     this.eventModal = modal;
@@ -74,32 +110,30 @@ export class TeamEventsComponent implements OnChanges, OnDestroy {
     modal.result.then((result: any) => {
       if (this.eventModal !== modal) return;
       this.eventModal = undefined;
-      this.toasts.success(result.nombre ? `${result.nombre} événement(s) enregistré(s).` : 'Événement enregistré.');
+      this.toasts.success(result.etat === 'ANNULEE' ? 'Événement annulé.' : result.nombre ? `${result.nombre} événement(s) enregistré(s).` : 'Événement enregistré.');
       this.load();
     }, () => { if (this.eventModal === modal) this.eventModal = undefined; });
   }
   private closeEventModal() { this.eventModal?.dismiss(); this.eventModal = undefined; }
-  editSelection(e: TeamEvent) {
-    this.selectionEvent = e; this.selected = e.convocations.filter(c => c.selectionnee).map(c => c.adhesionId); this.search = '';
-    this.api.candidates(e.id).subscribe({ next: p => this.candidates = p, error: err => this.error = teamError(err) });
-  }
-  togglePerson(id: number, checked: boolean) { this.selected = this.selected.filter(i => i !== id); if (checked) this.selected.push(id); }
-  saveSelection() { if (this.selectionEvent) this.run(this.api.select(this.selectionEvent.id, this.selected), 'Sélection enregistrée. Publiez les nouvelles convocations pour prévenir les participants.', () => this.selectionEvent = undefined); }
   publish(e: TeamEvent) { this.run(this.api.publish(e.id), 'Convocations publiées. Les emails sont placés dans la file d’envoi.'); }
   remind(e: TeamEvent) {
-    const key = this.reminders.get(e.id) ?? crypto.randomUUID(); this.reminders.set(e.id, key);
-    this.run(this.api.remind(e.id, key), 'Relance enregistrée pour les personnes sans réponse.', () => this.reminders.delete(e.id));
+    const scope = `${e.id}:all`;
+    const key = this.reminders.get(scope) ?? crypto.randomUUID(); this.reminders.set(scope, key);
+    this.run(this.api.remind(e.id, key), 'Relance enregistrée pour les personnes sans réponse.', () => this.reminders.delete(scope));
   }
-  cancel(e: TeamEvent) { if (confirm('Annuler cet événement et prévenir les personnes convoquées ?')) this.run(this.api.cancel(e.id), 'Événement annulé.'); }
-  reply(e: TeamEvent, id: number, value: boolean) { this.run(this.api.reply(e.id, id, value), 'Réponse enregistrée.'); }
+  publishInvitation(e: TeamEvent, id: number) {
+    this.run(this.api.publishInvitation(e.id, id), 'Convocation individuelle publiée. L’email est placé dans la file d’envoi.');
+  }
+  remindInvitation(e: TeamEvent, id: number) {
+    const scope = `${e.id}:${id}`;
+    const key = this.reminders.get(scope) ?? crypto.randomUUID(); this.reminders.set(scope, key);
+    this.run(this.api.remindInvitation(e.id, id, key), 'Relance individuelle enregistrée.', () => this.reminders.delete(scope));
+  }
+  reply(e: TeamEvent, id: number, value: boolean | null) { this.run(this.api.reply(e.id, id, value), 'Réponse enregistrée.'); }
   point(e: TeamEvent, id: number, value: boolean) { this.run(this.api.attendance(e.id, id, value), 'Présence enregistrée.'); }
   toggleParticipants(eventId: number) {
     if (this.expandedParticipants.has(eventId)) this.expandedParticipants.delete(eventId);
     else this.expandedParticipants.add(eventId);
-  }
-  toggleResponsibilities(eventId: number) {
-    if (this.expandedResponsibilities.has(eventId)) this.expandedResponsibilities.delete(eventId);
-    else this.expandedResponsibilities.add(eventId);
   }
   editResponsibilities(e: TeamEvent) {
     if (this.busy) return;
@@ -143,12 +177,25 @@ export class TeamEventsComponent implements OnChanges, OnDestroy {
     this.run(this.api.responsibilities(this.responsibilityEvent.id, this.responsibilityRows), 'Responsabilités enregistrées.', () => this.closeResponsibilities());
   }
   selectedInvites(e: TeamEvent) { return e.convocations.filter(c => c.selectionnee); }
-  presenceCount(e: TeamEvent, value: boolean | null) { return e.convocations.filter(c => c.selectionnee && c.presence === value).length; }
+  responsibilityInvites(e: TeamEvent): TeamInvitation[] {
+    return (e.responsabilites ?? []).flatMap(r => r.invitation ? [r.invitation] : []);
+  }
+  responsibilityResponseCount(e: TeamEvent, response: boolean | null) {
+    return this.responsibilityInvites(e).filter(c => c.reponse === response).length;
+  }
+  invitationLabel(invitation: TeamInvitation): string {
+    return invitation.reponse === true ? 'Présent' : invitation.reponse === false ? 'Absent'
+      : invitation.dateReponse ? 'Ne sais pas encore' : 'Sans réponse';
+  }
+  visibleInvites(e: TeamEvent) {
+    return filterByName(this.selectedInvites(e), this.participantSearch[e.id] ?? '', person => person.nom);
+  }
+  responseCount(e: TeamEvent, value: boolean | null) { return e.convocations.filter(c => c.selectionnee && c.reponse === value).length; }
   mailLabel(state: string) { return ({ PENDING: 'en attente', SENDING: 'envoi engagé', SENT: 'accepté par le prestataire', UNKNOWN: 'résultat incertain', REJECTED: 'refusé', CANCELLED: 'devenu inutile', NO_ADDRESS: 'adresse absente' } as Record<string, string>)[state] ?? state; }
   run<T>(request: Observable<T>, message: string, after?: () => void) {
     if (this.busy) return; this.busy = true; this.error = '';
-    const id = this.team.id;
-    request.subscribe({ next: () => { this.busy = false; if (id === this.team.id) { this.toasts.success(message); after?.(); this.load(); } },
+    const id = this.contextId;
+    request.subscribe({ next: () => { this.busy = false; if (id === this.contextId) { this.toasts.success(message); after?.(); this.load(); } },
       error: e => { this.busy = false; this.error = teamError(e); } });
   }
 }

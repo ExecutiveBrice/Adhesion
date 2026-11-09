@@ -99,8 +99,8 @@
   <div class="activities-header">
     <h2>Activités</h2>
     @if (canCreateActivity) {
-    <a class="btn btn-primary" routerLink="/activites/nouvelle">
-      <fa-icon [icon]="faCartPlus"></fa-icon> Ajouter une activité
+    <a class="btn btn-primary" routerLink="/activites/nouvelle" aria-label="Ajouter une activité" title="Ajouter une activité">
+      <fa-icon class="me-sm-1" [icon]="faPlus" aria-hidden="true"></fa-icon><span class="d-none d-sm-inline">Ajouter une activité</span>
     </a>
     }
   </div>

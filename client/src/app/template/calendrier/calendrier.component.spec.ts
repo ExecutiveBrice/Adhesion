@@ -1,4 +1,4 @@
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
@@ -7,10 +7,9 @@ import { ActiviteService } from '../../_services/activite.service';
 import { ParamService } from '../../_services/param.service';
 import { SeanceCalendrier } from '../../models/seance';
 import { CalendrierComponent } from './calendrier.component';
-import { NgbConfig, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 describe('CalendrierComponent — présences prévues dans l’accueil', () => {
-  it('limite la carte aux informations demandées et aux pictos personnels puis ouvre tous les détails', async () => {
+  it('limite la carte aux informations demandées et aux pictos personnels puis ouvre la page de l’événement', async () => {
     registerLocaleData(localeFr);
     const debut = new Date();
     debut.setDate(debut.getDate() + 1);
@@ -51,21 +50,10 @@ describe('CalendrierComponent — présences prévues dans l’accueil', () => {
     expect(icone.style.color).toBe('rgb(171, 71, 188)');
     expect(icone.querySelector('svg')?.getAttribute('data-icon')).toBe('handshake');
     expect(carte.querySelector('.responsabilite-seance')?.getAttribute('title')).toBe('Accueil : Alice Dupont');
-    const modales = TestBed.inject(NgbModal);
-    TestBed.inject(NgbConfig).animation = false;
-    try {
-      carte.querySelector<HTMLButtonElement>('.evenement-ouvrir')!.click();
-      await fixture.whenStable();
-      const modale = document.querySelector('.modal-body') as HTMLElement;
-      for (const texte of ['19:00', 'Gymnase', '1 rue des Sports', 'Prévoir une gourde', 'Modifiée', 'Accueil : Alice Dupont', 'Matériel : Bob Martin']) {
-        expect(modale.textContent).toContain(texte);
-      }
-      expect(modale.querySelectorAll('.responsabilite-icone').length).toBe(2);
-      expect(modale.querySelector('a[href="https://example.org/basket"]')).not.toBeNull();
-      expect(document.querySelector('.modal')?.getAttribute('aria-labelledby')).toBe('evenement-detail-titre');
-    } finally {
-      modales.dismissAll();
-    }
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.returnValue(Promise.resolve(true));
+    carte.querySelector<HTMLButtonElement>('.evenement-ouvrir')!.click();
+    await fixture.whenStable();
+    expect(navigate).toHaveBeenCalledOnceWith(['/evenements', 15]);
   });
 
 });
@@ -176,6 +164,10 @@ describe('CalendrierComponent : périmètre adhérent', () => {
     expect(salle.textContent).toBe('Gymnase');
     expect(salle.style.getPropertyValue('--couleur-salle')).toBe('#ef93ab');
     expect(fixture.nativeElement.querySelector('.popup-jour').textContent).toContain('1 rue des Sports');
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.returnValue(Promise.resolve(true));
+    resumes[0].click(); fixture.detectChanges();
+    expect(navigate).toHaveBeenCalledOnceWith(['/evenements', 15]);
+    expect(component.popupJourOuverte).toBeFalse();
   });
 
   it('ne sollicite pas Google lorsqu’aucun agenda n’est visible', () => {

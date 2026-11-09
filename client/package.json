@@ -10,7 +10,7 @@
     "build:integration": "node scripts/angular-cli.cjs build --base-href / --configuration=integration",
     "watch": "node scripts/angular-cli.cjs build --watch --configuration development",
     "test": "node scripts/angular-cli.cjs test",
-    "test:teams": "node scripts/angular-cli.cjs test --ts-config tsconfig.teams.spec.json --watch=false --browsers=ChromeHeadless --include=src/app/_helpers/activites-access.guard.spec.ts --include=src/app/_helpers/section-listing-access.guard.spec.ts --include=src/app/template/team-*/**/*.spec.ts --include=src/app/page/activite/*.spec.ts --include=src/app/template/evenement-detail/evenement-detail.component.spec.ts --include=src/app/template/calendrier/calendrier.component.spec.ts --include=src/app/page/agenda/agenda.component.spec.ts"
+    "test:teams": "node scripts/angular-cli.cjs test --ts-config tsconfig.teams.spec.json --watch=false --browsers=ChromeHeadless --include=src/app/_helpers/activites-access.guard.spec.ts --include=src/app/_helpers/section-listing-access.guard.spec.ts --include=src/app/template/team-*/**/*.spec.ts --include=src/app/page/activite/*.spec.ts --include=src/app/page/equipes/*.spec.ts --include=src/app/page/evenement/*.spec.ts --include=src/app/template/evenement-detail/evenement-detail.component.spec.ts --include=src/app/template/calendrier/calendrier.component.spec.ts --include=src/app/page/agenda/agenda.component.spec.ts"
   },
   "private": true,
   "dependencies": {

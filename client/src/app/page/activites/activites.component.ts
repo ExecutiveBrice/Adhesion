@@ -9,7 +9,7 @@ import { ManagedSection, SectionManagementService } from 'src/app/_services/sect
 import { Activite } from 'src/app/models';
 import { UtilisateurSelectionnable } from 'src/app/models/utilisateurSelectionnable';
 import { Router, RouterLink } from '@angular/router';
-import { faCircleCheck, faCircleXmark, faCartPlus, faPencilSquare } from '@fortawesome/free-solid-svg-icons';
+import { faCircleCheck, faCircleXmark, faPlus, faPencilSquare } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DatePipe, NgClass } from '@angular/common';
@@ -41,7 +41,7 @@ export class ActivitesComponent implements OnInit {
   faCircleXmark = faCircleXmark;
   faCircleCheck = faCircleCheck;
   faPencilSquare = faPencilSquare;
-  faCartPlus = faCartPlus;
+  faPlus = faPlus;
 
   activites: Activite[] = [];
   page = 1;
@@ -198,7 +198,7 @@ export class ActivitesComponent implements OnInit {
   }
 
   nomEvenement(evenement: SeanceCalendrier): string {
-    const types: Record<string, string> = { ACTIVITE: 'Activité', RENCONTRE: 'Rencontre', TOURNOI: 'Tournoi', AUTRE: 'Autre' };
+    const types: Record<string, string> = { ACTIVITE: 'Séance', ENTRAINEMENT: 'Entrainement', RENCONTRE: 'Match', TOURNOI: 'Tournoi', ANIMATION: 'Animation', AUTRE: 'Autre' };
     const nom = evenement.nomEvenement?.trim() || types[evenement.typeEvenement ?? ''] || 'Événement';
     return evenement.typeEvenement === 'RENCONTRE' && evenement.adversaire?.trim()
       ? `${nom} contre ${evenement.adversaire.trim()}` : nom;

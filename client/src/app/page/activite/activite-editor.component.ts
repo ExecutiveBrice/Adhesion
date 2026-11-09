@@ -1,8 +1,9 @@
 import { AfterViewInit, Component, EventEmitter, inject, Input, OnDestroy, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap/dropdown';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCircleCheck, faCircleXmark, faGear } from '@fortawesome/free-solid-svg-icons';
+import { faCircleCheck, faCircleXmark, faGear, faPen } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Activite, SectionConfiguration } from '../../models';
 import { ActiviteService } from '../../_services/activite.service';
@@ -15,7 +16,7 @@ import { TeamManagementComponent } from '../../template/team-management/team-man
 import { Team, TeamState } from '../../_services/team.service';
 
 @Component({ selector: 'app-activite-editor', templateUrl: './activite-editor.component.html', styleUrls: ['./activite-editor.component.css'],
-  imports: [FormsModule, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, FaIconComponent, TeamManagementComponent] })
+  imports: [FormsModule, RouterLink, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, FaIconComponent, TeamManagementComponent] })
 export class ActiviteEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   private refresh = registerApiViewRefresh();
   private activities = inject(ActiviteService);
@@ -37,6 +38,7 @@ export class ActiviteEditorComponent implements OnInit, AfterViewInit, OnDestroy
   teamsBusy = false;
   saving = false;
   faCircleCheck = faCircleCheck; faCircleXmark = faCircleXmark; faGear = faGear;
+  faPen = faPen;
   get canConfigureTeams() { return this.scopedToManagedSections || !!this.tokens.getUser().roles?.includes('ROLE_ADMIN'); }
   get canEditSelectedTeam() { return !!this.teams.find(team => team.id === this.selectedTeamId)?.canManage; }
   get sectionSelectionnee() { return !!this.activite.section?.id && (!this.scopedToManagedSections || this.managedSections.some(s => s.id === this.activite.section?.id)); }

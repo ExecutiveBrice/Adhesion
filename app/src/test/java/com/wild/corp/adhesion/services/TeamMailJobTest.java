@@ -36,8 +36,34 @@ class TeamMailJobTest {
         when(invitations.findAllById(any())).thenReturn(List.of(c));
         lenient().when(mails.findById(4L)).thenReturn(Optional.of(mail));
     }
+    private void responsibility() {
+        c.getAdherent().setId(12L);
+        TacheSeance task = new TacheSeance(); task.setId(7L); task.setNom("Matériel");
+        var duty = new ResponsabiliteSeance(task, c.getAdherent());
+        c.getSeance().getResponsabilites().add(duty);
+        c.setObjet(ConvocationEquipe.responsibilityKey(duty)); c.setResponsabilite("Matériel"); c.setAdhesion(null);
+    }
+    @Test void responsibilitiesWithoutMembershipUseTheSameDurableMailQueue() throws Exception {
+        responsibility();
+        HttpResponse<Void> response = mock(HttpResponse.class); when(response.statusCode()).thenReturn(201);
+        when(http.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class))).thenReturn(response);
+        job.sendPending();
+        assertThat(mail.getEtat()).isEqualTo("SENT"); assertThat(mail.getContenu()).contains("Alice Martin &middot; Mat&eacute;riel");
+    }
+    @Test void aRemovedResponsibilityCancelsPendingMail() throws Exception {
+        responsibility(); c.getSeance().getResponsabilites().clear(); job.sendPending();
+        assertThat(mail.getEtat()).isEqualTo("CANCELLED"); verify(http, never()).send(any(), any());
+    }
+    @Test void anUndecidedResponsibilityReplyCancelsPendingReminders() throws Exception {
+        responsibility(); mail.setType("RELANCE"); c.setDateReponse(LocalDateTime.now()); job.sendPending();
+        assertThat(mail.getEtat()).isEqualTo("CANCELLED"); verify(http, never()).send(any(), any());
+    }
     @Test void aReplyBeforeDispatchCancelsTheReminderWithoutHttp() throws Exception {
         mail.setType("RELANCE"); c.setReponse(true); job.sendPending();
+        assertThat(mail.getEtat()).isEqualTo("CANCELLED"); verify(http, never()).send(any(), any());
+    }
+    @Test void anUndecidedReplyAlsoCancelsAnAlreadyQueuedReminder() throws Exception {
+        mail.setType("RELANCE"); c.setDateReponse(LocalDateTime.now()); job.sendPending();
         assertThat(mail.getEtat()).isEqualTo("CANCELLED"); verify(http, never()).send(any(), any());
     }
     @Test void aCanceledOrRescheduledSessionInvalidatesPendingInvitations() throws Exception {

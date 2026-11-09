@@ -10,21 +10,15 @@
       <label class="col-md-6">Description<input class="form-control" maxlength="500" [(ngModel)]="form.description"></label>
       <fieldset class="col-md-6">
         <legend class="fs-6">Encadrants</legend>
-        <div class="overflow-auto" style="max-height: 15rem">
-          @for (p of people; track p.id) {
-            <label class="d-block"><input type="checkbox" class="me-1" [checked]="form.encadrants.includes(p.id)"
-              (change)="toggleStaff(p.id, 'encadrants', $any($event.target).checked)"> {{p.prenom}} {{p.nom}}</label>
-          }
-        </div>
+        <app-user-checkbox-dropdown [utilisateurs]="people" [selection]="selectedStaff('encadrants')"
+          libelle="Encadrants" [disabled]="busy" menuContainer="body"
+          (selectionChange)="selectStaff('encadrants', $event)"></app-user-checkbox-dropdown>
       </fieldset>
       <fieldset class="col-md-6">
         <legend class="fs-6">Référents</legend>
-        <div class="overflow-auto" style="max-height: 15rem">
-          @for (p of people; track p.id) {
-            <label class="d-block"><input type="checkbox" class="me-1" [checked]="form.referents.includes(p.id)"
-              (change)="toggleStaff(p.id, 'referents', $any($event.target).checked)"> {{p.prenom}} {{p.nom}}</label>
-          }
-        </div>
+        <app-user-checkbox-dropdown [utilisateurs]="people" [selection]="selectedStaff('referents')"
+          libelle="Référents" [disabled]="busy" menuContainer="body"
+          (selectionChange)="selectStaff('referents', $event)"></app-user-checkbox-dropdown>
       </fieldset>
     </div>
   </fieldset>

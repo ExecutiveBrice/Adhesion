@@ -17,6 +17,12 @@ public final class TeamRoster {
                 && !List.of(Status.ANNULEE.label, Status.LISTE_ATTENTE.label).contains(a.getStatutActuel() == null ? "" : a.getStatutActuel())
                 && (sameActivity(a.getActivite(), activity) || sameActivity(a.getSurClassement(), activity));
     }
+    public static boolean eligible(ConvocationEquipe invitation, Seance session) {
+        if (invitation.isParticipant()) return eligible(invitation.getAdhesion(), session.getActivite());
+        return session.getResponsabilites().stream().anyMatch(r ->
+                r.getAdherent().getId().equals(invitation.getAdherent().getId())
+                && ConvocationEquipe.responsibilityKey(r).equals(invitation.getObjet()));
+    }
     private static boolean sameActivity(Activite a, Activite b) {
         return a != null && b != null && (a == b || (a.getId() != null && a.getId().equals(b.getId())));
     }
