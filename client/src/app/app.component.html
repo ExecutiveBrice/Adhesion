@@ -1,22 +1,28 @@
 <div id="app">
   <header class="app-header sticky-top">
     <nav class="navbar navbar-expand-xxl bg-dark" data-bs-theme="dark" aria-label="Navigation principale" (keydown.escape)="closeMenu()">
-      <div class="container-fluid gap-2" [class.navbar-with-title]="!isLoginPage()">
+      <div class="container-fluid gap-2" [class.navbar-with-title]="!isLoginPage() && isLoggedIn">
         <a href="https://alod.fr" class="navbar-brand d-flex align-items-center" aria-label="ALOD, site de l’association">
           <img class="app-logo" src="assets/logo.png" alt="ALOD">
         </a>
-        @if (isLoginPage()) {
-          <div class="navbar-login-actions d-flex gap-2 ms-auto" role="group" aria-label="Connexion ou inscription">
+        @if (isLoginPage() || !isLoggedIn) {
+          <div class="navbar-login-actions d-flex align-items-center gap-2 ms-auto" role="group" aria-label="Boutique, panier et compte">
+            @if (showBoutique()) {
+              <app-shop-cart-link link="shop" [navigation]="true"></app-shop-cart-link>
+              <app-shop-cart-link [navigation]="true"></app-shop-cart-link>
+            }
             <button type="button" class="btn"
-              [class.btn-primary]="loginPage.view() !== 'inscription'"
-              [class.btn-outline-light]="loginPage.view() === 'inscription'"
-              [attr.aria-pressed]="loginPage.view() !== 'inscription'"
-              (click)="loginPage.view.set('connexion')">Connexion</button>
+              title="Connexion" aria-label="Connexion"
+              [class.btn-primary]="isLoginPage() && loginPage.view() !== 'inscription'"
+              [class.btn-outline-light]="!isLoginPage() || loginPage.view() === 'inscription'"
+              [attr.aria-pressed]="isLoginPage() && loginPage.view() !== 'inscription'"
+              (click)="openLogin('connexion')"><fa-icon [icon]="loginIcon" aria-hidden="true"></fa-icon><span class="navbar-action-label">Connexion</span></button>
             <button type="button" class="btn"
-              [class.btn-primary]="loginPage.view() === 'inscription'"
-              [class.btn-outline-light]="loginPage.view() !== 'inscription'"
-              [attr.aria-pressed]="loginPage.view() === 'inscription'"
-              (click)="loginPage.view.set('inscription')">Inscription</button>
+              title="Inscription" aria-label="Inscription"
+              [class.btn-primary]="isLoginPage() && loginPage.view() === 'inscription'"
+              [class.btn-outline-light]="!isLoginPage() || loginPage.view() !== 'inscription'"
+              [attr.aria-pressed]="isLoginPage() && loginPage.view() === 'inscription'"
+              (click)="openLogin('inscription')"><fa-icon [icon]="registerIcon" aria-hidden="true"></fa-icon><span class="navbar-action-label">Inscription</span></button>
           </div>
         } @else {
           <span class="navbar-page-title d-xxl-none fs-6 fw-semibold text-white" [title]="pageTitle()">{{ pageTitle() }}</span>
@@ -70,6 +76,16 @@
                   <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="materiel">Matériel</a>
                 </li>
               }
+              @if (isLoggedIn && hasShopOrders()) {
+                <li class="nav-item" (click)="isCollapsed = true">
+                  <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="boutique/commandes">Mes commandes</a>
+                </li>
+              }
+              @if (showResponsableBoutique) {
+                <li class="nav-item" (click)="isCollapsed = true">
+                  <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="boutique/gestion">Gestion boutique</a>
+                </li>
+              }
               @if (showProf) {
                 <li class="nav-item" (click)="isCollapsed = true">
                   <a class="nav-link" routerLinkActive="active" ariaCurrentWhenActive="page" routerLink="profs">Mes groupes</a>
@@ -95,6 +111,12 @@
 
             <div class="navbar-account d-flex flex-column flex-xxl-row align-items-xxl-center gap-2 ms-xxl-3">
               @if (isLoggedIn) {
+                @if (showBoutique()) {
+                  <div class="d-flex gap-2">
+                    <app-shop-cart-link link="shop" [navigation]="true" (click)="isCollapsed = true"></app-shop-cart-link>
+                    <app-shop-cart-link [navigation]="true" (click)="isCollapsed = true"></app-shop-cart-link>
+                  </div>
+                }
                 <span class="navbar-text account-name" [title]="username">{{ username }}</span>
                 <button type="button" class="btn btn-outline-light" (click)="isCollapsed = true; logout()">Déconnexion</button>
               } @else {
@@ -107,7 +129,7 @@
     </nav>
   </header>
 
-  @if (!isLoginPage() && !isCollapsed) {
+  @if (!isLoginPage() && isLoggedIn && !isCollapsed) {
     <button type="button" class="navbar-backdrop d-xxl-none" aria-label="Fermer le menu" tabindex="-1" (click)="closeMenu()"></button>
   }
 

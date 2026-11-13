@@ -1,4 +1,4 @@
-import { Component, computed, ElementRef, inject, signal, ViewChild } from '@angular/core';
+import { Component, computed, DestroyRef, ElementRef, inject, signal, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TokenStorageService } from './_services/token-storage.service';
 import { ParamService } from './_services/param.service';
@@ -11,20 +11,26 @@ import { NgbToast, NgbToastHeader } from '@ng-bootstrap/ng-bootstrap/toast';
 import { PwaService } from './_services/pwa.service';
 import { AuthService } from './_services/auth.service';
 import { LoginPageService } from './_services/login-page.service';
-import { filter } from 'rxjs';
+import { catchError, EMPTY, filter, Subscription } from 'rxjs';
+import { ShopCartLinkComponent } from './shop/components/shop-cart-link.component';
+import { ShopApiService } from './shop/services/shop-api.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faRightToBracket, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 
 
 @Component({
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.css'],
-    imports: [NgbCollapse, RouterLinkActive, RouterLink, RouterOutlet, NgbToast, NgbToastHeader]
+    imports: [FaIconComponent, ShopCartLinkComponent, NgbCollapse, RouterLinkActive, RouterLink, RouterOutlet, NgbToast, NgbToastHeader]
 })
 export class AppComponent {
   private readonly apiViewRefresh = registerApiViewRefresh();
   readonly toastService = inject(ToastService);
   readonly pwaService = inject(PwaService);
   readonly loginPage = inject(LoginPageService);
+  readonly loginIcon = faRightToBracket;
+  readonly registerIcon = faUserPlus;
   private readonly router = inject(Router);
   private readonly currentUrl = signal(this.router.url);
   readonly isLoginPage = computed(() => ['/', '/login'].includes(this.currentUrl().split(/[?#]/)[0]));
@@ -32,8 +38,13 @@ export class AppComponent {
   @ViewChild('menuToggle') private menuToggle?: ElementRef<HTMLButtonElement>;
   transmissionService = inject(ParamTransmissionService);
   private paramService = inject(ParamService);
+  readonly showBoutique = this.paramService.showBoutique;
   private tokenStorageService = inject(TokenStorageService);
   private authService = inject(AuthService);
+  private readonly shopApi = inject(ShopApiService);
+  private readonly destroyRef = inject(DestroyRef);
+  private shopOrdersSubscription?: Subscription;
+  readonly hasShopOrders = signal(false);
 
   isCollapsed = true
   private roles: string[] = [];
@@ -42,6 +53,7 @@ export class AppComponent {
   showBureau = false;
   showMembreCA = false;
   showLogistique = false;
+  showResponsableBoutique = false;
   showSecretaire = false;
   showProf=false;
   showReferent=false;
@@ -76,6 +88,8 @@ export class AppComponent {
     this.updatePage();
     this.updateSession();
 
+    this.paramService.getAllBoolean().pipe(catchError(() => EMPTY)).subscribe();
+
     this.paramService.isClose().subscribe({
       next: data => this.maintenance = data,
       error: () => this.maintenance = true
@@ -87,6 +101,13 @@ export class AppComponent {
     this.isCollapsed = true;
     if (wasOpen && restoreFocus) {
       this.menuToggle?.nativeElement.focus();
+    }
+  }
+
+  openLogin(view: 'connexion' | 'inscription'): void {
+    this.loginPage.view.set(view);
+    if (!this.isLoginPage()) {
+      void this.router.navigate(['/login'], { queryParams: { view } });
     }
   }
 
@@ -110,12 +131,26 @@ export class AppComponent {
     this.showBureau = this.roles.includes('ROLE_BUREAU');
     this.showMembreCA = this.roles.includes('ROLE_MEMBRECA');
     this.showLogistique = this.roles.includes('ROLE_LOGISTIQUE');
+    this.showResponsableBoutique = this.roles.includes('ROLE_RESPONSABLE_BOUTIQUE');
     this.showSecretaire = this.roles.includes('ROLE_SECRETAIRE');
     this.showProf = this.roles.includes('ROLE_ENCADRANT');
     this.showReferent = this.roles.includes('ROLE_REFERENT');
     this.showSeances = this.showProf || this.showReferent;
     this.showComptable = this.roles.includes('ROLE_COMPTABLE');
     this.username = user.username;
+    this.refreshShopOrders();
+  }
+
+  private refreshShopOrders(): void {
+    this.shopOrdersSubscription?.unsubscribe();
+    this.hasShopOrders.set(false);
+    if (!this.isLoggedIn || this.tokenStorageService.isTokenExpired()) return;
+    this.shopOrdersSubscription = this.shopApi.orders().pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: orders => this.hasShopOrders.set(orders.length > 0),
+      error: () => this.hasShopOrders.set(false)
+    });
   }
 
 

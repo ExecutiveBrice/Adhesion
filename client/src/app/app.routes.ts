@@ -1,5 +1,8 @@
 import { inject } from '@angular/core';
 import { Routes } from '@angular/router';
+import { shopManagerGuard } from './shop/shop-manager.guard';
+import { shopAuthGuard } from './shop/shop-auth.guard';
+import { shopOrdersGuard } from './shop/shop-orders.guard';
 import { TokenStorageService } from './_services/token-storage.service';
 import { materielGuard } from './_helpers/materiel.guard';
 
@@ -8,6 +11,17 @@ const inscriptionTitle = () => inject(TokenStorageService).getUser().roles?.incl
   : 'Mes adhésions';
 
 export const routes: Routes = [
+  { path: 'boutique/gestion', title: 'Gestion de la boutique', canActivate: [shopAuthGuard, shopManagerGuard], loadComponent: () => import('./shop/pages/shop-management.component').then((m) => m.ShopManagementComponent) },
+  { path: 'boutique', title: 'Boutique', loadComponent: () => import('./shop/pages/shop-catalog.component').then((m) => m.ShopCatalogComponent) },
+  { path: 'boutique/panier', title: 'Panier', loadComponent: () => import('./shop/pages/shop-cart.component').then((m) => m.ShopCartComponent) },
+  { path: 'boutique/checkout', title: 'Finaliser la commande', canActivate: [shopAuthGuard], loadComponent: () => import('./shop/pages/shop-checkout.component').then((m) => m.ShopCheckoutComponent) },
+  { path: 'boutique/produits/:id', title: 'Produit', loadComponent: () => import('./shop/pages/shop-product-detail.component').then((m) => m.ShopProductDetailComponent) },
+  { path: 'boutique/commandes', title: 'Mes commandes', canActivate: [shopOrdersGuard], loadComponent: () => import('./shop/pages/shop-orders.component').then((m) => m.ShopOrdersComponent) },
+  { path: 'boutique/commandes/:orderNumber/paiement-reussi', title: 'Paiement réussi', canActivate: [shopAuthGuard], loadComponent: () => import('./shop/pages/shop-payment-success.component').then((m) => m.ShopPaymentSuccessComponent) },
+  { path: 'boutique/commandes/:orderNumber/paiement-echoue', title: 'Paiement échoué', canActivate: [shopAuthGuard], loadComponent: () => import('./shop/pages/shop-payment-status.component').then((m) => m.ShopPaymentStatusComponent) },
+  { path: 'boutique/commandes/:orderNumber/paiement', title: 'Vérification du paiement', canActivate: [shopAuthGuard], loadComponent: () => import('./shop/pages/shop-payment-status.component').then((m) => m.ShopPaymentStatusComponent) },
+  { path: 'boutique/commandes/:orderNumber/messages', title: 'Demande de remboursement', canActivate: [shopAuthGuard], loadComponent: () => import('./shop/pages/shop-order-conversation.component').then((m) => m.ShopOrderConversationComponent) },
+  { path: 'boutique/commandes/:orderNumber', title: 'Commande', canActivate: [shopAuthGuard], loadComponent: () => import('./shop/pages/shop-order-detail.component').then((m) => m.ShopOrderDetailComponent) },
   { path: 'materiel', title: 'Matériel', canActivate: [materielGuard], loadComponent: () => import('./page/materiel/materiel.component').then((m) => m.MaterielComponent) },
   { path: 'login', title: 'Connexion', loadComponent: () => import('./page/login/login.component').then((m) => m.LoginComponent) },
   { path: 'resetPassword/:token', title: 'Réinitialisation du mot de passe', loadComponent: () => import('./page/resetPassword/resetpassword.component').then((m) => m.ResetPasswordComponent) },

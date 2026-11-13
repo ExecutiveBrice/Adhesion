@@ -1,0 +1,9 @@
+shop:
+  payment:
+    provider: helloasso
+    helloasso:
+      base-url: https://api.helloasso-sandbox.com
+      client-id: a965d35a2e714e94934051cfc6c1b5d1
+      client-secret: 3D35kPkGeYdwdanuQVZuaFW6Nl3EjDw+
+      organization-slug: amicale-laique-de-l-ouche-dinier
+

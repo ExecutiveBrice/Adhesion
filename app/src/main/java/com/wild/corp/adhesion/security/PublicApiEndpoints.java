@@ -16,6 +16,13 @@ public final class PublicApiEndpoints {
     }
 
     public static final List<Endpoint> ENDPOINTS = List.of(
+            new Endpoint(HttpMethod.GET, "/shop/products", "Catalogue public de la boutique"),
+            new Endpoint(HttpMethod.GET, "/shop/products/{productId}", "Fiche publique d'un produit actif"),
+            new Endpoint(HttpMethod.POST, "/shop/cart/quote", "Calcul du panier visiteur sans création de commande ni réservation de stock"),
+            new Endpoint(HttpMethod.POST, "/shop/payments/helloasso/notifications",
+                    "Notification HelloAsso : paiement relu via l’API authentifiée avant confirmation"),
+            new Endpoint(HttpMethod.GET, "/shop/product-images/{fileName}",
+                    "Visuels de la boutique chargés par les balises img sans jeton HTTP"),
             new Endpoint(HttpMethod.POST, "/auth/signin", "Connexion"),
             new Endpoint(HttpMethod.POST, "/auth/refresh", "Renouvellement PWA avec un jeton secret à usage unique"),
             new Endpoint(HttpMethod.POST, "/auth/signout", "Révocation du jeton PWA présenté, même après expiration du JWT"),

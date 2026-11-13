@@ -1,0 +1,8 @@
+shop:
+  payment:
+    provider: helloasso
+    helloasso:
+      base-url: ${HELLOASSO_BASE_URL:https://api.helloasso.com}
+      client-id: ${HELLOASSO_CLIENT_ID:}
+      client-secret: ${HELLOASSO_CLIENT_SECRET:}
+      organization-slug: ${HELLOASSO_ORGANIZATION_SLUG:}

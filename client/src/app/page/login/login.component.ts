@@ -120,6 +120,7 @@ export class LoginComponent implements OnInit {
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe(params => {
       this.sessionExpiree = params.get('sessionExpiree') === '1';
+      this.loginPage.view.set(params.get('view') === 'inscription' && !this.sessionExpiree ? 'inscription' : 'connexion');
       if (this.sessionExpiree) {
         this.isLoggedIn = false;
         this.roles = [];
@@ -129,8 +130,6 @@ export class LoginComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loginPage.view.set('connexion');
-
     this.chargerConfigurationAgendas();
 
     this.paramService.getAllText().subscribe({
@@ -159,7 +158,10 @@ export class LoginComponent implements OnInit {
           if (this.tokenStorage.getToken()) {
             this.isLoggedIn = true;
             this.roles = this.tokenStorage.getUser().roles;
-            if (this.roles.includes('ROLE_ADMIN')) {
+            const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+            if (returnUrl?.startsWith('/boutique')) {
+              void this.router.navigateByUrl(returnUrl);
+            } else if (this.roles.includes('ROLE_ADMIN')) {
               this.router.navigate(['admin']);
             } else if (this.roles.includes('ROLE_SECRETAIRE')) {
               this.router.navigate(['adhesions']);

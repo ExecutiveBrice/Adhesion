@@ -7,6 +7,11 @@ spring:
   datasource:
     driver-class-name: org.postgresql.Driver
 
+  # Seul le schéma boutique est géré par Liquibase sur cette branche.
+  # Les tables historiques conservent leur gestion Hibernate existante.
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-shop.xml
+
   jpa:
     show_sql: false
     generate-ddl: true
@@ -17,6 +22,19 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  cloud:
+    openfeign:
+      client:
+        config:
+          helloAssoCheckoutClient:
+            connect-timeout: 3000
+            read-timeout: 10000
+            logger-level: basic
+          helloAssoOAuthClient:
+            connect-timeout: 3000
+            read-timeout: 10000
+            logger-level: basic
 
 #logging.level.org.springframework.web: DEBUG
 logging.level.com.wild.corp: INFO
@@ -36,6 +54,28 @@ springdoc:
 
 image-storage-dir: C:\Users\brice\Documents
 
+shop:
+  order:
+    expiry-scan-delay-ms: ${SHOP_ORDER_EXPIRY_SCAN_DELAY_MS:60000}
+    expiry-initial-delay-ms: ${SHOP_ORDER_EXPIRY_INITIAL_DELAY_MS:30000}
+  payment:
+    # Aucun secret ici : ils devront être fournis par variables d'environnement
+    # dans la configuration propre à l'adaptateur choisi.
+    provider: ${SHOP_PAYMENT_PROVIDER:manual}
+    reconciliation:
+      enabled: ${SHOP_PAYMENT_RECONCILIATION_ENABLED:true}
+      fixed-delay-ms: ${SHOP_PAYMENT_RECONCILIATION_DELAY_MS:120000}
+      initial-delay-ms: ${SHOP_PAYMENT_RECONCILIATION_INITIAL_DELAY_MS:30000}
+      batch-size: ${SHOP_PAYMENT_RECONCILIATION_BATCH_SIZE:50}
+    helloasso:
+      # L'URL non secrète par défaut permet le démarrage avec le provider manuel.
+      # Les profils helloasso-sandbox et helloasso-production sélectionnent explicitement leur environnement.
+      base-url: ${HELLOASSO_BASE_URL:https://api.helloasso-sandbox.com}
+      client-id: ${HELLOASSO_CLIENT_ID:}
+      client-secret: ${HELLOASSO_CLIENT_SECRET:}
+      organization-slug: ${HELLOASSO_ORGANIZATION_SLUG:}
+      webhook-signature-key: ${HELLOASSO_WEBHOOK_SIGNATURE_KEY:}
+
 # Server-only Brevo newsletter configuration. Zero/empty values disable operations,
 # without preventing startup or changing transactional email delivery.
 brevo:
@@ -46,6 +86,8 @@ brevo:
 # Zone scolaire utilisée lors de la génération hebdomadaire des séances (A, B ou C).
 adhesion:
   security:
+    cors:
+      allowed-origins: ${ADHESION_SECURITY_CORS_ALLOWED_ORIGINS:http://localhost:4200,https://localhost:4200}
     password-reset:
       token-lifetime-minutes: 30
       rate-limit:

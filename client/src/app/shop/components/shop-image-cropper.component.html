@@ -1,0 +1,29 @@
+<dialog #dialog aria-labelledby="shop-crop-title" aria-describedby="shop-crop-help" (cancel)="$event.preventDefault(); cancel()">
+  <h2 id="shop-crop-title">Recadrer l’image du produit</h2>
+  <p id="shop-crop-help">Déplacez l’image avec la souris ou le doigt, ou utilisez les curseurs. Dézoomez pour afficher l’image entière : des marges blanches seront ajoutées si nécessaire.</p>
+  @if (loading) { <p role="status">Lecture de l’image…</p> }
+  @if (source) {
+    <div class="crop-frame" aria-label="Aperçu du recadrage au format 4:3"
+      (pointerdown)="startDrag($event)" (pointermove)="moveDrag($event)"
+      (pointerup)="endDrag($event)" (pointercancel)="endDrag($event)" (lostpointercapture)="endDrag($event)">
+      <img [src]="source.src" alt="Image en cours de recadrage" draggable="false"
+        [style.width.%]="source.naturalWidth / crop.width * 100" [style.height.%]="source.naturalHeight / crop.height * 100"
+        [style.left.%]="-crop.x / crop.width * 100" [style.top.%]="-crop.y / crop.height * 100">
+      <div class="crop-grid" aria-hidden="true"></div>
+    </div>
+    <button type="button" class="btn btn-outline-secondary btn-sm mt-2 fit-image" [disabled]="exporting" (click)="fitImage()">Afficher l’image entière</button>
+    <label for="shop-crop-zoom">Zoom × {{ zoom.toFixed(2) }}</label>
+    <input #zoomInput id="shop-crop-zoom" class="form-range" type="range" [min]="minZoom" max="4" step="any" [value]="zoom" [disabled]="exporting" (input)="zoom = +zoomInput.value">
+    <label for="shop-crop-horizontal">Position horizontale</label>
+    <input #horizontalInput id="shop-crop-horizontal" class="form-range" type="range" min="0" max="100" step="1" [value]="horizontal" [disabled]="exporting || !canMoveHorizontally" (input)="horizontal = +horizontalInput.value">
+    <label for="shop-crop-vertical">Position verticale</label>
+    <input #verticalInput id="shop-crop-vertical" class="form-range" type="range" min="0" max="100" step="1" [value]="vertical" [disabled]="exporting || !canMoveVertically" (input)="vertical = +verticalInput.value">
+    <p class="form-text">L’image est automatiquement redimensionnée et compressée pour la boutique (JPEG, 800 × 600 pixels maximum, format 4:3).</p>
+  }
+  @if (error) { <p class="text-danger" role="alert">{{ error }}</p> }
+  @if (exporting) { <p role="status">Préparation de l’image…</p> }
+  <div class="crop-actions">
+    <button type="button" class="btn btn-outline-secondary" autofocus (click)="cancel()">Annuler</button>
+    <button type="button" class="btn btn-primary" [disabled]="!source || exporting" (click)="confirm()">Valider le recadrage</button>
+  </div>
+</dialog>

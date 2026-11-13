@@ -1,0 +1,215 @@
+<section class="stock-overview" aria-labelledby="stock-overview-title">
+  <div class="stock-heading">
+    <div>
+      <h2 id="stock-overview-title">Besoins et approvisionnements</h2>
+      <p>Une ligne par variante pour suivre les commandes adhérents et fournisseur.</p>
+    </div>
+    <div class="stock-heading-actions">
+      <button type="button" class="btn btn-primary btn-sm" (click)="openSupplierOrder()" [disabled]="loading || !loaded">Commande fournisseur</button>
+      <button type="button" class="btn btn-outline-primary btn-sm" (click)="load()" [disabled]="loading">Actualiser</button>
+    </div>
+  </div>
+
+  @if (loading) { <p role="status">Chargement des stocks et des commandes…</p> }
+  @if (error) { <div class="alert alert-danger" role="alert">{{ error }}</div> }
+  @if (warning) { <div class="alert alert-warning" role="alert">{{ warning }}</div> }
+  @if (message) { <div class="alert alert-success" role="status">{{ message }}</div> }
+
+  @if (loaded && !loading) {
+    <div class="stock-summary" aria-label="Résumé des stocks">
+      <div class="stock-summary-card critical"><strong>{{ toOrderCount }}</strong><span>unités à commander</span></div>
+      <div class="stock-summary-card warning"><strong>{{ awaitingCount }}</strong><span>unités attendues du fournisseur</span></div>
+      <div class="stock-summary-card"><strong>{{ readyCount }}</strong><span>unités estimées prêtes à remettre</span></div>
+      <div class="stock-summary-card"><strong>{{ surplusCount }}</strong><span>unités de surplus estimé</span></div>
+    </div>
+
+    <p class="stock-explanation">« À commander » tient compte des commandes en attente de paiement et de celles déjà payées qui restent à remettre, du stock enregistré et des commandes fournisseur non reçues.</p>
+
+    <div class="stock-toolbar">
+      <label class="stock-search">Rechercher un produit ou un SKU
+        <input class="form-control" type="search" name="stockSearch" [(ngModel)]="query" placeholder="Nom, variante ou référence">
+      </label>
+      <label class="stock-filter">Afficher
+        <select class="form-select" name="stockFilter" [(ngModel)]="filter">
+          <option value="all">Toutes les variantes</option>
+          <option value="to-order">À commander</option>
+          <option value="awaiting">En attente fournisseur</option>
+          <option value="ready">Prêt à remettre</option>
+          <option value="surplus">Surplus disponible</option>
+          <option value="untracked">Stock non suivi</option>
+        </select>
+      </label>
+      <span class="stock-result-count" role="status">{{ filteredRows.length }} / {{ rows.length }} variantes</span>
+    </div>
+
+    @if (filteredRows.length) {
+      <div class="stock-table-scroll" role="region" aria-label="Tableau de stock">
+        <table class="stock-table">
+          <thead><tr>
+            <th scope="col">Produit / variante</th>
+            <th scope="col">Commandes client</th>
+            <th scope="col">À commander chez le fournisseur</th>
+            <th scope="col">Commande fournisseur en cours</th>
+            <th scope="col">En stock</th>
+          </tr></thead>
+          <tbody>
+            @for (row of filteredRows; track row.variant.id) {
+              <tr class="stock-variant-row" [class.stock-out]="row.status === 'to-order'" [class.stock-watch]="row.status === 'awaiting'" [class.stock-row-expanded]="expandedVariantIds.has(row.variant.id)" (click)="onRowClick(row, $event)">
+                <th scope="row">
+                  <div class="stock-product-name">{{ row.product.name }}</div>
+                  <div>{{ row.variant.label || 'Variante standard' }}</div>
+                  <small>SKU : {{ row.variant.sku }}</small>
+                  <span class="stock-badge" [class.out]="row.status === 'to-order'" [class.watch]="row.status === 'awaiting'" [class.inactive]="row.status === 'inactive'">{{ statusLabel(row.status) }}</span>
+                  <button type="button" class="stock-row-toggle" [attr.aria-expanded]="expandedVariantIds.has(row.variant.id)" [attr.aria-controls]="'stock-history-' + row.variant.id" (click)="$event.stopPropagation(); toggleRow(row)">{{ expandedVariantIds.has(row.variant.id) ? 'Masquer les commandes' : 'Voir les commandes' }}</button>
+                </th>
+                <td class="stock-number">{{ row.customerOrders }}</td>
+                <td class="stock-number stock-available">{{ row.toOrder }}</td>
+                <td class="stock-number">{{ row.awaitingSupplier }}</td>
+                <td class="stock-number">{{ row.variant.stockTracked ? row.variant.stockOnHand : 'Non suivi' }}</td>
+              </tr>
+              @if (expandedVariantIds.has(row.variant.id)) {
+                <tr class="stock-history-row">
+                  <td colspan="5" [id]="'stock-history-' + row.variant.id">
+                    <h3>Commandes de {{ row.product.name }} · {{ row.variant.label || row.variant.sku }}</h3>
+                    @if (row.activities.length) {
+                      <ol class="stock-activity-list">
+                        @for (activity of row.activities; track $index) {
+                          <li>
+                            <time [attr.datetime]="activity.date">{{ activity.date | date:'dd/MM/yyyy HH:mm':'':'fr-FR' }}</time>
+                            @if (activity.type === 'customer') {
+                              <div><strong>Commande client {{ activity.orderNumber }}</strong><span>{{ activity.quantity }} {{ activity.quantity === 1 ? 'article commandé' : 'articles commandés' }}</span></div>
+                              <div>Article : {{ itemStatusLabel(activity.itemStatus) }} · Commande : {{ orderStatusLabel(activity.orderStatus) }} · {{ stockEffectLabel(activity.stockEffect) }}</div>
+                            } @else {
+                              <div><strong>Commande fournisseur n°{{ activity.orderId }} · {{ activity.supplierName }}</strong><span>{{ activity.quantity }} {{ activity.quantity === 1 ? 'article commandé' : 'articles commandés' }}</span></div>
+                              <div>État : {{ activity.status === 'DRAFT' ? 'Brouillon' : activity.status === 'ORDERED' ? 'À recevoir' : 'Réceptionnée' }}@if (activity.reference) { · Réf. {{ activity.reference }} }@if (activity.receivedAt) { · Reçue le {{ activity.receivedAt | date:'dd/MM/yyyy HH:mm':'':'fr-FR' }} }</div>
+                            }
+                          </li>
+                        }
+                      </ol>
+                    } @else { <p class="stock-muted">Aucune commande pour cette variante.</p> }
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else { <p class="stock-empty">Aucune variante ne correspond à la recherche ou au filtre.</p> }
+
+    <section class="supplier-orders" aria-labelledby="supplier-orders-title">
+      <h3 id="supplier-orders-title">Commandes fournisseur</h3>
+      @if (supplierOrders.length) {
+        <ul>
+          @for (order of supplierOrders; track order.id) {
+            <li class="supplier-order">
+              <div>
+                <strong>n°{{ order.id }} · {{ order.supplierName }}</strong>
+                @if (order.reference) { <span>Réf. {{ order.reference }}</span> }
+                @if (order.invoiceReference) { <span>Facture : {{ order.invoiceReference }}</span> }
+                <small>{{ order.createdAt | date:'dd/MM/yyyy HH:mm':'':'fr-FR' }} · {{ order.status === 'DRAFT' ? 'Brouillon' : order.status === 'ORDERED' ? 'À recevoir' : 'Réceptionnée' }}</small>
+                <ul>
+                  @for (line of order.lines; track line.id) {
+                    <li>{{ line.productName }} · {{ line.variantName || line.sku }} : {{ line.quantity }}@if (line.unitCostAmountInCents != null) { · {{ euros(line.unitCostAmountInCents) }} € / unité · {{ euros(line.lineTotalAmountInCents ?? 0) }} € }</li>
+                  }
+                </ul>
+                @if (supplierOrderTotalCents(order) !== null) { <small>Total articles : {{ euros(supplierOrderTotalCents(order)!) }} €</small> }
+              </div>
+              @if (order.status === 'DRAFT') {
+                <button type="button" class="btn btn-outline-primary btn-sm" (click)="resumeDraft(order)">Reprendre le brouillon</button>
+              } @else if (order.status === 'ORDERED') {
+                <div class="supplier-order-actions">
+                  <button type="button" class="btn btn-outline-primary btn-sm" (click)="openSupplierOrderCompletion(order)">Compléter tarifs et facture</button>
+                  <button type="button" class="btn btn-outline-primary btn-sm" (click)="receiveSupplierOrder(order)" [disabled]="receivingOrderIds.has(order.id) || !supplierOrderReadyForDelivery(order)">{{ receivingOrderIds.has(order.id) ? 'Réception…' : 'Valider la livraison et ajouter au stock' }}</button>
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      } @else { <p class="stock-muted">Aucune commande fournisseur enregistrée.</p> }
+    </section>
+    @if (updatedAt) { <p class="stock-updated">Données actualisées à {{ updatedAt | date:'HH:mm':'':'fr-FR' }}.</p> }
+  }
+</section>
+
+<dialog #supplierOrderDialog class="supplier-order-dialog" (cancel)="$event.preventDefault(); closeSupplierOrder()" (close)="supplierOrderOpen = false">
+  <div class="supplier-order-modal" aria-labelledby="supplier-order-dialog-title">
+    <header>
+      <div>
+        <h2 id="supplier-order-dialog-title">{{ completionOrder ? 'Compléter la commande fournisseur n°' + completionOrder.id : activeDraftId == null ? 'Nouvelle commande fournisseur' : 'Brouillon fournisseur n°' + activeDraftId }}</h2>
+        <p>{{ completionOrder ? 'Renseignez la facture et les tarifs avant de valider la livraison.' : 'Les besoins à commander sont proposés automatiquement. Indiquez le fournisseur et les quantités à commander.' }}</p>
+      </div>
+      <button type="button" class="btn-close" aria-label="Fermer" (click)="closeSupplierOrder()" [disabled]="creatingSupplierOrder || placingSupplierOrder || completingSupplierOrder"></button>
+    </header>
+
+    @if (completionOrder) {
+      <div class="supplier-order-fields">
+        <label>Fournisseur
+          <input class="form-control" [value]="completionOrder.supplierName" disabled>
+        </label>
+        <label>Référence de facture
+          <input class="form-control" name="invoiceReference" maxlength="100" [(ngModel)]="invoiceReference" placeholder="Numéro ou référence de facture">
+        </label>
+      </div>
+    } @else {
+      <div class="supplier-order-fields">
+        <label>Fournisseur
+          <input class="form-control" name="supplierName" maxlength="200" [(ngModel)]="supplierName" (ngModelChange)="draftDirty = true" placeholder="Nom du fournisseur">
+        </label>
+      </div>
+    }
+
+    @if (supplierOrderError) { <p class="text-danger" role="alert">{{ supplierOrderError }}</p> }
+
+    <div class="supplier-order-lines" role="region" aria-label="Lignes de commande fournisseur">
+      @if (completionOrder) {
+        <table>
+          <thead><tr><th>Produit / variante</th><th>Quantité commandée</th><th>Prix unitaire (€)</th></tr></thead>
+          <tbody>
+            @for (line of completionOrder.lines; track line.id) {
+              <tr>
+                <th scope="row"><strong>{{ line.productName }}</strong><small>{{ line.variantName || 'Variante standard' }} · {{ line.sku }}</small></th>
+                <td>{{ line.quantity }}</td>
+                <td>
+                  <input class="form-control form-control-sm" type="number" min="0" step="0.01" [name]="'completion-cost-' + line.variantId" [value]="completionCostEuros(line.variantId)" (input)="setCompletionCost(line.variantId, $event)" [attr.aria-label]="'Prix unitaire pour ' + line.productName">
+                  @if (isCompletionCostInvalid(line.variantId)) { <small class="text-danger">Prix invalide.</small> }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      } @else {
+        <table>
+          <thead><tr><th>Produit / variante</th><th>Besoin</th><th>Quantité</th></tr></thead>
+          <tbody>
+            @for (row of purchaseRows; track row.variant.id) {
+              <tr [class.supplier-order-line-selected]="validPurchaseQuantity(row.variant.id) > 0">
+                <th scope="row"><strong>{{ row.product.name }}</strong><small>{{ row.variant.label || 'Variante standard' }} · {{ row.variant.sku }}</small></th>
+                <td>{{ row.toOrder }}</td>
+                <td>
+                  <input class="form-control form-control-sm" type="number" min="0" step="1" [name]="'purchase-count-' + row.variant.id" [value]="purchaseDrafts[row.variant.id] ?? ''" (input)="setPurchaseQuantity(row.variant.id, $event)" [attr.aria-label]="'Quantité pour ' + row.product.name">
+                  @if (isPurchaseInvalid(row.variant.id)) { <small class="text-danger">Entier positif requis.</small> }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+
+    <p class="supplier-order-summary">@if (completionOrder) { {{ completionOrder.lines.length }} {{ completionOrder.lines.length === 1 ? 'ligne à compléter' : 'lignes à compléter' }}. } @else { {{ purchaseLineCount }} {{ purchaseLineCount === 1 ? 'ligne sélectionnée' : 'lignes sélectionnées' }}. }</p>
+
+    <footer>
+      @if (completionOrder) {
+        <span class="supplier-order-spacer"></span>
+        <button type="button" class="btn btn-primary" (click)="completeSupplierOrder()" [disabled]="!invoiceReference.trim() || missingCompletionCostCount > 0 || invalidCompletionCostCount > 0 || completingSupplierOrder">{{ completingSupplierOrder ? 'Enregistrement…' : 'Enregistrer tarifs et facture' }}</button>
+      } @else {
+        <button type="button" class="btn btn-outline-secondary" (click)="prepareSupplierOrder()">Réappliquer les besoins</button>
+        <button type="button" class="btn btn-outline-secondary" (click)="clearPurchaseList()" [disabled]="purchaseLineCount === 0">Effacer les quantités</button>
+        <span class="supplier-order-spacer"></span>
+        <button type="button" class="btn btn-outline-primary" (click)="exportPurchaseList()" [disabled]="purchaseLineCount === 0 || invalidPurchaseCount > 0">Exporter CSV</button>
+        <button type="button" class="btn btn-primary" (click)="createSupplierOrder()" [disabled]="!supplierName.trim() || purchaseLineCount === 0 || invalidPurchaseCount > 0 || creatingSupplierOrder">{{ creatingSupplierOrder ? 'Lancement…' : activeDraftId === null ? 'Lancer la commande' : 'Enregistrer le brouillon' }}</button>
+        @if (activeDraftId !== null) { <button type="button" class="btn btn-success" (click)="placeSupplierOrder()" [disabled]="purchaseLineCount === 0 || draftDirty || placingSupplierOrder">{{ placingSupplierOrder ? 'Validation…' : 'Marquer comme commandée' }}</button> }
+      }
+    </footer>
+  </div>
+</dialog>

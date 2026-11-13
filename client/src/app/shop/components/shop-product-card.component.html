@@ -1,0 +1,24 @@
+<a class="shop-product-card" [routerLink]="['/boutique/produits', product.id]" [attr.aria-label]="'Voir le détail de ' + product.name">
+  <div class="shop-product-image" aria-hidden="true">
+    @if (product.imageUrl) {
+      <img [src]="product.imageUrl" [alt]="product.name">
+    } @else {
+      <span aria-hidden="true">{{ product.name.slice(0, 1) }}</span>
+    }
+  </div>
+  <div class="shop-product-content">
+
+    <h2>{{ product.name }}</h2>
+    <p>{{ product.description || 'Découvrez ce produit de la boutique ALOD.' }}</p>
+    @if (variant()) {
+
+      <div class="shop-card-footer">
+        <strong>{{ priceRange() }}</strong>
+        <span class="shop-availability" [class.unavailable]="!variant()!.available">{{ availabilityLabel(variant()!) }}</span>
+      </div>
+
+    } @else {
+      <p class="shop-availability unavailable">Indisponible</p>
+    }
+  </div>
+</a>

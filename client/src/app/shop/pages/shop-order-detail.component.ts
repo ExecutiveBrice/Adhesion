@@ -1,0 +1,58 @@
+import { shopPaymentReturnUrl } from '../shop-payment-return';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { DatePipe, DOCUMENT } from '@angular/common';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { EMPTY, catchError, exhaustMap, filter, firstValueFrom, timer } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ShopOrderDto } from '../models/shop.models';
+import { ShopApiService } from '../services/shop-api.service';
+import { ShopOrderSummaryComponent } from '../components/shop-order-summary.component';
+import { ShopPaymentCountdownComponent } from '../components/shop-payment-countdown.component';
+import { formatShopOrderStatus } from '../shop-format';
+
+@Component({
+  imports: [RouterLink, DatePipe, ShopOrderSummaryComponent, ShopPaymentCountdownComponent],
+  templateUrl: './shop-order-detail.component.html',
+  styleUrl: './shop-order-detail.component.css'
+})
+export class ShopOrderDetailComponent {
+  private readonly document = inject(DOCUMENT);
+  private readonly api = inject(ShopApiService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly order = signal<ShopOrderDto | null>(null);
+  readonly loading = signal(true);
+  readonly error = signal<string | null>(null);
+  readonly startingPayment = signal(false);
+  readonly orderStatus = formatShopOrderStatus;
+  private orderNumber = '';
+  ngOnInit(): void {
+    this.orderNumber = this.route.snapshot.paramMap.get('orderNumber') ?? '';
+    this.load();
+    timer(30_000, 30_000).pipe(
+      filter(() => this.order()?.status === 'PENDING_PAYMENT'),
+      exhaustMap(() => this.api.order(this.orderNumber).pipe(catchError(() => EMPTY))),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(order => this.order.set(order));
+  }
+  load(): void { this.loading.set(true); this.api.order(this.orderNumber).subscribe({ next: order => { this.order.set(order); this.loading.set(false); }, error: () => { this.error.set('Cette commande est introuvable ou ne vous appartient pas.'); this.loading.set(false); } }); }
+  async pay(): Promise<void> {
+    if (this.startingPayment() || !this.order()) return;
+    this.startingPayment.set(true); this.error.set(null);
+    try {
+      const pending = shopPaymentReturnUrl(this.document.baseURI, this.orderNumber);
+      const failed = shopPaymentReturnUrl(this.document.baseURI, this.orderNumber, true);
+      const session = await firstValueFrom(this.api.createPaymentSession(this.orderNumber, this.idempotencyKey(), pending, failed));
+      if (!session.redirectUrl) throw new Error('URL de paiement absente');
+      window.location.assign(session.redirectUrl);
+    } catch (error) {
+      this.error.set(error instanceof HttpErrorResponse && error.error?.code === 'INSECURE_CHECKOUT_URL'
+        ? 'HelloAsso exige une adresse HTTPS pour revenir après le paiement. Ouvrez la boutique en HTTPS.'
+        : 'Le paiement ne peut pas être démarré pour le moment. Aucun débit n’a été effectué.');
+      this.startingPayment.set(false);
+    }
+  }
+  private idempotencyKey(): string { return typeof crypto?.randomUUID === 'function' ? crypto.randomUUID() : `payment-${Date.now()}-${Math.random().toString(16).slice(2)}`; }
+}

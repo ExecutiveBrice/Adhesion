@@ -1,0 +1,209 @@
+package com.wild.corp.adhesion.shop.catalog.model;
+
+import com.wild.corp.adhesion.shop.common.persistence.AuditableEntity;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
+import jakarta.persistence.Table;
+import jakarta.persistence.Version;
+
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Stream;
+
+@Entity
+@Table(name = "shop_products")
+public class Product extends AuditableEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, length = 200)
+    private String name;
+
+    @Column(nullable = false, length = 220, unique = true)
+    private String slug;
+
+    @Column(length = 5000)
+    private String description;
+
+    @Column(name = "image_url", length = 2048)
+    private String imageUrl;
+
+    @Column(name = "additional_image_url_1", length = 2048)
+    private String additionalImageUrl1;
+
+    @Column(name = "additional_image_url_2", length = 2048)
+    private String additionalImageUrl2;
+
+    @Column(nullable = false)
+    private boolean active;
+
+    @Column(name = "display_order", nullable = false)
+    private int displayOrder;
+
+    @Version
+    @Column(nullable = false)
+    private long version;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "shop_product_category_links",
+            joinColumns = @JoinColumn(name = "product_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id"))
+    private Set<ProductCategory> categories = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("displayOrder ASC, id ASC")
+    private Set<ProductVariant> variants = new LinkedHashSet<>();
+
+    protected Product() {
+        // Required by JPA.
+    }
+
+    public Product(String name, String slug, String description, boolean active, int displayOrder) {
+        this.name = requireText(name, "Le nom du produit est obligatoire");
+        this.slug = requireText(slug, "Le slug du produit est obligatoire");
+        this.description = description;
+        this.active = active;
+        setDisplayOrder(displayOrder);
+    }
+
+    public void addCategory(ProductCategory category) {
+        categories.add(Objects.requireNonNull(category, "La catégorie est obligatoire"));
+    }
+
+    public void addVariant(ProductVariant variant) {
+        Objects.requireNonNull(variant, "La variante est obligatoire");
+        if (variant.getProduct() != this) {
+            throw new IllegalArgumentException("La variante appartient à un autre produit");
+        }
+        variants.add(variant);
+    }
+
+    public void activate() {
+        active = true;
+    }
+
+    public void deactivate() {
+        active = false;
+    }
+
+    public void rename(String name) {
+        this.name = requireText(name, "Le nom du produit est obligatoire");
+    }
+
+    public void updateDetails(String name, String slug, String description, String imageUrl, int displayOrder) {
+        this.name = requireText(name, "Le nom du produit est obligatoire");
+        this.slug = requireText(slug, "Le slug du produit est obligatoire");
+        this.description = description;
+        this.imageUrl = normalizeOptionalText(imageUrl);
+        setDisplayOrder(displayOrder);
+    }
+
+    public void replaceCategories(Iterable<ProductCategory> newCategories) {
+        categories.clear();
+        newCategories.forEach(this::addCategory);
+    }
+
+    public void setDisplayOrder(int displayOrder) {
+        if (displayOrder < 0) {
+            throw new IllegalArgumentException("L'ordre d'affichage ne peut pas être négatif");
+        }
+        this.displayOrder = displayOrder;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getSlug() {
+        return slug;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getImageUrl() { return imageUrl; }
+
+    public List<String> getAdditionalImageUrls() {
+        return Stream.of(additionalImageUrl1, additionalImageUrl2)
+                .filter(Objects::nonNull).toList();
+    }
+
+    public void replaceAdditionalImages(List<String> imageUrls) {
+        List<String> images = imageUrls == null ? List.of() : List.copyOf(imageUrls);
+        if (images.size() > 2) {
+            throw new IllegalArgumentException("Un produit accepte au maximum deux images supplémentaires");
+        }
+        if (images.stream().anyMatch(image -> image.isBlank() || image.length() > 2048)) {
+            throw new IllegalArgumentException("Chaque image supplémentaire doit avoir une URL de 1 à 2048 caractères");
+        }
+        additionalImageUrl1 = images.size() > 0 ? images.get(0).trim() : null;
+        additionalImageUrl2 = images.size() > 1 ? images.get(1).trim() : null;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public int getDisplayOrder() {
+        return displayOrder;
+    }
+
+    public long getVersion() {
+        return version;
+    }
+
+    public Set<ProductCategory> getCategories() {
+        return Collections.unmodifiableSet(categories);
+    }
+
+    public Set<ProductVariant> getVariants() {
+        return Collections.unmodifiableSet(variants);
+    }
+
+    private static String requireText(String value, String message) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(message);
+        }
+        return value.trim();
+    }
+
+    private static String normalizeOptionalText(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof Product product)) {
+            return false;
+        }
+        return id != null && Objects.equals(id, product.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
+}

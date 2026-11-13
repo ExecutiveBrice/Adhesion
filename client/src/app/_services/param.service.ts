@@ -1,6 +1,6 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient} from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { AgendaGoogleConfiguration, ParamBoolean, ParamNumber, ParamText, SalleConfiguration } from '../models';
 
@@ -11,6 +11,8 @@ const API_URL = environment.server+'/param/';
 })
 export class ParamService {
   private http = inject(HttpClient);
+  private readonly showBoutiqueState = signal(false);
+  readonly showBoutique = this.showBoutiqueState.asReadonly();
 
 
   getAllText(): Observable<ParamText[]> {
@@ -54,11 +56,26 @@ export class ParamService {
   }
 
   getAllBoolean(): Observable<ParamBoolean[]> {
-    return this.http.get<ParamBoolean[]>(API_URL + 'allBoolean', { responseType: 'json' });
+    return this.http.get<ParamBoolean[]>(API_URL + 'allBoolean', { responseType: 'json' }).pipe(
+      tap({
+        next: params => this.showBoutiqueState.set(params.find(param => this.isShopVisibilityParam(param))?.paramValue === true),
+        error: () => this.showBoutiqueState.set(false)
+      })
+    );
   }
 
   saveBoolean(param: ParamBoolean): Observable<ParamBoolean> {
-    return this.http.post<ParamBoolean>(API_URL + 'saveBoolean', param, { responseType: 'json' });
+    return this.http.post<ParamBoolean>(API_URL + 'saveBoolean', param, { responseType: 'json' }).pipe(
+      tap(saved => {
+        if (this.isShopVisibilityParam(saved)) {
+          this.showBoutiqueState.set(saved.paramValue === true);
+        }
+      })
+    );
+  }
+
+  private isShopVisibilityParam(param: ParamBoolean): boolean {
+    return param.paramName.trim().toLowerCase() === 'show_boutique';
   }
 
   isClose(): Observable<Boolean> {

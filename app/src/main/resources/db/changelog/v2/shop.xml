@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  <changeSet id="v2-shop" author="adhesion">
+    <preConditions onFail="HALT" onError="HALT">
+      <not><tableExists tableName="shop_products"/></not>
+    </preConditions>
+    <comment>Shop module after production commit 8a2cb143.</comment>
+    <createSequence sequenceName="shop_order_number_seq" startValue="1" incrementBy="1"/>
+    
+    <createTable tableName="shop_product_categories">
+      <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="name" type="varchar(160)"><constraints nullable="false"/></column>
+      <column name="slug" type="varchar(180)"><constraints nullable="false" unique="true" uniqueConstraintName="uk_shop_category_slug"/></column>
+      <column name="description" type="varchar(2000)"/>
+      <column name="active" type="boolean" defaultValueBoolean="true"><constraints nullable="false"/></column>
+      <column name="display_order" type="integer" defaultValueNumeric="0"><constraints nullable="false" checkConstraint="display_order &gt;= 0"/></column>
+      <column name="version" type="bigint" defaultValueNumeric="0"><constraints nullable="false"/></column>
+      <column name="created_at" type="timestamp with time zone"><constraints nullable="false"/></column>
+      <column name="updated_at" type="timestamp with time zone"><constraints nullable="false"/></column>
+    </createTable>
+    <createIndex tableName="shop_product_categories" indexName="idx_shop_category_active_order">
+      <column name="active"/><column name="display_order"/><column name="name"/>
+    </createIndex>
+    
+    <createTable tableName="shop_products">
+      <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="name" type="varchar(200)"><constraints nullable="false"/></column>
+      <column name="slug" type="varchar(220)"><constraints nullable="false" unique="true" uniqueConstraintName="uk_shop_product_slug"/></column>
+      <column name="description" type="varchar(5000)"/>
+      <column name="image_url" type="varchar(2048)"/>
+      <column name="active" type="boolean" defaultValueBoolean="false"><constraints nullable="false"/></column>
+      <column name="display_order" type="integer" defaultValueNumeric="0"><constraints nullable="false" checkConstraint="display_order &gt;= 0"/></column>
+      <column name="version" type="bigint" defaultValueNumeric="0"><constraints nullable="false"/></column>
+      <column name="created_at" type="timestamp with time zone"><constraints nullable="false"/></column>
+      <column name="updated_at" type="timestamp with time zone"><constraints nullable="false"/></column>
+    </createTable>
+    <createIndex tableName="shop_products" indexName="idx_shop_product_active_order">
+      <column name="active"/><column name="display_order"/><column name="name"/>
+    </createIndex>
+    
+    <createTable tableName="shop_product_category_links">
+      <column name="product_id" type="bigint"><constraints nullable="false" primaryKey="true"/></column>
+      <column name="category_id" type="bigint"><constraints nullable="false" primaryKey="true"/></column>
+    </createTable>
+    <addForeignKeyConstraint baseTableName="shop_product_category_links" baseColumnNames="product_id"
+      referencedTableName="shop_products" referencedColumnNames="id" constraintName="fk_shop_category_link_product" onDelete="CASCADE"/>
+    <addForeignKeyConstraint baseTableName="shop_product_category_links" baseColumnNames="category_id"
+      referencedTableName="shop_product_categories" referencedColumnNames="id" constraintName="fk_shop_category_link_category" onDelete="RESTRICT"/>
+    <createIndex tableName="shop_product_category_links" indexName="idx_shop_product_category_category">
+      <column name="category_id"/><column name="product_id"/>
+    </createIndex>
+    
+    <createTable tableName="shop_product_variants">
+      <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="product_id" type="bigint"><constraints nullable="false"/></column>
+      <column name="sku" type="varchar(100)"><constraints nullable="false" unique="true" uniqueConstraintName="uk_shop_variant_sku"/></column>
+      <column name="label" type="varchar(160)"/>
+      <column name="active" type="boolean" defaultValueBoolean="true"><constraints nullable="false"/></column>
+      <column name="display_order" type="integer" defaultValueNumeric="0"><constraints nullable="false" checkConstraint="display_order &gt;= 0"/></column>
+      <column name="price_amount_cents" type="bigint"><constraints nullable="false" checkConstraint="price_amount_cents &gt;= 0"/></column>
+      <column name="price_currency" type="varchar(3)"><constraints nullable="false" checkConstraint="char_length(price_currency) = 3"/></column>
+      <column name="stock_tracked" type="boolean" defaultValueBoolean="false"><constraints nullable="false"/></column>
+      <column name="stock_on_hand" type="bigint"/>
+      <column name="stock_reserved" type="bigint" defaultValueNumeric="0"><constraints nullable="false" checkConstraint="(stock_tracked = false AND stock_on_hand IS NULL AND stock_reserved = 0) OR (stock_tracked = true AND stock_on_hand IS NOT NULL AND stock_reserved &gt;= 0)"/></column>
+      <column name="version" type="bigint" defaultValueNumeric="0"><constraints nullable="false"/></column>
+      <column name="created_at" type="timestamp with time zone"><constraints nullable="false"/></column>
+      <column name="updated_at" type="timestamp with time zone"><constraints nullable="false"/></column>
+    </createTable>
+    <addForeignKeyConstraint baseTableName="shop_product_variants" baseColumnNames="product_id"
+      referencedTableName="shop_products" referencedColumnNames="id" constraintName="fk_shop_variant_product" onDelete="CASCADE"/>
+    <createIndex tableName="shop_product_variants" indexName="idx_shop_variant_product_active_order">
+      <column name="product_id"/><column name="active"/><column name="display_order"/>
+    </createIndex>
+    
+    <createTable tableName="shop_orders">
+      <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="order_number" type="varchar(40)"><constraints nullable="false" unique="true" uniqueConstraintName="uk_shop_order_number"/></column>
+      <column name="customer_user_id" type="bigint"><constraints nullable="false"/></column>
+      <column name="status" type="varchar(32)"><constraints nullable="false" checkConstraint="status IN ('DRAFT', 'PENDING_PAYMENT', 'PAID', 'PROCESSING', 'COMPLETED', 'CANCELLED', 'EXPIRED', 'REFUNDED')"/></column>
+      <column name="total_amount_cents" type="bigint"><constraints nullable="false" checkConstraint="total_amount_cents &gt;= 0"/></column>
+      <column name="total_currency" type="varchar(3)"><constraints nullable="false" checkConstraint="char_length(total_currency) = 3"/></column>
+      <column name="checkout_key" type="varchar(100)"/>
+      <column name="refund_requested" type="boolean" defaultValueBoolean="false"><constraints nullable="false"/></column>
+      <column name="version" type="bigint" defaultValueNumeric="0"><constraints nullable="false"/></column>
+      <column name="created_at" type="timestamp with time zone"><constraints nullable="false"/></column>
+      <column name="updated_at" type="timestamp with time zone"><constraints nullable="false"/></column>
+    </createTable>
+    <createIndex tableName="shop_orders" indexName="idx_shop_order_customer_created"><column name="customer_user_id"/><column name="created_at"/></createIndex>
+    <createIndex tableName="shop_orders" indexName="idx_shop_order_status_created"><column name="status"/><column name="created_at"/></createIndex>
+    <createIndex tableName="shop_orders" indexName="uk_shop_order_customer_checkout_key" unique="true"><column name="customer_user_id"/><column name="checkout_key"/></createIndex>
+    <createIndex tableName="shop_orders" indexName="idx_shop_order_refund_requested"><column name="refund_requested"/><column name="created_at"/></createIndex>
+    
+    <createTable tableName="shop_order_items">
+      <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="order_id" type="bigint"><constraints nullable="false"/></column>
+      <column name="product_id" type="bigint"><constraints nullable="false"/></column>
+      <column name="product_name" type="varchar(200)"><constraints nullable="false"/></column>
+      <column name="product_variant_id" type="bigint"/>
+      <column name="variant_name" type="varchar(160)"/>
+      <column name="sku" type="varchar(100)"/>
+      <column name="unit_price_amount_cents" type="bigint"><constraints nullable="false" checkConstraint="unit_price_amount_cents &gt;= 0"/></column>
+      <column name="unit_price_currency" type="varchar(3)"><constraints nullable="false"/></column>
+      <column name="quantity" type="integer"><constraints nullable="false" checkConstraint="quantity &gt; 0"/></column>
+      <column name="stock_reserved" type="boolean" defaultValueBoolean="false"><constraints nullable="false"/></column>
+      <column name="line_total_amount_cents" type="bigint"><constraints nullable="false" checkConstraint="line_total_amount_cents &gt;= 0"/></column>
+      <column name="line_total_currency" type="varchar(3)"><constraints nullable="false" checkConstraint="unit_price_currency = line_total_currency AND char_length(unit_price_currency) = 3"/></column>
+      <column name="status" type="varchar(32)" defaultValue="PENDING"><constraints nullable="false" checkConstraint="status IN ('PENDING', 'PROCESSING', 'COMPLETED', 'CANCELLED')"/></column>
+      <column name="created_at" type="timestamp with time zone"><constraints nullable="false"/></column>
+      <column name="updated_at" type="timestamp with time zone"><constraints nullable="false"/></column>
+    </createTable>
+    <addForeignKeyConstraint baseTableName="shop_order_items" baseColumnNames="order_id"
+      referencedTableName="shop_orders" referencedColumnNames="id" constraintName="fk_shop_order_item_order" onDelete="CASCADE"/>
+    <createIndex tableName="shop_order_items" indexName="idx_shop_order_item_order"><column name="order_id"/></createIndex>
+    <createIndex tableName="shop_order_items" indexName="idx_shop_order_item_product"><column name="product_id"/></createIndex>
+    
+    <createTable tableName="shop_payments">
+      <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="order_id" type="bigint"><constraints nullable="false" unique="true" uniqueConstraintName="uk_shop_payment_order"/></column>
+      <column name="status" type="varchar(32)"><constraints nullable="false" checkConstraint="status IN ('CREATED', 'PENDING', 'SUCCEEDED', 'FAILED', 'CANCELLED', 'REFUNDED')"/></column>
+      <column name="expected_amount_cents" type="bigint"><constraints nullable="false" checkConstraint="expected_amount_cents &gt;= 0"/></column>
+      <column name="expected_currency" type="varchar(3)"><constraints nullable="false" checkConstraint="char_length(expected_currency) = 3"/></column>
+      <column name="version" type="bigint" defaultValueNumeric="0"><constraints nullable="false"/></column>
+      <column name="created_at" type="timestamp with time zone"><constraints nullable="false"/></column>
+      <column name="updated_at" type="timestamp with time zone"><constraints nullable="false"/></column>
+    </createTable>
+    <addForeignKeyConstraint baseTableName="shop_payments" baseColumnNames="order_id"
+      referencedTableName="shop_orders" referencedColumnNames="id" constraintName="fk_shop_payment_order" onDelete="RESTRICT"/>
+    <createIndex tableName="shop_payments" indexName="idx_shop_payment_status_updated"><column name="status"/><column name="updated_at"/></createIndex>
+    
+    <createTable tableName="shop_payment_attempts">
+      <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="payment_id" type="bigint"><constraints nullable="false"/></column>
+      <column name="provider_key" type="varchar(80)"><constraints nullable="false"/></column>
+      <column name="status" type="varchar(32)"><constraints nullable="false" checkConstraint="status IN ('CREATED', 'PENDING', 'SUCCEEDED', 'FAILED', 'CANCELLED', 'REFUNDED')"/></column>
+      <column name="amount_cents" type="bigint"><constraints nullable="false" checkConstraint="amount_cents &gt;= 0"/></column>
+      <column name="currency" type="varchar(3)"><constraints nullable="false" checkConstraint="char_length(currency) = 3"/></column>
+      <column name="external_payment_id" type="varchar(255)"/>
+      <column name="redirect_url" type="varchar(2048)"/>
+      <column name="idempotency_key" type="varchar(100)"><constraints nullable="false"/></column>
+      <column name="failure_reason" type="varchar(500)"/>
+      <column name="version" type="bigint" defaultValueNumeric="0"><constraints nullable="false"/></column>
+      <column name="created_at" type="timestamp with time zone"><constraints nullable="false"/></column>
+      <column name="updated_at" type="timestamp with time zone"><constraints nullable="false"/></column>
+    </createTable>
+    <addForeignKeyConstraint baseTableName="shop_payment_attempts" baseColumnNames="payment_id"
+      referencedTableName="shop_payments" referencedColumnNames="id" constraintName="fk_shop_attempt_payment" onDelete="CASCADE"/>
+    <addUniqueConstraint tableName="shop_payment_attempts" columnNames="payment_id, idempotency_key" constraintName="uk_shop_attempt_idempotency"/>
+    <addUniqueConstraint tableName="shop_payment_attempts" columnNames="provider_key, external_payment_id" constraintName="uk_shop_attempt_provider_external"/>
+    <createIndex tableName="shop_payment_attempts" indexName="idx_shop_attempt_payment_status"><column name="payment_id"/><column name="status"/></createIndex>
+    
+    <createTable tableName="shop_order_messages">
+      <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="order_id" type="bigint"><constraints nullable="false"/></column>
+      <column name="sender_user_id" type="bigint"/>
+      <column name="sender_type" type="varchar(32)"><constraints nullable="false" checkConstraint="sender_type IN ('CUSTOMER', 'SHOP_MANAGER')"/></column>
+      <column name="content" type="varchar(2000)"><constraints nullable="false" checkConstraint="char_length(trim(content)) &gt; 0"/></column>
+      <column name="created_at" type="timestamp with time zone"><constraints nullable="false"/></column>
+      <column name="updated_at" type="timestamp with time zone"><constraints nullable="false"/></column>
+    </createTable>
+    <addForeignKeyConstraint baseTableName="shop_order_messages" baseColumnNames="order_id"
+      referencedTableName="shop_orders" referencedColumnNames="id" constraintName="fk_shop_order_message_order" onDelete="CASCADE"/>
+    <createIndex tableName="shop_order_messages" indexName="idx_shop_order_message_order_created"><column name="order_id"/><column name="created_at"/><column name="id"/></createIndex>
+    
+    <createTable tableName="shop_supplier_orders">
+      <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="supplier_name" type="varchar(200)"><constraints nullable="false" checkConstraint="char_length(trim(supplier_name)) &gt; 0"/></column>
+      <column name="supplier_reference" type="varchar(100)"/>
+      <column name="invoice_reference" type="varchar(100)"/>
+      <column name="status" type="varchar(20)" defaultValue="ORDERED"><constraints nullable="false" checkConstraint="status IN ('DRAFT', 'ORDERED', 'RECEIVED')"/></column>
+      <column name="received_at" type="timestamp with time zone"/>
+      <column name="created_at" type="timestamp with time zone"><constraints nullable="false"/></column>
+      <column name="updated_at" type="timestamp with time zone"><constraints nullable="false"/></column>
+    </createTable>
+    <createIndex tableName="shop_supplier_orders" indexName="idx_shop_supplier_order_status_created"><column name="status"/><column name="created_at"/></createIndex>
+    
+    <createTable tableName="shop_supplier_order_lines">
+      <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="order_id" type="bigint"><constraints nullable="false"/></column>
+      <column name="variant_id" type="bigint"><constraints nullable="false"/></column>
+      <column name="product_name" type="varchar(200)"><constraints nullable="false"/></column>
+      <column name="variant_name" type="varchar(160)"/>
+      <column name="sku" type="varchar(100)"><constraints nullable="false"/></column>
+      <column name="quantity" type="integer"><constraints nullable="false" checkConstraint="quantity &gt; 0"/></column>
+      <column name="unit_cost_amount_cents" type="bigint"/>
+      <column name="unit_cost_currency" type="varchar(3)"/>
+      <column name="expected_need" type="integer"/>
+      <column name="extra_approved" type="boolean" defaultValueBoolean="false"><constraints nullable="false" checkConstraint="(unit_cost_amount_cents IS NULL AND unit_cost_currency IS NULL) OR (unit_cost_amount_cents &gt;= 0 AND unit_cost_currency IS NOT NULL)"/></column>
+    </createTable>
+    <addForeignKeyConstraint baseTableName="shop_supplier_order_lines" baseColumnNames="order_id"
+      referencedTableName="shop_supplier_orders" referencedColumnNames="id" constraintName="fk_shop_supplier_line_order" onDelete="CASCADE"/>
+    <addUniqueConstraint tableName="shop_supplier_order_lines" columnNames="order_id, variant_id" constraintName="uk_shop_supplier_order_variant"/>
+    
+  </changeSet>
+</databaseChangeLog>

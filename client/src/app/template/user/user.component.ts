@@ -39,6 +39,7 @@ export class UserComponent implements OnInit {
     { code: ERole.ROLE_COMPTABLE, libelle: 'Comptable' },
     { code: ERole.ROLE_ENCADRANT, libelle: 'Encadrant' },
     { code: ERole.ROLE_REFERENT, libelle: 'Référent' },
+    { code: ERole.ROLE_RESPONSABLE_BOUTIQUE, libelle: 'Responsable boutique' },
     { code: ERole.ROLE_LOGISTIQUE, libelle: 'Logistique' }
   ];
   private readonly apiViewRefresh = registerApiViewRefresh();

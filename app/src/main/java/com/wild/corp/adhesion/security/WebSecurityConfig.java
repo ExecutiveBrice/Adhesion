@@ -7,6 +7,7 @@ import jakarta.servlet.DispatcherType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -19,6 +20,12 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -56,8 +63,26 @@ public class WebSecurityConfig{
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable())
+    public CorsConfigurationSource corsConfigurationSource(
+            @Value("${adhesion.security.cors.allowed-origins:http://localhost:4200,https://localhost:4200}") String allowedOrigins) {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isEmpty())
+                .toList());
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Idempotency-Key"));
+        configuration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource))
+                .csrf(csrf -> csrf.disable())
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth ->
@@ -66,6 +91,11 @@ public class WebSecurityConfig{
                                 .requestMatchers(HttpMethod.GET, "/auth/confirmEmail/*").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/param/agendas", "/param/salles", "/param/allText", "/param/allBoolean", "/param/isClose").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/activite/calendrier", "/activite/calendrier/google").permitAll()
+                                // Catalogue et panier consultables avant la connexion requise pour commander.
+                                .requestMatchers(HttpMethod.GET, "/shop/products", "/shop/products/*").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/shop/cart/quote").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/shop/product-images/**").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/shop/payments/helloasso/notifications").permitAll()
                                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                                 .requestMatchers(HttpMethod.OPTIONS,"/**").permitAll()
                                 .anyRequest().authenticated()

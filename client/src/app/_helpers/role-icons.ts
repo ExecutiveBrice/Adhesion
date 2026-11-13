@@ -1,5 +1,6 @@
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import {
+  faStore,
   faBuildingColumns,
   faCalculator,
   faChalkboardUser,
@@ -24,6 +25,7 @@ export const ROLE_ICONS: Partial<Record<ERole, RoleIcon>> = {
   [ERole.ROLE_COMPTABLE]: { icon: faCalculator, label: 'Comptable' },
   [ERole.ROLE_ENCADRANT]: { icon: faUserTie, label: 'Encadrant' },
   [ERole.ROLE_REFERENT]: { icon: faUserCheck, label: 'Référent' },
+  [ERole.ROLE_RESPONSABLE_BOUTIQUE]: { icon: faStore, label: 'Responsable boutique' },
   [ERole.ROLE_LOGISTIQUE]: { icon: faWrench, label: 'Logistique' }
 };
 

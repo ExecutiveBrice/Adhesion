@@ -55,6 +55,11 @@
 }
 
 .navbar-login-actions .btn {
+  align-items: center;
+  display: inline-flex;
+  gap: .45rem;
+  justify-content: center;
+  min-width: 44px;
   padding-inline: .5rem;
   white-space: nowrap;
 }
@@ -109,6 +114,10 @@
 }
 
 @media (max-width: 575.98px) {
+  .navbar-action-label {
+    display: none;
+  }
+
   .app-logo {
     width: 64px;
   }

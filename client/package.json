@@ -4,11 +4,13 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve --serve-path /adhesion/",
+    "start:https": "ng serve --serve-path /adhesion/ --ssl",
     "build": "ng build",
     "build:production": "ng build --base-href /adhesion/ --configuration=production",
     "build:integration": "ng build --base-href /adhesion/ --configuration=integration",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "test:shop": "ng test --ts-config tsconfig.shop.spec.json --watch=false --browsers=ChromeHeadless --include=src/app/shop/**/*.spec.ts --include=src/app/app.component.spec.ts"
   },
   "private": true,
   "dependencies": {

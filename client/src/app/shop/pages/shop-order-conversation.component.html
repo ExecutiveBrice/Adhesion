@@ -1,0 +1,23 @@
+<main class="shop-conversation-page container py-3 py-md-4">
+  <a [routerLink]="isManager ? '/boutique/gestion' : '/boutique/commandes'" class="shop-back">← {{ isManager ? 'Retour à la gestion boutique' : 'Retour à mes commandes' }}</a>
+  <header><p class="shop-eyebrow">Demande de remboursement</p><h1>Conversation — {{ orderNumber }}</h1><p>Échangez directement avec {{ isManager ? 'le client' : 'la gestion boutique' }}.</p></header>
+  @if (loading()) { <p role="status">Chargement de la conversation…</p> }
+  @else {
+    @if (error()) { <div class="alert alert-warning" role="alert">{{ error() }} <button type="button" class="btn btn-link p-0" (click)="load()">Réessayer</button></div> }
+    @else {
+      <section class="conversation" aria-label="Messages de la demande de remboursement">
+        @for (message of messages(); track message.id) {
+          <article class="message" [class.mine]="(isManager && message.senderType === 'SHOP_MANAGER') || (!isManager && message.senderType === 'CUSTOMER')">
+            <header><strong>{{ senderLabel(message) }}</strong><time>{{ message.createdAt | date:'short':'':'fr-FR' }}</time></header>
+            <p>{{ message.content }}</p>
+          </article>
+        } @empty { <p class="text-body-secondary mb-0">Aucun message pour le moment. Expliquez votre demande pour démarrer l’échange.</p> }
+      </section>
+      <form class="conversation-form" (ngSubmit)="send()">
+        <label for="conversation-message">Votre message</label>
+        <textarea id="conversation-message" class="form-control" name="message" [(ngModel)]="message" maxlength="2000" rows="4" required></textarea>
+        <button type="submit" class="btn btn-primary" [disabled]="sending() || !message.trim()">{{ sending() ? 'Envoi…' : 'Envoyer' }}</button>
+      </form>
+    }
+  }
+</main>

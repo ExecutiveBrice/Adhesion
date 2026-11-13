@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  <changeSet id="shop-product-gallery" author="adhesion">
+    <addColumn tableName="shop_products">
+      <column name="additional_image_url_1" type="varchar(2048)"/>
+      <column name="additional_image_url_2" type="varchar(2048)"/>
+    </addColumn>
+    <addColumn tableName="shop_product_variants">
+      <column name="image_url" type="varchar(2048)"/>
+    </addColumn>
+    <rollback>
+      <dropColumn tableName="shop_product_variants" columnName="image_url"/>
+      <dropColumn tableName="shop_products" columnName="additional_image_url_2"/>
+      <dropColumn tableName="shop_products" columnName="additional_image_url_1"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

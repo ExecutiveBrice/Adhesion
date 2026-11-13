@@ -1,0 +1,26 @@
+shop:
+  payment:
+    provider: helloasso
+    helloasso:
+      base-url: 'http://localhost:8089'
+      client-id: 'local-client'
+      client-secret: 'local-secret'
+      organization-slug: 'local-organization'
+
+# Feign exige à la fois un logger DEBUG et un niveau interne pour émettre ses traces.
+# BASIC journalise uniquement la méthode, l'URL et le statut HTTP : aucun jeton OAuth
+# ni corps de requête contenant des informations de paiement n'est écrit dans les logs.
+spring:
+  cloud:
+    openfeign:
+      client:
+        config:
+          helloAssoCheckoutClient:
+            logger-level: basic
+          helloAssoOAuthClient:
+            logger-level: basic
+
+logging:
+  level:
+    com.wild.corp.adhesion.shop.payment.helloasso.client.HelloAssoCheckoutClient: DEBUG
+    com.wild.corp.adhesion.shop.payment.helloasso.client.HelloAssoOAuthClient: DEBUG

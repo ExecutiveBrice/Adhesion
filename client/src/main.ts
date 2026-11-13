@@ -4,6 +4,10 @@ import { bootstrapApplication } from '@angular/platform-browser';
 import { AppComponent } from './app/app.component';
 import { appConfig } from './app/app.config';
 import { environment } from './environments/environment';
+import { restoredShopPaymentUrl } from './app/shop/shop-payment-return';
+
+const paymentReturnUrl = restoredShopPaymentUrl(window.location.href);
+if (paymentReturnUrl) window.history.replaceState(window.history.state, '', paymentReturnUrl);
 
 if (environment.production) {
   enableProdMode();

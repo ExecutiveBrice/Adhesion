@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  <changeSet id="shop-transfer-role" author="adhesion" dbms="postgresql">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="user_role_names"/>
+    </preConditions>
+    <comment>Accept the shop manager role while preserving the roles on this branch.</comment>
+    <sql splitStatements="false"><![CDATA[
+DO $$
+DECLARE old_check record;
+BEGIN
+    FOR old_check IN
+        SELECT conname FROM pg_constraint
+        WHERE conrelid = 'user_role_names'::regclass
+          AND contype = 'c'
+          AND pg_get_constraintdef(oid) LIKE '%role_name%'
+    LOOP
+        EXECUTE format('ALTER TABLE user_role_names DROP CONSTRAINT %I', old_check.conname);
+    END LOOP;
+    ALTER TABLE user_role_names ADD CONSTRAINT user_role_names_erole_check
+        CHECK (role_name IN (
+            'ROLE_USER', 'ROLE_SECRETAIRE', 'ROLE_BUREAU', 'ROLE_MEMBRECA',
+            'ROLE_ADMIN', 'ROLE_COMPTABLE', 'ROLE_ENCADRANT', 'ROLE_REFERENT',
+            'ROLE_LOGISTIQUE', 'ROLE_RESPONSABLE_BOUTIQUE'
+        ));
+END $$;
+    ]]></sql>
+  </changeSet>
+</databaseChangeLog>

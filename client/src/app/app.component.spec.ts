@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { of, Subject } from 'rxjs';
@@ -10,6 +10,8 @@ import { PwaService } from './_services/pwa.service';
 import { ToastService } from './_services/toast.service';
 import { TokenStorageService } from './_services/token-storage.service';
 import { LoginPageService } from './_services/login-page.service';
+import { ShopApiService } from './shop/services/shop-api.service';
+import { ShopOrderDto } from './shop/models/shop.models';
 
 @Component({ template: '' })
 class HeaderTestPage {}
@@ -19,14 +21,18 @@ describe('Navigation du bandeau', () => {
   let router: Router;
   let storage: jasmine.SpyObj<TokenStorageService>;
   let sessionChanges: Subject<StorageEvent>;
+  let shopApi: jasmine.SpyObj<ShopApiService>;
 
   beforeEach(async () => {
     sessionChanges = new Subject();
-    storage = jasmine.createSpyObj('TokenStorageService', ['getToken', 'getUser'], {
+    storage = jasmine.createSpyObj('TokenStorageService', ['getToken', 'getUser', 'isTokenExpired'], {
       sessionChanges$: sessionChanges
     });
     storage.getToken.and.returnValue('access-token');
+    storage.isTokenExpired.and.returnValue(false);
     storage.getUser.and.returnValue({ username: 'admin@example.org', roles: ['ROLE_ADMIN', 'ROLE_ENCADRANT'] });
+    shopApi = jasmine.createSpyObj('ShopApiService', ['orders']);
+    shopApi.orders.and.returnValue(of([]));
     TestBed.configureTestingModule({
       imports: [AppComponent],
       providers: [
@@ -37,10 +43,11 @@ describe('Navigation du bandeau', () => {
         ]),
         { provide: TokenStorageService, useValue: storage },
         { provide: AuthService, useValue: { logout: () => of(null) } },
-        { provide: ParamService, useValue: { isClose: () => of(false) } },
+        { provide: ParamService, useValue: { isClose: () => of(false), getAllBoolean: () => of([]), showBoutique: signal(true) } },
         { provide: ParamTransmissionService, useValue: {} },
         { provide: PwaService, useValue: { canInstall: () => false, showIosInstallHint: () => false } },
-        { provide: ToastService, useValue: { toasts: [] } }
+        { provide: ToastService, useValue: { toasts: [] } },
+        { provide: ShopApiService, useValue: shopApi }
       ]
     });
     router = TestBed.inject(Router);
@@ -60,6 +67,20 @@ describe('Navigation du bandeau', () => {
     expect(fixture.componentInstance.isCollapsed).toBeTrue();
     expect(fixture.nativeElement.querySelector('.navbar-page-title').textContent).toBe('Séances');
     expect(fixture.nativeElement.querySelector('.navbar-backdrop')).toBeNull();
+  });
+
+  it('masque Mes commandes sans historique et l’affiche après la première commande', async () => {
+    expect(fixture.nativeElement.querySelector('a[href="/boutique/commandes"]')).toBeNull();
+
+    shopApi.orders.and.returnValue(of([{ status: 'PENDING_PAYMENT' } as ShopOrderDto]));
+    await router.navigateByUrl('/seances');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('a[href="/boutique/commandes"]')).not.toBeNull();
+
+    storage.getToken.and.returnValue(null);
+    await router.navigateByUrl('/login');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('a[href="/boutique/commandes"]')).toBeNull();
   });
 
   it('ferme le menu avec Échap et rend le focus au bouton Menu', () => {
@@ -97,6 +118,17 @@ describe('Navigation du bandeau', () => {
     expect(TestBed.inject(LoginPageService).view()).toBe('connexion');
   });
 
+  it('affiche la boutique et le panier à côté de la connexion sur l’accueil public', async () => {
+    storage.getToken.and.returnValue(null);
+    await router.navigateByUrl('/login');
+    fixture.detectChanges();
+    const actions: HTMLElement = fixture.nativeElement.querySelector('.navbar-login-actions');
+
+    expect(actions.querySelector('a[href="/boutique"] fa-icon')).not.toBeNull();
+    expect(actions.querySelector('a[href="/boutique/panier"] fa-icon')).not.toBeNull();
+    expect(actions.querySelectorAll('button').length).toBe(2);
+  });
+
   it('efface les droits du bandeau lorsque la session expire', async () => {
     storage.getToken.and.returnValue(null);
     await router.navigateByUrl('/login?sessionExpiree=1');
@@ -128,7 +160,7 @@ describe('Déconnexion depuis une page protégée', () => {
   beforeEach(() => {
     revocation = new Subject();
     sessionChanges = new Subject();
-    storage = jasmine.createSpyObj('TokenStorageService', ['getToken', 'getUser', 'signOut'], {
+    storage = jasmine.createSpyObj('TokenStorageService', ['getToken', 'getUser', 'signOut', 'isTokenExpired'], {
       sessionChanges$: sessionChanges
     });
     storage.getToken.and.returnValue('access-token');
@@ -144,9 +176,10 @@ describe('Déconnexion depuis une page protégée', () => {
         provideRouter([]),
         { provide: TokenStorageService, useValue: storage },
         { provide: AuthService, useValue: { logout } },
-        { provide: ParamService, useValue: { isClose: () => of(false) } },
+        { provide: ParamService, useValue: { isClose: () => of(false), getAllBoolean: () => of([]), showBoutique: signal(false) } },
         { provide: ParamTransmissionService, useValue: {} },
         { provide: PwaService, useValue: {} },
+        { provide: ShopApiService, useValue: { orders: () => of([]) } },
         { provide: ToastService, useValue: {} }
       ]
     });
