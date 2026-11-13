@@ -90,10 +90,10 @@ public class CatalogService {
     public ProductVariant updateVariant(Long variantId, String sku, String label, Money price, boolean active,
                                         int displayOrder, boolean stockTracked, Long expectedVersion, String imageUrl) {
         if (expectedVersion == null) {
-            throw new IllegalArgumentException("La version de la variante est obligatoire pour sa modification");
+            throw new IllegalArgumentException("La version de la référence est obligatoire pour sa modification");
         }
         ProductVariant variant = variantRepository.findByIdForUpdate(variantId)
-                .orElseThrow(() -> new NoSuchElementException("Variante introuvable"));
+                .orElseThrow(() -> new NoSuchElementException("Référence introuvable"));
         variant.requireVersion(expectedVersion);
         variant.updateDetails(sku, label, price, active, displayOrder, stockTracked);
         variant.setImageUrl(imageUrl);
@@ -103,7 +103,7 @@ public class CatalogService {
 
     public ProductVariant updateVariantStock(Long variantId, long stockOnHand, long expectedVersion) {
         ProductVariant variant = variantRepository.findByIdForUpdate(variantId)
-                .orElseThrow(() -> new NoSuchElementException("Variante introuvable"));
+                .orElseThrow(() -> new NoSuchElementException("Référence introuvable"));
         variant.updateStockOnHand(stockOnHand, expectedVersion);
         variantRepository.flush();
         return variant;

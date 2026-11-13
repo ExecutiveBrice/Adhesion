@@ -44,7 +44,7 @@ public class ProductCategory extends AuditableEntity {
 
     public ProductCategory(String name, String slug, String description, boolean active, int displayOrder) {
         this.name = requireText(name, "Le nom de la catégorie est obligatoire");
-        this.slug = requireText(slug, "Le slug de la catégorie est obligatoire");
+        this.slug = requireText(slug, "L’identifiant d’URL de la catégorie est obligatoire");
         this.description = description;
         this.active = active;
         setDisplayOrder(displayOrder);
@@ -60,7 +60,7 @@ public class ProductCategory extends AuditableEntity {
 
     public void updateDetails(String name, String slug, String description, boolean active, int displayOrder) {
         this.name = requireText(name, "Le nom de la catégorie est obligatoire");
-        this.slug = requireText(slug, "Le slug de la catégorie est obligatoire");
+        this.slug = requireText(slug, "L’identifiant d’URL de la catégorie est obligatoire");
         this.description = description;
         this.active = active;
         setDisplayOrder(displayOrder);

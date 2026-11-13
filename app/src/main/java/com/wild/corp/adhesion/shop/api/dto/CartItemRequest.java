@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Positive;
 
 @JsonIgnoreProperties(ignoreUnknown = false)
 public record CartItemRequest(
-        @NotNull(message = "La variante est obligatoire") Long variantId,
+        @NotNull(message = "La référence est obligatoire") Long variantId,
         @NotNull(message = "La quantité est obligatoire")
         @Positive(message = "La quantité doit être strictement positive") Integer quantity) {
 

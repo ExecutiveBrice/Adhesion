@@ -301,7 +301,7 @@ describe('ShopStockOverviewComponent', () => {
     expect(fixture.componentInstance.rows[0].available).toBe(5);
     expect(fixture.nativeElement.querySelector('tbody tr')?.textContent).toContain('TS-M');
     const headings = [...fixture.nativeElement.querySelectorAll('.stock-table thead th')].map((element: Element) => element.textContent?.trim());
-    expect(headings).toEqual(['Produit / variante', 'Commandes client', 'À commander chez le fournisseur',
+    expect(headings).toEqual(['Produit / référence', 'Commandes client', 'À commander chez le fournisseur',
       'Commande fournisseur en cours', 'En stock']);
     expect(fixture.nativeElement.querySelector('#stock-count-42')).toBeNull();
     expect(fixture.nativeElement.querySelector('#purchase-count-42')).toBeNull();

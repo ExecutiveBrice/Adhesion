@@ -19,7 +19,7 @@
         <div class="shop-thumbnails" aria-label="Choisir une image">
           @for (thumbnail of images(); track $index; let index = $index) {
             <button type="button" [class.selected]="index === imageIndex()" [attr.aria-pressed]="index === imageIndex()"
-              [attr.aria-label]="'Afficher l’image ' + (index + 1) + (index === 0 && item.imageUrl ? ' (principale)' : (thumbnail === variant()?.imageUrl ? ' (variante sélectionnée)' : ''))"
+              [attr.aria-label]="'Afficher l’image ' + (index + 1) + (index === 0 && item.imageUrl ? ' (principale)' : (thumbnail === variant()?.imageUrl ? ' (référence sélectionnée)' : ''))"
               (click)="selectImage(index)"><img [src]="thumbnail" alt=""></button>
           }
         </div>
@@ -39,5 +39,5 @@
       } @else {
         <div class="shop-product-visual" role="img" [attr.aria-label]="'Illustration à venir pour ' + item.name">{{ item.name.slice(0, 1) }}</div>
       }
-    </section><div class="shop-product-info"><div class="shop-category-list">@for (category of item.categories; track category.id) { <span>{{ category.name }}</span> }</div><h1>{{ item.name }}</h1><p class="shop-description">{{ item.description || 'Description à venir.' }}</p><p class="shop-detail-range">Prix : <strong>{{ priceRange(item) }}</strong></p>@if (variant()) { <label for="detail-variant" class="form-label">Variante</label><select id="detail-variant" class="form-select" [ngModel]="variant()!.id" (ngModelChange)="selectVariant($event)">@for (choice of item.variants; track choice.id) { <option [value]="choice.id" [disabled]="!choice.available">{{ choice.label }} — {{ money(choice.price) }}{{ choice.available ? '' : ' (indisponible)' }}</option> }</select><div class="shop-detail-price"><strong>{{ money(variant()!.price) }}</strong><span [class.unavailable]="!variant()!.available">{{ availabilityLabel(variant()!) }}</span></div><button type="button" class="btn btn-primary btn-lg" [disabled]="!variant()!.available" (click)="add()">Ajouter au panier</button> }</div></article> }
+    </section><div class="shop-product-info"><div class="shop-category-list">@for (category of item.categories; track category.id) { <span>{{ category.name }}</span> }</div><h1>{{ item.name }}</h1><p class="shop-description">{{ item.description || 'Description à venir.' }}</p><p class="shop-detail-range">Prix : <strong>{{ priceRange(item) }}</strong></p>@if (variant()) { <label for="detail-variant" class="form-label">Référence</label><select id="detail-variant" class="form-select" [ngModel]="variant()!.id" (ngModelChange)="selectVariant($event)">@for (choice of item.variants; track choice.id) { <option [value]="choice.id" [disabled]="!choice.available">{{ choice.label }} — {{ money(choice.price) }}{{ choice.available ? '' : ' (indisponible)' }}</option> }</select><div class="shop-detail-price"><strong>{{ money(variant()!.price) }}</strong><span [class.unavailable]="!variant()!.available">{{ availabilityLabel(variant()!) }}</span></div><button type="button" class="btn btn-primary btn-lg" [disabled]="!variant()!.available" (click)="add()">Ajouter au panier</button> }</div></article> }
 </main>

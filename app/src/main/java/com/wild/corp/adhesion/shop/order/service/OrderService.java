@@ -51,7 +51,7 @@ public class OrderService {
         Map<Long, ProductVariant> variantsById = new LinkedHashMap<>();
         quantities.keySet().stream().sorted(Comparator.naturalOrder()).forEach(variantId -> {
             ProductVariant variant = variantRepository.findByIdForUpdate(variantId)
-                    .orElseThrow(() -> new IllegalArgumentException("La variante " + variantId + " est introuvable"));
+                    .orElseThrow(() -> new IllegalArgumentException("La référence " + variantId + " est introuvable"));
             variantsById.put(variantId, variant);
         });
 
@@ -201,7 +201,7 @@ public class OrderService {
                 .sorted(Comparator.comparing(OrderItem::getProductVariantId))
                 .forEach(item -> {
                     ProductVariant variant = variantRepository.findByIdForUpdate(item.getProductVariantId())
-                            .orElseThrow(() -> new IllegalStateException("La variante réservée est introuvable"));
+                            .orElseThrow(() -> new IllegalStateException("La référence réservée est introuvable"));
                     operation.apply(variant, item.getQuantity());
                 });
     }
@@ -213,7 +213,7 @@ public class OrderService {
         Map<Long, Integer> quantities = new LinkedHashMap<>();
         for (OrderItemRequest requestedItem : new ArrayList<>(requestedItems)) {
             if (requestedItem == null || requestedItem.variantId() == null) {
-                throw new IllegalArgumentException("La variante est obligatoire");
+                throw new IllegalArgumentException("La référence est obligatoire");
             }
             if (requestedItem.quantity() <= 0) {
                 throw new InvalidQuantityException(requestedItem.quantity());

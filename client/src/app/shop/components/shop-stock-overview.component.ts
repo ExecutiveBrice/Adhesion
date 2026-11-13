@@ -519,7 +519,7 @@ export class ShopStockOverviewComponent implements OnInit {
     if (this.invalidPurchaseCount) return;
     const selected = this.rows.filter(row => this.validPurchaseQuantity(row.variant.id) > 0);
     if (!selected.length) return;
-    const columns = ['Produit', 'Variante', 'SKU', 'Quantité achat', 'À servir', 'Attendu fournisseur', 'À commander'];
+    const columns = ['Produit', 'Référence', 'Code', 'Quantité achat', 'À servir', 'Attendu fournisseur', 'À commander'];
     const lines = selected.map(row => [row.product.name, row.variant.label || '', row.variant.sku,
       this.validPurchaseQuantity(row.variant.id), row.toPrepare, row.awaitingSupplier, row.toOrder]);
     const csv = '\uFEFF' + [columns, ...lines].map(line => line.map(value => this.csvCell(value)).join(';')).join('\r\n');

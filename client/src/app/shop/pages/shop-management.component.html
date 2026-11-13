@@ -43,162 +43,119 @@
   </div>
 
   <div id="catalogue-panel" role="tabpanel" aria-labelledby="catalogue-tab" [hidden]="activeTab !== 'catalogue'">
-  @if (error) { <div class="alert alert-danger" role="alert">{{ error }} @if (catalogConflict) { <button type="button" class="btn btn-outline-danger btn-sm ms-2" (click)="load()">Actualiser le catalogue</button> }</div> }
-  @if (imageUploadError) { <div class="alert alert-danger" role="alert">{{ imageUploadError }}</div> }
-  @if (message) { <div class="alert alert-success" role="status">{{ message }}</div> }
-  @if (loading) { <p role="status">Chargement du catalogue…</p> }
+    @if (error && !editor) { <div class="alert alert-danger" role="alert">{{ error }} @if (catalogConflict) { <button type="button" class="btn btn-outline-danger btn-sm ms-2" (click)="load()">Actualiser le catalogue</button> }</div> }
+    @if (message) { <div class="alert alert-success" role="status">{{ message }}</div> }
+    @if (loading) { <p role="status">Chargement du catalogue…</p> }
 
-  @if (!loading && catalogLoaded) {
-    <section class="management-section">
-      <h2>Catégories</h2>
-      <form class="management-form compact" #categoryForm="ngForm" (ngSubmit)="createCategory()">
-        <input class="form-control" name="newCategoryName" required placeholder="Nom" [(ngModel)]="newCategory.name">
-        <input class="form-control" name="newCategorySlug" required placeholder="Slug" [(ngModel)]="newCategory.slug">
-        <input class="form-control" name="newCategoryOrder" type="number" min="0" placeholder="Ordre" [(ngModel)]="newCategory.displayOrder">
-        <label class="form-check"><input class="form-check-input" name="newCategoryActive" type="checkbox" [(ngModel)]="newCategory.active"> Active</label>
-        <button class="btn btn-primary" [disabled]="saving || categoryForm.invalid">Ajouter</button>
-      </form>
-      <div class="management-list">
-        @for (category of categories; track category.id) {
-          <form class="management-row" #categoryEditForm="ngForm" (ngSubmit)="updateCategory(category)">
-            <input class="form-control" [name]="'categoryName' + category.id" required [(ngModel)]="category.name">
-            <input class="form-control" [name]="'categorySlug' + category.id" required [(ngModel)]="category.slug">
-            <input class="form-control" [name]="'categoryOrder' + category.id" type="number" min="0" [(ngModel)]="category.displayOrder">
-            <label class="form-check"><input class="form-check-input" [name]="'categoryActive' + category.id" type="checkbox" [(ngModel)]="category.active"> Active</label>
-            <button class="btn btn-outline-primary btn-sm" [disabled]="saving || categoryEditForm.invalid">Enregistrer</button>
-            <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="saving" (click)="deleteCategory(category)">Retirer</button>
-          </form>
-        } @empty { <p class="text-body-secondary mb-0">Aucune catégorie.</p> }
-      </div>
-    </section>
+    @if (catalogLoaded) {
+      <section class="management-section catalogue-products" aria-labelledby="catalogue-title" [attr.aria-busy]="loading">
+        <div class="catalogue-heading">
+          <div><h2 id="catalogue-title">Catalogue <span class="order-count">{{ products.length }}</span></h2><p>{{ visibleProductCount }} produit(s) visible(s) · Dépliez un produit pour gérer ses références.</p></div>
+          <button type="button" class="btn btn-primary" [disabled]="saving || loading" (click)="openProductEditor()">+ Nouveau produit</button>
+        </div>
+        <div class="catalogue-filters">
+          <label class="search-field" for="catalogue-search">Rechercher<input id="catalogue-search" class="form-control" type="search" placeholder="Nom du produit, libellé ou code…" [(ngModel)]="catalogSearch"></label>
+          <label for="catalogue-category">Catégorie<select id="catalogue-category" class="form-select" [(ngModel)]="catalogCategory"><option value="">Toutes les catégories</option>@for (category of categories; track category.id) { <option [value]="category.id">{{ category.name }}</option> }</select></label>
+          <label for="catalogue-status">Visibilité<select id="catalogue-status" class="form-select" [(ngModel)]="catalogStatus"><option value="all">Tous les produits</option><option value="visible">Visibles</option><option value="hidden">Masqués</option></select></label>
+        </div>
+        <p class="catalogue-results" role="status">{{ filteredProducts.length }} produit(s) affiché(s) sur {{ products.length }}</p>
+        <div class="product-list">
+          @for (product of filteredProducts; track product.id) {
+            <details class="product-panel">
+              <summary>
+                <span class="product-thumbnail">@if (product.imageUrl) { <img [src]="product.imageUrl" alt="" loading="lazy"> } @else { <span aria-hidden="true">▧</span> }</span>
+                <span class="product-summary"><span class="product-name">{{ product.name }}</span><span class="product-meta">{{ product.variants.length }} référence(s)@for (category of product.categories; track category.id) { <span> · {{ category.name }}</span> }</span></span>
+                <span [class.inactive]="!product.active" class="status">{{ product.active ? 'Visible' : 'Masqué' }}</span>
+                <span class="panel-chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div class="product-panel-body">
+                <div class="product-actions"><span class="text-body-secondary">{{ product.description || 'Aucune description.' }}</span><div><button type="button" class="btn btn-outline-primary btn-sm" [disabled]="saving || loading" (click)="openProductEditor(product)">Modifier le produit</button><button type="button" class="btn btn-outline-danger btn-sm" [disabled]="saving || loading" (click)="deleteProduct(product)">Supprimer</button></div></div>
+                <div class="variants-heading"><h3>Références <span class="order-count">{{ product.variants.length }}</span></h3><button type="button" class="btn btn-outline-primary btn-sm" [disabled]="saving || loading" (click)="openVariantEditor(product)">+ Ajouter une référence</button></div>
+                @if (product.variants.length) {
+                  <div class="variant-table-scroll"><table class="variant-table"><caption class="visually-hidden">Références de {{ product.name }}</caption><thead><tr><th scope="col">Référence</th><th scope="col">Prix</th><th scope="col">Stock</th><th scope="col">Statut</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead><tbody>
+                    @for (variant of product.variants; track variant.id) {
+                      <tr><th scope="row"><span class="variant-identity">@if (variant.imageUrl) { <img [src]="variant.imageUrl" alt="" loading="lazy"> }<span>{{ variant.label || variant.sku }}<small>{{ variant.sku }}</small></span></span></th><td class="price-cell">{{ variantPrice(variant) }}</td><td>@if (variant.stockTracked) { {{ variant.stockOnHand }}<small>{{ variant.stockReserved }} réservé(s)</small> } @else { <span class="text-body-secondary">Non suivi</span> }</td><td><span class="status" [class.inactive]="!variant.active">{{ variant.active ? 'Active' : 'Inactive' }}</span></td><td><div class="variant-actions"><button type="button" class="btn btn-outline-primary btn-sm" [attr.aria-label]="'Modifier la référence ' + (variant.label || variant.sku)" [disabled]="saving || loading" (click)="openVariantEditor(product, variant)">Modifier</button><button type="button" class="btn btn-outline-danger btn-sm" [attr.aria-label]="'Retirer la référence ' + (variant.label || variant.sku)" [disabled]="saving || loading" (click)="deleteVariant(variant.id)">Retirer</button></div></td></tr>
+                    }
+                  </tbody></table></div>
+                } @else { <p class="catalogue-empty">Aucune référence. Ajoutez une taille, une couleur ou un modèle pour permettre l’achat de ce produit.</p> }
+              </div>
+            </details>
+          } @empty {
+            <div class="catalogue-empty"><p>{{ products.length ? 'Aucun produit ne correspond aux filtres.' : 'Votre catalogue est encore vide.' }}</p>@if (products.length) { <button type="button" class="btn btn-outline-secondary btn-sm" (click)="catalogSearch = ''; catalogCategory = ''; catalogStatus = 'all'">Réinitialiser les filtres</button> } @else { <button type="button" class="btn btn-primary" (click)="openProductEditor()">Créer le premier produit</button> }</div>
+          }
+        </div>
+      </section>
 
-    <section class="management-section">
-      <h2>Nouveau produit</h2>
-      <form class="management-form" #productForm="ngForm" (ngSubmit)="createProduct()">
-        <input class="form-control" name="newProductName" required placeholder="Nom du produit" [(ngModel)]="newProduct.name">
-        <input class="form-control" name="newProductSlug" required placeholder="Slug" [(ngModel)]="newProduct.slug">
-        <div class="image-upload form-wide"><label class="btn btn-outline-secondary" for="newProductImage">Importer l’image principale</label><input id="newProductImage" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/gif,image/webp" [disabled]="saving || !!imageCrop" (change)="onNewProductImageSelected($event)"><small>PNG, JPEG, GIF ou WebP. Recadrez l’image après l’import ; sa taille et sa qualité seront adaptées automatiquement.</small>@if (newProductImagePreview) { <div class="image-preview"><img [src]="newProductImagePreview" alt="Aperçu de l’image du nouveau produit"><button type="button" class="btn btn-sm btn-outline-danger" (click)="removeNewProductImage()">Retirer l’image</button></div> }</div>
-        <fieldset class="additional-images form-wide">
-          <legend>Images supplémentaires (2 maximum)</legend>
-          <p class="text-body-secondary">Elles apparaîtront sous l’image principale dans la fiche produit.</p>
-          <div class="additional-image-slots">
-            @for (index of additionalImageSlots; track index) {
-              <div class="image-upload">
-                <label [for]="'newAdditionalImage' + index" class="btn btn-outline-secondary">Image {{ index + 2 }}</label>
-                <input [id]="'newAdditionalImage' + index" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/gif,image/webp"
-                  [disabled]="saving || !!imageCrop" (change)="onAdditionalImageSelected(null, index, $event)">
-                @if (additionalImagePreview(null, index); as preview) {
-                  <div class="image-preview"><img [src]="preview" [alt]="'Aperçu de l’image ' + (index + 2)">
-                    <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="saving || !!imageCrop"
-                      (click)="removeAdditionalImage(null, index)">Retirer</button>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        </fieldset>
-        <input class="form-control" name="newProductOrder" type="number" min="0" placeholder="Ordre" [(ngModel)]="newProduct.displayOrder">
-        <textarea class="form-control form-wide" name="newProductDescription" rows="2" placeholder="Description" [(ngModel)]="newProduct.description"></textarea>
-        <fieldset class="category-picker form-wide"><legend>Catégories</legend>@for (category of categories; track category.id) { <label class="form-check"><input class="form-check-input" type="checkbox" [checked]="selectedCategoryIds.has(category.id)" (change)="toggleNewProductCategory(category.id, $any($event.target).checked)"> {{ category.name }}</label> }</fieldset>
-        <label class="form-check"><input class="form-check-input" name="newProductActive" type="checkbox" [(ngModel)]="newProduct.active"> Visible dans la boutique</label>
-        <button class="btn btn-primary" [disabled]="saving || !!imageCrop || productForm.invalid">Ajouter le produit</button>
-      </form>
-    </section>
-
-    <section class="management-section">
-      <h2>Produits</h2>
-      <div class="product-list">
-        @for (product of products; track product.id) {
-          <article class="product-card">
-            <form #productEditForm="ngForm" (ngSubmit)="updateProduct(product)">
-              <div class="product-card-header"><h3>{{ product.name || 'Nouveau produit' }}</h3><span [class.inactive]="!product.active" class="status">{{ product.active ? 'Visible' : 'Masqué' }}</span></div>
-              <div class="management-form">
-                <input class="form-control" [name]="'productName' + product.id" required placeholder="Nom" [(ngModel)]="product.name">
-                <input class="form-control" [name]="'productSlug' + product.id" required placeholder="Slug" [(ngModel)]="product.slug">
-                <div class="image-upload form-wide"><label class="btn btn-outline-secondary" [for]="'productImage' + product.id">Importer l’image principale</label><input [id]="'productImage' + product.id" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/gif,image/webp" [disabled]="saving || !!imageCrop" (change)="onProductImageSelected(product.id, $event)"><small>PNG, JPEG, GIF ou WebP. Recadrez l’image après l’import ; sa taille et sa qualité seront adaptées automatiquement.</small>@if (previewFor(product); as preview) { <div class="image-preview"><img [src]="preview" [alt]="'Aperçu de ' + product.name"><button type="button" class="btn btn-sm btn-outline-danger" (click)="removeProductImage(product)">Retirer l’image</button></div> }</div>
-                <fieldset class="additional-images form-wide">
-          <legend>Images supplémentaires (2 maximum)</legend>
-          <p class="text-body-secondary">Elles apparaîtront sous l’image principale dans la fiche produit.</p>
-          <div class="additional-image-slots">
-            @for (index of additionalImageSlots; track index) {
-              <div class="image-upload">
-                <label [for]="'additionalImage' + product.id + '-' + index" class="btn btn-outline-secondary">Image {{ index + 2 }}</label>
-                <input [id]="'additionalImage' + product.id + '-' + index" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/gif,image/webp"
-                  [disabled]="saving || !!imageCrop" (change)="onAdditionalImageSelected(product.id, index, $event)">
-                @if (additionalImagePreview(product, index); as preview) {
-                  <div class="image-preview"><img [src]="preview" [alt]="'Aperçu de l’image ' + (index + 2)">
-                    <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="saving || !!imageCrop"
-                      (click)="removeAdditionalImage(product, index)">Retirer</button>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        </fieldset>
-        <input class="form-control" [name]="'productOrder' + product.id" type="number" min="0" placeholder="Ordre" [(ngModel)]="product.displayOrder">
-                <textarea class="form-control form-wide" [name]="'productDescription' + product.id" rows="2" placeholder="Description" [(ngModel)]="product.description"></textarea>
-                <fieldset class="category-picker form-wide"><legend>Catégories</legend>@for (category of categories; track category.id) { <label class="form-check"><input class="form-check-input" type="checkbox" [checked]="isCategoryOnProduct(product, category.id)" (change)="toggleProductCategory(product, category, $any($event.target).checked)"> {{ category.name }}</label> }</fieldset>
-                <label class="form-check"><input class="form-check-input" [name]="'productActive' + product.id" type="checkbox" [(ngModel)]="product.active"> Visible dans la boutique</label>
-                <button class="btn btn-outline-primary" [disabled]="saving || !!imageCrop || productEditForm.invalid">Enregistrer</button>
-                <button type="button" class="btn btn-outline-danger" [disabled]="saving" (click)="deleteProduct(product)">Supprimer</button>
-              </div>
+      <details class="management-section category-panel">
+        <summary><span>Catégories <span class="order-count">{{ categories.length }}</span></span><span class="panel-chevron" aria-hidden="true">⌄</span></summary>
+        <p class="text-body-secondary">Organisez les produits et leur ordre d’affichage dans la boutique.</p>
+        <form class="management-form compact" #categoryForm="ngForm" (ngSubmit)="createCategory()">
+          <label>Nom<input class="form-control" name="newCategoryName" required [(ngModel)]="newCategory.name"></label>
+          <label>Identifiant d’URL<input class="form-control" name="newCategorySlug" required [(ngModel)]="newCategory.slug"></label>
+          <label>Ordre<input class="form-control" name="newCategoryOrder" type="number" min="0" [(ngModel)]="newCategory.displayOrder"></label>
+          <label class="form-check"><input class="form-check-input" name="newCategoryActive" type="checkbox" [(ngModel)]="newCategory.active"> Active</label>
+          <button class="btn btn-primary" [disabled]="saving || loading || categoryForm.invalid">Ajouter</button>
+        </form>
+        <div class="management-list">
+          @for (category of categories; track category.id) {
+            <form class="management-row" #categoryEditForm="ngForm" (ngSubmit)="updateCategory(category)">
+              <label>Nom<input class="form-control" [name]="'categoryName' + category.id" required [(ngModel)]="category.name"></label>
+              <label>Identifiant d’URL<input class="form-control" [name]="'categorySlug' + category.id" required [(ngModel)]="category.slug"></label>
+              <label>Ordre<input class="form-control" [name]="'categoryOrder' + category.id" type="number" min="0" [(ngModel)]="category.displayOrder"></label>
+              <label class="form-check"><input class="form-check-input" [name]="'categoryActive' + category.id" type="checkbox" [(ngModel)]="category.active"> Active</label>
+              <button class="btn btn-outline-primary btn-sm" [disabled]="saving || loading || categoryEditForm.invalid">Enregistrer</button>
+              <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="saving || loading" (click)="deleteCategory(category)">Retirer</button>
             </form>
-
-            <section class="variants"><h4>Variantes</h4>
-              @for (variant of product.variants; track variant.id) {
-                <form class="variant-row" #variantForm="ngForm" (ngSubmit)="updateVariant(variant)">
-                  <div class="image-upload variant-image-upload">
-                    <label [for]="variantImageKey(variant.id)" class="btn btn-sm btn-outline-secondary">Image de la variante (optionnelle)</label>
-                    <input [id]="variantImageKey(variant.id)" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/gif,image/webp"
-                      [disabled]="saving || !!imageCrop" (change)="onVariantImageSelected(variantImageKey(variant.id), $event)">
-                    @if (variantImagePreview(variantImageKey(variant.id), variant); as preview) {
-                      <div class="image-preview"><img [src]="preview" alt="Aperçu de la variante">
-                        <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="saving || !!imageCrop"
-                          (click)="removeVariantImage(variantImageKey(variant.id), variant)">Retirer l’image</button>
-                      </div>
-                    }
-                  </div>
-                  <input class="form-control" [name]="'variantSku' + variant.id" required placeholder="SKU" [(ngModel)]="variant.sku">
-                  <input class="form-control" [name]="'variantLabel' + variant.id" placeholder="Libellé" [(ngModel)]="variant.label">
-                  <input class="form-control" [name]="'variantPrice' + variant.id" type="number" min="0" placeholder="Prix (centimes)" [(ngModel)]="variant.priceAmountInCents">
-                  <input class="form-control currency" [name]="'variantCurrency' + variant.id" required maxlength="3" placeholder="EUR" [(ngModel)]="variant.currency">
-                  <input class="form-control" [name]="'variantOrder' + variant.id" type="number" min="0" placeholder="Ordre" [(ngModel)]="variant.displayOrder">
-                  <label class="form-check"><input class="form-check-input" [name]="'variantActive' + variant.id" type="checkbox" [(ngModel)]="variant.active"> Active</label>
-                  @if (variant.stockTracked) { <small>En stock : {{ variant.stockOnHand }} · Réservé : {{ variant.stockReserved }}</small> }
-                  <button class="btn btn-outline-primary btn-sm" [disabled]="saving || !!imageCrop || variantForm.invalid">Enregistrer</button>
-                  <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="saving" (click)="deleteVariant(variant.id)">Retirer</button>
-                </form>
-              }
-              <form class="variant-row new-variant" #newVariantForm="ngForm" (ngSubmit)="createVariant(product)">
-                <div class="image-upload variant-image-upload">
-                    <label [for]="newVariantImageKey(product.id)" class="btn btn-sm btn-outline-secondary">Image de la variante (optionnelle)</label>
-                    <input [id]="newVariantImageKey(product.id)" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/gif,image/webp"
-                      [disabled]="saving || !!imageCrop" (change)="onVariantImageSelected(newVariantImageKey(product.id), $event)">
-                    @if (variantImagePreview(newVariantImageKey(product.id), draftFor(product.id)); as preview) {
-                      <div class="image-preview"><img [src]="preview" alt="Aperçu de la variante">
-                        <button type="button" class="btn btn-sm btn-outline-danger" [disabled]="saving || !!imageCrop"
-                          (click)="removeVariantImage(newVariantImageKey(product.id), draftFor(product.id))">Retirer l’image</button>
-                      </div>
-                    }
-                  </div>
-                  <input class="form-control" [name]="'newVariantSku' + product.id" required placeholder="SKU" [(ngModel)]="draftFor(product.id).sku">
-                <input class="form-control" [name]="'newVariantLabel' + product.id" placeholder="Libellé" [(ngModel)]="draftFor(product.id).label">
-                <input class="form-control" [name]="'newVariantPrice' + product.id" type="number" min="0" placeholder="Prix (centimes)" [(ngModel)]="draftFor(product.id).priceAmountInCents">
-                <input class="form-control currency" [name]="'newVariantCurrency' + product.id" required maxlength="3" [(ngModel)]="draftFor(product.id).currency">
-                <input class="form-control" [name]="'newVariantOrder' + product.id" type="number" min="0" placeholder="Ordre" [(ngModel)]="draftFor(product.id).displayOrder">
-                <label class="form-check"><input class="form-check-input" [name]="'newVariantActive' + product.id" type="checkbox" [(ngModel)]="draftFor(product.id).active"> Active</label>
-                <button class="btn btn-primary btn-sm" [disabled]="saving || !!imageCrop || newVariantForm.invalid">Ajouter une variante</button>
-                <small>Stock initial : 0. Ajoutez du stock dans Gestion du stock.</small>
-              </form>
-            </section>
-          </article>
-        } @empty { <p class="text-body-secondary">Aucun produit. Créez le premier produit ci-dessus.</p> }
-      </div>
-    </section>
-  }
+          } @empty { <p class="text-body-secondary mb-0">Aucune catégorie.</p> }
+        </div>
+      </details>
+    }
   </div>
 </main>
+
+<dialog #catalogDialog class="catalog-dialog" aria-labelledby="catalog-dialog-title" (cancel)="cancelEditor($event)">
+  @if (editor) {
+    <header class="editor-header"><div><p class="shop-eyebrow">Catalogue</p><h2 id="catalog-dialog-title">{{ editor === 'product' ? (editingProduct ? 'Modifier le produit' : 'Nouveau produit') : (variantEditor?.existing ? 'Modifier la référence' : 'Nouvelle référence') }}</h2>@if (variantEditor) { <p>{{ variantEditor.product.name }}</p> }</div><button type="button" class="editor-close" aria-label="Fermer sans enregistrer" [disabled]="saving || !!imageCrop" (click)="cancelEditor()">×</button></header>
+    @if (error) { <div class="alert alert-danger" role="alert">{{ error }}@if (catalogConflict) { <p class="mb-0">Fermez cette fenêtre puis actualisez le catalogue avant de réessayer.</p> }</div> }
+    @if (imageUploadError) { <div class="alert alert-danger" role="alert">{{ imageUploadError }}</div> }
+    @if (editor === 'product') {
+      <form #productEditorForm="ngForm" (ngSubmit)="saveProductEditor()">
+        <fieldset class="editor-fields" [disabled]="saving || !!imageCrop">
+          <div class="editor-grid">
+            <label class="form-wide" for="editor-product-name">Nom du produit<input id="editor-product-name" class="form-control" name="productName" required autofocus [(ngModel)]="productDraft.name"></label>
+            <label for="editor-product-slug">Identifiant d’URL<input id="editor-product-slug" class="form-control" name="productSlug" required aria-describedby="product-slug-help" [(ngModel)]="productDraft.slug"><small id="product-slug-help">Identifiant dans l’adresse du produit, ex. t-shirt-club.</small></label>
+            <label for="editor-product-order">Ordre d’affichage<input id="editor-product-order" class="form-control" name="productOrder" type="number" min="0" required [(ngModel)]="productDraft.displayOrder"></label>
+            <label class="form-wide" for="editor-product-description">Description<textarea id="editor-product-description" class="form-control" name="productDescription" rows="3" [(ngModel)]="productDraft.description"></textarea></label>
+            <fieldset class="category-picker form-wide"><legend>Catégories</legend>@for (category of categories; track category.id) { <label class="form-check"><input class="form-check-input" type="checkbox" [checked]="editingProduct ? isCategoryOnProduct(editingProduct, category.id) : selectedCategoryIds.has(category.id)" (change)="toggleEditorCategory(category, $any($event.target).checked)"> {{ category.name }}</label> } @empty { <small>Vous pourrez créer des catégories depuis le catalogue.</small> }</fieldset>
+            <label class="form-check form-wide"><input class="form-check-input" name="productActive" type="checkbox" [(ngModel)]="productDraft.active"> Visible dans la boutique</label>
+          </div>
+          <details class="editor-images" open><summary>Images du produit <span class="panel-chevron" aria-hidden="true">⌄</span></summary>
+            <p class="form-text">PNG, JPEG, GIF ou WebP. Recadrez l’image après l’import ; sa taille et sa qualité seront adaptées automatiquement.</p>
+            <div class="image-upload"><label class="btn btn-outline-secondary" for="newProductImage">Importer l’image principale</label><input id="newProductImage" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/gif,image/webp" [disabled]="saving || !!imageCrop" (change)="editingProduct ? onProductImageSelected(editingProduct.id, $event) : onNewProductImageSelected($event)">@if (editingProduct ? previewFor(editingProduct) : newProductImagePreview; as preview) { <div class="image-preview"><img [src]="preview" alt="Aperçu de l’image principale"><button type="button" class="btn btn-sm btn-outline-danger" (click)="editingProduct ? removeProductImage(editingProduct) : removeNewProductImage()">Retirer l’image</button></div> }</div>
+            <p class="form-text">Images supplémentaires (2 maximum), affichées dans la fiche produit.</p>
+            <div class="additional-image-slots">@for (index of additionalImageSlots; track index) { <div class="image-upload"><label [for]="'editorAdditionalImage' + index" class="btn btn-outline-secondary">Importer l’image {{ index + 2 }}</label><input [id]="'editorAdditionalImage' + index" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/gif,image/webp" (change)="onAdditionalImageSelected(editingProduct?.id ?? null, index, $event)">@if (additionalImagePreview(editingProduct, index); as preview) { <div class="image-preview"><img [src]="preview" [alt]="'Aperçu de l’image ' + (index + 2)"><button type="button" class="btn btn-sm btn-outline-danger" (click)="removeAdditionalImage(editingProduct, index)">Retirer</button></div> }</div> }</div>
+          </details>
+          @if (!editingProduct) { <p class="editor-note">Une fois le produit créé, dépliez-le pour ajouter ses références et leurs prix.</p> }
+        </fieldset>
+        <footer class="editor-footer"><button type="button" class="btn btn-outline-secondary" [disabled]="saving || !!imageCrop" (click)="cancelEditor()">Annuler</button><button class="btn btn-primary" [disabled]="saving || !!imageCrop || productEditorForm.invalid">{{ saving ? 'Enregistrement…' : (editingProduct ? 'Enregistrer les modifications' : 'Créer le produit') }}</button></footer>
+      </form>
+    }
+    @if (editor === 'variant' && variantEditor; as current) {
+      <form class="new-variant" #variantEditorForm="ngForm" (ngSubmit)="saveVariantEditor()">
+        <fieldset class="editor-fields" [disabled]="saving || !!imageCrop"><div class="editor-grid">
+          <label for="editor-variant-label">Libellé<input id="editor-variant-label" class="form-control" name="variantLabel" autofocus placeholder="Ex. Taille M · Bleu" [(ngModel)]="current.draft.label"></label>
+          <label for="editor-variant-sku">Code<input id="editor-variant-sku" class="form-control" name="variantSku" required placeholder="Ex. TS-BLEU-M" [(ngModel)]="current.draft.sku"></label>
+          <label for="editor-variant-price">Prix ({{ current.draft.currency }})<input id="editor-variant-price" class="form-control" name="variantPrice" type="number" min="0" step="0.01" required [ngModel]="current.draft.priceAmountInCents / 100" (ngModelChange)="setVariantEditorPrice($event)"></label>
+          <label for="editor-variant-currency">Devise<input id="editor-variant-currency" class="form-control currency" name="variantCurrency" required pattern="[a-zA-Z]{3}" maxlength="3" [(ngModel)]="current.draft.currency"></label>
+          <label for="editor-variant-order">Ordre d’affichage<input id="editor-variant-order" class="form-control" name="variantOrder" type="number" min="0" required [(ngModel)]="current.draft.displayOrder"></label>
+          <label class="form-check"><input class="form-check-input" name="variantActive" type="checkbox" [(ngModel)]="current.draft.active"> Référence active</label>
+          <div class="image-upload form-wide"><label [for]="variantEditorImageKey" class="btn btn-outline-secondary">Importer une image de la référence</label><input [id]="variantEditorImageKey" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/gif,image/webp" (change)="onVariantImageSelected(variantEditorImageKey, $event)"><small>Facultatif. Sans image, celle du produit est utilisée.</small>@if (variantImagePreview(variantEditorImageKey, current.draft); as preview) { <div class="image-preview"><img [src]="preview" alt="Aperçu de la référence"><button type="button" class="btn btn-sm btn-outline-danger" (click)="removeVariantImage(variantEditorImageKey, current.draft)">Retirer l’image</button></div> }</div>
+        </div><p class="editor-note">@if (current.existing) { En stock : {{ current.existing.stockOnHand }} · Réservé : {{ current.existing.stockReserved }}. } @else { Stock initial : 0. } Gérez les quantités dans l’onglet Gestion du stock.</p></fieldset>
+        <footer class="editor-footer"><button type="button" class="btn btn-outline-secondary" [disabled]="saving || !!imageCrop" (click)="cancelEditor()">Annuler</button><button class="btn btn-primary" [disabled]="saving || !!imageCrop || variantEditorForm.invalid">{{ saving ? 'Enregistrement…' : (current.existing ? 'Enregistrer les modifications' : 'Créer la référence') }}</button></footer>
+      </form>
+    }
+  }
+</dialog>
 @if (imageCrop; as crop) {
-  <app-shop-image-cropper [file]="crop.file"
-    (cropped)="applyImageCrop($event)" (cancelled)="imageCrop = null"></app-shop-image-cropper>
+  <app-shop-image-cropper [file]="crop.file" (cropped)="applyImageCrop($event)" (cancelled)="imageCrop = null"></app-shop-image-cropper>
 }

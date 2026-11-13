@@ -44,27 +44,39 @@ describe('ShopCartLinkComponent', () => {
     expect(fixture.nativeElement.querySelector('a').getAttribute('href')).toBe('/boutique');
   });
 
-  it('affiche l’alerte lorsqu’une commande attend son paiement', () => {
-    api.orders.and.returnValue(of([{ status: 'PENDING_PAYMENT' } as ShopOrderDto]));
+  it('compte uniquement les commandes en attente de paiement', () => {
+    api.orders.and.returnValue(of([
+      { status: 'PENDING_PAYMENT' } as ShopOrderDto,
+      { status: 'PAID' } as ShopOrderDto,
+      { status: 'PENDING_PAYMENT' } as ShopOrderDto
+    ]));
     create('orders');
 
-    expect(fixture.nativeElement.querySelector('.shop-action-alert')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('a').getAttribute('aria-label')).toContain('action est en attente');
+    expect(fixture.nativeElement.querySelector('.shop-cart-badge').textContent.trim()).toBe('2');
+    expect(fixture.nativeElement.querySelector('a').getAttribute('aria-label')).toBe('Mes commandes : 2 commandes en attente');
+    expect(fixture.nativeElement.querySelector('.shop-action-alert')).toBeNull();
   });
 
-  it('affiche l’alerte lorsqu’un panier contient des articles', () => {
+  it('affiche le compteur sans alerte lorsqu’un panier contient des articles', () => {
     api.orders.and.returnValue(of([]));
     itemCount.set(2);
     create('cart');
 
-    expect(fixture.nativeElement.querySelector('.shop-action-alert')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.shop-cart-badge').textContent.trim()).toBe('2');
+    expect(fixture.nativeElement.querySelector('.shop-action-alert')).toBeNull();
   });
 
-  it('conserve l’alerte globale de la boutique pour une commande à régler', () => {
+  it('affiche le compteur des commandes à régler sur le bouton Boutique du menu', () => {
     api.orders.and.returnValue(of([{ status: 'PENDING_PAYMENT' } as ShopOrderDto]));
+    itemCount.set(3);
     create('shop');
+    fixture.componentRef.setInput('navigation', true);
+    fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('.shop-action-alert')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.shop-action-alert')).toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('.shop-cart-badge').length).toBe(1);
+    expect(fixture.nativeElement.querySelector('.shop-cart-badge').textContent.trim()).toBe('1');
+    expect(fixture.nativeElement.querySelector('a').getAttribute('aria-label')).toBe('Boutique : 1 commande en attente');
   });
 
   it('n’affiche pas d’alerte en l’absence d’action à effectuer', () => {
@@ -84,6 +96,7 @@ describe('ShopCartLinkComponent', () => {
     orders.next([{ status: 'CANCELLED' } as ShopOrderDto]);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('a').getAttribute('href')).toBe('/boutique/commandes');
+    expect(fixture.nativeElement.querySelector('.shop-cart-badge')).toBeNull();
     expect(fixture.nativeElement.querySelector('.shop-action-alert')).toBeNull();
   });
 

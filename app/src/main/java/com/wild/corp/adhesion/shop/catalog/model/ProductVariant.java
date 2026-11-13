@@ -74,7 +74,7 @@ public class ProductVariant extends AuditableEntity {
 
     public ProductVariant(Product product, String sku, String label, Money price, boolean active, int displayOrder) {
         this.product = Objects.requireNonNull(product, "Le produit est obligatoire");
-        this.sku = requireText(sku, "Le SKU est obligatoire");
+        this.sku = requireText(sku, "Le code est obligatoire");
         this.label = normalizeOptionalText(label);
         this.price = Objects.requireNonNull(price, "Le prix est obligatoire");
         this.active = active;
@@ -138,14 +138,14 @@ public class ProductVariant extends AuditableEntity {
     public void updateStockOnHand(long quantity, long expectedVersion) {
         requireVersion(expectedVersion);
         if (!stockTracked) {
-            throw new IllegalStateException("Le suivi du stock est désactivé pour cette variante");
+            throw new IllegalStateException("Le suivi du stock est désactivé pour cette référence");
         }
         stockOnHand = quantity;
     }
 
     public void receiveStock(int quantity) {
         if (!stockTracked || stockOnHand == null) {
-            throw new IllegalStateException("Le suivi du stock est désactivé pour cette variante");
+            throw new IllegalStateException("Le suivi du stock est désactivé pour cette référence");
         }
         if (quantity <= 0) {
             throw new IllegalArgumentException("La quantité reçue doit être positive");
@@ -155,7 +155,7 @@ public class ProductVariant extends AuditableEntity {
 
     public void requireVersion(long expectedVersion) {
         if (version != expectedVersion) {
-            throw new IllegalStateException("La variante a changé depuis son chargement. Actualisez la page avant de réessayer.");
+            throw new IllegalStateException("La référence a changé depuis son chargement. Actualisez la page avant de réessayer.");
         }
     }
 
@@ -175,7 +175,7 @@ public class ProductVariant extends AuditableEntity {
 
     public void updateDetails(String sku, String label, Money price, boolean active, int displayOrder,
                               boolean stockTracked) {
-        this.sku = requireText(sku, "Le SKU est obligatoire");
+        this.sku = requireText(sku, "Le code est obligatoire");
         this.label = normalizeOptionalText(label);
         this.price = Objects.requireNonNull(price, "Le prix est obligatoire");
         this.active = active;

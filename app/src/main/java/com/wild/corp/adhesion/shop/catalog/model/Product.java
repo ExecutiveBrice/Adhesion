@@ -75,7 +75,7 @@ public class Product extends AuditableEntity {
 
     public Product(String name, String slug, String description, boolean active, int displayOrder) {
         this.name = requireText(name, "Le nom du produit est obligatoire");
-        this.slug = requireText(slug, "Le slug du produit est obligatoire");
+        this.slug = requireText(slug, "L’identifiant d’URL du produit est obligatoire");
         this.description = description;
         this.active = active;
         setDisplayOrder(displayOrder);
@@ -86,9 +86,9 @@ public class Product extends AuditableEntity {
     }
 
     public void addVariant(ProductVariant variant) {
-        Objects.requireNonNull(variant, "La variante est obligatoire");
+        Objects.requireNonNull(variant, "La référence est obligatoire");
         if (variant.getProduct() != this) {
-            throw new IllegalArgumentException("La variante appartient à un autre produit");
+            throw new IllegalArgumentException("La référence appartient à un autre produit");
         }
         variants.add(variant);
     }
@@ -107,7 +107,7 @@ public class Product extends AuditableEntity {
 
     public void updateDetails(String name, String slug, String description, String imageUrl, int displayOrder) {
         this.name = requireText(name, "Le nom du produit est obligatoire");
-        this.slug = requireText(slug, "Le slug du produit est obligatoire");
+        this.slug = requireText(slug, "L’identifiant d’URL du produit est obligatoire");
         this.description = description;
         this.imageUrl = normalizeOptionalText(imageUrl);
         setDisplayOrder(displayOrder);

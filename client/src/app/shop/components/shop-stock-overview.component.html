@@ -2,7 +2,7 @@
   <div class="stock-heading">
     <div>
       <h2 id="stock-overview-title">Besoins et approvisionnements</h2>
-      <p>Une ligne par variante pour suivre les commandes adhérents et fournisseur.</p>
+      <p>Une ligne par référence pour suivre les commandes adhérents et fournisseur.</p>
     </div>
     <div class="stock-heading-actions">
       <button type="button" class="btn btn-primary btn-sm" (click)="openSupplierOrder()" [disabled]="loading || !loaded">Commande fournisseur</button>
@@ -26,12 +26,12 @@
     <p class="stock-explanation">« À commander » tient compte des commandes en attente de paiement et de celles déjà payées qui restent à remettre, du stock enregistré et des commandes fournisseur non reçues.</p>
 
     <div class="stock-toolbar">
-      <label class="stock-search">Rechercher un produit ou un SKU
-        <input class="form-control" type="search" name="stockSearch" [(ngModel)]="query" placeholder="Nom, variante ou référence">
+      <label class="stock-search">Rechercher un produit ou un code
+        <input class="form-control" type="search" name="stockSearch" [(ngModel)]="query" placeholder="Nom du produit, libellé ou code">
       </label>
       <label class="stock-filter">Afficher
         <select class="form-select" name="stockFilter" [(ngModel)]="filter">
-          <option value="all">Toutes les variantes</option>
+          <option value="all">Toutes les références</option>
           <option value="to-order">À commander</option>
           <option value="awaiting">En attente fournisseur</option>
           <option value="ready">Prêt à remettre</option>
@@ -39,14 +39,14 @@
           <option value="untracked">Stock non suivi</option>
         </select>
       </label>
-      <span class="stock-result-count" role="status">{{ filteredRows.length }} / {{ rows.length }} variantes</span>
+      <span class="stock-result-count" role="status">{{ filteredRows.length }} / {{ rows.length }} références</span>
     </div>
 
     @if (filteredRows.length) {
       <div class="stock-table-scroll" role="region" aria-label="Tableau de stock">
         <table class="stock-table">
           <thead><tr>
-            <th scope="col">Produit / variante</th>
+            <th scope="col">Produit / référence</th>
             <th scope="col">Commandes client</th>
             <th scope="col">À commander chez le fournisseur</th>
             <th scope="col">Commande fournisseur en cours</th>
@@ -57,8 +57,8 @@
               <tr class="stock-variant-row" [class.stock-out]="row.status === 'to-order'" [class.stock-watch]="row.status === 'awaiting'" [class.stock-row-expanded]="expandedVariantIds.has(row.variant.id)" (click)="onRowClick(row, $event)">
                 <th scope="row">
                   <div class="stock-product-name">{{ row.product.name }}</div>
-                  <div>{{ row.variant.label || 'Variante standard' }}</div>
-                  <small>SKU : {{ row.variant.sku }}</small>
+                  <div>{{ row.variant.label || 'Référence standard' }}</div>
+                  <small>Code : {{ row.variant.sku }}</small>
                   <span class="stock-badge" [class.out]="row.status === 'to-order'" [class.watch]="row.status === 'awaiting'" [class.inactive]="row.status === 'inactive'">{{ statusLabel(row.status) }}</span>
                   <button type="button" class="stock-row-toggle" [attr.aria-expanded]="expandedVariantIds.has(row.variant.id)" [attr.aria-controls]="'stock-history-' + row.variant.id" (click)="$event.stopPropagation(); toggleRow(row)">{{ expandedVariantIds.has(row.variant.id) ? 'Masquer les commandes' : 'Voir les commandes' }}</button>
                 </th>
@@ -86,7 +86,7 @@
                           </li>
                         }
                       </ol>
-                    } @else { <p class="stock-muted">Aucune commande pour cette variante.</p> }
+                    } @else { <p class="stock-muted">Aucune commande pour cette référence.</p> }
                   </td>
                 </tr>
               }
@@ -94,7 +94,7 @@
           </tbody>
         </table>
       </div>
-    } @else { <p class="stock-empty">Aucune variante ne correspond à la recherche ou au filtre.</p> }
+    } @else { <p class="stock-empty">Aucune référence ne correspond à la recherche ou au filtre.</p> }
 
     <section class="supplier-orders" aria-labelledby="supplier-orders-title">
       <h3 id="supplier-orders-title">Commandes fournisseur</h3>
@@ -163,11 +163,11 @@
     <div class="supplier-order-lines" role="region" aria-label="Lignes de commande fournisseur">
       @if (completionOrder) {
         <table>
-          <thead><tr><th>Produit / variante</th><th>Quantité commandée</th><th>Prix unitaire (€)</th></tr></thead>
+          <thead><tr><th>Produit / référence</th><th>Quantité commandée</th><th>Prix unitaire (€)</th></tr></thead>
           <tbody>
             @for (line of completionOrder.lines; track line.id) {
               <tr>
-                <th scope="row"><strong>{{ line.productName }}</strong><small>{{ line.variantName || 'Variante standard' }} · {{ line.sku }}</small></th>
+                <th scope="row"><strong>{{ line.productName }}</strong><small>{{ line.variantName || 'Référence standard' }} · {{ line.sku }}</small></th>
                 <td>{{ line.quantity }}</td>
                 <td>
                   <input class="form-control form-control-sm" type="number" min="0" step="0.01" [name]="'completion-cost-' + line.variantId" [value]="completionCostEuros(line.variantId)" (input)="setCompletionCost(line.variantId, $event)" [attr.aria-label]="'Prix unitaire pour ' + line.productName">
@@ -179,11 +179,11 @@
         </table>
       } @else {
         <table>
-          <thead><tr><th>Produit / variante</th><th>Besoin</th><th>Quantité</th></tr></thead>
+          <thead><tr><th>Produit / référence</th><th>Besoin</th><th>Quantité</th></tr></thead>
           <tbody>
             @for (row of purchaseRows; track row.variant.id) {
               <tr [class.supplier-order-line-selected]="validPurchaseQuantity(row.variant.id) > 0">
-                <th scope="row"><strong>{{ row.product.name }}</strong><small>{{ row.variant.label || 'Variante standard' }} · {{ row.variant.sku }}</small></th>
+                <th scope="row"><strong>{{ row.product.name }}</strong><small>{{ row.variant.label || 'Référence standard' }} · {{ row.variant.sku }}</small></th>
                 <td>{{ row.toOrder }}</td>
                 <td>
                   <input class="form-control form-control-sm" type="number" min="0" step="1" [name]="'purchase-count-' + row.variant.id" [value]="purchaseDrafts[row.variant.id] ?? ''" (input)="setPurchaseQuantity(row.variant.id, $event)" [attr.aria-label]="'Quantité pour ' + row.product.name">

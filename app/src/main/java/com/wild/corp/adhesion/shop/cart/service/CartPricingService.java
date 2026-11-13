@@ -44,7 +44,7 @@ public class CartPricingService {
         for (Map.Entry<Long, Integer> requested : quantities.entrySet()) {
             ProductVariant variant = variantsById.get(requested.getKey());
             if (variant == null) {
-                throw new NoSuchElementException("La variante " + requested.getKey() + " est introuvable");
+                throw new NoSuchElementException("La référence " + requested.getKey() + " est introuvable");
             }
             variant.ensureOrderable(requested.getValue());
             if (currency == null) {
@@ -72,7 +72,7 @@ public class CartPricingService {
         Map<Long, Integer> quantities = new LinkedHashMap<>();
         for (OrderItemRequest requestedItem : requestedItems) {
             if (requestedItem == null || requestedItem.variantId() == null) {
-                throw new IllegalArgumentException("La variante est obligatoire");
+                throw new IllegalArgumentException("La référence est obligatoire");
             }
             if (requestedItem.quantity() <= 0) {
                 throw new InvalidQuantityException(requestedItem.quantity());

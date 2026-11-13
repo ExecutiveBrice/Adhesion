@@ -1,4 +1,4 @@
-import { Component, OnDestroy, ViewChild, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnDestroy, ViewChild, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { forkJoin, map, Observable, of, switchMap, timeout } from 'rxjs';
@@ -12,7 +12,7 @@ import { ShopStockOverviewComponent } from '../components/shop-stock-overview.co
 import { ShopImageCropperComponent } from '../components/shop-image-cropper.component';
 import { registerApiViewRefresh } from '../../_services/api-render.service';
 import { buildOrderAvailability, ShopItemAvailability } from '../models/shop-order-availability';
-import { formatShopOrderStatus } from '../shop-format';
+import { formatShopMoney, formatShopOrderStatus } from '../shop-format';
 
 type VariantDraft = ShopAdminVariantCreateRequest;
 
@@ -26,6 +26,7 @@ export class ShopManagementComponent implements OnDestroy {
   @ViewChild(ShopStockOverviewComponent) stockOverview?: ShopStockOverviewComponent;
   private readonly apiViewRefresh = registerApiViewRefresh();
   private readonly api = inject(ShopAdminApiService);
+  private readonly changeDetector = inject(ChangeDetectorRef);
   products: ShopAdminProductDto[] = [];
   categories: ShopAdminCategoryDto[] = [];
   activeTab: 'stocks' | 'catalogue' | 'orders' = 'stocks';
@@ -52,6 +53,103 @@ export class ShopManagementComponent implements OnDestroy {
   newProductImagePreview: string | null = null;
   private readonly productImageFiles: Record<number, File | undefined> = {};
   readonly productImagePreviews: Record<number, string | undefined> = {};
+  @ViewChild('catalogDialog', { static: true }) private catalogDialog!: ElementRef<HTMLDialogElement>;
+  catalogSearch = '';
+  catalogStatus = 'all';
+  catalogCategory = '';
+  editor: 'product' | 'variant' | null = null;
+  editingProduct: ShopAdminProductDto | null = null;
+  variantEditor: { product: ShopAdminProductDto; draft: VariantDraft; existing: ShopAdminVariantDto | null } | null = null;
+
+  get productDraft(): Omit<ShopAdminProductRequest, 'categoryIds'> { return this.editingProduct ?? this.newProduct; }
+
+  get filteredProducts(): ShopAdminProductDto[] {
+    const query = this.catalogSearch.trim().toLocaleLowerCase('fr');
+    return this.products.filter(product =>
+      (this.catalogStatus === 'all' || product.active === (this.catalogStatus === 'visible')) &&
+      (!this.catalogCategory || product.categories.some(category => category.id === Number(this.catalogCategory))) &&
+      (!query || [product.name, product.slug, ...product.variants.flatMap(variant => [variant.sku, variant.label ?? ''])]
+        .some(value => value.toLocaleLowerCase('fr').includes(query))));
+  }
+
+  get visibleProductCount(): number { return this.products.filter(product => product.active).length; }
+
+  variantPrice(variant: ShopAdminVariantDto): string {
+    return formatShopMoney({ amountInCents: variant.priceAmountInCents, currency: variant.currency });
+  }
+
+  openProductEditor(product?: ShopAdminProductDto): void {
+    if (this.saving || this.editor) return;
+    this.editingProduct = product ? { ...product, categories: [...product.categories], additionalImageUrls: [...(product.additionalImageUrls ?? [])] } : null;
+    this.editor = 'product';
+    this.openEditor();
+  }
+
+  openVariantEditor(product: ShopAdminProductDto, variant?: ShopAdminVariantDto): void {
+    if (this.saving || this.editor) return;
+    const draft = variant ? { ...variant } : this.draftFor(product.id);
+    this.variantEditor = { product, draft, existing: variant ? draft as ShopAdminVariantDto : null };
+    this.editor = 'variant';
+    this.openEditor();
+  }
+
+  get variantEditorImageKey(): string {
+    const editor = this.variantEditor;
+    return editor ? (editor.existing ? this.variantImageKey(editor.existing.id) : this.newVariantImageKey(editor.product.id)) : '';
+  }
+
+  toggleEditorCategory(category: ShopAdminCategoryDto, selected: boolean): void {
+    if (this.editingProduct) this.toggleProductCategory(this.editingProduct, category, selected);
+    else this.toggleNewProductCategory(category.id, selected);
+  }
+
+  saveProductEditor(): void {
+    if (this.editingProduct) this.updateProduct(this.editingProduct);
+    else this.createProduct();
+  }
+
+  saveVariantEditor(): void {
+    if (!this.variantEditor) return;
+    if (this.variantEditor.existing) this.updateVariant(this.variantEditor.existing);
+    else this.createVariant(this.variantEditor.product);
+  }
+
+  setVariantEditorPrice(amount: number | null): void {
+    if (this.variantEditor) this.variantEditor.draft.priceAmountInCents = Math.round(Number(amount) * 100);
+  }
+
+  cancelEditor(event?: Event): void {
+    event?.preventDefault();
+    if (!this.saving && !this.imageCrop) this.closeEditor();
+  }
+
+  private openEditor(): void {
+    this.error = this.imageUploadError = this.message = '';
+    this.catalogConflict = false;
+    this.changeDetector.detectChanges();
+    this.catalogDialog.nativeElement.showModal();
+  }
+
+  private closeEditor(): void {
+    if (this.editingProduct) {
+      this.clearProductImage(this.editingProduct.id);
+      this.clearAdditionalImageDrafts(this.editingProduct.id);
+    } else if (this.editor === 'product') {
+      this.clearNewProductImage();
+      this.clearAdditionalImageDrafts(null);
+      this.selectedCategoryIds.clear();
+      this.newProduct = { name: '', slug: '', description: null, imageUrl: null, active: false, displayOrder: this.products.length, categoryIds: [] };
+    }
+    if (this.variantEditor) {
+      this.clearVariantImage(this.variantEditorImageKey);
+      delete this.variantDrafts[this.variantEditor.product.id];
+    }
+    this.catalogDialog?.nativeElement.close();
+    this.editor = null;
+    this.editingProduct = null;
+    this.variantEditor = null;
+    this.imageUploadError = '';
+  }
 
   newCategory: ShopAdminCategoryRequest = { name: '', slug: '', description: null, active: true, displayOrder: 0 };
   newProduct: ShopAdminProductRequest = {
@@ -59,6 +157,7 @@ export class ShopManagementComponent implements OnDestroy {
   };
 
   ngOnDestroy(): void {
+    this.catalogDialog?.nativeElement.close();
     this.revokePreview(this.newProductImagePreview);
     Object.values(this.productImagePreviews).forEach(preview => this.revokePreview(preview));
     this.additionalImageDrafts.forEach(draft => this.revokePreview(draft.preview));
@@ -157,6 +256,7 @@ export class ShopManagementComponent implements OnDestroy {
       this.clearAdditionalImageDrafts(null);
       this.selectedCategoryIds.clear();
       this.message = 'Produit ajouté.';
+      if (this.editor === 'product') this.closeEditor();
       this.load();
     });
   }
@@ -170,12 +270,13 @@ export class ShopManagementComponent implements OnDestroy {
       this.clearProductImage(product.id);
       this.clearAdditionalImageDrafts(product.id);
       this.message = 'Produit mis à jour.';
+      if (this.editor === 'product') this.closeEditor();
       this.load();
     });
   }
 
   deleteProduct(product: ShopAdminProductDto): void {
-    if (!window.confirm(`Supprimer définitivement « ${product.name} » et ses variantes ?`)) return;
+    if (!window.confirm(`Supprimer définitivement « ${product.name} » et ses références ?`)) return;
     this.run(this.api.deleteProduct(product.id), () => {
       this.clearProductImage(product.id);
       this.clearAdditionalImageDrafts(product.id);
@@ -199,7 +300,8 @@ export class ShopManagementComponent implements OnDestroy {
     ), () => {
       this.clearVariantImage(key);
       delete this.variantDrafts[product.id];
-      this.message = 'Variante ajoutée.';
+      this.message = 'Référence ajoutée.';
+      if (this.editor === 'variant') this.closeEditor();
       this.load();
     });
   }
@@ -214,16 +316,17 @@ export class ShopManagementComponent implements OnDestroy {
       switchMap(variantRequest => this.api.updateVariant(variant.id, variantRequest))
     ), () => {
       this.clearVariantImage(key);
-      this.message = 'Variante mise à jour.';
+      this.message = 'Référence mise à jour.';
+      if (this.editor === 'variant') this.closeEditor();
       this.load();
     });
   }
 
   deleteVariant(variantId: number): void {
-    if (!window.confirm('Retirer cette variante ?')) return;
+    if (!window.confirm('Retirer cette référence ?')) return;
     this.run(this.api.deleteVariant(variantId), () => {
       this.clearVariantImage(this.variantImageKey(variantId));
-      this.message = 'Variante retirée.';
+      this.message = 'Référence retirée.';
       this.load();
     });
   }

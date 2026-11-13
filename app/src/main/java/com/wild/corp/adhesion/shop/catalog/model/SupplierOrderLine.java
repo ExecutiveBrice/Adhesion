@@ -58,7 +58,7 @@ public class SupplierOrderLine {
             throw new IllegalArgumentException("La quantité commandée doit être positive");
         }
         this.order = Objects.requireNonNull(order);
-        this.variantId = Objects.requireNonNull(variant.getId(), "La variante doit être enregistrée");
+        this.variantId = Objects.requireNonNull(variant.getId(), "La référence doit être enregistrée");
         this.productName = variant.getProduct().getName();
         this.variantName = variant.getLabel();
         this.sku = variant.getSku();

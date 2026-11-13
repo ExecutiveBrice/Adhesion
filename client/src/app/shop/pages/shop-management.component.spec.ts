@@ -2,13 +2,157 @@ import { registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { ShopAdminOrderDto, ShopAdminProductDto } from '../models/shop.models';
 import { ShopAdminApiService } from '../services/shop-admin-api.service';
 import { ShopManagementComponent } from './shop-management.component';
+import { ApiRenderService } from '../../_services/api-render.service';
 
 describe('ShopManagementComponent', () => {
   beforeAll(() => registerLocaleData(localeFr));
+
+  function catalogueFixture() {
+    const category = { id: 3, name: 'Vêtements', slug: 'vetements', description: null, active: true, displayOrder: 0 };
+    const variant = { id: 11, sku: 'TS-M', label: 'Bleu M', imageUrl: '/variante.jpg', priceAmountInCents: 1500,
+      currency: 'EUR', active: true, displayOrder: 0, stockTracked: true, stockOnHand: 4, stockReserved: 1, version: 2 };
+    const product: ShopAdminProductDto = { id: 7, name: 'T-shirt', slug: 't-shirt', description: null,
+      imageUrl: '/main.jpg', additionalImageUrls: ['/detail.jpg'], active: true, displayOrder: 0,
+      categories: [category], variants: [variant] };
+    const api = jasmine.createSpyObj<ShopAdminApiService>('ShopAdminApiService',
+      ['products', 'orders', 'supplierOrders', 'categories', 'createProduct', 'updateProduct', 'createVariant', 'updateVariant']);
+    api.products.and.returnValue(of([product, { ...product, id: 8, name: 'Mug', slug: 'mug', active: false, categories: [], variants: [] }]));
+    api.orders.and.returnValue(of([]));
+    api.supplierOrders.and.returnValue(of([]));
+    api.categories.and.returnValue(of([category]));
+    api.createProduct.and.returnValue(of(product));
+    api.updateProduct.and.returnValue(of(product));
+    api.createVariant.and.returnValue(of(variant));
+    api.updateVariant.and.returnValue(of(variant));
+    TestBed.configureTestingModule({ imports: [ShopManagementComponent],
+      providers: [provideRouter([]), { provide: ShopAdminApiService, useValue: api }] });
+    const fixture = TestBed.createComponent(ShopManagementComponent);
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('#catalogue-tab') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    return { fixture, component: fixture.componentInstance, api, product, variant, category };
+  }
+
+  it('affiche des produits repliés et combine recherche de référence, catégorie et visibilité', async () => {
+    const { fixture, component } = catalogueFixture();
+    const panels = fixture.nativeElement.querySelectorAll('.product-panel') as NodeListOf<HTMLDetailsElement>;
+    expect(panels.length).toBe(2);
+    expect(panels[0].open).toBeFalse();
+    (panels[0].querySelector('summary') as HTMLElement).click();
+    expect(panels[0].open).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.category-panel').open).toBeFalse();
+    const search = fixture.nativeElement.querySelector('#catalogue-search') as HTMLInputElement;
+    search.value = ' ts-m ';
+    search.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.product-panel').length).toBe(1);
+    component.catalogCategory = '3';
+    component.catalogStatus = 'hidden';
+    TestBed.inject(ApiRenderService).notify();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.product-panel').length).toBe(0);
+    expect(fixture.nativeElement.textContent).toContain('Aucun produit ne correspond');
+    component.catalogStatus = 'visible';
+    expect(component.filteredProducts.map(product => product.id)).toEqual([7]);
+    fixture.destroy();
+  });
+
+  it('annule les changements du produit, des catégories et des images sans modifier le catalogue', () => {
+    const { fixture, component, api, product, category } = catalogueFixture();
+    component.openProductEditor(product);
+    const dialog = fixture.nativeElement.querySelector('.catalog-dialog') as HTMLDialogElement;
+    expect(dialog.matches(':modal')).toBeTrue();
+    component.editingProduct!.name = 'Nom abandonné';
+    component.toggleEditorCategory(category, false);
+    component.removeProductImage(component.editingProduct!);
+    component.removeAdditionalImage(component.editingProduct, 0);
+    const cancel = new Event('cancel', { cancelable: true });
+    dialog.dispatchEvent(cancel);
+    fixture.detectChanges();
+    expect(cancel.defaultPrevented).toBeTrue();
+    expect(dialog.open).toBeFalse();
+    expect(product.name).toBe('T-shirt');
+    expect(product.categories).toEqual([category]);
+    expect(product.imageUrl).toBe('/main.jpg');
+    expect(product.additionalImageUrls).toEqual(['/detail.jpg']);
+    expect(api.updateProduct).not.toHaveBeenCalled();
+    component.openProductEditor(product);
+    expect(component.editingProduct!.name).toBe('T-shirt');
+    fixture.destroy();
+  });
+
+  it('nettoie les images et les champs du nouveau produit à l’annulation', () => {
+    const { fixture, component, api, category } = catalogueFixture();
+    component.openProductEditor();
+    component.newProduct.name = 'Brouillon';
+    component.toggleEditorCategory(category, true);
+    const file = new File(['photo'], 'photo.jpg', { type: 'image/jpeg' });
+    component.onNewProductImageSelected(imageSelection(file));
+    component.applyImageCrop(file);
+    const preview = component.newProductImagePreview!;
+    const revoke = spyOn(URL, 'revokeObjectURL');
+    component.cancelEditor();
+    expect(revoke).toHaveBeenCalledWith(preview);
+    expect(api.createProduct).not.toHaveBeenCalled();
+    component.openProductEditor();
+    expect(component.newProduct.name).toBe('');
+    expect(component.newProduct.categoryIds).toEqual([]);
+    expect(component.selectedCategoryIds.size).toBe(0);
+    expect(component.newProductImagePreview).toBeNull();
+    fixture.destroy();
+  });
+
+  it('enregistre le prix saisi en euros et la version de la variante sans modifier la liste avant succès', async () => {
+    const { fixture, component, api, product, variant } = catalogueFixture();
+    const response = new Subject<typeof variant>();
+    api.updateVariant.and.returnValue(response);
+    component.openVariantEditor(product, variant);
+    await fixture.whenStable();
+    const price = fixture.nativeElement.querySelector('#editor-variant-price') as HTMLInputElement;
+    expect(price.value).toBe('15');
+    price.value = '19.99';
+    price.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.catalog-dialog form') as HTMLFormElement).dispatchEvent(new Event('submit', { cancelable: true }));
+    fixture.detectChanges();
+    expect(api.updateVariant).toHaveBeenCalledWith(11, jasmine.objectContaining({ priceAmountInCents: 1999, expectedVersion: 2, stockTracked: true }));
+    expect(variant.priceAmountInCents).toBe(1500);
+    component.cancelEditor();
+    expect(component.editor).toBe('variant');
+    response.next({ ...variant, priceAmountInCents: 1999 });
+    response.complete();
+    TestBed.inject(ApiRenderService).notify();
+    fixture.detectChanges();
+    expect(component.editor).toBeNull();
+    expect(fixture.nativeElement.querySelector('.catalog-dialog').open).toBeFalse();
+    fixture.destroy();
+  });
+
+  it('conserve le brouillon en cas de conflit et annule ensuite sans modifier la variante', () => {
+    const { fixture, component, api, product, variant } = catalogueFixture();
+    const response = new Subject<typeof variant>();
+    api.updateVariant.and.returnValue(response);
+    component.openVariantEditor(product, variant);
+    component.variantEditor!.draft.label = 'Libellé en cours';
+    component.removeVariantImage(component.variantEditorImageKey, component.variantEditor!.draft);
+    component.saveVariantEditor();
+    response.error({ status: 409, error: { detail: 'La variante a été modifiée.' } });
+    TestBed.inject(ApiRenderService).notify();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.catalog-dialog').matches(':modal')).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.catalog-dialog [role="alert"]').textContent).toContain('La variante a été modifiée.');
+    expect(component.variantEditor!.draft.label).toBe('Libellé en cours');
+    component.cancelEditor();
+    expect(variant.label).toBe('Bleu M');
+    expect(variant.imageUrl).toBe('/variante.jpg');
+    fixture.destroy();
+  });
 
   function imageSelection(file: File): Event {
     const input = document.createElement('input');
@@ -174,9 +318,10 @@ describe('ShopManagementComponent', () => {
   });
 
   it('ouvre le tableau de stock et charge le catalogue à la demande', () => {
-    const api = jasmine.createSpyObj<ShopAdminApiService>('ShopAdminApiService', ['products', 'orders', 'categories']);
+    const api = jasmine.createSpyObj<ShopAdminApiService>('ShopAdminApiService', ['products', 'orders', 'supplierOrders', 'categories']);
     api.products.and.returnValue(of([]));
     api.orders.and.returnValue(of([]));
+    api.supplierOrders.and.returnValue(of([]));
     api.categories.and.returnValue(of([]));
     TestBed.configureTestingModule({
       imports: [ShopManagementComponent],
@@ -198,9 +343,10 @@ describe('ShopManagementComponent', () => {
   });
 
   it('ouvre le recadrage depuis le formulaire et ferme la fenêtre à l’annulation', () => {
-    const api = jasmine.createSpyObj<ShopAdminApiService>('ShopAdminApiService', ['products', 'orders', 'categories']);
+    const api = jasmine.createSpyObj<ShopAdminApiService>('ShopAdminApiService', ['products', 'orders', 'supplierOrders', 'categories']);
     api.products.and.returnValue(of([]));
     api.orders.and.returnValue(of([]));
+    api.supplierOrders.and.returnValue(of([]));
     api.categories.and.returnValue(of([]));
     TestBed.configureTestingModule({
       imports: [ShopManagementComponent],
@@ -210,6 +356,7 @@ describe('ShopManagementComponent', () => {
     fixture.detectChanges();
     const component = fixture.componentInstance;
     component.selectTab('catalogue');
+    component.openProductEditor();
     component.newProduct.name = 'T-shirt';
     component.newProduct.slug = 't-shirt';
     fixture.detectChanges();
@@ -220,7 +367,7 @@ describe('ShopManagementComponent', () => {
     input.files = transfer.files;
     input.dispatchEvent(new Event('change'));
     fixture.detectChanges();
-    const dialog = fixture.nativeElement.querySelector('dialog') as HTMLDialogElement;
+    const dialog = fixture.nativeElement.querySelector('app-shop-image-cropper dialog') as HTMLDialogElement;
     expect(dialog.matches(':modal')).toBeTrue();
     expect(input.disabled).toBeTrue();
     expect(input.value).toBe('');
@@ -228,7 +375,8 @@ describe('ShopManagementComponent', () => {
     (dialog.querySelector('.btn-outline-secondary') as HTMLButtonElement).click();
     fixture.detectChanges();
     expect(component.imageCrop).toBeNull();
-    expect(fixture.nativeElement.querySelector('dialog')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-shop-image-cropper dialog')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.catalog-dialog').matches(':modal')).toBeTrue();
     expect(input.disabled).toBeFalse();
     expect(component.newProductImagePreview).toBeNull();
     fixture.destroy();
@@ -243,9 +391,10 @@ describe('ShopManagementComponent', () => {
       }]
     };
     const api = jasmine.createSpyObj<ShopAdminApiService>('ShopAdminApiService',
-      ['products', 'orders', 'categories', 'createVariant']);
+      ['products', 'orders', 'supplierOrders', 'categories', 'createVariant']);
     api.products.and.returnValue(of([product]));
     api.orders.and.returnValue(of([]));
+    api.supplierOrders.and.returnValue(of([]));
     api.categories.and.returnValue(of([]));
     api.createVariant.and.returnValue(of({
       id: 42, sku: 'TS-M', label: 'M', priceAmountInCents: 1500, currency: 'EUR',
@@ -258,6 +407,7 @@ describe('ShopManagementComponent', () => {
     const fixture = TestBed.createComponent(ShopManagementComponent);
     fixture.detectChanges();
     fixture.componentInstance.selectTab('catalogue');
+    fixture.componentInstance.openVariantEditor(product);
     fixture.detectChanges();
 
     const form = fixture.nativeElement.querySelector('.new-variant') as HTMLFormElement;

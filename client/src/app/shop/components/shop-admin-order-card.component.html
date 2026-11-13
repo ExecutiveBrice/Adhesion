@@ -56,7 +56,7 @@
           <div class="item-description">
             <strong>{{ item.productName }}</strong>
             @if (item.variantName) { <span>{{ item.variantName }}</span> }
-            @if (item.sku) { <small>Référence : {{ item.sku }}</small> }
+            @if (item.sku) { <small>Code : {{ item.sku }}</small> }
           </div>
           <div class="item-pricing"><span>{{ item.quantity }} × {{ item.unitPrice.amountInCents / 100 | currency:item.unitPrice.currency:'symbol':'1.2-2':'fr-FR' }}</span><strong>{{ item.lineTotal.amountInCents / 100 | currency:item.lineTotal.currency:'symbol':'1.2-2':'fr-FR' }}</strong></div>
           <div class="item-status-control">

@@ -39,23 +39,23 @@ public class SupplierOrderService {
 
     public SupplierOrder create(String supplierName, String reference, List<Line> lines) {
         if (lines == null || lines.isEmpty()) {
-            throw new IllegalArgumentException("Une commande fournisseur doit contenir au moins une variante");
+            throw new IllegalArgumentException("Une commande fournisseur doit contenir au moins une référence");
         }
         Set<Long> seen = new HashSet<>();
         for (Line line : lines) {
             if (line == null || line.variantId() == null || line.quantity() <= 0) {
-                throw new IllegalArgumentException("Chaque ligne doit contenir une variante et une quantité positive");
+                throw new IllegalArgumentException("Chaque ligne doit contenir une référence et une quantité positive");
             }
             if (!seen.add(line.variantId())) {
-                throw new IllegalArgumentException("Une variante ne peut figurer qu’une fois dans la commande fournisseur");
+                throw new IllegalArgumentException("Une référence ne peut figurer qu’une fois dans la commande fournisseur");
             }
         }
         SupplierOrder order = new SupplierOrder(supplierName, reference);
         lines.stream().sorted(Comparator.comparing(Line::variantId)).forEach(line -> {
             ProductVariant variant = variantRepository.findByIdForUpdate(line.variantId())
-                    .orElseThrow(() -> new NoSuchElementException("Variante introuvable : " + line.variantId()));
+                    .orElseThrow(() -> new NoSuchElementException("Référence introuvable : " + line.variantId()));
             if (!variant.isStockTracked()) {
-                throw new IllegalArgumentException("Le stock de la variante " + line.variantId() + " n’est pas suivi");
+                throw new IllegalArgumentException("Le stock de la référence " + line.variantId() + " n’est pas suivi");
             }
             order.addLine(variant, line.quantity());
         });
@@ -87,7 +87,7 @@ public class SupplierOrderService {
         var lockedVariants = new java.util.HashMap<Long, ProductVariant>();
         for (var line : lines) {
             ProductVariant variant = variantRepository.findByIdForUpdate(line.getVariantId())
-                    .orElseThrow(() -> new NoSuchElementException("Variante introuvable : " + line.getVariantId()));
+                    .orElseThrow(() -> new NoSuchElementException("Référence introuvable : " + line.getVariantId()));
             lockedVariants.put(line.getVariantId(), variant);
         }
         var incoming = outstandingSupplierQuantities();
@@ -108,9 +108,9 @@ public class SupplierOrderService {
         var variants = new java.util.HashMap<Long, ProductVariant>();
         lines.stream().sorted(Comparator.comparing(Line::variantId)).forEach(line -> {
             ProductVariant variant = variantRepository.findByIdForUpdate(line.variantId())
-                    .orElseThrow(() -> new NoSuchElementException("Variante introuvable : " + line.variantId()));
+                    .orElseThrow(() -> new NoSuchElementException("Référence introuvable : " + line.variantId()));
             if (!variant.isStockTracked()) {
-                throw new IllegalArgumentException("Le stock de la variante " + line.variantId() + " n’est pas suivi");
+                throw new IllegalArgumentException("Le stock de la référence " + line.variantId() + " n’est pas suivi");
             }
             variants.put(line.variantId(), variant);
         });
@@ -126,7 +126,7 @@ public class SupplierOrderService {
 
     private static int need(ProductVariant variant, long demand, long incoming) {
         if (!variant.isStockTracked() || variant.getStockOnHand() == null) {
-            throw new IllegalStateException("Le stock de la variante n'est plus suivi");
+            throw new IllegalStateException("Le stock de la référence n'est plus suivi");
         }
         // Le stock comptable actuel inclut déjà les déductions des commandes payées.
         long presentForPaid = Math.max(0, Math.subtractExact(
@@ -159,12 +159,12 @@ public class SupplierOrderService {
 
     private static void validateLines(List<Line> lines) {
         if (lines == null || lines.isEmpty()) {
-            throw new IllegalArgumentException("Une commande fournisseur doit contenir au moins une variante");
+            throw new IllegalArgumentException("Une commande fournisseur doit contenir au moins une référence");
         }
         Set<Long> seen = new HashSet<>();
         for (Line line : lines) {
             if (line == null || line.variantId() == null || line.quantity() <= 0 || !seen.add(line.variantId())) {
-                throw new IllegalArgumentException("Chaque variante doit figurer une seule fois avec une quantité positive");
+                throw new IllegalArgumentException("Chaque référence doit figurer une seule fois avec une quantité positive");
             }
         }
     }
@@ -180,7 +180,7 @@ public class SupplierOrderService {
         }
         order.getLines().stream().sorted(Comparator.comparing(line -> line.getVariantId())).forEach(line -> {
             ProductVariant variant = variantRepository.findByIdForUpdate(line.getVariantId())
-                    .orElseThrow(() -> new NoSuchElementException("Variante introuvable : " + line.getVariantId()));
+                    .orElseThrow(() -> new NoSuchElementException("Référence introuvable : " + line.getVariantId()));
             variant.receiveStock(line.getQuantity());
         });
         order.markReceived();
