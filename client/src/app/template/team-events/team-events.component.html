@@ -20,7 +20,7 @@
   }
   @if (error) { <div class="alert alert-danger" role="alert">{{error}}</div> }
   @if (loading) { <p role="status">Chargement des événements…</p> }
-  <div [class.events-grid]="summaryCards">
+  <div>
   @for (e of visibleEvents; track e.id) {
     <article class="event-card mb-3" [class.event-roster]="!!detailEvent" [class.cancelled]="e.etat === 'ANNULEE'">
       <header class="d-flex flex-wrap justify-content-between gap-2">
@@ -29,7 +29,7 @@
         } @else {
           <div class="roster-heading">
             <h2>Participants et responsabilités</h2>
-            <p>Les personnes mobilisées et leurs réponses à l’invitation.</p>
+            <p>{{e.sansInvitation ? 'Les personnes mobilisées pour cet événement.' : 'Les personnes mobilisées et leurs réponses à l’invitation.'}}</p>
           </div>
         }
         @if (!detailEvent) {
@@ -40,8 +40,10 @@
         }
         @if (!detailEvent && e.canManage && upcoming(e)) {
           <div class="d-flex flex-wrap gap-1">
+            @if (!e.sansInvitation || responsibilityInvites(e).length) {
             <button type="button" class="btn btn-sm btn-primary" aria-label="Publier les convocations" title="Publier les convocations" (click)="publish(e)" [disabled]="busy"><fa-icon class="me-sm-1" [icon]="faEnvelope" aria-hidden="true" /><span class="d-none d-sm-inline">Publier les convocations</span></button>
             <button type="button" class="btn btn-sm btn-outline-primary" aria-label="Relancer" title="Relancer" (click)="remind(e)" [disabled]="busy"><fa-icon class="me-sm-1" [icon]="faArrowsRotate" aria-hidden="true" /><span class="d-none d-sm-inline">Relancer</span></button>
+            }
             @if (allowEventEditing && !detailEvent) {
               <button type="button" class="btn btn-sm btn-outline-secondary" aria-label="Modifier l’événement" title="Modifier l’événement" (click)="open(e)" [disabled]="busy"><fa-icon class="me-sm-1" [icon]="faPen" aria-hidden="true" /><span class="d-none d-sm-inline">Modifier</span></button>
             }
@@ -49,16 +51,6 @@
         }
       </header>
       @if (!detailEvent) {
-      @if (summaryCards) {
-        <dl class="event-summary">
-          <div><dt>Équipe</dt><dd>{{team.nom}}</dd></div>
-          <div><dt>Lieu</dt><dd>{{e.lieu || 'Non renseigné'}}</dd></div>
-          @if (e.rendezVous) {
-            <div><dt>Rendez-vous</dt><dd>{{e.rendezVous | date:'dd/MM/yyyy à HH:mm'}}</dd></div>
-          }
-          <div><dt>Participants</dt><dd>{{selectedInvites(e).length}}</dd></div>
-        </dl>
-      }
       @if (e.adversaire) { <p class="mb-1">Adversaire : {{e.adversaire}}</p> }
       @if (e.commentaire) { <p class="practical mb-1">{{e.commentaire}}</p> }
       }
@@ -69,6 +61,7 @@
             [attr.aria-label]="(expandedParticipants.has(e.id) ? 'Masquer' : 'Afficher') + ' les participants (' + selectedInvites(e).length + ') et les responsabilités (' + (e.responsabilites?.length || 0) + ')'"
             [title]="(expandedParticipants.has(e.id) ? 'Masquer' : 'Afficher') + ' les participants et les responsabilités'">
             <span class="d-none d-sm-inline">Participants ({{selectedInvites(e).length}})</span>
+            @if (!e.sansInvitation) {
             <span class="response-count response-present" [attr.aria-label]="responseCount(e, true) + ' réponse(s) Présent'" title="Réponse à l’invitation : Présent">
               <fa-icon [icon]="faCircleCheck" aria-hidden="true" /> {{responseCount(e, true)}}
             </span>
@@ -78,10 +71,9 @@
             <span class="response-count response-pending" [attr.aria-label]="responseCount(e, null) + ' réponse(s) Ne sais pas encore ou sans réponse'" title="Réponse à l’invitation : Ne sais pas encore ou sans réponse">
               <fa-icon [icon]="faTriangleExclamation" aria-hidden="true" /> {{responseCount(e, null)}}
             </span>
+            }
             <span class="responsibilities-summary">
-              <span class="d-none d-sm-inline">Responsabilités</span>
-              <fa-icon class="responsibilities-icon" [icon]="faHandHoldingMedical" aria-hidden="true" />
-              <span>{{e.responsabilites?.length || 0}}</span>
+              <span class="d-none d-sm-inline">Responsabilités ({{e.responsabilites?.length || 0}})</span>
               @if (responsibilityInvites(e).length) {
                 <span class="response-count response-present" [attr.aria-label]="responsibilityResponseCount(e, true) + ' responsabilité(s) : Présent'" title="Responsabilités : Présent"><fa-icon [icon]="faCircleCheck" aria-hidden="true" /> {{responsibilityResponseCount(e, true)}}</span>
                 <span class="response-count response-absent" [attr.aria-label]="responsibilityResponseCount(e, false) + ' responsabilité(s) : Absent'" title="Responsabilités : Absent"><fa-icon [icon]="faCircleXmark" aria-hidden="true" /> {{responsibilityResponseCount(e, false)}}</span>
@@ -98,7 +90,7 @@
             <section class="roster-section" [attr.aria-labelledby]="'roster-participants-title-' + e.id">
               <header class="roster-section-heading">
                 <h3 [id]="'roster-participants-title-' + e.id">Participants <span class="roster-total">{{selectedInvites(e).length}}</span></h3>
-                <p>{{responseCount(e, true)}} présent(s) · {{responseCount(e, false)}} absent(s) · {{responseCount(e, null)}} à confirmer</p>
+                @if (!e.sansInvitation) { <p>{{responseCount(e, true)}} présent(s) · {{responseCount(e, false)}} absent(s) · {{responseCount(e, null)}} à confirmer</p> }
               </header>
               <ul class="roster-list">
                 @for (c of selectedInvites(e); track c.id) {
@@ -109,7 +101,7 @@
                         @if (c.equipes?.length) { <p class="roster-teams">{{c.equipes.join(' · ')}}</p> }
                       </div>
                     </div>
-                    <ng-container *ngTemplateOutlet="invitationState; context: {$implicit: c}" />
+                    @if (!e.sansInvitation) { <ng-container *ngTemplateOutlet="invitationState; context: {$implicit: c}" /> }
                   </li>
                 } @empty {
                   <li class="roster-empty">Aucun participant sélectionné.</li>
@@ -176,7 +168,7 @@
           } @empty { <p class="small text-muted mb-0" role="status">{{selectedInvites(e).length ? 'Aucun participant ne correspond à la recherche.' : 'Aucun participant sélectionné.'}}</p> }
         </div>
         } @else {
-          <p class="small text-muted mb-0">{{e.canManage ? 'Aucun participant proposé. Mettez à jour l’effectif de l’équipe avant de publier.' : 'Aucune convocation publiée à votre nom pour cet événement.'}}</p>
+          <p class="small text-muted mb-0">{{e.sansInvitation ? 'Aucun participant sélectionné.' : e.canManage ? 'Aucun participant proposé. Mettez à jour l’effectif de l’équipe avant de publier.' : 'Aucune convocation publiée à votre nom pour cet événement.'}}</p>
         }
         <section class="event-responsibilities mt-3" aria-label="Responsabilités de l’événement">
           <h6>Responsabilités</h6>
@@ -224,7 +216,7 @@
     <button type="button" class="btn-close" aria-label="Fermer" (click)="closeResponsibilities()" [disabled]="busy"></button>
   </div>
   <div class="modal-body">
-    <p>Choisissez une responsabilité et une équipe de la section. Elle sera attribuée automatiquement au premier référent de l’équipe, ou à son premier adhérent en l’absence de référent.</p>
+    <p>Pour chaque responsabilité, choisissez une équipe parmi toutes les équipes actives de la section, y compris l’équipe en cours et celles des autres activités. Elle sera attribuée automatiquement au premier référent de l’équipe, ou à son premier adhérent en l’absence de référent.</p>
     @if (error) { <div class="alert alert-danger" role="alert">{{error}}</div> }
     @if (responsibilitiesLoading) { <p role="status">Chargement des responsabilités et des équipes…</p> }
     @else {
@@ -258,6 +250,7 @@
 </ng-template>
 
 <ng-template #invitationActions let-c let-e="event" let-responsibility="responsibility">
+              @if (!e.sansInvitation || responsibility) {
               <div class="participant-invitation">
                 <span class="small text-muted">Convocation : {{c.publication ? 'Publiée' : 'Brouillon'}}</span>
                 @if (e.canManage) {
@@ -288,4 +281,5 @@
                 </div>
               }
               </div>
+              }
 </ng-template>

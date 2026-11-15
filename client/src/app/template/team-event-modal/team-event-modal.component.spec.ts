@@ -27,6 +27,43 @@ describe('Modale indépendante de création d’événement', () => {
     component.startChanged('2026-11-05T01:00');
     expect(component.form.rendezVous).toBe('2026-11-04T22:00');
   });
+  it('précoche Sans invitation et transmet ce choix aux événements répétés', async () => {
+    const fixture = TestBed.createComponent(TeamEventModalComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const checkbox = fixture.nativeElement.querySelector('input[name="sansInvitation"]') as HTMLInputElement;
+    expect(checkbox.checked).toBeTrue();
+    const editor = fixture.componentInstance;
+    editor.toggleSection(7, true); editor.repeat = true; editor.weeks = 3;
+    api.createEvents.and.returnValue(of({ nombre: 3, evenements: [] }));
+    editor.save();
+    expect(api.createEvents.calls.mostRecent().args[0].sansInvitation).toBeTrue();
+    expect(api.createEvents.calls.mostRecent().args.slice(1)).toEqual([[7], 3]);
+  });
+  it('réactive explicitement les invitations lorsque Sans invitation est décochée', async () => {
+    const fixture = TestBed.createComponent(TeamEventModalComponent);
+    fixture.detectChanges(); await fixture.whenStable();
+    const checkbox = fixture.nativeElement.querySelector('input[name="sansInvitation"]') as HTMLInputElement;
+    checkbox.click(); fixture.detectChanges();
+    expect(fixture.componentInstance.form.sansInvitation).toBeFalse();
+    expect(fixture.nativeElement.querySelector('#sans-invitation-help').textContent).toContain('Les invitations et les réponses');
+    const editor = fixture.componentInstance; editor.toggleSection(7, true);
+    api.createEvents.and.returnValue(of({ nombre: 1, evenements: [] }));
+    editor.save();
+    expect(api.createEvents.calls.mostRecent().args[0].sansInvitation).toBeFalse();
+  });
+  for (const sansInvitation of [false, true, undefined]) {
+    it(`conserve le mode de l’événement existant (${sansInvitation}) à la modification`, async () => {
+      const fixture = TestBed.createComponent(TeamEventModalComponent);
+      fixture.componentInstance.event = { id: 20, type: 'ACTIVITE', debut: '3000-01-01T18:00:00', fin: '3000-01-01T19:00:00',
+        etat: 'PROGRAMMEE', lieu: '', salleId: null, rendezVous: '', adversaire: '', commentaire: '', equipes: [],
+        canManage: true, convocations: [], emails: {}, sansInvitation };
+      fixture.detectChanges(); await fixture.whenStable();
+      const checkbox = fixture.nativeElement.querySelector('input[name="sansInvitation"]') as HTMLInputElement;
+      expect(checkbox.checked).toBe(sansInvitation ?? false);
+      expect(fixture.componentInstance.form.sansInvitation).toBe(sansInvitation ?? false);
+    });
+  }
   it('transmet les équipes, les sections et la période de répétition et bloque les doubles envois', () => {
     const response = new Subject<any>(); api.createEvents.and.returnValue(response);
     component.toggleSection(7, true); component.toggleTeam(10, true); component.toggleTeam(11, true);

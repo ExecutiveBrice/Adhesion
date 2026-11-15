@@ -161,16 +161,18 @@ describe('Chat des activités', () => {
       { ...message(10), senderRole: 'REFERENT_ACTIVITE' },
       { ...message(11), senderRole: 'ENCADRANT' },
       { ...message(12), senderRole: 'MEMBRECA' },
-      { ...message(13), senderRole: 'SECRETAIRE' }
+      { ...message(13), senderRole: 'SECRETAIRE' },
+      { ...message(14), senderRole: 'REFERENT_EQUIPE' }
     ]);
     http.expectOne(url + '/7/read').flush({ unreadCount: 0 });
     fixture.detectChanges();
     const roles = fixture.nativeElement.querySelectorAll('.chat-role');
-    expect([...roles].map((item: any) => item.textContent.trim())).toEqual(['Référent d’activité', 'Encadrant', 'Membre du CA', 'Secrétariat']);
+    expect([...roles].map((item: any) => item.textContent.trim())).toEqual(['Référent d’activité', 'Encadrant', 'Membre du CA', 'Secrétariat', 'Référent d’équipe']);
     expect(roles[0].classList).toContain('role-referent_activite');
     expect(roles[1].classList).toContain('role-encadrant');
     expect(roles[2].classList).toContain('role-membreca');
     expect(roles[3].classList).toContain('role-secretaire');
+    expect(roles[4].classList).toContain('role-referent_equipe');
     fixture.destroy();
   }));
 

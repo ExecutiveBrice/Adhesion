@@ -15,21 +15,37 @@ public class ActivityTeamService {
     private final EquipeRepository teams;
     private final ActiviteRepository activities;
     private final AdhesionRepository memberships;
-    public ActivityTeamService(EquipeRepository teams, ActiviteRepository activities, AdhesionRepository memberships) {
-        this.teams = teams; this.activities = activities; this.memberships = memberships;
+    private final ChatRepository chats;
+    public ActivityTeamService(EquipeRepository teams, ActiviteRepository activities, AdhesionRepository memberships,
+                               ChatRepository chats) {
+        this.teams = teams; this.activities = activities; this.memberships = memberships; this.chats = chats;
     }
     public Equipe ensureFirstTeam(Activite activity) {
         activities.findForTeamUpdate(activity.getId()).orElseThrow();
         List<Equipe> existing = teams.findByActivite_IdOrderByIdAsc(activity.getId());
         Equipe first = existing.stream().filter(t -> !t.isArchivee()).findFirst().orElse(null);
-        if (first != null) return first;
+        if (first != null) {
+            ensureTeamChat(first);
+            return first;
+        }
         Set<String> names = new TreeSet<>(String.CASE_INSENSITIVE_ORDER); existing.forEach(t -> names.add(t.getNom()));
         int suffix = existing.size() + 1;
         String name = "Groupe " + suffix;
         while (names.contains(name)) name = "Groupe " + ++suffix;
         first = new Equipe(); first.setActivite(activity); first.setNom(name);
         first.getEncadrants().addAll(activity.getProfs()); first.getReferents().addAll(activity.getReferents());
-        return teams.saveAndFlush(first);
+        teams.saveAndFlush(first);
+        ensureTeamChat(first);
+        return first;
+    }
+    /** Called with the activity lock held, so concurrent team updates cannot create duplicate chats. */
+    public void ensureTeamChat(Equipe team) {
+        Chat chat = chats.findByEquipeId(team.getId()).orElseGet(() -> {
+            Chat created = new Chat(); created.setCible(ChatTarget.EQUIPE); created.setEquipe(team);
+            return created;
+        });
+        chat.setNom(team.getNom());
+        chats.save(chat);
     }
     public void assignNewMembership(Adhesion input) {
         if (input == null || input.getId() == null) return;

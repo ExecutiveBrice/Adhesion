@@ -5,8 +5,6 @@ import { NgbConfig } from '@ng-bootstrap/ng-bootstrap';
 import { TeamEventDetails, TeamService } from '../../_services/team.service';
 import { ParamService } from '../../_services/param.service';
 import { TokenStorageService } from '../../_services/token-storage.service';
-import { TribuService } from '../../_services/tribu.service';
-import { Adherent, Tribu, User } from '../../models';
 import { EvenementComponent } from './evenement.component';
 
 describe('Page événement', () => {
@@ -14,9 +12,8 @@ describe('Page événement', () => {
   let api: jasmine.SpyObj<TeamService>;
   let params: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
   let queryParams: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
-  let connectedTribu: Subject<Tribu>;
   const detail = (): TeamEventDetails => ({ activiteId: 7, activiteNom: 'Basket', sectionNom: 'Sports',
-    adresse: '1 rue des Sports', causeAnnulation: null, lien: 'example.org/basket', canChat: true,
+    adresse: '1 rue des Sports', causeAnnulation: null, lien: 'example.org/basket', canChat: true, adherentId: 1,
     evenement: { id: 20, type: 'RENCONTRE', debut: '3000-01-01T18:00:00', fin: '3000-01-01T19:00:00',
       rendezVous: '3000-01-01T17:00:00', etat: 'PROGRAMMEE', lieu: 'Gymnase', salleId: 4, adversaire: 'Nantes',
       commentaire: 'Maillot blanc', equipes: ['Seniors'], canManage: true, emails: {}, responsabilites: [],
@@ -27,21 +24,44 @@ describe('Page événement', () => {
     api.event.and.returnValue(of(detail())); api.eventMessages.and.returnValue(of([]));
     params = new BehaviorSubject(convertToParamMap({ evenementId: '20' }));
     queryParams = new BehaviorSubject(convertToParamMap({}));
-    connectedTribu = new Subject<Tribu>();
     TestBed.configureTestingModule({ imports: [EvenementComponent], providers: [provideRouter([]),
       { provide: ActivatedRoute, useValue: { paramMap: params, queryParamMap: queryParams } },
       { provide: TeamService, useValue: api }, { provide: ParamService, useValue: {} },
-      { provide: TokenStorageService, useValue: { getUser: () => ({ id: 10 }) } },
-      { provide: TribuService, useValue: { getConnected: () => connectedTribu } }
+      { provide: TokenStorageService, useValue: { getUser: () => ({ id: 10, roles: ['ROLE_REFERENT'] }) } }
     ] });
     TestBed.inject(NgbConfig).animation = false;
     fixture = TestBed.createComponent(EvenementComponent); fixture.detectChanges();
-    const tribu = new Tribu();
-    tribu.adherents = [Object.assign(new Adherent(), { id: 1, user: Object.assign(new User(), { id: 10 }) }),
-      Object.assign(new Adherent(), { id: 2, user: Object.assign(new User(), { id: 11 }) })];
-    connectedTribu.next(tribu); fixture.detectChanges();
   });
   afterEach(() => fixture.destroy());
+  it('ne demande aucune réponse pour un événement sans invitation', () => {
+    const data = detail(); data.evenement.sansInvitation = true;
+    fixture.componentInstance.detail.set(data); fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('Sans invitation pour les participants.');
+    expect(fixture.nativeElement.querySelector('.event-invitations')).toBeNull();
+    expect(fixture.componentInstance.replyInvitations()).toEqual([]);
+    fixture.componentInstance.reply(data.evenement.convocations[0], true);
+    expect(api.reply).not.toHaveBeenCalled();
+  });
+  it('demande toujours la réponse personnelle à une responsabilité lorsque les participants sont sans invitation', () => {
+    const data = detail(); data.evenement.sansInvitation = true;
+    const duty = { ...data.evenement.convocations[0], id: 40, adhesionId: null };
+    data.evenement.responsabilites = [{ tache: { id: 3, nom: 'Matériel' },
+      adherent: { id: 1, prenom: 'Alice', nom: 'Martin' }, invitation: duty }];
+    fixture.componentInstance.detail.set(data); fixture.detectChanges();
+    expect(fixture.componentInstance.replyInvitations().map(r => r.invitation.id)).toEqual([40]);
+    const invitation = fixture.nativeElement.querySelector('.event-invitations');
+    expect(invitation.textContent).toContain('Matériel');
+    expect(invitation.querySelectorAll('button').length).toBe(3);
+    fixture.componentInstance.reply(data.evenement.convocations[0], true);
+    expect(api.reply).not.toHaveBeenCalled();
+    api.reply.and.returnValue(of(data.evenement));
+    fixture.componentInstance.reply(duty, true);
+    expect(api.reply).toHaveBeenCalledWith(20, 40, true);
+    fixture.componentInstance.tab.set('participants'); fixture.detectChanges();
+    const panel = fixture.nativeElement.querySelector('.tab-pane.active');
+    expect(panel.querySelector('.roster-responsibility .invitation-state')).not.toBeNull();
+    expect(panel.querySelector('.roster-person:not(.roster-responsibility) .invitation-state')).toBeNull();
+  });
   it('présente les trois onglets et toutes les informations pratiques sans charger le chat masqué', () => {
     const tabs = fixture.nativeElement.querySelectorAll('[role="tab"]');
     expect(tabs.length).toBe(3);
@@ -52,9 +72,13 @@ describe('Page événement', () => {
     expect(api.eventMessages).not.toHaveBeenCalled();
     expect(fixture.nativeElement.querySelector('a[href="https://example.org/basket"]')).not.toBeNull();
   });
-  it('ouvre la fiche aux autres adhérents sans action ni accès au chat, même par lien direct', () => {
+  it('montre la liste complète aux autres adhérents sans réponse ni accès au chat, même par lien direct', () => {
     const data = detail(); data.canChat = false;
-    data.evenement.canManage = false; data.evenement.convocations = [];
+    data.evenement.canManage = false;
+    data.evenement.convocations[0].canReply = false;
+    data.evenement.responsabilites = [{ tache: { id: 3, nom: 'Matériel' },
+      adherent: { id: 2, prenom: 'Bob', nom: 'Durand' },
+      invitation: { ...data.evenement.convocations[0], id: 40, adherentId: 2, nom: 'Bob Durand', reponse: true } }];
     api.event.and.returnValue(of(data));
     queryParams.next(convertToParamMap({ onglet: 'chat' }));
     params.next(convertToParamMap({ evenementId: '20' })); fixture.detectChanges();
@@ -62,11 +86,64 @@ describe('Page événement', () => {
     expect(fixture.nativeElement.textContent).toContain('Basket');
     expect(fixture.nativeElement.querySelector('.event-invitations')).toBeNull();
     expect(fixture.componentInstance.tab()).toBe('informations');
+    fixture.componentInstance.selectTab('participants'); fixture.detectChanges();
+    const panel = fixture.nativeElement.querySelector('.tab-pane.active');
+    expect(panel.querySelector('.roster-person:not(.roster-responsibility)').textContent).toContain('Alice Martin');
+    expect(panel.querySelector('.roster-responsibility').textContent).toContain('Bob Durand');
+    expect(panel.querySelector('.roster-task').textContent).toContain('Matériel');
+    expect(panel.querySelector('.roster-responsibility .invitation-state').getAttribute('aria-label')).toBe('Présent');
+    expect(panel.querySelector('button, input, select')).toBeNull();
+    fixture.componentInstance.reply(data.evenement.convocations[0], true);
     fixture.componentInstance.selectTab('chat'); fixture.detectChanges();
     expect(fixture.componentInstance.tab()).toBe('informations');
     expect(api.eventMessages).not.toHaveBeenCalled();
     expect(api.reply).not.toHaveBeenCalled();
   });
+  it('propose dans Informations les réponses personnelles de participant et de responsable', () => {
+    const data = detail(); data.evenement.canManage = false;
+    const own = data.evenement.convocations[0];
+    data.evenement.convocations.push({ ...own, id: 31, adherentId: 2, nom: 'Bob Durand', canReply: false });
+    data.evenement.responsabilites = [
+      { tache: { id: 3, nom: 'Matériel' }, adherent: { id: 1, prenom: 'Alice', nom: 'Martin' },
+        invitation: { ...own, id: 40 } },
+      { tache: { id: 4, nom: 'Accueil' }, adherent: { id: 2, prenom: 'Bob', nom: 'Durand' },
+        invitation: { ...own, id: 41, adherentId: 2, nom: 'Bob Durand', canReply: false } }
+    ];
+    fixture.componentInstance.detail.set(data); fixture.detectChanges();
+    const invitations = fixture.nativeElement.querySelector('.tab-pane.active .event-invitations');
+    expect(invitations.querySelectorAll('.event-invitation').length).toBe(2);
+    expect(invitations.querySelectorAll('button').length).toBe(6);
+    expect(invitations.textContent).toContain('Matériel');
+    expect(invitations.textContent).not.toContain('Bob Durand');
+    fixture.componentInstance.tab.set('participants'); fixture.detectChanges();
+    const panel = fixture.nativeElement.querySelector('.tab-pane.active');
+    expect(panel.querySelectorAll('.roster-person').length).toBe(4);
+    expect(panel.querySelector('button')).toBeNull();
+  });
+  for (const canManage of [true, false]) {
+  it(`permet à l’attributaire d’une tâche de répondre avant publication (gestionnaire : ${canManage})`, () => {
+    const data = detail(); data.adherentId = 7;
+    data.evenement.canManage = canManage;
+    data.evenement.responsabilites = [{ tache: { id: 3, nom: 'Matériel' },
+      adherent: { id: 7, prenom: 'Rémi', nom: 'Référent' },
+      invitation: { ...data.evenement.convocations[0], id: 40, adherentId: 7, adhesionId: null, nom: 'Rémi Référent' } }];
+    api.event.and.returnValue(of(data));
+    params.next(convertToParamMap({ evenementId: '20' })); fixture.detectChanges();
+    const panel = fixture.nativeElement.querySelector('.tab-pane.active');
+    const rows = panel.querySelectorAll('.event-invitation');
+    expect(rows.length).toBe(1);
+    expect(rows[0].textContent).toContain('Rémi Référent');
+    expect(rows[0].textContent).toContain('Matériel');
+    expect(rows[0].querySelectorAll('button').length).toBe(3);
+    const updated = { ...data.evenement, responsabilites: [{ ...data.evenement.responsabilites![0],
+      invitation: { ...data.evenement.responsabilites![0].invitation!, reponse: true, dateReponse: '2026-11-10T12:00:00' } }] };
+    api.reply.and.returnValue(of(updated));
+    rows[0].querySelector('button').click(); fixture.detectChanges();
+    expect(api.reply).toHaveBeenCalledOnceWith(20, 40, true);
+    expect(rows[0].querySelector('button').getAttribute('aria-pressed')).toBe('true');
+    expect(fixture.componentInstance.adherentId()).toBe(7);
+  });
+  }
   for (const [index, value] of [true, false, null].entries()) {
     it(`enregistre la réponse ${value} depuis Informations et actualise les participants`, () => {
       const pending = new Subject<ReturnType<typeof detail>['evenement']>();
@@ -115,7 +192,7 @@ describe('Page événement', () => {
     expect(fixture.nativeElement.querySelector('.event-invitations')).toBeNull();
   });
   it('ne présente aucune réponse si l’adhérent connecté ne peut pas être identifié', () => {
-    connectedTribu.next(new Tribu()); fixture.detectChanges();
+    fixture.componentInstance.detail.set({ ...detail(), adherentId: null }); fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.event-invitations')).toBeNull();
     fixture.componentInstance.reply(detail().evenement.convocations[0], true);
     expect(api.reply).not.toHaveBeenCalled();

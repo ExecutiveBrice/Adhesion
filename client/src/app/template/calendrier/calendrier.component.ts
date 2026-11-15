@@ -3,12 +3,13 @@ import { EvenementModalService } from '../../_services/evenement-modal.service';
 import { Router } from '@angular/router';
 import { Evenement, evenementSeance, evenementGoogle } from '../../models/evenement';
 import { catchError, forkJoin, of } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActiviteService } from 'src/app/_services/activite.service';
 import { ParamService } from 'src/app/_services/param.service';
 import { AgendaGoogleConfiguration } from 'src/app/models';
 import { EvenementGoogleAgenda, SeanceCalendrier } from 'src/app/models/seance';
 import { faCalendarPlus, faCheck, faChevronLeft, faChevronRight, faFileArrowDown, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { NgClass, DatePipe } from '@angular/common';
+import { NgClass, DatePipe, NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { registerApiViewRefresh } from 'src/app/_services/api-render.service';
 import { ResponsabiliteSeance } from '../../models/responsabiliteSeance';
@@ -29,7 +30,7 @@ interface JourCalendrier {
     selector: 'app-calendrier',
     templateUrl: './calendrier.component.html',
     styleUrls: ['../../page/login/login.component.css', './calendrier.component.css'],
-    imports: [NgClass, FaIconComponent, DatePipe, ResponsabilitesSeanceComponent]
+    imports: [NgClass, FaIconComponent, DatePipe, NgTemplateOutlet, ResponsabilitesSeanceComponent]
 })
 export class CalendrierComponent implements OnInit, OnChanges {
   private readonly apiViewRefresh = registerApiViewRefresh();
@@ -44,6 +45,11 @@ export class CalendrierComponent implements OnInit, OnChanges {
   @Input() adherentId?: number;
   @Input() joursVisibles?: number;
   @Input() affichage: 'calendrier' | 'liste' = 'calendrier';
+  @Input() afficherAttenteReponse = false;
+
+  evenementsAttenteReponse: EvenementCalendrier[] = [];
+  chargementAttenteReponse = false;
+  erreurAttenteReponse = '';
 
   evenementsAVenir: EvenementCalendrier[] = [];
   evenementSelectionne: EvenementCalendrier | null = null;
@@ -69,7 +75,27 @@ export class CalendrierComponent implements OnInit, OnChanges {
   faCalendarPlus = faCalendarPlus;
   faFileArrowDown = faFileArrowDown;
 
-  ngOnInit(): void { this.chargerConfigurationAgendas(); }
+  ngOnInit(): void {
+    this.chargerConfigurationAgendas();
+    if (this.afficherAttenteReponse) this.chargerAttenteReponse();
+  }
+
+  chargerAttenteReponse(): void {
+    this.chargementAttenteReponse = true;
+    this.erreurAttenteReponse = '';
+    this.activiteService.getEvenementsAttenteReponse().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: seances => {
+        this.evenementsAttenteReponse = seances.map(s => evenementSeance(s, true));
+        this.chargementAttenteReponse = false;
+        this.changeDetectorRef.markForCheck();
+      },
+      error: () => {
+        this.chargementAttenteReponse = false;
+        this.erreurAttenteReponse = 'Impossible de charger les événements en attente de réponse.';
+        this.changeDetectorRef.markForCheck();
+      }
+    });
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if ((changes['tribuUuid'] && !changes['tribuUuid'].firstChange)

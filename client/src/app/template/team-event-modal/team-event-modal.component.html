@@ -16,6 +16,10 @@
         <label class="col-md-6">Rendez-vous<input type="datetime-local" class="form-control" name="rendezVous" [max]="form.debut" [ngModel]="form.rendezVous" (ngModelChange)="meetingChanged($event)"><small class="text-body-secondary">Par défaut, une heure avant le début.</small></label>
         @if (form.type === 'RENCONTRE') { <label class="col-md-6">Adversaire<input class="form-control" name="adversaire" maxlength="100" [(ngModel)]="form.adversaire"></label> }
         <label class="col-12">Informations pratiques<textarea class="form-control" name="commentaire" maxlength="2000" [(ngModel)]="form.commentaire"></textarea></label>
+        <div class="col-12">
+          <label><input type="checkbox" name="sansInvitation" [(ngModel)]="form.sansInvitation" aria-describedby="sans-invitation-help"> Sans invitation</label>
+          <p id="sans-invitation-help" class="small text-body-secondary mb-0">{{form.sansInvitation ? 'Aucune invitation ni relance de participation ne sera envoyée. Le pointage des présences reste disponible.' : 'Les invitations et les réponses des participants sont activées. Cochez « Sans invitation » pour les désactiver.'}} Les responsabilités nécessitent toujours une invitation et une réponse.</p>
+        </div>
         @if (!event) {
           <fieldset class="col-12"><legend class="fs-6">Équipes concernées</legend>
             @for (t of teams; track t.id) { <label class="d-block"><input type="checkbox" [checked]="form.equipes.includes(t.id)" (change)="toggleTeam(t.id, $any($event.target).checked)" [disabled]="team?.id === t.id"> {{t.activiteNom}} · {{t.nom}}</label> }

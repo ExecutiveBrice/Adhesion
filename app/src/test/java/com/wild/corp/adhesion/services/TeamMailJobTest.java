@@ -43,8 +43,15 @@ class TeamMailJobTest {
         c.getSeance().getResponsabilites().add(duty);
         c.setObjet(ConvocationEquipe.responsibilityKey(duty)); c.setResponsabilite("Matériel"); c.setAdhesion(null);
     }
+    @Test void switchingToNoInvitationsCancelsQueuedMailWithoutHttp() throws Exception {
+        mail.getSeance().setSansInvitation(true);
+        job.sendPending();
+        assertThat(mail.getEtat()).isEqualTo("CANCELLED");
+        verify(http, never()).send(any(), any());
+    }
     @Test void responsibilitiesWithoutMembershipUseTheSameDurableMailQueue() throws Exception {
         responsibility();
+        c.getSeance().setSansInvitation(true);
         HttpResponse<Void> response = mock(HttpResponse.class); when(response.statusCode()).thenReturn(201);
         when(http.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class))).thenReturn(response);
         job.sendPending();

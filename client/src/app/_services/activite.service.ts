@@ -67,6 +67,10 @@ export class ActiviteService {
     return this.http.get<SeanceCalendrier[]>(API_URL + 'calendrier', { params, responseType: 'json' });
   }
 
+  getEvenementsAttenteReponse(): Observable<SeanceCalendrier[]> {
+    return this.http.get<SeanceCalendrier[]>(API_URL + 'calendrier/attente-reponse');
+  }
+
   getCalendrierGoogle(dateDebut: string, dateFin: string, sources: string[]): Observable<CalendrierGoogle> {
     let params = new HttpParams().set('dateDebut', dateDebut).set('dateFin', dateFin);
     sources.forEach(source => params = params.append('source', source));

@@ -51,7 +51,6 @@
     @if (evenement.seanceId) {
       <p><a class="btn btn-primary" [routerLink]="['/evenements', evenement.seanceId]" (click)="modal.close()">Ouvrir la page de l’événement</a></p>
     }
-    <p><a routerLink="/equipes" (click)="modal.close()">Consulter les convocations et répondre dans Mes équipes</a></p>
   }
   <div class="evenement-liens">
     @if (lienActivite; as lien) { <a [href]="lien" target="_blank" rel="noopener noreferrer">Voir l’activité</a> }

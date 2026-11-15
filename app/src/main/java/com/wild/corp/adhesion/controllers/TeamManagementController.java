@@ -17,7 +17,6 @@ public class TeamManagementController {
     public TeamManagementController(TeamManagementService service) { this.service = service; }
     public record Answer(@com.fasterxml.jackson.annotation.JsonProperty(value = "value", required = true) Boolean value) { }
     public record Reminder(String requestId) { }
-    @GetMapping("/mine") public List<TeamView> mine(Principal p) { return service.mine(p.getName()); }
     @GetMapping("/activities/{id}") public State state(@PathVariable Long id, Principal p) { return service.state(id, p.getName()); }
     @GetMapping("/activities/{id}/adhesions/{adhesionId}") public MemberDetails memberDetails(@PathVariable Long id, @PathVariable Long adhesionId, Principal p) {
         return service.memberDetails(id, adhesionId, p.getName());

@@ -64,7 +64,6 @@
           <span class="d-none d-sm-inline">Participants et responsabilités</span>
         </button>
         <ng-template ngbNavContent>
-          @if (!e.canManage) { <p class="text-muted">Les convocations affichées sont celles que vous êtes autorisé à consulter.</p> }
           <app-team-events [detailEvent]="e" [allowEventEditing]="false" (eventChanged)="eventChanged($event)" />
         </ng-template>
       </li>

@@ -8,8 +8,6 @@ import { faCircleInfo, faComments, faUsers } from '@fortawesome/free-solid-svg-i
 import { catchError, finalize, of, switchMap } from 'rxjs';
 import { TeamEvent, TeamEventDetails, TeamInvitation, TeamService, teamError } from '../../_services/team.service';
 import { ToastService } from '../../_services/toast.service';
-import { TokenStorageService } from '../../_services/token-storage.service';
-import { TribuService } from '../../_services/tribu.service';
 import { TeamEventsComponent } from '../../template/team-events/team-events.component';
 import { EventChatComponent } from './event-chat.component';
 
@@ -27,10 +25,8 @@ export class EvenementComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly toasts = inject(ToastService);
-  private readonly storage = inject(TokenStorageService);
-  private readonly tribus = inject(TribuService);
-  readonly adherentId = signal<number | null>(null);
   readonly detail = signal<TeamEventDetails | null>(null);
+  readonly adherentId = computed(() => this.detail()?.adherentId ?? null);
   readonly loading = signal(true);
   readonly error = signal('');
   readonly tab = signal<EventTab>('informations');
@@ -44,18 +40,14 @@ export class EvenementComponent implements OnInit {
       ...event.convocations.map(invitation => ({ invitation, responsibility: '' })),
       ...(event.responsabilites ?? []).flatMap(r => r.invitation
         ? [{ invitation: r.invitation, responsibility: r.tache.nom }] : [])
-    ].filter(({ invitation }) => invitation.adherentId === adherentId && invitation.selectionnee && invitation.canReply);
+    ].filter(({ invitation, responsibility }) => (!event.sansInvitation || !!responsibility)
+      && invitation.adherentId === adherentId && invitation.selectionnee && invitation.canReply);
   });
   readonly faCircleInfo = faCircleInfo;
   readonly faUsers = faUsers;
   readonly faComments = faComments;
 
   ngOnInit() {
-    const userId = this.storage.getUser().id;
-    this.tribus.getConnected().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: tribu => this.adherentId.set(userId == null ? null : tribu.adherents.find(a => a.user?.id === userId)?.id ?? null),
-      error: () => this.replyError.set('Impossible de charger vos invitations. Réessayez après actualisation.')
-    });
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       const tab = params.get('onglet');
       this.tab.set(tab === 'participants' || (tab === 'chat' && this.detail()?.canChat !== false) ? tab : 'informations');

@@ -38,6 +38,21 @@ class ChatConfigurationServicesTest {
     }
 
     @Test
+    void automaticTeamChatsCannotBeReconfiguredOrDeletedOrCreatedManually() {
+        Chat chat = new Chat(); chat.setId(8L); chat.setCible(ChatTarget.EQUIPE);
+        when(chats.findById(8L)).thenReturn(Optional.of(chat));
+        when(chats.findAll()).thenReturn(List.of(chat));
+        assertThat(service.getAll()).isEmpty();
+        assertThatThrownBy(() -> service.delete(8L)).hasMessageContaining("automatiquement");
+        assertThatThrownBy(() -> service.update(8L, new ChatConfiguration(null, "Global", "ASSOCIATION", null, null,
+                List.of(new ChatConfiguration.RolePermission("ROLE_USER", true))))).hasMessageContaining("automatiquement");
+        assertThatThrownBy(() -> service.create(new ChatConfiguration(null, "Équipe", "EQUIPE", 3L, null, List.of())))
+                .hasMessageContaining("automatiquement");
+        org.mockito.Mockito.verify(chats, org.mockito.Mockito.never()).delete(any(Chat.class));
+        org.mockito.Mockito.verify(chats, org.mockito.Mockito.never()).save(any(Chat.class));
+    }
+
+    @Test
     void createsAChatWithReadAndWritePermissions() {
         Section section = Section.builder().id(4L).nom("Basket").type("COMPETITION").build();
         when(sections.findById(4L)).thenReturn(Optional.of(section));

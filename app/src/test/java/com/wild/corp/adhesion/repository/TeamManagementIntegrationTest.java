@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.*;
 @DataJpaTest(properties = { "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect",
         "spring.liquibase.enabled=false", "spring.jpa.hibernate.ddl-auto=create-drop", "spring.jpa.show-sql=false" })
 @ContextConfiguration(classes = TeamManagementIntegrationTest.Config.class)
-@Import({EventChatService.class, EventCreationService.class, TeamManagementService.class, PresenceServices.class, ActivityTeamService.class, ResponsabiliteSeanceServices.class})
+@Import({ChatService.class, ChatReadRepository.class, EventChatService.class, EventCreationService.class, TeamManagementService.class, PresenceServices.class, ActivityTeamService.class, ResponsabiliteSeanceServices.class})
 class TeamManagementIntegrationTest {
     @SpringBootConfiguration @EnableAutoConfiguration
     @EntityScan(basePackageClasses = Seance.class) @EnableJpaRepositories(basePackageClasses = EquipeRepository.class)
@@ -38,12 +38,17 @@ class TeamManagementIntegrationTest {
     @Autowired TeamMailRepository mails;
     @Autowired PresenceServices presences;
     @Autowired ActivityTeamService activityTeams;
+    @Autowired ChatRepository teamChats;
+    @Autowired ChatService teamChat;
+    @Autowired org.springframework.jdbc.core.JdbcTemplate jdbc;
     Activite activity;
     Adherent admin, parent, alice, bob, outsider, coach;
     Adhesion aliceMembership, bobMembership;
     LocalDateTime start;
 
     @BeforeEach void setup() {
+        // Read cursors use JDBC rather than an entity, so Hibernate does not create this table.
+        jdbc.execute("CREATE TABLE IF NOT EXISTS chat_reads (user_id bigint, chat_id bigint, last_message_id bigint, PRIMARY KEY (user_id, chat_id))");
         admin = person("admin", ERole.ROLE_ADMIN);
         parent = person("parent", ERole.ROLE_USER);
         alice = person("alice", ERole.ROLE_USER); alice.setRepresentant(parent); alice.setEmailRepresentant(true);
@@ -75,7 +80,162 @@ class TeamManagementIntegrationTest {
     }
     EventView event(TeamView t) { return service.createEvent(t.id(), edit(List.of(t.id())), login(admin)); }
 
-    @Test void everyoneCanReadEventDetailsWhileInvitationsAndChatKeepTheirPermissions() {
+    @Test void teamChatsAreCreatedOnceForManualAndAutomaticTeamsAndKeepHistoryOnRename() {
+        Equipe first = activityTeams.ensureFirstTeam(activity);
+        activityTeams.ensureFirstTeam(activity);
+        assertThat(teamChats.findAll()).hasSize(1);
+        Chat firstChat = teamChats.findByEquipeId(first.getId()).orElseThrow();
+        assertThat(firstChat.getCible()).isEqualTo(ChatTarget.EQUIPE);
+        TeamView t = team("Compétition", aliceMembership.getId());
+        Long chatId = teamChats.findByEquipeId(t.id()).orElseThrow().getId();
+        var sent = teamChat.send(login(alice), chatId, "Bonjour l’équipe");
+        service.saveTeam(activity.getId(), t.id(), new TeamEdit("Compétition A", "", List.of(coach.getId()), List.of()), login(admin));
+        em.flush(); em.clear();
+        assertThat(teamChats.findAll()).hasSize(2);
+        assertThat(teamChats.findByEquipeId(t.id()).orElseThrow().getId()).isEqualTo(chatId);
+        assertThat(teamChat.rooms(login(alice))).anySatisfy(room -> {
+            assertThat(room.id()).isEqualTo(chatId);
+            assertThat(room.nom()).isEqualTo("Compétition A");
+            assertThat(room.groupeFiltre()).contains("Équipe", activity.getNom(), "Compétition A");
+        });
+        assertThat(teamChat.history(login(alice), chatId, null, null)).extracting(ChatService.Message::id).containsExactly(sent.id());
+    }
+
+    @Test void teamChatsAllowOnlyTheirCurrentMembersRepresentativesAndStaff() {
+        TeamView t = team("Équipe A", aliceMembership.getId());
+        TeamView other = team("Équipe B", bobMembership.getId());
+        service.saveTeam(activity.getId(), t.id(), new TeamEdit(t.nom(), "", List.of(coach.getId()), List.of(parent.getId())), login(admin));
+        Long chatId = teamChats.findByEquipeId(t.id()).orElseThrow().getId();
+        Long otherChatId = teamChats.findByEquipeId(other.id()).orElseThrow().getId();
+        em.flush(); em.clear();
+        for (Adherent allowed : List.of(alice, parent, coach)) {
+            assertThat(teamChat.rooms(login(allowed))).anySatisfy(room -> {
+                assertThat(room.id()).isEqualTo(chatId); assertThat(room.canWrite()).isTrue();
+            });
+            teamChat.send(login(allowed), chatId, "Bonjour " + allowed.getPrenom());
+        }
+        assertThat(teamChat.history(login(coach), chatId, null, null)).extracting(ChatService.Message::senderRole)
+                .contains("ENCADRANT", "REFERENT_EQUIPE");
+        for (Adherent denied : List.of(bob, outsider, admin)) {
+            assertThat(teamChat.rooms(login(denied))).noneMatch(room -> room.id().equals(chatId));
+            assertThatThrownBy(() -> teamChat.history(login(denied), chatId, null, null)).hasMessageContaining("403");
+            assertThatThrownBy(() -> teamChat.send(login(denied), chatId, "Interdit")).hasMessageContaining("403");
+            assertThatThrownBy(() -> teamChat.markRead(login(denied), chatId, 1L)).hasMessageContaining("403");
+        }
+        assertThatThrownBy(() -> teamChat.send(login(alice), otherChatId, "Autre équipe")).hasMessageContaining("403");
+        assertThat(teamChat.rooms(login(alice)).getFirst().unreadCount()).isEqualTo(2);
+        service.saveTeam(activity.getId(), t.id(), new TeamEdit(t.nom(), "", List.of(), List.of()), login(admin));
+        service.roster(activity.getId(), t.id(), new RosterEdit(List.of()), login(admin));
+        em.flush(); em.clear();
+        for (Adherent removed : List.of(alice, parent, coach)) {
+            assertThatThrownBy(() -> teamChat.history(login(removed), chatId, null, null)).hasMessageContaining("403");
+        }
+    }
+
+    @Test void teamChatAccessTracksMembershipEligibilityDatesAndArchival() {
+        activityTeams.ensureFirstTeam(activity);
+        TeamView t = team("Réserve", aliceMembership.getId());
+        Long chatId = teamChats.findByEquipeId(t.id()).orElseThrow().getId();
+        teamChat.send(login(alice), chatId, "Historique conservé");
+        for (String status : List.of(Status.ANNULEE.label, Status.LISTE_ATTENTE.label)) {
+            aliceMembership.setStatutActuel(status);
+            assertThatThrownBy(() -> teamChat.send(login(alice), chatId, "Interdit")).hasMessageContaining("403");
+            assertThatThrownBy(() -> teamChat.history(login(parent), chatId, null, null)).hasMessageContaining("403");
+        }
+        aliceMembership.setStatutActuel(Status.VALIDEE.label);
+        Equipe entity = teams.findById(t.id()).orElseThrow();
+        var assignment = entity.getAffectations().getFirst();
+        assignment.setDebut(LocalDate.now().plusDays(1));
+        assertThatThrownBy(() -> teamChat.history(login(alice), chatId, null, null)).hasMessageContaining("403");
+        assignment.setDebut(LocalDate.now());
+        assignment.setFin(LocalDate.now());
+        assertThatThrownBy(() -> teamChat.history(login(alice), chatId, null, null)).hasMessageContaining("403");
+        assignment.setFin(null);
+        assertThat(teamChat.history(login(alice), chatId, null, null)).hasSize(1);
+        service.archive(activity.getId(), t.id(), login(admin));
+        assertThat(teamChat.rooms(login(alice))).noneMatch(room -> room.id().equals(chatId));
+        assertThatThrownBy(() -> teamChat.send(login(coach), chatId, "Archivée")).hasMessageContaining("403");
+        assertThat(teamChats.findById(chatId)).isPresent();
+    }
+
+    @Test void eventsWithoutInvitationsKeepAttendanceButNeverAskForRepliesOrSendMail() {
+        TeamView t = team("Équipe", aliceMembership.getId(), bobMembership.getId());
+        EventEdit input = new EventEdit(List.of(t.id()), "ACTIVITE", start, start.plusHours(1),
+                null, "Studio", null, "", "", true);
+        org.mockito.Mockito.when(calendar.unavailable(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(Set.of());
+        var created = creation.create(new EventCreationService.Creation(input, List.of(), 2), login(admin));
+        assertThat(created.evenements()).hasSize(2).allSatisfy(e -> {
+            assertThat(e.sansInvitation()).isTrue();
+            assertThat(e.convocations()).hasSize(2).allSatisfy(c -> assertThat(c.canReply()).isFalse());
+        });
+        EventView e = created.evenements().getFirst();
+        em.flush(); em.clear();
+        assertThat(sessions.findById(e.id()).orElseThrow().isSansInvitation()).isTrue();
+        assertThat(service.events(t.id(), login(alice)).getFirst().convocations()).hasSize(1);
+        assertThat(service.eventDetails(e.id(), login(alice)).evenement().convocations())
+                .hasSize(2).allSatisfy(c -> assertThat(c.canReply()).isFalse());
+        Long invitationId = e.convocations().getFirst().id();
+        service.publish(e.id(), login(admin));
+        assertThatThrownBy(() -> service.publishInvitation(e.id(), invitationId, login(admin))).hasMessageContaining("sans invitation");
+        service.remind(e.id(), UUID.randomUUID().toString(), login(admin));
+        assertThatThrownBy(() -> service.remindInvitation(e.id(), invitationId, UUID.randomUUID().toString(), login(admin))).hasMessageContaining("sans invitation");
+        assertThatThrownBy(() -> service.reply(e.id(), invitationId, true, login(admin))).hasMessageContaining("403");
+        assertThat(service.attendance(e.id(), invitationId, true, login(admin)).convocations())
+                .anySatisfy(c -> { assertThat(c.id()).isEqualTo(invitationId); assertThat(c.presence()).isTrue(); });
+        assertThat(service.reschedule(e.id(), edit(List.of(t.id())), login(admin)).sansInvitation()).isTrue();
+        service.cancel(e.id(), login(admin));
+        assertThat(mails.findAll()).isEmpty();
+    }
+
+    @Test void anExistingEventCanSwitchInvitationMode() {
+        TeamView t = team("Équipe", aliceMembership.getId());
+        EventView e = event(t);
+        assertThat(e.sansInvitation()).isFalse();
+        service.publish(e.id(), login(admin));
+        var input = new EventEdit(List.of(t.id()), "ACTIVITE", start, start.plusHours(1), null, "Studio", null, "", "", true);
+        EventView updated = service.reschedule(e.id(), input, login(admin));
+        assertThat(updated.sansInvitation()).isTrue();
+        assertThat(updated.convocations()).allSatisfy(c -> assertThat(c.canReply()).isFalse());
+        assertThat(mails.findAll()).hasSize(1); // Only the original publication, no modification email.
+        var restored = new EventEdit(List.of(t.id()), "ACTIVITE", start, start.plusHours(1), null, "Studio", null, "", "", false);
+        assertThat(service.reschedule(e.id(), restored, login(admin)).sansInvitation()).isFalse();
+        assertThat(service.eventDetails(e.id(), login(alice)).evenement().convocations())
+                .allSatisfy(c -> assertThat(c.canReply()).isTrue());
+    }
+
+    @Test void responsibilitiesStillRequireRepliesWhenParticipantsHaveNoInvitations() {
+        TeamView t = team("Équipe", aliceMembership.getId(), bobMembership.getId());
+        var input = new EventEdit(List.of(t.id()), "ACTIVITE", start, start.plusHours(1), null, "Studio", null, "", "", true);
+        EventView e = service.createEvent(t.id(), input, login(admin));
+        TacheSeance task = new TacheSeance(); task.setNom("Matériel"); em.persist(task); em.flush();
+        EventView draft = service.responsibilities(e.id(), List.of(
+                new com.wild.corp.adhesion.models.resources.ResponsabiliteEquipeRequest(task.getId(), t.id())), login(admin));
+        Long dutyId = draft.responsabilites().getFirst().invitation().id();
+        Adherent assignee = draft.responsabilites().getFirst().adherent().id().equals(alice.getId()) ? alice : bob;
+        var personal = service.eventDetails(e.id(), login(assignee)).evenement();
+        assertThat(personal.convocations()).allSatisfy(c -> assertThat(c.canReply()).isFalse());
+        assertThat(personal.responsabilites().getFirst().invitation().canReply()).isTrue();
+        assertThat(service.eventDetails(e.id(), login(outsider)).evenement().responsabilites().getFirst().invitation().canReply()).isFalse();
+        EventView published = service.publish(e.id(), login(admin));
+        assertThat(published.convocations()).allSatisfy(c -> assertThat(c.publication()).isNull());
+        assertThat(published.responsabilites().getFirst().invitation().publication()).isNotNull();
+        service.publishInvitation(e.id(), dutyId, login(admin)); // Already published: no duplicate email.
+        assertThat(mails.findAll()).hasSize(1).allSatisfy(m -> assertThat(m.getConvocations()).containsExactly(dutyId));
+        service.remind(e.id(), UUID.randomUUID().toString(), login(admin));
+        service.remindInvitation(e.id(), dutyId, UUID.randomUUID().toString(), login(admin));
+        assertThat(mails.findAll()).hasSize(3).allSatisfy(m -> assertThat(m.getConvocations()).containsExactly(dutyId));
+        EventView answered = service.reply(e.id(), dutyId, true, login(assignee));
+        assertThat(answered.responsabilites().getFirst().invitation().reponse()).isTrue();
+        assertThat(answered.convocations()).allSatisfy(c -> assertThat(c.dateReponse()).isNull());
+        service.reschedule(e.id(), input, login(admin));
+        service.cancel(e.id(), login(admin));
+        assertThat(mails.findAll()).extracting(TeamMail::getType)
+                .containsExactly("CONVOCATION", "RELANCE", "RELANCE", "MODIFICATION", "ANNULATION");
+        assertThat(mails.findAll()).allSatisfy(m -> assertThat(m.getConvocations()).containsExactly(dutyId));
+    }
+
+    @Test void everyoneCanReadTheEventRosterWhileRepliesAndChatKeepTheirPermissions() {
         TeamView t = team("Équipe", aliceMembership.getId(), bobMembership.getId());
         EventView e = event(t);
         EventDetails details = service.eventDetails(e.id(), login(admin));
@@ -84,19 +244,49 @@ class TeamManagementIntegrationTest {
         assertThat(details.sectionNom()).isEqualTo("Danse");
         assertThat(details.evenement().convocations()).hasSize(2);
         assertThat(details.canChat()).isTrue();
+        assertThat(details.adherentId()).isEqualTo(admin.getId());
         EventDetails publicDetails = service.eventDetails(e.id(), login(outsider));
         assertThat(publicDetails.activiteNom()).isEqualTo(details.activiteNom());
         assertThat(publicDetails.evenement().commentaire()).isEqualTo("Venir en tenue");
         assertThat(publicDetails.evenement().canManage()).isFalse();
-        assertThat(publicDetails.evenement().convocations()).isEmpty();
+        assertThat(publicDetails.evenement().convocations()).hasSize(2).allSatisfy(invite -> {
+            assertThat(invite.canReply()).isFalse();
+            assertThat(invite.publication()).isNull();
+        });
         assertThat(publicDetails.evenement().emails()).isEmpty();
         assertThat(publicDetails.canChat()).isFalse();
+        assertThat(publicDetails.adherentId()).isEqualTo(outsider.getId());
         assertThatThrownBy(() -> service.eventDetails(Long.MAX_VALUE, login(admin))).hasMessageContaining("404");
         service.publish(e.id(), login(admin));
         assertThat(service.eventDetails(e.id(), login(parent)).evenement().convocations()).hasSize(2);
         assertThat(service.eventDetails(e.id(), login(parent)).canChat()).isTrue();
-        assertThat(service.eventDetails(e.id(), login(alice)).evenement().convocations()).singleElement()
-                .satisfies(invite -> { assertThat(invite.adherentId()).isEqualTo(alice.getId()); assertThat(invite.canReply()).isTrue(); });
+        assertThat(service.eventDetails(e.id(), login(alice)).evenement().convocations()).hasSize(2)
+                .allSatisfy(invite -> assertThat(invite.canReply()).isEqualTo(invite.adherentId().equals(alice.getId())));
+    }
+
+    @Test void referentWithoutUserRoleOrTribeCanIdentifyAndAnswerTheirOwnResponsibility() {
+        Adherent referent = person("referent", ERole.ROLE_REFERENT);
+        TeamView t = team("Équipe", aliceMembership.getId());
+        teams.findById(t.id()).orElseThrow().getReferents().add(referent);
+        EventView e = event(t);
+        TacheSeance task = new TacheSeance(); task.setNom("Matériel"); em.persist(task); em.flush();
+        service.responsibilities(e.id(), List.of(
+                new com.wild.corp.adhesion.models.resources.ResponsabiliteEquipeRequest(task.getId(), t.id())), login(coach));
+        em.flush(); em.clear();
+        assertThat(referent.getTribu()).isNull();
+        assertThat(referent.getUser().getRoles()).containsExactly(ERole.ROLE_REFERENT);
+        EventDetails details = service.eventDetails(e.id(), login(referent));
+        assertThat(details.adherentId()).isEqualTo(referent.getId());
+        assertThat(details.evenement().canManage()).isTrue();
+        var invitation = details.evenement().responsabilites().getFirst().invitation();
+        assertThat(invitation.adherentId()).isEqualTo(details.adherentId());
+        assertThat(invitation.canReply()).isTrue();
+        for (Boolean answer : Arrays.asList(true, false, null)) {
+            EventView updated = service.reply(e.id(), invitation.id(), answer, login(referent));
+            assertThat(updated.responsabilites().getFirst().invitation().reponse()).isEqualTo(answer);
+            assertThat(updated.responsabilites().getFirst().invitation().dateReponse()).isNotNull();
+            assertThat(updated.convocations().getFirst().dateReponse()).isNull();
+        }
     }
 
     @Test void eventVisibilityDoesNotGrantManagementInvitationOrAttendanceRights() {
@@ -110,7 +300,8 @@ class TeamManagementIntegrationTest {
         assertThatThrownBy(() -> service.attendance(e.id(), invitationId, true, login(outsider))).hasMessageContaining("403");
         service.publish(e.id(), login(admin));
         assertThatThrownBy(() -> service.reply(e.id(), invitationId, true, login(outsider))).hasMessageContaining("403");
-        assertThat(service.eventDetails(e.id(), login(outsider)).evenement().convocations()).isEmpty();
+        assertThat(service.eventDetails(e.id(), login(outsider)).evenement().convocations()).singleElement()
+                .satisfies(invite -> assertThat(invite.canReply()).isFalse());
         assertThat(service.eventDetails(e.id(), login(coach)).canChat()).isTrue();
         service.cancel(e.id(), login(admin));
         assertThat(service.eventDetails(e.id(), login(outsider)).evenement().etat()).isEqualTo("ANNULEE");
@@ -118,6 +309,44 @@ class TeamManagementIntegrationTest {
         Seance past = sessions.findById(e.id()).orElseThrow();
         past.setDebut(start.minusYears(1)); past.setFin(start.minusYears(1).plusHours(1)); past.getEquipes().clear();
         assertThat(service.eventDetails(e.id(), login(outsider)).evenement().debut()).isEqualTo(past.getDebut());
+    }
+
+    @Test void publicRosterIncludesParticipantAndResponsibilityResponsesAndSurvivesAReply() {
+        TeamView t = team("Équipe", aliceMembership.getId(), bobMembership.getId());
+        EventView e = event(t);
+        TacheSeance task = new TacheSeance(); task.setNom("Matériel"); em.persist(task); em.flush();
+        EventView draft = service.responsibilities(e.id(), List.of(
+                new com.wild.corp.adhesion.models.resources.ResponsabiliteEquipeRequest(task.getId(), t.id())), login(coach));
+        Long dutyId = draft.responsabilites().getFirst().invitation().id();
+        assertThat(service.eventDetails(e.id(), login(outsider)).evenement().responsabilites()).singleElement().satisfies(r -> {
+            assertThat(r.invitation()).isNotNull();
+            assertThat(r.invitation().canReply()).isFalse();
+        });
+        service.publish(e.id(), login(coach));
+        Long aliceId = e.convocations().stream().filter(c -> c.adherentId().equals(alice.getId())).findFirst().orElseThrow().id();
+        Long bobId = e.convocations().stream().filter(c -> c.adherentId().equals(bob.getId())).findFirst().orElseThrow().id();
+        service.reply(e.id(), bobId, false, login(bob));
+        service.reply(e.id(), dutyId, null, login(alice));
+        EventView updated = service.reply(e.id(), aliceId, true, login(alice));
+        assertThat(updated.convocations()).hasSize(2).allSatisfy(c ->
+                assertThat(c.canReply()).isEqualTo(c.adherentId().equals(alice.getId())));
+        assertThat(updated.responsabilites().getFirst().invitation().dateReponse()).isNotNull();
+        service.attendance(e.id(), aliceId, true, login(coach));
+        EventView visible = service.eventDetails(e.id(), login(outsider)).evenement();
+        assertThat(visible.convocations()).extracting(InviteView::reponse).containsExactly(true, false);
+        assertThat(visible.convocations()).allSatisfy(c -> {
+            assertThat(c.canReply()).isFalse();
+            assertThat(c.presence()).isNull();
+        });
+        assertThat(visible.responsabilites()).singleElement().satisfies(r -> {
+            assertThat(r.adherent().id()).isEqualTo(alice.getId());
+            assertThat(r.invitation().reponse()).isNull();
+            assertThat(r.invitation().dateReponse()).isNotNull();
+            assertThat(r.invitation().canReply()).isFalse();
+        });
+        service.roster(activity.getId(), t.id(), new RosterEdit(List.of(aliceMembership.getId())), login(admin));
+        assertThat(service.eventDetails(e.id(), login(outsider)).evenement().convocations())
+                .extracting(InviteView::adherentId).containsExactly(alice.getId());
     }
 
     @Test void eventMembersShowTheirActiveSectionTeamsEvenWhenNotTargetedByTheEvent() {
@@ -271,8 +500,6 @@ class TeamManagementIntegrationTest {
         activity.getSection().getReferents().add(parent.getUser());
         em.flush(); em.clear();
 
-        assertThat(service.mine(login(admin))).isEmpty();
-        assertThat(service.mine(login(parent))).isEmpty();
         for (Adherent manager : List.of(admin, parent, coach)) {
             assertThat(creation.options(login(manager)).equipes()).extracting(TeamView::id).containsExactly(t.id());
             assertThat(creation.create(new EventCreationService.Creation(edit(List.of(t.id())), List.of(), 1), login(manager)).nombre())
@@ -416,6 +643,45 @@ class TeamManagementIntegrationTest {
         assertThat(service.eventDetails(e.id(), login(parent)).evenement().responsabilites()).hasSize(2);
     }
 
+    @Test void taskAssigneeCanReplyWithoutManagingTheEventOrWaitingForPublication() {
+        TeamView host = team("Hôte", aliceMembership.getId());
+        EventView e = event(host);
+        Equipe volunteers = new Equipe(); volunteers.setActivite(activity); volunteers.setNom("Bénévoles");
+        volunteers.getReferents().add(outsider); em.persist(volunteers);
+        TacheSeance task = new TacheSeance(); task.setNom("Accueil"); em.persist(task); em.flush();
+        service.responsibilities(e.id(), List.of(
+                new com.wild.corp.adhesion.models.resources.ResponsabiliteEquipeRequest(task.getId(), volunteers.getId())), login(coach));
+        em.flush(); em.clear();
+        EventDetails details = service.eventDetails(e.id(), login(outsider));
+        assertThat(details.evenement().canManage()).isFalse();
+        assertThat(details.adherentId()).isEqualTo(outsider.getId());
+        var duty = details.evenement().responsabilites().getFirst().invitation();
+        assertThat(duty.publication()).isNull();
+        assertThat(duty.canReply()).isTrue();
+        assertThat(duty.adherentId()).isEqualTo(details.adherentId());
+        assertThat(details.evenement().convocations()).allSatisfy(c -> assertThat(c.canReply()).isFalse());
+        for (Boolean answer : Arrays.asList(true, false, null)) {
+            EventView updated = service.reply(e.id(), duty.id(), answer, login(outsider));
+            var saved = updated.responsabilites().getFirst().invitation();
+            assertThat(saved.reponse()).isEqualTo(answer);
+            assertThat(saved.dateReponse()).isNotNull();
+            assertThat(saved.publication()).isNull();
+            assertThat(updated.convocations()).allSatisfy(c -> assertThat(c.dateReponse()).isNull());
+        }
+        assertThat(mails.count()).isZero();
+        assertThatThrownBy(() -> service.reply(e.id(), duty.id(), true, login(alice))).hasMessageContaining("403");
+        assertThatThrownBy(() -> service.responsibilities(e.id(), List.of(), login(outsider))).hasMessageContaining("403");
+        assertThatThrownBy(() -> service.attendance(e.id(), e.convocations().getFirst().id(), true, login(outsider)))
+                .hasMessageContaining("403");
+        Seance session = sessions.findById(e.id()).orElseThrow();
+        session.setDebut(start.minusYears(1));
+        assertThat(service.eventDetails(e.id(), login(outsider)).evenement().responsabilites().getFirst().invitation().canReply()).isFalse();
+        assertThatThrownBy(() -> service.reply(e.id(), duty.id(), true, login(outsider))).hasMessageContaining("409");
+        session.setDebut(start);
+        service.cancel(e.id(), login(coach));
+        assertThat(service.eventDetails(e.id(), login(outsider)).evenement().responsabilites().getFirst().invitation().canReply()).isFalse();
+    }
+
     @Test void responsibilityInvitationsSupportPeopleWithoutMembershipAndRespectReplyPermissions() {
         TeamView t = team("A", aliceMembership.getId()); EventView e = event(t);
         Equipe target = em.find(Equipe.class, t.id()); target.getReferents().add(outsider);
@@ -424,9 +690,11 @@ class TeamManagementIntegrationTest {
         EventView draft = service.responsibilities(e.id(), inputs, login(coach));
         Long duty = draft.responsabilites().getFirst().invitation().id();
         assertThat(draft.responsabilites().getFirst().invitation().adhesionId()).isNull();
-        // A responsibility assignee cannot reply before publication.
+        // Task assignment grants reply access even before publication, without management rights.
         target.getReferents().clear();
-        assertThatThrownBy(() -> service.reply(e.id(), duty, true, login(outsider))).hasMessageContaining("403");
+        EventView assigned = service.eventDetails(e.id(), login(outsider)).evenement();
+        assertThat(assigned.canManage()).isFalse();
+        assertThat(assigned.responsabilites().getFirst().invitation().canReply()).isTrue();
         assertThat(sessions.findAllByAdherentAndStatutNonExcluAndDebutBetweenOrderByDebut(outsider.getId(),
                 List.of(Status.ANNULEE.label, Status.LISTE_ATTENTE.label), start.minusDays(1), start.plusDays(1))).isEmpty();
         service.publishInvitation(e.id(), duty, login(coach));
@@ -434,9 +702,9 @@ class TeamManagementIntegrationTest {
                 List.of(Status.ANNULEE.label, Status.LISTE_ATTENTE.label), start.minusDays(1), start.plusDays(1)))
                 .extracting(Seance::getId).containsExactly(e.id());
         EventView published = service.eventDetails(e.id(), login(outsider)).evenement();
-        assertThat(published.convocations()).isEmpty();
+        assertThat(published.convocations()).singleElement().satisfies(invite -> assertThat(invite.canReply()).isFalse());
         assertThat(published.responsabilites().getFirst().invitation().canReply()).isTrue();
-        assertThat(service.eventDetails(e.id(), login(alice)).evenement().responsabilites().getFirst().invitation()).isNull();
+        assertThat(service.eventDetails(e.id(), login(alice)).evenement().responsabilites().getFirst().invitation().canReply()).isFalse();
         assertThatThrownBy(() -> service.reply(e.id(), duty, true, login(alice))).hasMessageContaining("403");
         service.reply(e.id(), duty, null, login(outsider));
         service.remindInvitation(e.id(), duty, UUID.randomUUID().toString(), login(coach));
@@ -452,7 +720,7 @@ class TeamManagementIntegrationTest {
         assertThatThrownBy(() -> service.reply(e.id(), duty, true, login(outsider))).hasMessageContaining("409");
     }
 
-    @Test void removingAndReaddingAResponsibilityRequiresANewInvitationAndPreservesHistory() {
+    @Test void removingAndReaddingAResponsibilityResetsTheReplyAndPreservesHistory() {
         TeamView t = team("A", aliceMembership.getId()); EventView e = event(t);
         TacheSeance task = new TacheSeance(); task.setNom("Matériel"); em.persist(task); em.flush();
         var inputs = List.of(new com.wild.corp.adhesion.models.resources.ResponsabiliteEquipeRequest(task.getId(), t.id()));
@@ -467,7 +735,7 @@ class TeamManagementIntegrationTest {
         assertThat(restored.id()).isEqualTo(duty); assertThat(restored.publication()).isNull();
         assertThat(restored.reponse()).isNull(); assertThat(restored.dateReponse()).isNull();
         assertThat(invitations.findById(duty).orElseThrow().getHistorique()).hasSize(1);
-        assertThatThrownBy(() -> service.reply(e.id(), duty, true, login(parent))).hasMessageContaining("403");
+        assertThat(service.reply(e.id(), duty, true, login(parent)).responsabilites().getFirst().invitation().reponse()).isTrue();
     }
 
     @Test void responsibilitiesBelongToEventsAndRequireTheEventManager() {
@@ -502,7 +770,8 @@ class TeamManagementIntegrationTest {
             assertThat(r.invitation().equipes()).containsExactly("Invités");
         });
         assertThat(service.eventDetails(event.id(), login(parent)).evenement().responsabilites()).singleElement().satisfies(r -> {
-            assertThat(r.invitation()).isNull();
+            assertThat(r.invitation()).isNotNull();
+            assertThat(r.invitation().canReply()).isFalse();
             assertThat(r.equipes()).containsExactly("Invités");
         });
         assertThatThrownBy(() -> service.responsibilityTeams(event.id(), login(parent))).hasMessageContaining("403");
@@ -758,6 +1027,8 @@ class TeamManagementIntegrationTest {
         service.reply(published.id(), bobInvite.getId(), true, login(parent));
         service.attendance(published.id(), aliceInvite.getId(), true, login(coach));
         service.attendance(published.id(), bobInvite.getId(), false, login(coach));
+        // Compare persisted timestamps using the database's precision.
+        em.flush(); em.refresh(bobInvite);
         Long bobId = bobInvite.getId(); LocalDateTime bobPublication = bobInvite.getPublication(), bobReply = bobInvite.getDateReponse();
         EventView draft = event(t);
 
@@ -830,55 +1101,10 @@ class TeamManagementIntegrationTest {
         assertThat(invitations.findPublishedForUser(login(parent))).isEmpty();
     }
 
-    @Test void myTeamsOnlyIncludesDirectCoachAndReferentAssignmentsRegardlessOfAccountRole() {
-        TeamView member = team("Membre", aliceMembership.getId());
-        TeamView coached = team("Encadrée");
-        TeamView referred = team("Référente");
-        teams.findById(coached.id()).orElseThrow().getEncadrants().add(alice);
-        teams.findById(referred.id()).orElseThrow().getReferents().add(alice);
-        // Being both referent and coach still produces just one button.
-        teams.findById(referred.id()).orElseThrow().getEncadrants().add(alice);
-        em.flush(); em.clear();
-
-        assertThat(service.mine(login(alice))).extracting(TeamView::id)
-                .containsExactly(coached.id(), referred.id()).doesNotContain(member.id());
-        assertThat(service.mine(login(outsider))).isEmpty();
-    }
-
-    @Test void myTeamsDoesNotIncludeMembershipsPublishedInvitationsOrAssignmentsOfRepresentedPeople() {
-        TeamView member = team("Membre", aliceMembership.getId(), bobMembership.getId());
-        teams.findById(member.id()).orElseThrow().getReferents().add(bob);
-        EventView e = event(member);
-        service.publish(e.id(), login(admin));
-        em.flush(); em.clear();
-
-        assertThat(invitations.findPublishedForUser(login(alice))).isNotEmpty();
-        assertThat(invitations.findPublishedForUser(login(parent))).isNotEmpty();
-        assertThat(service.mine(login(alice))).isEmpty();
-        assertThat(service.mine(login(parent))).isEmpty();
-        assertThat(service.mine(login(bob))).extracting(TeamView::id).containsExactly(member.id());
-        assertThat(service.events(member.id(), login(parent))).extracting(EventView::id).containsExactly(e.id());
-    }
-
-    @Test void myTeamsRequiresAnAssignmentEvenForAnAdministratorOrSectionManager() {
-        TeamView t = team("Équipe");
-        activity.getSection().getReferents().add(parent.getUser());
-        em.flush();
-
-        assertThat(service.mine(login(admin))).isEmpty();
-        assertThat(service.mine(login(parent))).isEmpty();
-        teams.findById(t.id()).orElseThrow().getReferents().add(admin);
-        teams.findById(t.id()).orElseThrow().getEncadrants().add(parent);
-        em.flush(); em.clear();
-        assertThat(service.mine(login(admin))).extracting(TeamView::id).containsExactly(t.id());
-        assertThat(service.mine(login(parent))).extracting(TeamView::id).containsExactly(t.id());
-    }
-
     @Test void aRemovedCoachLosesAccessToTheTeamAndItsAttendance() {
         TeamView t = team("A", aliceMembership.getId()); EventView e = event(t);
         assertThat(sessions.findByIdAndManagerUsername(e.id(), login(coach))).isPresent();
         service.saveTeam(activity.getId(), t.id(), new TeamEdit(t.nom(), "", List.of(), List.of()), login(admin)); em.flush();
-        assertThat(service.mine(login(coach))).isEmpty();
         assertThat(sessions.findByIdAndManagerUsername(e.id(), login(coach))).isEmpty();
         assertThatThrownBy(() -> service.publish(e.id(), login(coach))).hasMessageContaining("403");
     }

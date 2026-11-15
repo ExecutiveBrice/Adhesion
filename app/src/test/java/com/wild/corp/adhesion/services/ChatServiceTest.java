@@ -67,7 +67,7 @@ class ChatServiceTest {
     @EnumSource(ERole.class)
     void allExplicitRolePermissionsAreIndependentOfLinksIncludingMemberAndReferentRoles(ERole role) {
         user.setRoles(Set.of(role));
-        for (ChatTarget target : ChatTarget.values()) {
+        for (ChatTarget target : List.of(ChatTarget.SECTION, ChatTarget.ACTIVITE, ChatTarget.ASSOCIATION)) {
             Chat chat = room(target, 8L, target == ChatTarget.ACTIVITE ? 30L : 20L);
             ChatPermission permission = permission(chat, role, false);
             when(chats.findById(8L)).thenReturn(Optional.of(chat));
@@ -99,7 +99,9 @@ class ChatServiceTest {
     void rolesAloneNeverGrantAccessToUnrelatedChats(ERole role) {
         user.setRoles(Set.of(role));
         for (ChatTarget target : ChatTarget.values()) {
-            when(chats.findById(8L)).thenReturn(Optional.of(room(target, 8L, 20L)));
+            Chat chat = room(target, 8L, 20L);
+            if (target == ChatTarget.EQUIPE) permission(chat, role, true);
+            when(chats.findById(8L)).thenReturn(Optional.of(chat));
             forbidden(() -> service.history("alice", 8L, null, null));
             forbidden(() -> service.send("alice", 8L, "Bonjour"));
             forbidden(() -> service.markRead("alice", 8L, 1L));
@@ -147,6 +149,10 @@ class ChatServiceTest {
             Activite activity = new Activite(); activity.setId(targetId); activity.setNom("Activité");
             activity.setSection(Section.builder().id(20L).nom("Section").build());
             chat.setActivite(activity);
+        } else if (target == ChatTarget.EQUIPE) {
+            Activite activity = new Activite(); activity.setId(30L); activity.setNom("Activité");
+            Equipe team = new Equipe(); team.setId(targetId); team.setNom("Équipe"); team.setActivite(activity);
+            chat.setEquipe(team);
         }
         return chat;
     }

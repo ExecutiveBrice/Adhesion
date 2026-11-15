@@ -20,7 +20,7 @@ import { TribuService } from './_services/tribu.service';
 import { Adherent } from './models';
 import { SessionNavigationService } from './_services/session-navigation.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faHouse, faCalendarDays, faUser, faComments, faStore, faGear, faPersonRunning, faUsers, faIdCard, faEnvelope, faChartColumn, faPeopleGroup, faCalendarCheck, faClipboardList, faRightToBracket, faBullhorn, faCalculator } from '@fortawesome/free-solid-svg-icons';
+import { faHouse, faCalendarDays, faComments, faStore, faGear, faPersonRunning, faUsers, faIdCard, faEnvelope, faChartColumn, faPeopleGroup, faCalendarCheck, faClipboardList, faRightToBracket, faBullhorn, faCalculator, faBoxOpen } from '@fortawesome/free-solid-svg-icons';
 
 
 @Component({
@@ -33,7 +33,6 @@ export class AppComponent {
   readonly faBullhorn = faBullhorn;
   readonly faHouse = faHouse;
   readonly faCalendarDays = faCalendarDays;
-  readonly faUser = faUser;
   readonly faComments = faComments;
   readonly faStore = faStore;
   readonly faGear = faGear;
@@ -43,6 +42,7 @@ export class AppComponent {
   readonly faEnvelope = faEnvelope;
   readonly faChartColumn = faChartColumn;
   readonly faCalculator = faCalculator;
+  readonly faBoxOpen = faBoxOpen;
   readonly faPeopleGroup = faPeopleGroup;
   readonly faCalendarCheck = faCalendarCheck;
   readonly faClipboardList = faClipboardList;

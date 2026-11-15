@@ -32,6 +32,9 @@ public class Seance {
     @Column(length = 20, nullable = false)
     private String typeEvenement = "ACTIVITE";
 
+    @Column(nullable = false)
+    private boolean sansInvitation;
+
     @Column(length = 200)
     private String lieuExterieur;
 

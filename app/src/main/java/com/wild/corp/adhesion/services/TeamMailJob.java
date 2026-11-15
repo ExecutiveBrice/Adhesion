@@ -46,6 +46,7 @@ public class TeamMailJob {
             if (m == null) return null;
             Seance s = m.getSeance();
             List<ConvocationEquipe> validRecipients = invitations.findAllById(m.getConvocations()).stream()
+                    .filter(c -> !s.isSansInvitation() || !c.isParticipant())
                     .filter(c -> TeamRoster.contactAddress(c.getAdherent()).equals(m.getDestinataire()))
                     .filter(c -> switch (m.getType()) {
                         case "ANNULATION" -> s.getEtatSeance() == ESeance.ANNULEE;

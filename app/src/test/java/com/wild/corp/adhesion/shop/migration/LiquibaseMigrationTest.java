@@ -80,6 +80,49 @@ class LiquibaseMigrationTest {
     }
 
     @Test
+    void createsTeamChatsWithoutLosingExistingHistoryAndEnforcesUniqueTargets() throws Exception {
+        var source = database();
+        isolatePostgres(source);
+        var jdbc = new JdbcTemplate(source);
+        jdbc.execute("CREATE TABLE activites (id bigint PRIMARY KEY)");
+        jdbc.execute("CREATE TABLE sections (id bigint PRIMARY KEY)");
+        jdbc.execute("CREATE TABLE users (id bigint PRIMARY KEY)");
+        jdbc.execute("CREATE TABLE equipes (id bigint PRIMARY KEY, nom varchar(100), archivee boolean)");
+        jdbc.execute("INSERT INTO equipes VALUES (3, 'Équipe A', false), (4, 'Équipe B', true)");
+        migrate(source, "db/changelog/v2/chat.xml");
+        migrate(source, "db/changelog/v2/changeset-v10.xml");
+        if (source.getUrl().startsWith("jdbc:postgresql:")) {
+            // Reproduce the additional target constraint found on Hibernate-created databases.
+            jdbc.execute("ALTER TABLE chats ADD CONSTRAINT chats_cible_check CHECK (cible IN ('SECTION', 'ACTIVITE', 'ASSOCIATION'))");
+        }
+        jdbc.execute("INSERT INTO users VALUES (7)");
+        jdbc.execute("INSERT INTO chats (id, nom, cible) VALUES (8, 'Global existant', 'ASSOCIATION')");
+        jdbc.execute("INSERT INTO chat_permissions (chat_id, role, ecriture) VALUES (8, 'ROLE_USER', true)");
+        jdbc.execute("INSERT INTO chat_messages (id, chat_id, sender_user_id, sender_name, content, created_at) VALUES (9, 8, 7, 'Alice', 'Historique', CURRENT_TIMESTAMP)");
+        jdbc.execute("INSERT INTO chat_reads VALUES (7, 8, 9)");
+        migrate(source, "db/changelog/v2/changeset-v24.xml");
+        migrate(source, "db/changelog/v2/changeset-v24.xml");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM chats", Integer.class)).isEqualTo(3);
+        assertThat(jdbc.queryForList("SELECT nom FROM chats WHERE cible = 'EQUIPE' ORDER BY equipe_id", String.class))
+                .containsExactly("Équipe A", "Équipe B");
+        assertThat(jdbc.queryForObject("SELECT content FROM chat_messages WHERE id = 9", String.class)).isEqualTo("Historique");
+        assertThat(jdbc.queryForObject("SELECT last_message_id FROM chat_reads WHERE user_id = 7 AND chat_id = 8", Long.class)).isEqualTo(9);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM chat_permissions", Integer.class)).isEqualTo(1);
+        assertThatThrownBy(() -> jdbc.execute("INSERT INTO chats (nom, cible, equipe_id) VALUES ('Doublon', 'EQUIPE', 3)"))
+                .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> jdbc.execute("INSERT INTO chats (nom, cible) VALUES ('Sans équipe', 'EQUIPE')"))
+                .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        jdbc.execute("INSERT INTO equipes VALUES (5, 'Équipe C', false)");
+        assertThatThrownBy(() -> jdbc.execute("UPDATE chats SET equipe_id = 5 WHERE id = 8"))
+                .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> jdbc.execute("INSERT INTO chats (nom, cible, equipe_id) VALUES ('Inconnue', 'EQUIPE', 999)"))
+                .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        jdbc.execute("DELETE FROM equipes WHERE id = 3");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM chats WHERE equipe_id = 3", Integer.class)).isZero();
+        assertThat(jdbc.queryForObject("SELECT content FROM chat_messages WHERE id = 9", String.class)).isEqualTo("Historique");
+    }
+
+    @Test
     void createsCompleteSchemaAndCanRestartWithoutReapplyingChanges() throws Exception {
         var source = database();
         // PostgreSQL test runs use a disposable database, with a separate schema per scenario.

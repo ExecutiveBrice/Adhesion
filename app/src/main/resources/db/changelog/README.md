@@ -88,6 +88,16 @@ automatiquement au démarrage du serveur.
 
 ## Vérification
 
+La V24 crée un chat par équipe existante et ajoute le rattachement unique
+`chats.equipe_id`. Les messages et repères de lecture existants sont conservés.
+Les futurs chats d’équipe sont créés automatiquement avec les équipes.
+
+La V23 ajoute l’option `sans_invitation` aux événements. Elle vaut `false`
+pour les événements existants. En mode sans invitation, les participants et
+le pointage des présences restent disponibles, sans réponse de participation
+attendue ni envoi de convocations ou de relances de participation. Les demandes
+de responsabilité conservent toujours leurs invitations, réponses et relances.
+
 `LiquibaseMigrationTest` vérifie la création complète, la validation de toutes
 les entités JPA, le redémarrage, la reprise du socle et la conservation des
 données boutique. Pour PostgreSQL, utiliser une base **jetable** avec

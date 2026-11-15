@@ -26,7 +26,7 @@ export class TeamEventModalComponent implements OnInit {
   cancelling = false;
   error = '';
   private automaticMeeting = true;
-  form: TeamEventEdit = { equipes: [], type: 'ACTIVITE', debut: '', fin: '', salleId: null, lieu: '', rendezVous: '', adversaire: '', commentaire: '' };
+  form: TeamEventEdit = { equipes: [], type: 'ACTIVITE', debut: '', fin: '', salleId: null, lieu: '', rendezVous: '', adversaire: '', commentaire: '', sansInvitation: true };
   ngOnInit() {
     const date = new Date(); date.setDate(date.getDate() + 1); date.setHours(18, 0, 0, 0);
     const start = this.local(date);
@@ -34,7 +34,7 @@ export class TeamEventModalComponent implements OnInit {
       debut: this.event?.debut.slice(0, 16) ?? start, fin: this.event?.fin.slice(0, 16) ?? this.shift(start, 60),
       salleId: this.event?.salleId ?? null, lieu: this.event?.salleId ? '' : this.event?.lieu ?? '',
       rendezVous: this.event?.rendezVous?.slice(0, 16) || this.shift(this.event?.debut.slice(0, 16) ?? start, -60),
-      adversaire: this.event?.adversaire ?? '', commentaire: this.event?.commentaire ?? '' };
+      adversaire: this.event?.adversaire ?? '', commentaire: this.event?.commentaire ?? '', sansInvitation: this.event ? this.event.sansInvitation ?? false : true };
     this.automaticMeeting = !this.event;
     this.loadOptions();
   }
@@ -81,7 +81,7 @@ export class TeamEventModalComponent implements OnInit {
     return !!this.event?.canManage && this.event.etat !== 'ANNULEE' && new Date(this.event.debut).getTime() > Date.now();
   }
   cancel() {
-    if (this.busy || !this.canCancel || !confirm('Annuler cet événement et prévenir les personnes convoquées ?')) return;
+    if (this.busy || !this.canCancel || !confirm(this.event?.sansInvitation && !this.event.responsabilites?.length ? 'Annuler cet événement ?' : 'Annuler cet événement et prévenir les personnes convoquées ?')) return;
     this.busy = true; this.cancelling = true; this.error = '';
     this.api.cancel(this.event!.id).subscribe({
       next: result => this.modal.close(result),

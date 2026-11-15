@@ -43,6 +43,7 @@ public class ChatConfigurationServices {
     @Transactional
     public List<ChatConfiguration> getAll() {
         return chatRepository.findAll().stream()
+                .filter(chat -> chat.getCible() != ChatTarget.EQUIPE)
                 .sorted(java.util.Comparator.comparing((Chat chat) -> cibleNom(chat), String.CASE_INSENSITIVE_ORDER)
                         .thenComparing(Chat::getNom, String.CASE_INSENSITIVE_ORDER))
                 .map(this::toConfiguration).toList();
@@ -78,11 +79,14 @@ public class ChatConfigurationServices {
 
     @Transactional
     public void delete(Long chatId) {
-        chatRepository.delete(chatRepository.findById(chatId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Chat introuvable")));
+        Chat chat = chatRepository.findById(chatId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Chat introuvable"));
+        requireConfigurable(chat);
+        chatRepository.delete(chat);
     }
 
     private ChatConfiguration update(Chat chat, ChatConfiguration configuration) {
+        requireConfigurable(chat);
         ChatConfiguration normalisee = normaliser(configuration);
         appliquerCible(chat, normalisee);
         verifierNomUnique(chat, normalisee.nom());
@@ -98,6 +102,12 @@ public class ChatConfigurationServices {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Chat introuvable dans cette section");
         }
         return chat;
+    }
+
+    private void requireConfigurable(Chat chat) {
+        if (chat.getCible() == ChatTarget.EQUIPE) {
+            throw invalide("Le chat d'équipe est géré automatiquement depuis son équipe");
+        }
     }
 
     private ChatConfiguration normaliser(ChatConfiguration configuration) {
@@ -131,6 +141,7 @@ public class ChatConfigurationServices {
         } catch (IllegalArgumentException exception) {
             throw invalide("Le rattachement du chat est invalide");
         }
+        if (cible == ChatTarget.EQUIPE) throw invalide("Le chat d'équipe est créé automatiquement avec son équipe");
         if (cible != ChatTarget.ASSOCIATION && (configuration.cibleId() == null || configuration.cibleId() <= 0)) {
             throw invalide("Sélectionnez une section ou une activité pour ce chat");
         }

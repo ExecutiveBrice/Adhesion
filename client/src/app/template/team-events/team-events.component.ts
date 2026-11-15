@@ -4,7 +4,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { DatePipe, KeyValuePipe, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faArrowUpRightFromSquare, faArrowsRotate, faChevronDown, faChevronUp, faCircleCheck, faCircleExclamation, faCircleQuestion, faCircleXmark, faClock, faClockRotateLeft, faEnvelope, faHandHoldingMedical, faPen, faPlus, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUpRightFromSquare, faArrowsRotate, faChevronDown, faChevronUp, faCircleCheck, faCircleExclamation, faCircleQuestion, faCircleXmark, faClock, faClockRotateLeft, faEnvelope, faPen, faPlus, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { forkJoin, Observable } from 'rxjs';
 import { TeamService, Team, TeamEvent, TeamInvitation, ResponsibilityTeam, TeamResponsibilityEdit, teamError } from '../../_services/team.service';
 import { ParamService } from '../../_services/param.service';
@@ -32,7 +32,6 @@ export class TeamEventsComponent implements OnChanges, OnDestroy {
   @Input() teams: Team[] = [];
   @Input() collapsibleParticipants = false;
   @Input() collapsibleEvents = false;
-  @Input() summaryCards = false;
   @Input() allowEventEditing = true;
   eventsExpanded = false;
   events: TeamEvent[] = [];
@@ -52,7 +51,6 @@ export class TeamEventsComponent implements OnChanges, OnDestroy {
   faPlus = faPlus;
   faArrowsRotate = faArrowsRotate;
   faClockRotateLeft = faClockRotateLeft;
-  faHandHoldingMedical = faHandHoldingMedical;
   faArrowUpRightFromSquare = faArrowUpRightFromSquare;
   expandedParticipants = new Set<number>();
   participantSearch: Record<number, string> = {};
@@ -140,8 +138,10 @@ export class TeamEventsComponent implements OnChanges, OnDestroy {
     this.closeResponsibilities();
     this.error = ''; this.responsibilityEvent = e; this.responsibilitiesLoading = true;
     this.responsibilityTeams = []; this.tasks = [];
-    this.responsibilityRows = e.responsabilites?.length
-      ? e.responsabilites.map(r => ({ tacheId: r.tache.id, equipeId: r.equipeId ?? undefined })) : [{}];
+    this.responsibilityRows = [
+      ...(e.responsabilites ?? []).map(r => ({ tacheId: r.tache.id, equipeId: r.equipeId ?? undefined })),
+      {}
+    ];
     const modal = this.modals.open(this.responsibilitiesModal, { size: 'lg', centered: true,
       ariaLabelledBy: 'responsibilities-title', beforeDismiss: () => !this.busy });
     this.responsibilityModal = modal;

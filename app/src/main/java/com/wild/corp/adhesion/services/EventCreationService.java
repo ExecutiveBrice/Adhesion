@@ -68,7 +68,7 @@ public class EventCreationService {
             if (weeks > 1 && start.toLocalDate().datesUntil(end.toLocalDate().plusDays(end.toLocalTime().equals(LocalTime.MIDNIGHT) ? 0 : 1)).anyMatch(excluded::contains)) continue;
             for (List<Long> target : grouped.values()) {
                 EventEdit occurrence = new EventEdit(target, edit.type(), start, end, edit.salleId(), edit.lieu(),
-                        edit.rendezVous() == null ? start.minusHours(1) : edit.rendezVous().plusWeeks(week), edit.adversaire(), edit.commentaire());
+                        edit.rendezVous() == null ? start.minusHours(1) : edit.rendezVous().plusWeeks(week), edit.adversaire(), edit.commentaire(), edit.sansInvitation());
                 created.add(management.createEvent(target.getFirst(), occurrence, name));
             }
         }

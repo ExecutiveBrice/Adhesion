@@ -300,9 +300,9 @@ describe('AgendaComponent', () => {
       jasmine.clock().mockDate(new Date(2026, 9, 6, 12));
       fixture.detectChanges();
       fixture.nativeElement.querySelector('.agenda-evenement').click();
-      accueil.componentInstance.adherentId = 42;
-      accueil.componentInstance.affichage = 'liste';
-      accueil.componentInstance.joursVisibles = 15;
+      accueil.componentRef.setInput('adherentId', 42);
+      accueil.componentRef.setInput('affichage', 'liste');
+      accueil.componentRef.setInput('joursVisibles', 15);
       accueil.detectChanges();
       accueil.nativeElement.querySelector('.evenement-ouvrir').click();
       expect(navigate.calls.allArgs()).toEqual([[['/evenements', 1]], [['/evenements', 1]]]);

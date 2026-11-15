@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  <changeSet id="v24-team-chats" author="codex">
+    <addColumn tableName="chats"><column name="equipe_id" type="bigint"/></addColumn>
+    <addForeignKeyConstraint baseTableName="chats" baseColumnNames="equipe_id" referencedTableName="equipes"
+      referencedColumnNames="id" constraintName="fk_chat_equipe" onDelete="CASCADE"/>
+    <addUniqueConstraint tableName="chats" columnNames="equipe_id" constraintName="uq_chat_equipe"/>
+    <!-- Historical schemas may also have unnamed inline or Hibernate-generated target checks. -->
+    <sql dbms="postgresql" splitStatements="false"><![CDATA[
+      DO $$ DECLARE target_check record;
+      BEGIN
+        FOR target_check IN SELECT conname FROM pg_constraint
+          WHERE conrelid = 'chats'::regclass AND contype = 'c'
+            AND pg_get_constraintdef(oid) LIKE '%cible%'
+        LOOP
+          EXECUTE format('ALTER TABLE chats DROP CONSTRAINT %I', target_check.conname);
+        END LOOP;
+      END $$;
+    ]]></sql>
+    <sql dbms="h2">ALTER TABLE chats DROP CONSTRAINT IF EXISTS ck_chat_target</sql>
+    <sql>ALTER TABLE chats ADD CONSTRAINT ck_chat_target CHECK (
+      (cible = 'SECTION' AND section_id IS NOT NULL AND activite_id IS NULL AND equipe_id IS NULL)
+      OR (cible = 'ACTIVITE' AND section_id IS NULL AND activite_id IS NOT NULL AND equipe_id IS NULL)
+      OR (cible = 'ASSOCIATION' AND section_id IS NULL AND activite_id IS NULL AND equipe_id IS NULL)
+      OR (cible = 'EQUIPE' AND section_id IS NULL AND activite_id IS NULL AND equipe_id IS NOT NULL)
+    )</sql>
+    <sql>
+      INSERT INTO chats (nom, cible, equipe_id)
+      SELECT e.nom, 'EQUIPE', e.id FROM equipes e
+      WHERE NOT EXISTS (SELECT 1 FROM chats c WHERE c.equipe_id = e.id)
+    </sql>
+  </changeSet>
+</databaseChangeLog>

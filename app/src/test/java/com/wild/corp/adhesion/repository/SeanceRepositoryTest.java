@@ -35,6 +35,38 @@ class SeanceRepositoryTest {
     @Autowired private EntityManager entityManager;
     @Autowired private SeanceRepository seanceRepository;
     @Autowired private ActiviteRepository activiteRepository;
+    @Autowired private ConvocationEquipeRepository invitations;
+
+    @Test void pendingRepliesExcludeOtherPeopleUnpublishedWithdrawnAnsweredAndPastInvitations() {
+        var user = new com.wild.corp.adhesion.models.User("alice@example.org", "password");
+        entityManager.persist(user);
+        var person = new com.wild.corp.adhesion.models.Adherent(); person.setUser(user);
+        entityManager.persist(person);
+        var other = new com.wild.corp.adhesion.models.Adherent(); entityManager.persist(other);
+        var now = LocalDateTime.now();
+        var future = session(now.plusDays(30), ESeance.PROGRAMMEE);
+        var modified = session(now.plusDays(2), ESeance.MODIFIEE);
+        var withoutInvitations = session(now.plusDays(1), ESeance.PROGRAMMEE);
+        withoutInvitations.setSansInvitation(true);
+        for (int i = 0; i < 12; i++) {
+            var c = new com.wild.corp.adhesion.models.ConvocationEquipe();
+            c.setSeance(i == 0 ? modified : i == 7 ? session(now.minusHours(1), ESeance.PROGRAMMEE)
+                    : i == 8 ? session(now.plusDays(1), ESeance.ANNULEE)
+                    : i == 9 ? session(now.plusDays(1), ESeance.REALISEE)
+                    : i >= 10 ? withoutInvitations : future);
+            c.setAdherent(i == 2 ? other : person);
+            c.setObjet(i == 0 || i == 10 ? "PARTICIPANT" : "RESPONSABILITE:" + i + ":0");
+            c.setSelectionnee(i != 3);
+            c.setPublication(i == 4 ? null : now.minusDays(1));
+            if (i == 5) c.setReponse(false);
+            if (i == 6) c.setDateReponse(now); // Explicit “not sure yet” is already a reply.
+            entityManager.persist(c);
+        }
+        entityManager.flush(); entityManager.clear();
+        assertThat(invitations.findPendingForUser(user.getUsername(), now,
+                List.of(ESeance.PROGRAMMEE, ESeance.MODIFIEE)))
+                .extracting(c -> c.getSeance().getId()).containsExactly(withoutInvitations.getId(), modified.getId(), future.getId());
+    }
 
     @Test
     void explicitlySavedSessionsRemainAvailableAfterReload() {

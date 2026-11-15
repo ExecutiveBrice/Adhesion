@@ -3,44 +3,10 @@
 .team-events[hidden] { display: none !important; }
 .event-card { border: 1px solid #d9e2e1; border-radius: .7rem; padding: 1rem; background: #fff; }
 .event-card.cancelled { opacity: .7; border-left: 4px solid #b02a37; }
-.events-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
-  gap: 1rem;
-  align-items: start;
-}
-.events-grid .event-card {
-  min-width: 0;
-  margin-bottom: 0 !important;
-  color: #18322b;
-  border-color: #dce6e2;
-  border-radius: .75rem;
-  box-shadow: 0 4px 18px rgba(22, 58, 48, .06);
-  overflow-wrap: anywhere;
-}
-.events-grid .event-card > header {
-  padding-bottom: .85rem;
-  border-bottom: 1px solid #edf1ef;
-}
-.event-summary {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: .75rem;
-  margin: 1rem 0;
-}
-.event-summary dt {
-  margin-bottom: .15rem;
-  color: #526861;
-  font-size: .76rem;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-.event-summary dd { margin: 0; font-size: .95rem; }
 .practical { white-space: pre-wrap; }
 label { font-size: .92rem; }
 .participants-toggle { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
 .responsibilities-summary { display: inline-flex; align-items: center; gap: .5rem; }
-.responsibilities-icon { color: #559df1; font-size: 1.2em; flex-shrink: 0; }
 .response-count { display: inline-flex; align-items: center; gap: .25rem; }
 .response-present { color: #198754; }
 .response-absent { color: #dc3545; }

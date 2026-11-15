@@ -1,4 +1,44 @@
+<ng-template #carteEvenement let-evenement>
+  <article class="card evenement-card" [style.--agenda-color]="couleurEvenement(evenement)" (click)="ouvrirEvenement(evenement)">
+    <button type="button" class="evenement-ouvrir" [attr.aria-label]="'Détails de ' + evenement.titre">
+      <span class="evenement-libelle">
+        <strong class="evenement-titre">{{evenement.activiteNom || evenement.titre}}</strong>
+        @if (evenement.descriptif) { <span class="evenement-descriptif">{{evenement.descriptif}}</span> }
+      </span>
+      <span class="evenement-date-heure">
+        <time class="evenement-date" [attr.datetime]="evenement.debut">{{evenement.debut | date:'dd/MM':'':'fr-FR'}}</time>
+        <span aria-hidden="true">·</span>
+        <span class="evenement-heure">{{evenement.journeeEntiere ? 'Toute la journée' : heure(evenement.debut)}}</span>
+      </span>
+    </button>
+    @if (mesResponsabilites(evenement); as responsabilites) {
+      @if (responsabilites.length) {
+        <app-responsabilites-seance class="evenement-responsabilites" [responsabilites]="responsabilites"></app-responsabilites-seance>
+      }
+    }
+  </article>
+</ng-template>
 @if (affichage === 'liste') {
+  @if (afficherAttenteReponse) {
+    <section class="evenements-accueil evenements-attente-reponse" aria-labelledby="titre-attente-reponse" [attr.aria-busy]="chargementAttenteReponse">
+      <div class="evenements-entete"><h2 id="titre-attente-reponse">Attente de réponse</h2></div>
+      @if (chargementAttenteReponse) {
+        <p role="status">Chargement des événements en attente de réponse…</p>
+      } @else if (erreurAttenteReponse) {
+        <div class="alert alert-warning" role="alert">{{erreurAttenteReponse}}
+          <button type="button" class="btn btn-outline-primary btn-sm" (click)="chargerAttenteReponse()">Réessayer</button>
+        </div>
+      } @else {
+        <div class="evenements-liste">
+          @for (evenement of evenementsAttenteReponse; track evenement.id) {
+            <ng-container *ngTemplateOutlet="carteEvenement; context: { $implicit: evenement }"></ng-container>
+          } @empty {
+            <p class="text-body-secondary" role="status">Aucun événement en attente de réponse.</p>
+          }
+        </div>
+      }
+    </section>
+  }
   <section class="evenements-accueil" aria-labelledby="titre-evenements" [attr.aria-busy]="chargementCalendrier">
     <div class="evenements-entete">
       <div>
@@ -20,24 +60,7 @@
     } @else {
       <div class="evenements-liste">
         @for (evenement of evenementsAVenir.slice(0, nombreEvenementsAffiches); track evenement.source + ':' + evenement.agendaSource + ':' + evenement.id + ':' + evenement.debut) {
-          <article class="card evenement-card" [style.--agenda-color]="couleurEvenement(evenement)" (click)="ouvrirEvenement(evenement)">
-            <button type="button" class="evenement-ouvrir" [attr.aria-label]="'Détails de ' + evenement.titre">
-              <span class="evenement-libelle">
-                <strong class="evenement-titre">{{evenement.activiteNom || evenement.titre}}</strong>
-                @if (evenement.descriptif) { <span class="evenement-descriptif">{{evenement.descriptif}}</span> }
-              </span>
-              <span class="evenement-date-heure">
-                <time class="evenement-date" [attr.datetime]="evenement.debut">{{evenement.debut | date:'dd/MM':'':'fr-FR'}}</time>
-                <span aria-hidden="true">·</span>
-                <span class="evenement-heure">{{evenement.journeeEntiere ? 'Toute la journée' : heure(evenement.debut)}}</span>
-              </span>
-            </button>
-            @if (mesResponsabilites(evenement); as responsabilites) {
-              @if (responsabilites.length) {
-                <app-responsabilites-seance class="evenement-responsabilites" [responsabilites]="responsabilites"></app-responsabilites-seance>
-              }
-            }
-          </article>
+          <ng-container *ngTemplateOutlet="carteEvenement; context: { $implicit: evenement }"></ng-container>
         } @empty {
           <p class="text-body-secondary" role="status">Aucun événement à venir sur cette période.</p>
         }

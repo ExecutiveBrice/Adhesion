@@ -5,7 +5,7 @@ import { environment } from '../../environments/environment';
 
 export interface ChatCategory { descriptif: string; jour: string; horaire: string; }
 export interface ChatRoom { id: number; nom: string; groupeFiltre: string; categories: ChatCategory[]; unreadCount: number; canWrite: boolean; }
-export type ChatSenderRole = 'REFERENT_ACTIVITE' | 'REFERENT_SECTION' | 'COMMUNICATION_SECTION' |
+export type ChatSenderRole = 'REFERENT_EQUIPE' | 'REFERENT_ACTIVITE' | 'REFERENT_SECTION' | 'COMMUNICATION_SECTION' |
   'COMMUNICATION_GLOBAL' | 'ENCADRANT' | 'MEMBRECA' | 'SECRETAIRE';
 export interface ChatMessage { id: number; senderUserId: number; senderName: string; senderRole?: ChatSenderRole; content: string; createdAt: string; }
 

@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -111,6 +112,7 @@ public class ChatService {
     }
 
     private boolean canRead(User user, Chat chat, List<Activite> linkedActivities) {
+        if (chat.getCible() == ChatTarget.EQUIPE) return onTeam(user, chat.getEquipe());
         // Links grant read access; explicit role grants apply independently, including ROLE_USER.
         return chat.getPermissions().stream().anyMatch(permission -> hasRole(user, permission))
                 || switch (chat.getCible()) {
@@ -120,11 +122,29 @@ public class ChatService {
                     case ACTIVITE -> linkedActivities.stream()
                             .anyMatch(activity -> chat.getActivite().getId().equals(activity.getId()));
                     case ASSOCIATION -> false;
+                    case EQUIPE -> false; // Team chats use their roster exclusively.
                 };
     }
 
     private boolean canWrite(User user, Chat chat) {
+        if (chat.getCible() == ChatTarget.EQUIPE) return onTeam(user, chat.getEquipe());
         return chat.getPermissions().stream().anyMatch(permission -> permission.isEcriture() && hasRole(user, permission));
+    }
+
+    private boolean onTeam(User user, Equipe team) {
+        if (team.isArchivee()) return false;
+        return java.util.stream.Stream.concat(team.getEncadrants().stream(), team.getReferents().stream())
+                .anyMatch(person -> owns(user, person))
+                || team.getAffectations().stream()
+                    .filter(assignment -> TeamRoster.active(assignment, LocalDate.now()))
+                    .map(AffectationEquipe::getAdhesion)
+                    .filter(membership -> TeamRoster.eligible(membership, team.getActivite()))
+                    .map(Adhesion::getAdherent)
+                    .anyMatch(person -> owns(user, person) || (person.getRepresentant() != null && owns(user, person.getRepresentant())));
+    }
+
+    private boolean owns(User user, Adherent person) {
+        return person.getUser() != null && user.getId().equals(person.getUser().getId());
     }
 
     private boolean hasRole(User user, ChatPermission permission) {
@@ -132,6 +152,10 @@ public class ChatService {
     }
 
     private String displayRole(User user, Chat chat) {
+        if (chat.getCible() == ChatTarget.EQUIPE) {
+            if (chat.getEquipe().getEncadrants().stream().anyMatch(person -> owns(user, person))) return "ENCADRANT";
+            if (chat.getEquipe().getReferents().stream().anyMatch(person -> owns(user, person))) return "REFERENT_EQUIPE";
+        }
         // The visual precedence is intentional: it follows the requested order.
         if (user.getRoles().contains(ERole.ROLE_SECRETAIRE)) return "SECRETAIRE";
         if (user.getRoles().contains(ERole.ROLE_MEMBRECA)) return "MEMBRECA";

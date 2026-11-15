@@ -22,9 +22,24 @@ class TeamManagementControllerTest {
     @Autowired MockMvc mvc;
     @MockitoBean TeamManagementService service;
 
+    @Test void myTeamsEndpointIsNoLongerAvailable() throws Exception {
+        mvc.perform(get("/teams/mine").with(user("coach@example.org")))
+                .andExpect(status().isNotFound());
+        verifyNoInteractions(service);
+    }
+
     @Test void loadsOneEventByIdWithTheAuthenticatedUser() throws Exception {
         mvc.perform(get("/teams/events/20").with(user("member@example.org"))).andExpect(status().isOk());
         verify(service).eventDetails(20L, "member@example.org");
+    }
+
+    @Test void returnsTheConnectedAdherentIdForAReferentWithoutTheUserRole() throws Exception {
+        when(service.eventDetails(20L, "referent@example.org"))
+                .thenReturn(new TeamManagementService.EventDetails(null, 7L, "Basket", "Sports",
+                        null, null, null, true, 42L));
+        mvc.perform(get("/teams/events/20").with(user("referent@example.org").roles("REFERENT")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.adherentId").value(42));
     }
 
     @Test void acceptsRosterChangesWithoutAFutureEventsOption() throws Exception {

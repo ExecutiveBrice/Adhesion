@@ -58,6 +58,75 @@ describe('CalendrierComponent — présences prévues dans l’accueil', () => {
 
 });
 
+describe('CalendrierComponent : attente de réponse', () => {
+  let fixture: ComponentFixture<CalendrierComponent>;
+  let activites: jasmine.SpyObj<ActiviteService>;
+  const seance = (id: number): SeanceCalendrier => ({
+    id, activiteId: 1, activiteNom: 'Basket', horaireActivite: '', salle: '',
+    adresseSalle: null, couleurSalle: null, commentaire: null, lien: null,
+    debut: '2099-12-01T18:00:00', fin: '2099-12-01T19:00:00', etatSeance: 'PROGRAMMEE'
+  });
+
+  beforeEach(() => {
+    registerLocaleData(localeFr);
+    activites = jasmine.createSpyObj('ActiviteService', ['getCalendrierAdherent', 'getEvenementsAttenteReponse']);
+    activites.getCalendrierAdherent.and.returnValue(of([]));
+    activites.getEvenementsAttenteReponse.and.returnValue(of([]));
+    TestBed.configureTestingModule({ imports: [CalendrierComponent], providers: [provideRouter([]),
+      { provide: ActiviteService, useValue: activites },
+      { provide: ParamService, useValue: { getAgendasGoogle: () => of([]) } }
+    ] });
+    fixture = TestBed.createComponent(CalendrierComponent);
+    fixture.componentInstance.adherentId = 42;
+    fixture.componentInstance.affichage = 'liste';
+    fixture.componentInstance.joursVisibles = 15;
+    fixture.componentInstance.afficherAttenteReponse = true;
+  });
+
+  it('affiche toutes les invitations au-dessus des événements à venir, même au-delà de 15 jours et de 12 cartes', () => {
+    activites.getEvenementsAttenteReponse.and.returnValue(of(Array.from({ length: 14 }, (_, i) => seance(i + 1))));
+    fixture.detectChanges();
+    const sections = fixture.nativeElement.querySelectorAll('section');
+    expect(sections[0].querySelector('h2').textContent).toBe('Attente de réponse');
+    expect(sections[1].querySelector('h2').textContent).toBe('Événements à venir');
+    expect(sections[0].querySelectorAll('.evenement-card').length).toBe(14);
+    expect(sections[1].querySelectorAll('.evenement-card').length).toBe(0);
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.returnValue(Promise.resolve(true));
+    sections[0].querySelector('.evenement-ouvrir').click();
+    expect(navigate).toHaveBeenCalledOnceWith(['/evenements', 1]);
+  });
+
+  it('affiche un chargement puis un état vide sans masquer les événements à venir', () => {
+    const result = new Subject<SeanceCalendrier[]>();
+    activites.getEvenementsAttenteReponse.and.returnValue(result);
+    fixture.detectChanges();
+    const section = fixture.nativeElement.querySelector('.evenements-attente-reponse');
+    expect(section.textContent).toContain('Chargement');
+    expect(section.textContent).not.toContain('Aucun événement');
+    result.next([]); result.complete(); fixture.detectChanges();
+    expect(section.textContent).toContain('Aucun événement en attente de réponse.');
+  });
+
+  it('permet de réessayer après un échec indépendant du calendrier', () => {
+    activites.getEvenementsAttenteReponse.and.returnValue(throwError(() => new Error('network')));
+    fixture.detectChanges();
+    const section = fixture.nativeElement.querySelector('.evenements-attente-reponse');
+    expect(section.textContent).toContain('Impossible de charger');
+    expect(fixture.componentInstance.chargementCalendrier).toBeFalse();
+    activites.getEvenementsAttenteReponse.and.returnValue(of([seance(1)]));
+    section.querySelector('button').click(); fixture.detectChanges();
+    expect(section.querySelectorAll('.evenement-card').length).toBe(1);
+    expect(section.querySelector('[role="alert"]')).toBeNull();
+  });
+
+  it('réserve la catégorie à l’accueil', () => {
+    fixture.componentInstance.afficherAttenteReponse = false;
+    fixture.detectChanges();
+    expect(activites.getEvenementsAttenteReponse).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('.evenements-attente-reponse')).toBeNull();
+  });
+});
+
 describe('CalendrierComponent : périmètre adhérent', () => {
   let fixture: ComponentFixture<CalendrierComponent>;
   let component: CalendrierComponent;

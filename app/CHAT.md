@@ -4,6 +4,12 @@ Toutes les discussions utilisent une seule entité `Chat`. Plusieurs chats peuve
 
 ## Accès
 
+Chaque équipe dispose automatiquement d’un chat dans le menu **Chat**, identifié par son nom et son activité. Sa création accompagne celle de l’équipe, y compris la première équipe créée automatiquement pour une activité. Le renommage conserve le chat et son historique. La migration V24 crée aussi les chats des équipes existantes.
+
+Pour ces chats d’équipe, la lecture et l’écriture sont réservées aux adhérents actuellement affectés à l’équipe (hors liste d’attente et adhésions annulées), à leurs représentants, ainsi qu’aux encadrants et référents de cette équipe. Les droits suivent immédiatement les changements d’effectif et d’intervenants, sans permission par rôle global. Une équipe archivée disparaît de la liste et son chat n’est plus accessible ; son historique est conservé. Ces chats sont gérés depuis les équipes et ne sont pas modifiables ou supprimables dans l’administration des chats. L’activation générale du Chat reste applicable.
+
+Pour les chats de section, d’activité et globaux :
+
 La lecture est accordée si au moins une des conditions suivantes est satisfaite :
 
 - Le compte est lié à l’activité du chat en tant qu’adhérent, encadrant, référent d’activité ou référent de la section de cette activité.

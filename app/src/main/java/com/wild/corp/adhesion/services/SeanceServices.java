@@ -4,6 +4,7 @@ import com.wild.corp.adhesion.models.*;
 import com.wild.corp.adhesion.models.resources.SeanceCalendrierResponse;
 import com.wild.corp.adhesion.models.resources.SeanceResponse;
 import com.wild.corp.adhesion.repository.SeanceRepository;
+import com.wild.corp.adhesion.repository.ConvocationEquipeRepository;
 import com.wild.corp.adhesion.repository.SalleRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,9 @@ public class SeanceServices {
 
     @Autowired
     SeanceRepository seanceRepository;
+
+    @Autowired
+    ConvocationEquipeRepository convocations;
 
     @Autowired
     SalleRepository salleRepository;
@@ -48,6 +52,16 @@ public class SeanceServices {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "L'adhérent est obligatoire");
         }
         return getCalendrier(dateDebut, dateFin, null, adherentId);
+    }
+
+    public List<SeanceCalendrierResponse> getEvenementsAttenteReponse(String username) {
+        return convocations.findPendingForUser(username, LocalDateTime.now(),
+                        List.of(ESeance.PROGRAMMEE, ESeance.MODIFIEE)).stream()
+                .filter(c -> (!c.getSeance().isSansInvitation() || !c.isParticipant()) && TeamRoster.eligible(c, c.getSeance()))
+                .map(ConvocationEquipe::getSeance)
+                .distinct()
+                .map(SeanceCalendrierResponse::from)
+                .toList();
     }
 
     public List<SeanceResponse> getSeancesForAdherent(LocalDate dateDebut, LocalDate dateFin, Long adherentId) {

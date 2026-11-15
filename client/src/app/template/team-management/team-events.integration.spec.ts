@@ -74,6 +74,43 @@ describe('Ajout d’événements depuis la fiche activité', () => {
     http.expectNone(`${base}/teams/activities/7`);
   }));
 
+  it('ajoute une responsabilité à une autre équipe en conservant celle déjà enregistrée', fakeAsync(() => {
+    const event: TeamEvent = { id: 50, type: 'ACTIVITE', debut: '3000-01-01T18:00:00', fin: '3000-01-01T19:00:00',
+      rendezVous: '', salleId: null, lieu: 'Studio', adversaire: '', commentaire: '',
+      etat: 'PROGRAMMEE', equipes: ['Débutants'], canManage: true, emails: {}, convocations: [],
+      responsabilites: [{ tache: { id: 3, nom: 'Matériel' }, equipeId: 10,
+        adherent: { id: 1, prenom: 'Alice', nom: 'Martin' } }] };
+    openTeam(state(), [event]);
+    fixture.nativeElement.querySelector('.participants-toggle').click(); fixture.detectChanges();
+    click('Ajouter une responsabilité');
+    http.expectOne(`${base}/teams/events/50/responsibility-teams`).flush([
+      { id: 10, nom: 'Débutants', activiteNom: 'Danse', attributaire: { id: 1, prenom: 'Alice', nom: 'Martin' } },
+      { id: 11, nom: 'Confirmés', activiteNom: 'Autre activité', attributaire: { id: 2, prenom: 'Bob', nom: 'Durand' } }
+    ]);
+    http.expectOne(`${base}/param/taches-seance`).flush([{ id: 3, nom: 'Matériel' }]);
+    tick(); fixture.detectChanges();
+    const dialog = document.querySelector('[role="dialog"]')!;
+    const choose = (label: string, row: number, option: number) => {
+      const select = dialog.querySelectorAll(`[aria-label="${label}"]`)[row] as HTMLSelectElement;
+      select.selectedIndex = option; select.dispatchEvent(new Event('change')); tick(); fixture.detectChanges();
+    };
+    const teams = dialog.querySelector('[aria-label="Équipe de la section"]') as HTMLSelectElement;
+    expect(Array.from(teams.options).map(option => option.textContent?.trim()))
+      .toEqual(['Choisir une équipe', 'Danse · Débutants', 'Autre activité · Confirmés']);
+    expect(dialog.querySelectorAll('select').length).toBe(4);
+    expect(teams.selectedIndex).toBe(1);
+    expect(dialog.textContent).toContain('Attribuée à Alice Martin');
+    choose('Responsabilité', 1, 1); choose('Équipe de la section', 1, 2);
+    expect(dialog.textContent).toContain('Attribuée à Bob Durand');
+    click('Enregistrer les responsabilités');
+    const request = http.expectOne(`${base}/teams/events/50/responsibilities`);
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.body).toEqual([{ tacheId: 3, equipeId: 10 }, { tacheId: 3, equipeId: 11 }]);
+    request.flush(event); tick();
+    http.expectOne(`${base}/teams/equipes/10/events`).flush([event]); tick(); fixture.detectChanges();
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+  }));
+
   it('charge les principales informations dans une modale sans modifier l’effectif', fakeAsync(() => {
     const data = state();
     data.candidats = [{ id: 1, prenom: 'Alice', nom: 'Martin', adhesionId: 100, statut: 'Validée' }];

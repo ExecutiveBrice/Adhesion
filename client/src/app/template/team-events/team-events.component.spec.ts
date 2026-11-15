@@ -28,6 +28,36 @@ describe('Convocations et présences d’équipe', () => {
     fixture.componentRef.setInput('team', team); render();
   });
   afterEach(() => { TestBed.inject(NgbModal).dismissAll(); fixture.destroy(); });
+  it('affiche les participants sans invitation ni réponse tout en conservant le pointage', () => {
+    const e = event(); e.sansInvitation = true; e.canManage = true;
+    component.events = [e];
+    fixture.componentRef.setInput('collapsibleParticipants', true); render();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.textContent).not.toContain('Sans invitation pour les participants.');
+    expect(root.textContent).toContain('Alice Martin');
+    expect(root.textContent).not.toContain('Sans réponse');
+    expect(root.querySelector('[aria-label="Publier les convocations"]')).toBeNull();
+    expect(root.querySelector('.participant-invitation')).toBeNull();
+    expect(root.querySelector('.participant-response')).toBeNull();
+    expect(root.querySelector('.response-count')).toBeNull();
+    expect(root.querySelector('.participant-attendance')?.textContent).toContain('Présence réelle');
+    fixture.componentRef.setInput('detailEvent', e); render();
+    expect(root.querySelector('.invitation-state')).toBeNull();
+    expect(root.textContent).not.toContain('à confirmer');
+  });
+  it('conserve les convocations et les réponses des responsabilités en mode sans invitation', () => {
+    const e = event(); e.sansInvitation = true; e.canManage = true;
+    e.responsabilites = [{ tache: { id: 3, nom: 'Matériel' }, adherent: { id: 1, prenom: 'Alice', nom: 'Martin' },
+      invitation: { ...e.convocations[0], id: 40, adhesionId: null } }];
+    component.events = [e]; render();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.participant-card:not(.responsibility-card) .participant-response')).toBeNull();
+    const duty = root.querySelector('.responsibility-card')!;
+    expect(duty.querySelector('.participant-response')).not.toBeNull();
+    expect(duty.querySelectorAll('.participant-actions [aria-pressed]').length).toBe(3);
+    expect(duty.querySelector('[aria-label="Relancer Alice Martin pour Matériel"]')).not.toBeNull();
+    expect(root.querySelector('[aria-label="Publier les convocations"]')).not.toBeNull();
+  });
   it('filtre les participants par nom et prénom indépendamment pour chaque événement et conserve les compteurs', () => {
     const first = event();
     first.convocations.push({ ...first.convocations[0], id: 31, adherentId: 2, adhesionId: 101, nom: 'Élodie Dupont', reponse: true });
@@ -213,13 +243,38 @@ describe('Convocations et présences d’équipe', () => {
   it('restaure l’équipe enregistrée et refuse les doublons et les équipes vides', () => {
     const e = event(); e.responsabilites = [{ tache: { id: 3, nom: 'Matériel' }, adherent: { id: 1, prenom: 'Alice', nom: 'Martin' }, equipeId: 10 }];
     component.editResponsibilities(e);
-    expect(component.responsibilityRows).toEqual([{ tacheId: 3, equipeId: 10 }]);
+    expect(component.responsibilityRows).toEqual([{ tacheId: 3, equipeId: 10 }, {}]);
+    component.responsibilityRows.pop();
     component.responsibilityRows.push({ tacheId: 3, equipeId: 10 }); component.saveResponsibilities();
     expect(component.error).toContain('déjà attribuée');
     component.responsibilityRows = [{ tacheId: 3, equipeId: 12 }]; component.saveResponsibilities();
     expect(component.error).toContain('aucun référent ni adhérent');
     expect(api.responsibilities).not.toHaveBeenCalled();
   });
+  for (const detail of [false, true]) {
+    it(`prépare une nouvelle ligne sans remplacer les responsabilités existantes depuis ${detail ? 'la fiche événement' : 'la liste'}`, () => {
+      const e = event(); e.canManage = true;
+      e.responsabilites = [{ tache: { id: 3, nom: 'Matériel' }, equipeId: 10,
+        adherent: { id: 1, prenom: 'Alice', nom: 'Martin' } }];
+      component.events = [e];
+      if (detail) fixture.componentRef.setInput('detailEvent', e);
+      render();
+      (fixture.nativeElement.querySelector('[aria-label="Ajouter une responsabilité"]') as HTMLButtonElement).click();
+      render();
+      expect(component.responsibilityRows).toEqual([{ tacheId: 3, equipeId: 10 }, {}]);
+      const dialog = document.querySelector('[role="dialog"]')!;
+      const choose = (label: string, index: number) => {
+        const select = dialog.querySelectorAll(`[aria-label="${label}"]`)[1] as HTMLSelectElement;
+        select.selectedIndex = index; select.dispatchEvent(new Event('change')); render();
+      };
+      choose('Responsabilité', 1); choose('Équipe de la section', 2);
+      api.responsibilities.and.returnValue(of(e));
+      if (detail) component.api.event = jasmine.createSpy().and.returnValue(of({ evenement: e }));
+      (dialog.querySelector('.modal-footer .btn-primary') as HTMLButtonElement).click();
+      expect(api.responsibilities).toHaveBeenCalledWith(20, [{ tacheId: 3, equipeId: 10 }, { tacheId: 3, equipeId: 11 }]);
+      expect(e.responsabilites).toHaveSize(1);
+    });
+  }
   it('ignore le chargement d’une modale fermée pour un autre événement', () => {
     const pending = new Subject<any>(); api.responsibilityTeams.and.returnValue(pending);
     component.editResponsibilities(component.events[0]); component.closeResponsibilities();

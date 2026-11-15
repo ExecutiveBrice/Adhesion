@@ -55,6 +55,10 @@ public class ActiviteController {
         return ResponseEntity.ok(adherentId == null ? events.getCalendrier(dateDebut, dateFin, tribuUuid)
                 : events.getCalendrierForAdherent(dateDebut, dateFin, adherentId));
     }
+    @GetMapping("/calendrier/attente-reponse") @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<SeanceCalendrierResponse>> pendingReplies(Authentication user) {
+        return ResponseEntity.ok(events.getEvenementsAttenteReponse(user.getName()));
+    }
     @GetMapping("/calendrier/google")
     public ResponseEntity<CalendrierGoogleResponse> googleCalendar(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,

@@ -27,6 +27,10 @@ public class Chat {
     @JoinColumn(name = "activite_id")
     private Activite activite;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "equipe_id", unique = true)
+    private Equipe equipe;
+
     @Enumerated(jakarta.persistence.EnumType.STRING)
     @Column(nullable = false, length = 20)
     private ChatTarget cible = ChatTarget.SECTION;
@@ -41,6 +45,7 @@ public class Chat {
         return switch (cible) {
             case SECTION -> "Section · " + section.getNom();
             case ACTIVITE -> "Activité · " + activite.getNom();
+            case EQUIPE -> "Équipe · " + equipe.getActivite().getNom() + " · " + equipe.getNom();
             case ASSOCIATION -> "Global";
         };
     }

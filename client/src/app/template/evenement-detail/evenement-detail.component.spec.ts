@@ -60,11 +60,14 @@ describe('EvenementDetailComponent', () => {
 
   });
 
-  it('oriente les convocations vers Mes équipes quelle que soit la section', () => {
+  it('ouvre la fiche événement quelle que soit la section', () => {
     for (const sectionType of ['COMPETITION', 'NON_COMPETITIVE']) {
       fixture.componentRef.setInput('evenement', { ...seance(), sectionType });
       fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('a[href="/equipes"]')).not.toBeNull();
+      const link = fixture.nativeElement.querySelector('a[href="/evenements/15"]') as HTMLAnchorElement;
+      expect(link).not.toBeNull();
+      link.click();
+      expect(TestBed.inject(NgbActiveModal).close).toHaveBeenCalled();
 
     }
   });
