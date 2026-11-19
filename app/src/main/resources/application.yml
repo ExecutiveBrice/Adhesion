@@ -34,6 +34,7 @@ spring:
           helloAssoOAuthClient:
             connect-timeout: 3000
             read-timeout: 10000
+            follow-redirects: false
             logger-level: basic
 
 #logging.level.org.springframework.web: DEBUG
@@ -61,7 +62,7 @@ shop:
   payment:
     # Aucun secret ici : ils devront être fournis par variables d'environnement
     # dans la configuration propre à l'adaptateur choisi.
-    provider: ${SHOP_PAYMENT_PROVIDER:manual}
+    provider: helloasso
     reconciliation:
       enabled: ${SHOP_PAYMENT_RECONCILIATION_ENABLED:true}
       fixed-delay-ms: ${SHOP_PAYMENT_RECONCILIATION_DELAY_MS:120000}
@@ -70,7 +71,7 @@ shop:
     helloasso:
       # L'URL non secrète par défaut permet le démarrage avec le provider manuel.
       # Les profils helloasso-sandbox et helloasso-production sélectionnent explicitement leur environnement.
-      base-url: ${HELLOASSO_BASE_URL:https://api.helloasso-sandbox.com}
+      base-url: https://api.helloasso-sandbox.com
       client-id: ${HELLOASSO_CLIENT_ID:}
       client-secret: ${HELLOASSO_CLIENT_SECRET:}
       organization-slug: ${HELLOASSO_ORGANIZATION_SLUG:}
@@ -83,8 +84,9 @@ brevo:
     api-key: ${BREVO_APIKEY_PRIVATE:}
     list-id: ${BREVO_NEWSLETTER_LIST_ID:1}
 
-# Zone scolaire utilisée lors de la génération hebdomadaire des séances (A, B ou C).
 adhesion:
+  logging:
+    startup-parameters: true
   security:
     cors:
       allowed-origins: ${ADHESION_SECURITY_CORS_ALLOWED_ORIGINS:http://localhost:4200,https://localhost:4200}
@@ -95,6 +97,7 @@ adhesion:
         address: 5
         window-seconds: 3600
         max-tracked-keys: 100000
+  # Zone scolaire utilisée lors de la génération hebdomadaire des séances (A, B ou C).
   calendrier:
     zone: ${ZONE_SCOLAIRE:C}
     jours-feries-dataset: ${JOURS_FERIES_DATASET:jours-ouvres-week-end-feries-france-2010-a-2030}

@@ -20,11 +20,23 @@ Cela fonctionne aussi sous `/adhesion/`, sans nouvelle règle nginx. La connexio
 retrouve la page boutique demandée via le paramètre `returnUrl`.
 
 Pour activer HelloAsso avec Docker Compose, définir `SHOP_PAYMENT_PROVIDER=helloasso`,
-`HELLOASSO_BASE_URL` (sandbox ou production), `HELLOASSO_CLIENT_ID`,
-`HELLOASSO_CLIENT_SECRET` et `HELLOASSO_ORGANIZATION_SLUG`. La clé optionnelle
-`HELLOASSO_WEBHOOK_SIGNATURE_KEY` est également transmise au conteneur.
-Le fournisseur par défaut reste `manual` ; les paiements HelloAsso nécessitent
-ces variables et une URL de retour HTTPS.
+`HELLOASSO_CLIENT_ID`, `HELLOASSO_CLIENT_SECRET` et `HELLOASSO_ORGANIZATION_SLUG`.
+Choisir `HELLOASSO_BASE_URL` selon l'environnement des identifiants :
+
+| Environnement | `HELLOASSO_BASE_URL` |
+| --- | --- |
+| Production | `https://api.helloasso.com` |
+| Sandbox | `https://api.helloasso-sandbox.com` |
+
+L'application ajoute elle-même `/oauth2/token` pour l'authentification et
+`/v5/…` pour le checkout. En cas d'erreur `OAUTH_FAILED_HTTP_301`, vérifier
+que la base est l'adresse HTTPS de l'API et qu'elle ne contient aucun chemin.
+Après une modification du fichier `.env` de Compose, recréer le conteneur
+avec `docker compose up -d --no-deps --force-recreate app_adhesion`.
+
+La clé optionnelle `HELLOASSO_WEBHOOK_SIGNATURE_KEY` est également transmise
+au conteneur. Compose utilise `manual` par défaut. Le paiement HelloAsso
+nécessite une URL de retour HTTPS.
 
 Validation ciblée : `mvn -o '-Dtest=com.wild.corp.adhesion.shop.**,ControllerAuthorizationArchitectureTest,UserRoleAuthorizationMvcTest' test`
 dans `app`, puis `npm run test:shop` et `npm run build` dans `client`.
@@ -36,7 +48,9 @@ jetable, définir `MIGRATION_TEST_URL`, `MIGRATION_TEST_USER` et
 ## Test local sur la sandbox
 
 Avec le profil backend `helloasso-sandbox` et les identifiants de l'association
-de test, démarrer le frontend depuis `client` avec `npm run start:https`, puis
+de test fournis au backend via `HELLOASSO_CLIENT_ID`, `HELLOASSO_CLIENT_SECRET`
+et `HELLOASSO_ORGANIZATION_SLUG`, démarrer le frontend depuis `client` avec
+`npm run start:https`, puis
 ouvrir `https://localhost:4200/adhesion/`. Accepter le certificat de développement
 local dans le navigateur si nécessaire. Les origines locales HTTP et HTTPS sont
 autorisées par défaut ; si `ADHESION_SECURITY_CORS_ALLOWED_ORIGINS` est défini,

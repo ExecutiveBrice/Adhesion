@@ -10,7 +10,6 @@
       </div>
     }
   </div>
-  @if (message) { <div class="alert alert-success" role="status">{{message}}</div> }
   @if (erreur) {
     <div class="alert alert-danger d-flex flex-wrap gap-2 align-items-center" role="alert">
       <span>{{erreur}}</span><button type="button" class="btn btn-outline-danger btn-sm ms-auto" (click)="charger()" [disabled]="chargement || actionEnCours !== null">Actualiser</button>
@@ -19,7 +18,12 @@
   @if (chargement) {
     <p role="status">Chargement du matériel…</p>
   } @else if (!erreur || materiels.length > 0) {
-    <app-calendrier-materiel [materiels]="materiels" (empruntSelectionne)="visualiserEmprunt($event)"></app-calendrier-materiel>
+    <details class="calendrier-panneau mb-4">
+      <summary>Calendrier de réservation</summary>
+      <app-calendrier-materiel [materiels]="materiels" [operationEnCours]="actionEnCours !== null"
+        (afficherMateriel)="visualiserEmprunt($event)" (annulerReservation)="annulerReservationCalendrier($event)"
+        (restituerEmprunt)="restituerEmpruntCalendrier($event)"></app-calendrier-materiel>
+    </details>
     @if (materiels.length > 0) {
       <div class="row g-3 mb-4">
         <div class="col-12 col-md-6"><input #rechercheMateriel id="materielRecherche" type="search" class="form-control" [(ngModel)]="recherche" placeholder="Matériel, zonage ou emprunteur"></div>
@@ -37,7 +41,7 @@
               @if (quantiteAVenir > 0) { <span class="badge text-bg-info">{{quantiteAVenir}} à venir</span> }
               @if ((materiel.quantiteDisponible ?? 0) > 0) { <span class="badge text-bg-success">{{materiel.quantiteDisponible}} disponible(s)</span> }
               @else { <span class="badge text-bg-secondary">Aucun disponible</span> }
-              <button type="button" class="btn btn-sm" [class.btn-secondary]="!materiel.horsService" [class.btn-danger]="materiel.horsService" [id]="'materielHS' + materiel.id" [attr.aria-pressed]="materiel.horsService" [attr.aria-label]="'Hors service : ' + materiel.nom" title="Gérer la quantité hors service" [disabled]="!administrateur || actionEnCours !== null" (click)="changerHorsService(materiel)">HS : {{materiel.quantiteHorsService ?? 0}}</button>
+              <button type="button" class="btn btn-sm" [class.btn-secondary]="!materiel.horsService" [class.btn-danger]="materiel.horsService" [id]="'materielHS' + materiel.id" [attr.aria-pressed]="materiel.horsService" [attr.aria-label]="'Hors service : ' + materiel.nom" title="Gérer la quantité hors service" [disabled]="!peutGererEmpruntsEtHorsService || actionEnCours !== null" (click)="changerHorsService(materiel)">HS : {{materiel.quantiteHorsService ?? 0}}</button>
             </div>
             <dl class="materiel-details">
               <div><dt>Stock total</dt><dd>{{materiel.quantiteTotale ?? 1}}</dd></div>
@@ -56,7 +60,7 @@
               }
             </div>
             <div class="materiel-actions">
-              @if (peutEmprunter && (materiel.quantiteDisponible ?? 0) > 0) {
+              @if (peutGererEmpruntsEtHorsService) {
                 <button type="button" class="materiel-primary-action btn btn-primary" [disabled]="actionEnCours !== null" (click)="emprunter(materiel)" [attr.aria-label]="'Emprunter ' + materiel.nom">{{actionEnCours === materiel.id ? 'Enregistrement…' : 'Emprunter'}}</button>
               }
               @if (peutRestituer(materiel)) {

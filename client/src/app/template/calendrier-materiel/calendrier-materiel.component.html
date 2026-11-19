@@ -24,7 +24,7 @@
                 <button type="button" class="calendrier-jour" [class.aujourdhui]="jour.iso === statutEmprunt.dateCourante"
                   [class.selectionne]="jour.iso === selection()" [attr.aria-pressed]="jour.iso === selection()"
                   [attr.aria-current]="jour.iso === statutEmprunt.dateCourante ? 'date' : null"
-                  [attr.aria-label]="libelleJour(jour)" [attr.data-date]="jour.iso" (click)="selection.set(jour.iso)">
+                  [attr.aria-label]="libelleJour(jour)" [attr.data-date]="jour.iso" (click)="selectionnerJour(jour.iso)">
                   <span class="jour-numero">{{jour.numero}}</span>
                   @for (entree of jour.emprunts.slice(0, 2); track entree.emprunt.id) {
                     @let statut = statutCalendrier(entree.emprunt);
@@ -48,9 +48,11 @@
           @for (entree of jour.emprunts; track entree.emprunt.id) {
             @let emprunt = entree.emprunt;
             @let statut = statutCalendrier(emprunt);
-            <li>
-              <button type="button" class="emprunt-detail" (click)="empruntSelectionne.emit(entree)"
-                [attr.aria-label]="'Afficher ' + entree.materielNom + ' dans la liste du matériel'">
+            @let selectionne = empruntSelectionneId() === emprunt.id;
+            <li class="emprunt-fiche" [class.selectionne]="selectionne">
+              <button type="button" class="emprunt-detail" [attr.aria-expanded]="selectionne"
+                [attr.aria-controls]="'actions-emprunt-' + emprunt.id"
+                (click)="empruntSelectionneId.set(selectionne ? null : emprunt.id)">
                 <span class="d-flex flex-wrap gap-2 align-items-center">
                   <strong>{{entree.materielNom}} × {{emprunt.quantite ?? 1}}</strong>
                   <span class="badge" [class.text-bg-warning]="statut === 'En cours'" [class.text-bg-danger]="statut === 'En dépassement'" [class.text-bg-primary]="statut === 'Programmé'" [class.text-bg-success]="statut === 'Terminé'">{{statut}}</span>
@@ -63,6 +65,19 @@
                 @if (emprunt.dateRetour) { <span class="text-body-secondary">Rapporté le {{emprunt.dateRetour | date:'dd/MM/yyyy'}}</span> }
                 @else if (emprunt.quantiteRetournee) { <span>{{(emprunt.quantite ?? 1) - emprunt.quantiteRetournee}} restant(s) à rendre</span> }
               </button>
+              <div class="emprunt-actions" [id]="'actions-emprunt-' + emprunt.id" [hidden]="!selectionne">
+                @if (selectionne && statutEmprunt.peutGerer(emprunt, utilisateur)) {
+                  @if (statut === 'Programmé') {
+                    <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="operationEnCours()"
+                      (click)="annulerReservation.emit(entree)">Annuler la réservation</button>
+                  } @else if (statut === 'En cours' || statut === 'En dépassement') {
+                    <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="operationEnCours()"
+                      (click)="restituerEmprunt.emit(entree)">Restituer</button>
+                  }
+                }
+                <button type="button" class="btn btn-outline-secondary btn-sm"
+                  (click)="afficherMateriel.emit(entree)">Afficher dans la liste du matériel</button>
+              </div>
             </li>
           } @empty { <li class="text-body-secondary">Aucun emprunt pour cette journée.</li> }
         </ul>

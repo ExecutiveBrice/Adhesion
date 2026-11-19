@@ -7,4 +7,4 @@ public record EmpruntMaterielResponse(Long id, Long emprunteurId, String emprunt
         OffsetDateTime dateEmprunt, OffsetDateTime dateRetour, String enregistreParNom, String rapporteParNom,
         Boolean horsService, String commentaire, int quantite, int quantiteRetournee,
         java.util.List<com.wild.corp.adhesion.models.RetourMateriel> retours,
-        LocalDate dateDebut, LocalDate dateFinPrevue) {}
+        LocalDate dateDebut, LocalDate dateFinPrevue, Boolean reservation, OffsetDateTime dateAnnulation) {}

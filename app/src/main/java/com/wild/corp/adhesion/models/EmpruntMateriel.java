@@ -53,6 +53,10 @@ public class EmpruntMateriel {
     private LocalDate dateDebut;
     private LocalDate dateFinPrevue;
 
+    // Null pour les entrées historiques, dont le statut dépend de la date de début.
+    private Boolean reservation;
+    private OffsetDateTime dateAnnulation;
+
     private OffsetDateTime dateRetour;
     private Long enregistreParId;
     @Column(length = 511)

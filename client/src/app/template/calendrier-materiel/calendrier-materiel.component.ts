@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subscription } from 'rxjs';
 import { MaterielService } from '../../_services/materiel.service';
 import { StatutEmpruntService } from '../../_services/statut-emprunt.service';
+import { TokenStorageService } from '../../_services/token-storage.service';
 import { EmpruntCalendrierMateriel, EmpruntMateriel, Materiel } from '../../models/materiel';
 
 interface JourEmprunts {
@@ -22,14 +23,19 @@ interface JourEmprunts {
 export class CalendrierMaterielComponent {
   private readonly service = inject(MaterielService);
   private readonly destroyRef = inject(DestroyRef);
+  readonly utilisateur = inject(TokenStorageService).getUser();
   readonly statutEmprunt = inject(StatutEmpruntService);
   // Une nouvelle liste signale aussi une création, une restitution ou une modification du matériel.
   readonly materiels = input<Materiel[]>([]);
-  readonly empruntSelectionne = output<EmpruntCalendrierMateriel>();
+  readonly operationEnCours = input(false);
+  readonly afficherMateriel = output<EmpruntCalendrierMateriel>();
+  readonly annulerReservation = output<EmpruntCalendrierMateriel>();
+  readonly restituerEmprunt = output<EmpruntCalendrierMateriel>();
   readonly emprunts = signal<EmpruntCalendrierMateriel[]>([]);
   readonly chargement = signal(true);
   readonly erreur = signal('');
   readonly selection = signal(this.statutEmprunt.dateCourante);
+  readonly empruntSelectionneId = signal<number | null>(null);
   readonly joursSemaine = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
   private readonly decalageMois = signal(0);
   private readonly premierMois = computed(() => {
@@ -68,7 +74,7 @@ export class CalendrierMaterielComponent {
       const aujourdHui = this.statutEmprunt.dateCourante;
       const premier = this.iso(this.premierMois());
       untracked(() => {
-        if (!this.jourSelectionne()) this.selection.set(aujourdHui.startsWith(premier.slice(0, 7)) ? aujourdHui : premier);
+        if (!this.jourSelectionne()) this.selectionnerJour(aujourdHui.startsWith(premier.slice(0, 7)) ? aujourdHui : premier);
         this.charger();
       });
     });
@@ -78,7 +84,12 @@ export class CalendrierMaterielComponent {
     this.decalageMois.update(valeur => valeur + decalage);
     const premier = this.iso(this.premierMois());
     const aujourdHui = this.statutEmprunt.dateCourante;
-    this.selection.set(aujourdHui.startsWith(premier.slice(0, 7)) ? aujourdHui : premier);
+    this.selectionnerJour(aujourdHui.startsWith(premier.slice(0, 7)) ? aujourdHui : premier);
+  }
+
+  selectionnerJour(iso: string): void {
+    this.selection.set(iso);
+    this.empruntSelectionneId.set(null);
   }
 
   charger(): void {
@@ -91,6 +102,9 @@ export class CalendrierMaterielComponent {
       this.iso(new Date(date.getFullYear(), date.getMonth() + 2, 0))
     ).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: emprunts => {
+        if (!emprunts.some(entree => entree.emprunt.id === this.empruntSelectionneId())) {
+          this.empruntSelectionneId.set(null);
+        }
         this.emprunts.set([...emprunts].sort((a, b) => a.materielNom.localeCompare(b.materielNom, 'fr')
           || (a.emprunt.emprunteurNom ?? '').localeCompare(b.emprunt.emprunteurNom ?? '', 'fr') || a.emprunt.id - b.emprunt.id));
         this.chargement.set(false);
@@ -117,11 +131,11 @@ export class CalendrierMaterielComponent {
 
   private presentLeJour(entree: EmpruntCalendrierMateriel, jour: string, aujourdHui: string): boolean {
     const emprunt = entree.emprunt;
-    if (emprunt.horsService != null) return false;
+    if (emprunt.horsService != null || emprunt.dateAnnulation) return false;
     const debut = emprunt.dateDebut || this.iso(new Date(emprunt.dateEmprunt));
     // Un emprunt non restitué reste visible jusqu’à aujourd’hui si sa fin prévue est dépassée.
     const fin = emprunt.dateRetour ? this.iso(new Date(emprunt.dateRetour))
-      : emprunt.dateFinPrevue ? [emprunt.dateFinPrevue, aujourdHui].sort().at(-1)!
+      : emprunt.dateFinPrevue ? (emprunt.reservation ? emprunt.dateFinPrevue : [emprunt.dateFinPrevue, aujourdHui].sort().at(-1)!)
       : '9999-12-31';
     return debut <= jour && jour <= fin;
   }

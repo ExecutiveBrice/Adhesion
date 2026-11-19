@@ -1,5 +1,6 @@
-<div class="modal-header"><h2 id="historique-materiel-title" class="modal-title h5">Journal d’emprunt — {{materiel.nom}}</h2><button type="button" class="btn-close" aria-label="Fermer" (click)="activeModal.dismiss()"></button></div>
+<div class="modal-header"><h2 id="historique-materiel-title" class="modal-title h5">{{reservation ? 'Annuler la réservation' : 'Journal d’emprunt'}} — {{materiel.nom}}</h2><button type="button" class="btn-close" aria-label="Fermer" [disabled]="enregistrement" (click)="activeModal.dismiss()"></button></div>
 <div class="modal-body">
+  @if (erreurReservation) { <div class="alert alert-danger" role="alert">{{erreurReservation}}</div> }
   @if (chargement) { <p role="status">Chargement du journal…</p> }
   @else if (erreur) { <div class="alert alert-danger" role="alert">{{erreur}}<button type="button" class="btn btn-outline-danger btn-sm ms-2" (click)="charger()">Réessayer</button></div> }
   @else {
@@ -20,16 +21,42 @@
           }
           } @else {
           @let statut = statutEmprunt.statut(emprunt);
-          <div class="d-flex flex-wrap justify-content-between gap-2"><h3 class="h6 mb-0">{{emprunt.emprunteurNom}} — {{(emprunt.quantite ?? 1) - (emprunt.quantiteRetournee ?? 0)}} {{statut === 'À venir' ? 'prévu(s)' : 'à rendre'}}</h3><span class="badge" [class.text-bg-info]="statut === 'À venir'" [class.text-bg-warning]="statut === 'En cours'" [class.text-bg-success]="statut === 'Rapporté'">{{statut}}</span></div>
+          <div class="d-flex flex-wrap justify-content-between gap-2">
+            <h3 class="h6 mb-0">{{emprunt.emprunteurNom}}
+              @if (statut === 'À venir') { — {{emprunt.quantite ?? 1}} prévu(s) }
+              @else if (statut === 'En cours' || statut === 'Rapporté') { — {{(emprunt.quantite ?? 1) - (emprunt.quantiteRetournee ?? 0)}} à rendre }
+            </h3>
+            <span class="badge" [class.text-bg-info]="statut === 'À venir'" [class.text-bg-warning]="statut === 'En cours'" [class.text-bg-success]="statut === 'Rapporté'" [class.text-bg-secondary]="statut === 'Annulé'">
+              {{statut === 'À venir' && emprunt.reservation ? 'Réservé' : statut}}
+            </span>
+          </div>
           <p class="mt-2 mb-0">Quantité : {{emprunt.quantite ?? 1}}</p><dl class="row mt-3 mb-0">
             <dt class="col-5">Début emprunt</dt><dd class="col-7">{{(emprunt.dateDebut || emprunt.dateEmprunt) | date:'dd/MM/yyyy'}}</dd>
             @if (emprunt.dateFinPrevue) { <dt class="col-5">Fin prévue</dt><dd class="col-7">{{emprunt.dateFinPrevue | date:'dd/MM/yyyy'}}</dd> }
             <dt class="col-5">Enregistré par</dt><dd class="col-7">{{emprunt.enregistreParNom || 'Non renseigné'}}</dd>
-            <dt class="col-5">Retour</dt><dd class="col-7">{{emprunt.dateRetour ? (emprunt.dateRetour | date:'dd/MM/yyyy HH:mm') : 'Non rapporté'}}</dd>
-            @if (emprunt.dateRetour) { <dt class="col-5">Rapporté par</dt><dd class="col-7 mb-0">{{emprunt.rapporteParNom || 'Non renseigné'}}</dd> }
+            @if (emprunt.dateAnnulation) {
+              <dt class="col-5">Annulation</dt><dd class="col-7">{{emprunt.dateAnnulation | date:'dd/MM/yyyy HH:mm'}}</dd>
+            } @else if (statut !== 'À venir') {
+              <dt class="col-5">Retour</dt><dd class="col-7">{{emprunt.dateRetour ? (emprunt.dateRetour | date:'dd/MM/yyyy HH:mm') : 'Non rapporté'}}</dd>
+              @if (emprunt.dateRetour) { <dt class="col-5">Rapporté par</dt><dd class="col-7 mb-0">{{emprunt.rapporteParNom || 'Non renseigné'}}</dd> }
+            }
           </dl>
           @for (retour of emprunt.retours ?? []; track $index) {
             <p class="mb-1">Retour de {{retour.quantite}} le {{retour.dateRetour | date:'dd/MM/yyyy HH:mm'}} · {{retour.rapporteParNom}}</p>
+          }
+          @if (peutGererReservation(emprunt)) {
+            <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
+              @if (reservationAAnnuler === emprunt.id) {
+                <p class="w-100 mb-0">Confirmer l’annulation de cette réservation ?</p>
+                <button type="button" class="btn btn-danger btn-sm" [disabled]="enregistrement" (click)="enregistrerReservation(emprunt, true)">Confirmer l’annulation</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" [disabled]="enregistrement" (click)="conserverReservation()">Conserver la réservation</button>
+              } @else {
+                @if (peutCommencerReservation(emprunt)) {
+                  <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="enregistrement" (click)="enregistrerReservation(emprunt, false)">Enregistrer la remise</button>
+                }
+                <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="enregistrement" (click)="demanderAnnulation(emprunt)">Annuler la réservation</button>
+              }
+            </div>
           }
           }
         </article>
@@ -37,4 +64,4 @@
     </div>
   }
 </div>
-<div class="modal-footer"><button type="button" class="btn btn-outline-secondary" (click)="activeModal.dismiss()">Fermer</button></div>
+<div class="modal-footer"><button type="button" class="btn btn-outline-secondary" [disabled]="enregistrement" (click)="activeModal.dismiss()">Fermer</button></div>

@@ -6,6 +6,7 @@ import { Materiel, EmpruntMateriel } from '../../models/materiel';
 import { MaterielService } from '../../_services/materiel.service';
 import { TokenStorageService } from '../../_services/token-storage.service';
 import { registerApiViewRefresh } from '../../_services/api-render.service';
+import { StatutEmpruntService } from '../../_services/statut-emprunt.service';
 
 @Component({
   selector: 'app-retour-materiel-modal',
@@ -31,14 +32,16 @@ export class RetourMaterielModalComponent {
   readonly activeModal = inject(NgbActiveModal);
   private readonly service = inject(MaterielService);
   private readonly utilisateur = inject(TokenStorageService).getUser();
-  @Input() set materiel(value: Materiel) {
+  private readonly statutEmprunt = inject(StatutEmpruntService);
+  @Input() set materiel(value: Pick<Materiel, 'id' | 'nom' | 'emprunts'>) {
     this.objet = value;
-    this.emprunts = (value.emprunts ?? []).filter(e => this.utilisateur.roles?.includes('ROLE_ADMIN') || e.emprunteurId === this.utilisateur.id);
+    this.emprunts = (value.emprunts ?? []).filter(e => this.statutEmprunt.statut(e) === 'En cours'
+      && this.statutEmprunt.peutGerer(e, this.utilisateur));
     this.empruntId = this.emprunts.length === 1 ? this.emprunts[0].id : null;
     this.quantite = this.restant;
   }
-  get materiel(): Materiel { return this.objet; }
-  objet!: Materiel;
+  get materiel(): Pick<Materiel, 'id' | 'nom' | 'emprunts'> { return this.objet; }
+  objet!: Pick<Materiel, 'id' | 'nom' | 'emprunts'>;
   emprunts: EmpruntMateriel[] = [];
   empruntId: number | null = null;
   quantite = 1;

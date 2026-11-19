@@ -40,7 +40,7 @@ describe('Choix du membre du CA emprunteur', () => {
     fixture.componentInstance.emprunteurId = 4;
     fixture.componentInstance.emprunter();
     expect(service.emprunter).toHaveBeenCalledWith(2, 4, 1, '2026-12-31', '2027-01-01');
-    expect(modal.close).toHaveBeenCalledWith(resultat);
+    expect(modal.close).toHaveBeenCalledWith({ materiel: resultat, reservation: false });
   });
 
   it('garde la modale ouverte en cas de conflit et empêche les doubles validations', () => {
@@ -129,5 +129,29 @@ describe('Choix du membre du CA emprunteur', () => {
     fixture.componentInstance.emprunter();
     expect(service.getMembresCA).not.toHaveBeenCalled();
     expect(service.emprunter).toHaveBeenCalledWith(2, undefined, 1, '2026-12-31', '2027-01-01');
+  });
+
+  it('permet de réserver pour une date ultérieure lorsque tout le stock est emprunté', () => {
+    const component = fixture.componentInstance;
+    component.materiel = { ...materiel, quantiteTotale: 2, quantiteHorsService: 1, quantiteDisponible: 0 };
+    fixture.detectChanges();
+    const confirmer: HTMLButtonElement = fixture.nativeElement.querySelector('button[type="submit"]');
+    expect(confirmer.disabled).toBeTrue();
+    component.emprunter();
+    expect(service.emprunter).not.toHaveBeenCalled();
+
+    const jourDeJanvier = (numero: string) => Array.from<HTMLElement>(
+      fixture.nativeElement.querySelectorAll('.ngb-dp-month:nth-child(2) .ngb-dp-day'))
+      .find(jour => jour.textContent?.trim() === numero)!;
+    jourDeJanvier('1').click();
+    jourDeJanvier('2').click();
+    fixture.detectChanges();
+    expect(component.quantiteMax).toBe(1);
+    expect(confirmer.disabled).toBeFalse();
+    expect(confirmer.textContent).toContain('Confirmer la réservation');
+    service.emprunter.and.returnValue(of(component.materiel));
+    confirmer.click();
+    expect(service.emprunter).toHaveBeenCalledWith(2, 3, 1, '2027-01-01', '2027-01-02');
+    expect(modal.close).toHaveBeenCalledWith({ materiel: component.materiel, reservation: true });
   });
 });

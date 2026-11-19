@@ -4,6 +4,7 @@ package com.wild.corp.adhesion.config;
 import com.wild.corp.adhesion.models.Adhesion;
 import com.wild.corp.adhesion.services.AdhesionServices;
 import com.wild.corp.adhesion.services.EmailService;
+import com.wild.corp.adhesion.services.MaterielServices;
 import com.wild.corp.adhesion.services.ParamBooleanServices;
 import com.wild.corp.adhesion.services.ParamNumberServices;
 import com.wild.corp.adhesion.services.RappelServices;
@@ -40,6 +41,8 @@ public class Config {
     @Autowired
     SeanceServices seanceServices;
     @Autowired
+    MaterielServices materielServices;
+    @Autowired
     RappelServices rappelServices;
     @Scheduled(cron = "0 0 1 * * ?", zone = "Europe/Paris")
     public void tachesJournalieres() {
@@ -56,8 +59,9 @@ public class Config {
     }
 
     @EventListener(ApplicationReadyEvent.class)
-    public void rattraperSeancesAuDemarrage() {
+    public void reprendreAuDemarrage() {
         rattraperSeancesPassees();
+        materielServices.reprendreReservationsExistantes();
     }
 
     private void rattraperSeancesPassees() {

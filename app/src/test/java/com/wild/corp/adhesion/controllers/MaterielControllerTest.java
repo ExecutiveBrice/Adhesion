@@ -45,6 +45,19 @@ class MaterielControllerTest {
     }
 
     @Test
+    void reservationActionsUseTheAuthenticatedMemberAndTheSelectedReservation() throws Exception {
+        mvc.perform(delete("/materiel/2/reservations/4").with(user("ca").roles("MEMBRECA")))
+                .andExpect(status().isOk());
+        mvc.perform(post("/materiel/2/reservations/4/emprunt").with(user("admin").roles("ADMIN")))
+                .andExpect(status().isOk());
+        mvc.perform(delete("/materiel/2/reservations/4").with(user("logistique").roles("LOGISTIQUE")))
+                .andExpect(status().isForbidden());
+        verify(service).annulerReservation(2L, 4L, "ca", false);
+        verify(service).commencerReservation(2L, 4L, "admin", true);
+        verify(service, never()).annulerReservation(2L, 4L, "logistique", false);
+    }
+
+    @Test
     void anonymousAndOrdinaryMembersCannotAccessMaterialOrZones() throws Exception {
         mvc.perform(get("/materiel")).andExpect(status().isUnauthorized());
         for (String role : new String[] {"USER", "BUREAU", "SECRETAIRE", "ENCADRANT", "COMPTABLE"}) {
@@ -70,38 +83,21 @@ class MaterielControllerTest {
     }
 
     @Test
-    void caCannotCreateMaterialOrConfigureZones() throws Exception {
-        mvc.perform(post("/materiel").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"nom\":\"Objet\",\"zonageId\":1}").with(user("ca").roles("MEMBRECA")))
-                .andExpect(status().isForbidden());
-        mvc.perform(post("/materiel/zonages").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"nom\":\"Zone\",\"couleur\":\"#123456\"}").with(user("ca").roles("MEMBRECA")))
-                .andExpect(status().isForbidden());
-        mvc.perform(put("/materiel/zonages/1").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"nom\":\"Zone\",\"couleur\":\"#123456\"}").with(user("ca").roles("MEMBRECA")))
-                .andExpect(status().isForbidden());
-        mvc.perform(delete("/materiel/zonages/1").with(user("ca").roles("MEMBRECA")))
-                .andExpect(status().isForbidden());
+    void adminAndCaCannotCreateMaterialOrConfigureZonesWithoutLogisticsRole() throws Exception {
+        for (String role : new String[] {"ADMIN", "MEMBRECA"}) {
+            var member = user("member").roles(role);
+            mvc.perform(post("/materiel").contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"nom\":\"Objet\",\"zonageId\":1}").with(member))
+                    .andExpect(status().isForbidden());
+            mvc.perform(post("/materiel/zonages").contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"nom\":\"Zone\",\"couleur\":\"#123456\"}").with(member))
+                    .andExpect(status().isForbidden());
+            mvc.perform(put("/materiel/zonages/1").contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"nom\":\"Zone\",\"couleur\":\"#123456\"}").with(member))
+                    .andExpect(status().isForbidden());
+            mvc.perform(delete("/materiel/zonages/1").with(member)).andExpect(status().isForbidden());
+        }
         verifyNoInteractions(service);
-    }
-
-    @Test
-    void adminCanCreateAndConfigure() throws Exception {
-        mvc.perform(post("/materiel").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"nom\":\"Objet\",\"zonageId\":1}").with(user("admin").roles("ADMIN")))
-                .andExpect(status().isCreated());
-        mvc.perform(post("/materiel/zonages").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"nom\":\"Zone\",\"couleur\":\"#123456\"}").with(user("admin").roles("ADMIN")))
-                .andExpect(status().isCreated());
-        mvc.perform(put("/materiel/zonages/1").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"nom\":\"Zone\",\"couleur\":\"#123456\"}").with(user("admin").roles("ADMIN")))
-                .andExpect(status().isOk());
-        mvc.perform(delete("/materiel/zonages/1").with(user("admin").roles("ADMIN")))
-                .andExpect(status().isNoContent());
-        verify(service).create(new MaterielRequest("Objet", 1L));
-        verify(service).createZonage(new ZonageConfiguration(null, "Zone", "#123456"));
-        verify(service).updateZonage(1L, new ZonageConfiguration(null, "Zone", "#123456"));
-        verify(service).deleteZonage(1L);
     }
 
     @Test
@@ -121,12 +117,12 @@ class MaterielControllerTest {
     }
 
     @Test
-    void onlyAdminsCanChooseACaMemberOrChangeHsAndCaCanReadHistory() throws Exception {
+    void onlyAdminsCanChooseABorrowerAndCaCanChangeHsAndReadHistory() throws Exception {
         mvc.perform(get("/materiel/membres-ca").with(user("ca").roles("MEMBRECA")))
                 .andExpect(status().isForbidden());
         mvc.perform(patch("/materiel/2/hors-service").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"horsService\":true,\"commentaire\":\"Lampe cassée\"}").with(user("ca").roles("MEMBRECA")))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isOk());
         mvc.perform(get("/materiel/2/historique").with(user("member").roles("USER")))
                 .andExpect(status().isForbidden());
         mvc.perform(get("/materiel/2/historique").with(user("ca").roles("MEMBRECA")))
@@ -141,6 +137,7 @@ class MaterielControllerTest {
                 .andExpect(status().isOk());
         verify(service).getHistorique(2L);
         verify(service).getMembresCA();
+        verify(service).updateHorsService(2L, new HorsServiceRequest(true, "Lampe cassée"), "ca");
         verify(service).updateHorsService(2L, new HorsServiceRequest(true, "Lampe cassée"), "admin");
         verify(service).emprunter(2L, "admin", 4L, true, 1, null, null);
     }
@@ -224,8 +221,8 @@ class MaterielControllerTest {
     }
 
     @Test
-    void onlyAdminAndLogisticsCanEditOrDelete() throws Exception {
-        for (String role : new String[] {"USER", "MEMBRECA", "BUREAU", "SECRETAIRE", "ENCADRANT", "COMPTABLE"}) {
+    void onlyLogisticsCanEditOrDelete() throws Exception {
+        for (String role : new String[] {"ADMIN", "USER", "MEMBRECA", "BUREAU", "SECRETAIRE", "ENCADRANT", "COMPTABLE"}) {
             mvc.perform(put("/materiel/2").contentType(MediaType.APPLICATION_JSON)
                     .content("{\"nom\":\"Objet\",\"zonageId\":1}").with(user("member").roles(role)))
                     .andExpect(status().isForbidden());
@@ -233,8 +230,9 @@ class MaterielControllerTest {
         }
         verifyNoInteractions(service);
         mvc.perform(put("/materiel/2").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"nom\":\"Objet\",\"zonageId\":1}").with(user("admin").roles("ADMIN"))).andExpect(status().isOk());
-        mvc.perform(delete("/materiel/2").with(user("admin").roles("ADMIN"))).andExpect(status().isNoContent());
+                .content("{\"nom\":\"Objet\",\"zonageId\":1}").with(user("admin").roles("ADMIN", "LOGISTIQUE")))
+                .andExpect(status().isOk());
+        mvc.perform(delete("/materiel/2").with(user("admin").roles("ADMIN", "LOGISTIQUE"))).andExpect(status().isNoContent());
     }
 
     @TestConfiguration(proxyBeanMethods = false)

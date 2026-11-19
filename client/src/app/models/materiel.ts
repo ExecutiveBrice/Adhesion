@@ -42,6 +42,8 @@ export interface EmpruntMateriel {
   dateEmprunt: string;
   dateDebut?: string | null;
   dateFinPrevue?: string | null;
+  reservation?: boolean | null;
+  dateAnnulation?: string | null;
   dateRetour: string | null;
   enregistreParNom: string | null;
   rapporteParNom: string | null;

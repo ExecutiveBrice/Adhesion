@@ -24,6 +24,12 @@ export class MaterielService {
     return this.http.post<Materiel>(`${API_URL}/${id}/emprunt`, { emprunteurId, quantite, dateDebut, dateFinPrevue });
   }
   restituer(id: number, empruntId?: number, quantite?: number) { return this.http.post<Materiel>(`${API_URL}/${id}/retour`, { empruntId, quantite }); }
+  commencerReservation(id: number, reservationId: number) {
+    return this.http.post<Materiel>(`${API_URL}/${id}/reservations/${reservationId}/emprunt`, null);
+  }
+  annulerReservation(id: number, reservationId: number) {
+    return this.http.delete<Materiel>(`${API_URL}/${id}/reservations/${reservationId}`);
+  }
   getMembresCA() { return this.http.get<MembreCAMateriel[]>(`${API_URL}/membres-ca`); }
   getHistorique(id: number) { return this.http.get<EmpruntMateriel[]>(`${API_URL}/${id}/historique`); }
   updateHorsService(id: number, horsService: boolean, commentaire: string, quantiteHorsService?: number) {

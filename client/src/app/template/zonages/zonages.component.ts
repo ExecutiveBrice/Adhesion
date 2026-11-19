@@ -4,6 +4,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { MaterielService } from '../../_services/materiel.service';
 import { registerApiViewRefresh } from '../../_services/api-render.service';
+import { ToastService } from '../../_services/toast.service';
 import { Zonage } from '../../models/materiel';
 
 @Component({
@@ -14,6 +15,7 @@ import { Zonage } from '../../models/materiel';
 export class ZonagesComponent implements OnInit {
   private readonly apiViewRefresh = registerApiViewRefresh();
   private readonly service = inject(MaterielService);
+  private readonly toast = inject(ToastService);
   readonly faTrash = faTrash;
   zonages: Zonage[] = [];
   nom = '';
@@ -21,7 +23,6 @@ export class ZonagesComponent implements OnInit {
   chargement = true;
   enregistrement = false;
   erreur = '';
-  message = '';
 
   ngOnInit(): void { this.charger(); }
 
@@ -71,8 +72,11 @@ export class ZonagesComponent implements OnInit {
     });
   }
 
-  private commencer(): void { this.enregistrement = true; this.erreur = ''; this.message = ''; }
-  private terminer(message: string): void { this.enregistrement = false; this.message = message; }
+  private commencer(): void { this.enregistrement = true; this.erreur = ''; }
+  private terminer(message: string): void {
+    this.enregistrement = false;
+    this.toast.success(message, 'Zonages');
+  }
   private echouer(response: any): void {
     this.enregistrement = false;
     this.erreur = response?.error?.detail || response?.error?.message || 'Le zonage n’a pas pu être enregistré.';

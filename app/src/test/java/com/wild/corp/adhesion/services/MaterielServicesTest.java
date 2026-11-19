@@ -37,8 +37,6 @@ class MaterielServicesTest {
             return entree;
         });
         when(emprunts.findAllByMaterielIdOrderByDateEmpruntDescIdDesc(any())).thenAnswer(invocation -> journal);
-        when(emprunts.findFirstByMaterielIdAndHorsServiceIsNullAndDateRetourIsNullOrderByDateEmpruntDescIdDesc(any()))
-                .thenAnswer(invocation -> journal.stream().filter(e -> e.getHorsService() == null && e.getDateRetour() == null).findFirst());
         service = new MaterielServices(materiels, zonages, users, emprunts);
         Zonage zone = Zonage.builder().id(1L).nom("Étagère A").couleur("#0F9D58").build();
         materiel = Materiel.builder().id(2L).nom("Vidéoprojecteur").zonage(zone).build();
@@ -85,8 +83,8 @@ class MaterielServicesTest {
 
     @Test
     void keepsSelectedPeriodInLoanAndHistory() {
-        LocalDate debut = LocalDate.of(2026, 12, 31);
-        LocalDate fin = LocalDate.of(2027, 1, 2);
+        LocalDate debut = LocalDate.now(ZoneId.of("Europe/Paris"));
+        LocalDate fin = debut.plusDays(2);
         EmpruntMaterielResponse emprunt = service.emprunter(2L, user.getUsername(), null, false, 1, debut, fin)
                 .emprunts().getFirst();
         assertThat(emprunt.dateDebut()).isEqualTo(debut);

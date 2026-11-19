@@ -39,18 +39,18 @@ public class MaterielController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('ADMIN', 'LOGISTIQUE')")
+    @PreAuthorize("hasRole('LOGISTIQUE')")
     public MaterielResponse create(@RequestBody MaterielRequest request) { return service.create(request); }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'LOGISTIQUE')")
+    @PreAuthorize("hasRole('LOGISTIQUE')")
     public MaterielResponse update(@PathVariable Long id, @RequestBody MaterielRequest request) {
         return service.update(id, request);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyRole('ADMIN', 'LOGISTIQUE')")
+    @PreAuthorize("hasRole('LOGISTIQUE')")
     public void delete(@PathVariable Long id) { service.delete(id); }
 
     @PostMapping("/{id}/emprunt")
@@ -69,6 +69,20 @@ public class MaterielController {
         return service.restituer(id, authentication.getName(), administrateur(authentication), request);
     }
 
+    @PostMapping("/{id}/reservations/{reservationId}/emprunt")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEMBRECA')")
+    public MaterielResponse commencerReservation(@PathVariable Long id, @PathVariable Long reservationId,
+            Authentication authentication) {
+        return service.commencerReservation(id, reservationId, authentication.getName(), administrateur(authentication));
+    }
+
+    @DeleteMapping("/{id}/reservations/{reservationId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEMBRECA')")
+    public MaterielResponse annulerReservation(@PathVariable Long id, @PathVariable Long reservationId,
+            Authentication authentication) {
+        return service.annulerReservation(id, reservationId, authentication.getName(), administrateur(authentication));
+    }
+
     @GetMapping("/membres-ca")
     @PreAuthorize("hasRole('ADMIN')")
     public List<MembreCAMaterielResponse> getMembresCA() { return service.getMembresCA(); }
@@ -78,7 +92,7 @@ public class MaterielController {
     public List<EmpruntMaterielResponse> getHistorique(@PathVariable Long id) { return service.getHistorique(id); }
 
     @PatchMapping("/{id}/hors-service")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEMBRECA')")
     public MaterielResponse updateHorsService(@PathVariable Long id, @RequestBody HorsServiceRequest request,
             Authentication authentication) {
         return service.updateHorsService(id, request, authentication.getName());
@@ -95,19 +109,19 @@ public class MaterielController {
 
     @PostMapping("/zonages")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('ADMIN', 'LOGISTIQUE')")
+    @PreAuthorize("hasRole('LOGISTIQUE')")
     public ZonageConfiguration createZonage(@RequestBody ZonageConfiguration request) {
         return service.createZonage(request);
     }
 
     @PutMapping("/zonages/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'LOGISTIQUE')")
+    @PreAuthorize("hasRole('LOGISTIQUE')")
     public ZonageConfiguration updateZonage(@PathVariable Long id, @RequestBody ZonageConfiguration request) {
         return service.updateZonage(id, request);
     }
 
     @DeleteMapping("/zonages/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyRole('ADMIN', 'LOGISTIQUE')")
+    @PreAuthorize("hasRole('LOGISTIQUE')")
     public void deleteZonage(@PathVariable Long id) { service.deleteZonage(id); }
 }

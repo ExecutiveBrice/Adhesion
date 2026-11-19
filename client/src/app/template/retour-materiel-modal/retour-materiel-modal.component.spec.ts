@@ -25,7 +25,9 @@ describe('Retours de matériel par quantité', () => {
   });
   it('limite le choix aux emprunts personnels et enregistre un retour partiel', () => {
     const component = TestBed.createComponent(RetourMaterielModalComponent).componentInstance;
-    component.materiel = tables;
+    component.materiel = { ...tables, emprunts: [
+      ...tables.emprunts!, { ...emprunt, id: 13, reservation: true, dateDebut: '2026-10-16' }
+    ] };
     expect(component.emprunts.map(e => e.id)).toEqual([11]);
     expect(component.restant).toBe(3);
     component.quantite = 2;

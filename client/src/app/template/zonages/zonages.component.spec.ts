@@ -4,6 +4,7 @@ import { ZonagesComponent } from './zonages.component';
 import { MaterielService } from '../../_services/materiel.service';
 import { Zonage } from '../../models/materiel';
 import { ApiRenderService } from '../../_services/api-render.service';
+import { ToastService } from '../../_services/toast.service';
 
 describe('Paramétrage des zonages', () => {
   let fixture: ComponentFixture<ZonagesComponent>;
@@ -27,6 +28,8 @@ describe('Paramétrage des zonages', () => {
     expect(service.createZonage).toHaveBeenCalledWith('Étagère A', '#ABCDEF');
     expect(component.zonages.length).toBe(2);
     expect(component.nom).toBe('');
+    expect(TestBed.inject(ToastService).toasts).toContain(jasmine.objectContaining({ message: 'Zonage ajouté.', type: 'success' }));
+    expect(fixture.nativeElement.textContent).not.toContain('Zonage ajouté.');
   });
 
   it('enregistre les modifications et supprime un zonage vide', () => {
@@ -35,10 +38,12 @@ describe('Paramétrage des zonages', () => {
     service.updateZonage.and.returnValue(of(modifie));
     component.enregistrer(modifie);
     expect(component.zonages[0]).toEqual(modifie);
+    expect(TestBed.inject(ToastService).toasts).toContain(jasmine.objectContaining({ message: 'Zonage enregistré.', type: 'success' }));
     service.deleteZonage.and.returnValue(of(undefined));
     component.supprimer(modifie);
     expect(service.deleteZonage).toHaveBeenCalledWith(1);
     expect(component.zonages.length).toBe(0);
+    expect(TestBed.inject(ToastService).toasts).toContain(jasmine.objectContaining({ message: 'Zonage supprimé.', type: 'success' }));
   });
 
   it('conserve les zonages contenant du matériel et affiche la raison du refus', () => {

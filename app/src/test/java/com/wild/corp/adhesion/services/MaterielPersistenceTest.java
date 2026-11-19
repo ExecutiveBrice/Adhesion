@@ -18,9 +18,12 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.concurrent.*;
 import static org.assertj.core.api.Assertions.*;
 
@@ -131,6 +134,97 @@ class MaterielPersistenceTest {
         assertThat(retourne.zonage().id()).isEqualTo(zone.id());
         assertThat(service.getHistorique(objet.id()).getFirst().dateDebut()).isEqualTo(debut);
         assertThat(service.getHistorique(objet.id()).getFirst().dateFinPrevue()).isEqualTo(fin);
+    }
+
+    @Test
+    void reservationsCanOverlapAndDoNotConsumeImmediateStock() {
+        User membre = users.save(new User("membre@example.org", "password"));
+        Long zone = service.createZonage(new ZonageConfiguration(null, "Stock", "#123456")).id();
+        Long id = service.create(new MaterielRequest("Projecteur", zone)).id();
+        LocalDate demain = LocalDate.now(ZoneId.of("Europe/Paris")).plusDays(1);
+
+        var premier = service.emprunter(id, membre.getUsername(), null, false, 1, demain, demain);
+        Long reservationId = premier.emprunts().getFirst().id();
+        assertThat(premier.quantiteDisponible()).isEqualTo(1);
+        assertThat(premier.quantiteEmpruntee()).isZero();
+        assertThat(premier.emprunteurId()).isNull();
+        assertThatThrownBy(() -> service.restituer(id, membre.getUsername(), false,
+                new RetourMaterielRequest(reservationId, 1)))
+                .isInstanceOfSatisfying(ResponseStatusException.class,
+                        e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
+        assertThatThrownBy(() -> service.commencerReservation(id, reservationId, membre.getUsername(), false))
+                .isInstanceOfSatisfying(ResponseStatusException.class,
+                        e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
+
+        var emprunt = service.emprunter(id, membre.getUsername());
+        Long empruntId = emprunt.emprunts().stream().filter(e -> Boolean.FALSE.equals(e.reservation())).findFirst().orElseThrow().id();
+        assertThat(emprunt.quantiteDisponible()).isZero();
+        assertThat(emprunt.quantiteEmpruntee()).isEqualTo(1);
+        assertThatThrownBy(() -> service.emprunter(id, membre.getUsername())).isInstanceOf(ResponseStatusException.class);
+
+        var second = service.emprunter(id, membre.getUsername(), null, false, 1, demain, demain);
+        assertThat(second.emprunts()).filteredOn(e -> Boolean.TRUE.equals(e.reservation())).hasSize(2);
+        assertThat(second.quantiteEmpruntee()).isEqualTo(1);
+        assertThat(service.restituer(id, membre.getUsername(), false).quantiteDisponible()).isEqualTo(1);
+        assertThat(service.getHistorique(id)).filteredOn(e -> e.dateRetour() != null)
+                .extracting(EmpruntMaterielResponse::id).containsExactly(empruntId);
+    }
+
+    @Test
+    void cancellationRemainsInHistoryAndAnActualCheckoutIsRequiredForRestitution() {
+        User membre = users.save(new User("membre@example.org", "password"));
+        User autre = users.save(new User("autre@example.org", "password"));
+        Long zone = service.createZonage(new ZonageConfiguration(null, "Stock", "#123456")).id();
+        Long id = service.create(new MaterielRequest("Projecteur", zone)).id();
+        LocalDate aujourdHui = LocalDate.now(ZoneId.of("Europe/Paris"));
+        Materiel objet = materiels.findById(id).orElseThrow();
+        Long reservationId = emprunts.save(EmpruntMateriel.builder().materiel(objet).reservation(true)
+                .emprunteurId(membre.getId()).dateDebut(aujourdHui).dateFinPrevue(aujourdHui)
+                .dateEmprunt(OffsetDateTime.now().minusDays(1)).build()).getId();
+        Long annuleeId = service.emprunter(id, membre.getUsername(), null, false, 1, aujourdHui.plusDays(1), aujourdHui.plusDays(1))
+                .emprunts().stream().filter(e -> !e.id().equals(reservationId)).findFirst().orElseThrow().id();
+
+        assertThatThrownBy(() -> service.annulerReservation(id, annuleeId, autre.getUsername(), false))
+                .isInstanceOfSatisfying(ResponseStatusException.class,
+                        e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN));
+        assertThat(service.annulerReservation(id, annuleeId, autre.getUsername(), true).emprunts())
+                .extracting(EmpruntMaterielResponse::id).containsExactly(reservationId);
+        assertThat(service.getHistorique(id)).filteredOn(e -> e.id().equals(annuleeId)).singleElement().satisfies(e -> {
+            assertThat(e.dateAnnulation()).isNotNull();
+            assertThat(e.dateRetour()).isNull();
+        });
+        assertThat(service.getCalendrier(aujourdHui, aujourdHui.plusDays(1))).extracting(e -> e.emprunt().id())
+                .containsExactly(reservationId);
+
+        assertThat(service.getAll().getFirst().quantiteEmpruntee()).isZero();
+        service.emprunter(id, autre.getUsername());
+        assertThatThrownBy(() -> service.commencerReservation(id, reservationId, membre.getUsername(), false))
+                .isInstanceOfSatisfying(ResponseStatusException.class,
+                        e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
+        service.restituer(id, autre.getUsername(), false);
+        assertThat(service.commencerReservation(id, reservationId, membre.getUsername(), false).quantiteEmpruntee()).isEqualTo(1);
+        assertThatThrownBy(() -> service.annulerReservation(id, reservationId, membre.getUsername(), false))
+                .isInstanceOfSatisfying(ResponseStatusException.class,
+                        e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
+        assertThat(service.restituer(id, membre.getUsername(), false).quantiteDisponible()).isEqualTo(1);
+    }
+
+    @Test
+    void startupMarksExistingFutureReservationsAndKeepsExistingActiveLoans() {
+        Long zone = service.createZonage(new ZonageConfiguration(null, "Stock", "#123456")).id();
+        Long id = service.create(new MaterielRequest("Projecteur", zone)).id();
+        Materiel objet = materiels.findById(id).orElseThrow();
+        LocalDate aujourdHui = LocalDate.now(ZoneId.of("Europe/Paris"));
+        Long futur = emprunts.save(EmpruntMateriel.builder().materiel(objet).dateDebut(aujourdHui.plusDays(1))
+                .dateEmprunt(OffsetDateTime.now()).build()).getId();
+        Long enCours = emprunts.save(EmpruntMateriel.builder().materiel(objet).dateDebut(aujourdHui)
+                .dateEmprunt(OffsetDateTime.now()).build()).getId();
+
+        service.reprendreReservationsExistantes();
+
+        assertThat(emprunts.findById(futur).orElseThrow().getReservation()).isTrue();
+        assertThat(emprunts.findById(enCours).orElseThrow().getReservation()).isNull();
+        assertThat(service.getAll().getFirst().quantiteEmpruntee()).isEqualTo(1);
     }
 
     @Test

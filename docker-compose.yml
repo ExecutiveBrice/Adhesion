@@ -5,7 +5,12 @@ services:
     depends_on:
       - app_adhesion
     volumes:
-      - ./client:/usr/share/nginx/html/adhesion
+      - type: bind
+        source: ${ADHESION_FRONTEND_DIR:-./client/dist/browser}
+        target: /usr/share/nginx/html/adhesion
+        read_only: true
+        bind:
+          create_host_path: false
     networks:
       - traefik_web
     labels:

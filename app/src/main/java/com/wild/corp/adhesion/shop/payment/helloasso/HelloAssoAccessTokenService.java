@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import java.net.URI;
 import java.time.Clock;
 import java.time.Instant;
 
@@ -72,7 +73,7 @@ public class HelloAssoAccessTokenService {
                 // Un refresh token expiré ne met pas en jeu de paiement : une nouvelle authentification est sûre.
                 return authenticateWithClientCredentials();
             }
-            throw HelloAssoFailure.from(exception, "OAUTH_FAILED");
+            throw oauthFailure(exception);
         }
     }
 
@@ -80,8 +81,20 @@ public class HelloAssoAccessTokenService {
         try {
             return toAccessToken(oauthClient.issueToken(clientCredentialsForm()));
         } catch (FeignException exception) {
-            throw HelloAssoFailure.from(exception, "OAUTH_FAILED");
+            throw oauthFailure(exception);
         }
+    }
+
+    private PaymentProviderException oauthFailure(FeignException exception) {
+        int status = exception.status();
+        if (status >= 300 && status < 400) {
+            URI baseUrl = properties.getBaseUrl();
+            LOGGER.warn("OAuth HelloAsso a renvoyé HTTP {} (schéma={}, hôte={}). "
+                            + "Vérifiez HELLOASSO_BASE_URL : https://api.helloasso.com en production "
+                            + "ou https://api.helloasso-sandbox.com en sandbox, sans chemin.",
+                    status, baseUrl.getScheme(), baseUrl.getHost());
+        }
+        return HelloAssoFailure.from(exception, "OAUTH_FAILED");
     }
 
     private AccessToken toAccessToken(HelloAssoOAuthTokenResponse response) {

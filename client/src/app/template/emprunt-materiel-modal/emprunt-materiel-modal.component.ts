@@ -7,6 +7,11 @@ import { MaterielService } from '../../_services/materiel.service';
 import { TokenStorageService } from '../../_services/token-storage.service';
 import { registerApiViewRefresh } from '../../_services/api-render.service';
 
+export interface CreationEmpruntMateriel {
+  materiel: Materiel;
+  reservation: boolean;
+}
+
 @Component({
   selector: 'app-emprunt-materiel-modal',
   imports: [FormsModule, DatePipe, NgbDatepickerModule],
@@ -65,6 +70,19 @@ export class EmpruntMaterielModalComponent implements OnInit {
     return !!this.debutPlage && !!this.finPlage && this.debutPlage <= this.finPlage;
   }
 
+  get reservation(): boolean {
+    return this.debutPlage > this.calendarDate(this.calendar.getToday());
+  }
+
+  get quantiteMax(): number {
+    return this.reservation ? (this.materiel.quantiteTotale ?? 1) - (this.materiel.quantiteHorsService ?? 0)
+      : this.materiel.quantiteDisponible ?? 1;
+  }
+
+  get quantiteValide(): boolean {
+    return Number.isInteger(this.quantite) && this.quantite >= 1 && this.quantite <= this.quantiteMax;
+  }
+
   charger(): void {
     this.chargement = true;
     this.membresCA = [];
@@ -82,15 +100,17 @@ export class EmpruntMaterielModalComponent implements OnInit {
   emprunter(): void {
     if (this.enregistrement || this.chargement || this.emprunteurId === null || !this.periodeValide
         || (this.administrateur && !this.membresCA.some(membre => membre.id === this.emprunteurId))
-        || !Number.isInteger(this.quantite) || this.quantite < 1 || this.quantite > (this.materiel.quantiteDisponible ?? 1)) return;
+        || !this.quantiteValide) return;
     this.enregistrement = true;
     this.erreur = '';
+    const reservation = this.reservation;
     this.service.emprunter(this.materiel.id, this.administrateur ? this.emprunteurId! : undefined,
       this.quantite, this.debutPlage, this.finPlage!).subscribe({
-      next: materiel => this.activeModal.close(materiel),
+      next: materiel => this.activeModal.close({ materiel, reservation } satisfies CreationEmpruntMateriel),
       error: response => {
         this.enregistrement = false;
-        this.erreur = response?.error?.detail || response?.error?.message || 'L’emprunt n’a pas pu être enregistré.';
+        this.erreur = response?.error?.detail || response?.error?.message
+          || (reservation ? 'La réservation n’a pas pu être enregistrée.' : 'L’emprunt n’a pas pu être enregistré.');
       }
     });
   }

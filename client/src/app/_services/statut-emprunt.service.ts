@@ -2,7 +2,7 @@ import { DestroyRef, Injectable, NgZone, inject, signal } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { EmpruntMateriel, Materiel } from '../models/materiel';
 
-export type StatutEmprunt = 'À venir' | 'En cours' | 'Rapporté';
+export type StatutEmprunt = 'À venir' | 'En cours' | 'Rapporté' | 'Annulé';
 
 @Injectable({ providedIn: 'root' })
 export class StatutEmpruntService {
@@ -29,8 +29,16 @@ export class StatutEmpruntService {
   }
 
   statut(emprunt: EmpruntMateriel): StatutEmprunt {
+    if (emprunt.dateAnnulation) return 'Annulé';
     if (emprunt.dateRetour) return 'Rapporté';
+    if (emprunt.reservation != null) return emprunt.reservation ? 'À venir' : 'En cours';
     return emprunt.dateDebut && emprunt.dateDebut > this.aujourdHui() ? 'À venir' : 'En cours';
+  }
+
+  peutGerer(emprunt: EmpruntMateriel, utilisateur: { id?: number; roles?: string[] }): boolean {
+    const roles = utilisateur.roles ?? [];
+    return emprunt.horsService == null
+      && (roles.includes('ROLE_ADMIN') || (roles.includes('ROLE_MEMBRECA') && emprunt.emprunteurId === utilisateur.id));
   }
 
   quantite(materiel: Materiel, statut: StatutEmprunt): number {

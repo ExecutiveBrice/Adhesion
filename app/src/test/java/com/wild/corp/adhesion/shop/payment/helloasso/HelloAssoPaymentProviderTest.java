@@ -12,11 +12,17 @@ import com.wild.corp.adhesion.shop.payment.provider.PaymentProviderException;
 import com.wild.corp.adhesion.shop.payment.provider.PaymentRequest;
 import com.wild.corp.adhesion.shop.payment.provider.PaymentResult;
 import com.wild.corp.adhesion.shop.payment.provider.PaymentSession;
+import feign.FeignException;
+import feign.Request;
+import feign.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.util.MultiValueMap;
 import org.wild.corp.adhesion.client.helloasso.model.HelloAssoApiV5CommonModelsCartsInitCheckoutBody;
 import org.wild.corp.adhesion.client.helloasso.model.HelloAssoApiV5CommonModelsCartsInitCheckoutResponse;
@@ -235,6 +241,31 @@ class HelloAssoPaymentProviderTest {
                 .thenReturn(checkoutWith(HelloAssoApiV5CommonModelsEnumsPaymentState.ABANDONED, 2_500));
 
         assertThat(provider.retrievePayment("741").status()).isEqualTo(PaymentStatus.CANCELLED);
+    }
+
+    @Test
+    @ExtendWith(OutputCaptureExtension.class)
+    void diagnosesAnOAuthRedirectWithoutCreatingACheckout(CapturedOutput output) {
+        Request request = Request.create(Request.HttpMethod.POST,
+                "http://api.helloasso-sandbox.com/oauth2/token", Map.of(), null, null, null);
+        Response redirect = Response.builder().status(301).request(request)
+                .headers(Map.of("Location", List.of("https://api.helloasso-sandbox.com/oauth2/token"))).build();
+        when(oauthClient.issueToken(any())).thenThrow(FeignException.errorStatus("issueToken", redirect));
+        HelloAssoPaymentProperties properties = properties();
+        properties.setBaseUrl(URI.create("http://api.helloasso-sandbox.com"));
+        HelloAssoPaymentProvider redirectingProvider = new HelloAssoPaymentProvider(checkoutClient,
+                new HelloAssoAccessTokenService(oauthClient, properties), properties, new JsonMapper());
+
+        assertThatThrownBy(() -> redirectingProvider.createPayment(new PaymentRequest(12L, "CMD-2026-00012",
+                new Money(2_500, "EUR"), "idempotency-key", URI.create("https://site.test/return"),
+                URI.create("https://site.test/cancel"))))
+                .isInstanceOfSatisfying(PaymentProviderException.class, exception -> {
+                    assertThat(exception.getErrorCode()).isEqualTo("OAUTH_FAILED_HTTP_301");
+                    assertThat(exception.isRetryable()).isFalse();
+                });
+
+        assertThat(output.getOut()).contains("schéma=http, hôte=api.helloasso-sandbox.com", "HELLOASSO_BASE_URL");
+        verifyNoInteractions(checkoutClient);
     }
 
     @Test

@@ -19,6 +19,7 @@ import java.util.stream.Stream;
 @Service
 @Transactional
 public class MaterielServices {
+    private static final ZoneId PARIS = ZoneId.of("Europe/Paris");
     private final MaterielRepository materielRepository;
     private final ZonageRepository zonageRepository;
     private final UserRepository userRepository;
@@ -32,6 +33,10 @@ public class MaterielServices {
         this.empruntRepository = empruntRepository;
     }
 
+    public void reprendreReservationsExistantes() {
+        empruntRepository.reprendreReservationsExistantes(LocalDate.now(PARIS));
+    }
+
     public List<MaterielResponse> getAll() {
         return materielRepository.findAllByOrderByNomAscIdAsc().stream().map(m -> toResponse(m.getEmprunteurId() == null ? m : materiel(m.getId()))).toList();
     }
@@ -41,9 +46,8 @@ public class MaterielServices {
         if (debut == null || fin == null || fin.isBefore(debut) || !fin.isBefore(debut.plusMonths(2))) {
             throw erreur(HttpStatus.BAD_REQUEST, "La période du calendrier doit être comprise entre un jour et deux mois");
         }
-        ZoneId paris = ZoneId.of("Europe/Paris");
-        return empruntRepository.findForCalendrier(debut.atStartOfDay(paris).toOffsetDateTime(), fin,
-                fin.plusDays(1).atStartOfDay(paris).toOffsetDateTime()).stream()
+        return empruntRepository.findForCalendrier(debut.atStartOfDay(PARIS).toOffsetDateTime(), fin,
+                fin.plusDays(1).atStartOfDay(PARIS).toOffsetDateTime()).stream()
                 .map(e -> new EmpruntCalendrierMaterielResponse(e.getMateriel().getId(), e.getMateriel().getNom(),
                         toConfiguration(e.getMateriel().getZonage()), toEmpruntResponse(e))).toList();
     }
@@ -102,8 +106,9 @@ public class MaterielServices {
 
     public MaterielResponse emprunter(Long id, String username, Long emprunteurId, boolean administrateur,
             Integer quantite, LocalDate dateDebut, LocalDate dateFinPrevue) {
+        LocalDate aujourdHui = LocalDate.now(PARIS);
         if (dateDebut == null && dateFinPrevue == null) {
-            dateDebut = LocalDate.now(ZoneId.of("Europe/Paris"));
+            dateDebut = aujourdHui;
             dateFinPrevue = dateDebut.plusDays(1);
         }
         if (dateDebut == null || dateFinPrevue == null || dateFinPrevue.isBefore(dateDebut)) {
@@ -111,7 +116,10 @@ public class MaterielServices {
         }
         Materiel materiel = materiel(id);
         int nombre = quantitePositive(quantite == null ? 1 : quantite);
-        if (nombre > materiel.getQuantiteTotale() - materiel.getQuantiteHorsService() - quantiteEmpruntee(materiel))
+        boolean reservation = dateDebut.isAfter(aujourdHui);
+        int disponible = materiel.getQuantiteTotale() - materiel.getQuantiteHorsService();
+        if (!reservation) disponible -= quantiteEmpruntee(materiel);
+        if (nombre > disponible)
             throw erreur(HttpStatus.CONFLICT, "Quantité disponible insuffisante");
         User acteur = utilisateur(username);
         if (emprunteurId != null && !administrateur) {
@@ -124,12 +132,45 @@ public class MaterielServices {
         }
         EmpruntMateriel emprunt = EmpruntMateriel.builder().materiel(materiel).quantite(nombre)
                 .emprunteurId(emprunteur.getId()).emprunteurNom(nomUtilisateur(emprunteur))
-                .dateDebut(dateDebut).dateFinPrevue(dateFinPrevue)
+                .dateDebut(dateDebut).dateFinPrevue(dateFinPrevue).reservation(reservation)
                 .dateEmprunt(OffsetDateTime.now(ZoneOffset.UTC)).build();
         emprunt.setEnregistreParId(acteur.getId());
         emprunt.setEnregistreParNom(nomUtilisateur(acteur));
         empruntRepository.save(emprunt);
         return toResponse(materiel);
+    }
+
+    public MaterielResponse commencerReservation(Long id, Long reservationId, String username, boolean administrateur) {
+        Materiel materiel = materiel(id);
+        LocalDate aujourdHui = LocalDate.now(PARIS);
+        EmpruntMateriel reservation = reservation(materiel, reservationId, username, administrateur, aujourdHui);
+        if (reservation.getDateDebut().isAfter(aujourdHui)) {
+            throw erreur(HttpStatus.CONFLICT, "La réservation peut être utilisée à partir de sa date de début");
+        }
+        if (reservation.getQuantite() > materiel.getQuantiteTotale() - materiel.getQuantiteHorsService() - quantiteEmpruntee(materiel)) {
+            throw erreur(HttpStatus.CONFLICT, "Quantité disponible insuffisante");
+        }
+        reservation.setReservation(false);
+        return toResponse(materiel);
+    }
+
+    public MaterielResponse annulerReservation(Long id, Long reservationId, String username, boolean administrateur) {
+        Materiel materiel = materiel(id);
+        EmpruntMateriel reservation = reservation(materiel, reservationId, username, administrateur, LocalDate.now(PARIS));
+        reservation.setDateAnnulation(OffsetDateTime.now(ZoneOffset.UTC));
+        return toResponse(materiel);
+    }
+
+    private EmpruntMateriel reservation(Materiel materiel, Long reservationId, String username, boolean administrateur,
+            LocalDate aujourdHui) {
+        User acteur = utilisateur(username);
+        EmpruntMateriel reservation = ouverts(materiel).stream()
+                .filter(e -> e.getId().equals(reservationId) && estReserve(e, aujourdHui)).findFirst()
+                .orElseThrow(() -> erreur(HttpStatus.CONFLICT, "Cette réservation n’est plus disponible"));
+        if (!administrateur && !Objects.equals(reservation.getEmprunteurId(), acteur.getId())) {
+            throw erreur(HttpStatus.FORBIDDEN, "Seul le membre concerné ou un administrateur peut gérer cette réservation");
+        }
+        return reservation;
     }
 
     public MaterielResponse restituer(Long id, String username, boolean administrateur) {
@@ -139,7 +180,7 @@ public class MaterielServices {
     public MaterielResponse restituer(Long id, String username, boolean administrateur, RetourMaterielRequest request) {
         Materiel materiel = materiel(id);
         User acteur = utilisateur(username);
-        List<EmpruntMateriel> ouverts = ouverts(materiel);
+        List<EmpruntMateriel> ouverts = enCours(materiel);
         EmpruntMateriel emprunt;
         if (request == null || request.empruntId() == null) {
             List<EmpruntMateriel> candidats = ouverts.stream()
@@ -180,8 +221,6 @@ public class MaterielServices {
             throw erreur(HttpStatus.BAD_REQUEST, "Le problème ou la réparation est obligatoire et limité à 2000 caractères");
         }
         User acteur = utilisateur(username);
-        // Reprendre un éventuel emprunt ancien avant le nouvel événement du journal.
-        if (materiel.getEmprunteurId() != null) empruntOuExistant(materiel);
         empruntRepository.save(EmpruntMateriel.builder().materiel(materiel)
                 .horsService(nombre > materiel.getQuantiteHorsService()).quantite(Math.abs(nombre - materiel.getQuantiteHorsService())).commentaire(commentaire).dateEmprunt(OffsetDateTime.now(ZoneOffset.UTC))
                 .enregistreParId(acteur.getId()).enregistreParNom(nomUtilisateur(acteur)).build());
@@ -200,9 +239,7 @@ public class MaterielServices {
     }
 
     public List<EmpruntMaterielResponse> getHistorique(Long id) {
-        Materiel materiel = materiel(id);
-        // Préserve aussi les emprunts encore ouverts datant d'avant la création du journal.
-        if (materiel.getEmprunteurId() != null) empruntOuExistant(materiel);
+        materiel(id);
         return empruntRepository.findAllByMaterielIdOrderByDateEmpruntDescIdDesc(id).stream()
                 .map(this::toEmpruntResponse).toList();
     }
@@ -211,26 +248,31 @@ public class MaterielServices {
         return new EmpruntMaterielResponse(emprunt.getId(), emprunt.getEmprunteurId(), emprunt.getEmprunteurNom(),
                 emprunt.getDateEmprunt(), emprunt.getDateRetour(), emprunt.getEnregistreParNom(), emprunt.getRapporteParNom(),
                 emprunt.getHorsService(), emprunt.getCommentaire(), emprunt.getQuantite(), emprunt.getQuantiteRetournee(), List.copyOf(emprunt.getRetours()),
-                emprunt.getDateDebut(), emprunt.getDateFinPrevue());
+                emprunt.getDateDebut(), emprunt.getDateFinPrevue(), emprunt.getReservation(), emprunt.getDateAnnulation());
     }
 
     private List<EmpruntMateriel> ouverts(Materiel materiel) {
         return empruntRepository.findAllByMaterielIdOrderByDateEmpruntDescIdDesc(materiel.getId()).stream()
-                .filter(e -> e.getHorsService() == null && e.getDateRetour() == null).toList();
+                .filter(e -> e.getHorsService() == null && e.getDateRetour() == null && e.getDateAnnulation() == null).toList();
+    }
+
+    private boolean estReserve(EmpruntMateriel emprunt, LocalDate aujourdHui) {
+        if (emprunt.getReservation() != null) return emprunt.getReservation();
+        return emprunt.getDateDebut() != null && emprunt.getDateDebut().isAfter(aujourdHui);
+    }
+
+    private List<EmpruntMateriel> enCours(Materiel materiel) {
+        LocalDate aujourdHui = LocalDate.now(PARIS);
+        return ouverts(materiel).stream().filter(e -> !estReserve(e, aujourdHui)).toList();
     }
 
     private int quantiteEmpruntee(Materiel materiel) {
-        return ouverts(materiel).stream().mapToInt(e -> e.getQuantite() - e.getQuantiteRetournee()).sum();
+        return enCours(materiel).stream().mapToInt(e -> e.getQuantite() - e.getQuantiteRetournee()).sum();
     }
 
     private int quantitePositive(int quantite) {
         if (quantite < 1) throw erreur(HttpStatus.BAD_REQUEST, "La quantité doit être un entier positif");
         return quantite;
-    }
-
-    private EmpruntMateriel empruntOuExistant(Materiel materiel) {
-        return empruntRepository.findFirstByMaterielIdAndHorsServiceIsNullAndDateRetourIsNullOrderByDateEmpruntDescIdDesc(materiel.getId())
-                .orElseGet(() -> empruntRepository.save(nouvelEmprunt(materiel)));
     }
 
     private EmpruntMateriel nouvelEmprunt(Materiel materiel) {
@@ -312,7 +354,7 @@ public class MaterielServices {
 
     private void migrerAncienEmprunt(Materiel materiel) {
         if (materiel.getEmprunteurId() != null) {
-            empruntOuExistant(materiel);
+            if (enCours(materiel).isEmpty()) empruntRepository.save(nouvelEmprunt(materiel));
             materiel.setEmprunteurId(null);
             materiel.setEmprunteurNom(null);
             materiel.setDateEmprunt(null);
@@ -320,14 +362,17 @@ public class MaterielServices {
     }
 
     private MaterielResponse toResponse(Materiel materiel) {
-        List<EmpruntMaterielResponse> emprunts = ouverts(materiel).stream().map(this::toEmpruntResponse).toList();
-        int empruntee = emprunts.stream().mapToInt(e -> e.quantite() - e.quantiteRetournee()).sum();
-        EmpruntMaterielResponse premier = emprunts.isEmpty() ? null : emprunts.get(0);
+        LocalDate aujourdHui = LocalDate.now(PARIS);
+        List<EmpruntMateriel> ouverts = ouverts(materiel);
+        List<EmpruntMateriel> enCours = ouverts.stream().filter(e -> !estReserve(e, aujourdHui)).toList();
+        int empruntee = enCours.stream().mapToInt(e -> e.getQuantite() - e.getQuantiteRetournee()).sum();
+        EmpruntMateriel premier = enCours.isEmpty() ? null : enCours.getFirst();
         return new MaterielResponse(materiel.getId(), materiel.getNom(), toConfiguration(materiel.getZonage()),
-                premier == null ? null : premier.emprunteurId(), premier == null ? null : premier.emprunteurNom(),
-                premier == null ? null : premier.dateEmprunt(), materiel.getQuantiteHorsService() > 0, materiel.getProbleme(),
+                premier == null ? null : premier.getEmprunteurId(), premier == null ? null : premier.getEmprunteurNom(),
+                premier == null ? null : premier.getDateEmprunt(), materiel.getQuantiteHorsService() > 0, materiel.getProbleme(),
                 materiel.getQuantiteTotale(), materiel.getQuantiteHorsService(), empruntee,
-                materiel.getQuantiteTotale() - materiel.getQuantiteHorsService() - empruntee, emprunts, materiel.getImage());
+                Math.max(0, materiel.getQuantiteTotale() - materiel.getQuantiteHorsService() - empruntee),
+                ouverts.stream().map(this::toEmpruntResponse).toList(), materiel.getImage());
     }
 
     private ResponseStatusException erreur(HttpStatus statut, String message) {
