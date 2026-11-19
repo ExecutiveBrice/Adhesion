@@ -1,5 +1,38 @@
 http://localhost:8000/swagger-ui/index.html
 
+## Docker et migrations Liquibase
+
+Compose active Liquibase au démarrage de `app_adhesion`, après que PostgreSQL est prêt. Le changelog `db/changelog/db.changelog-shop.xml` et ses fichiers inclus sont embarqués dans le JAR depuis `app/src/main/resources/db/changelog` ; aucun volume supplémentaire n'est nécessaire.
+
+Après une modification des migrations, reconstruire le JAR puis l'image Docker depuis la racine du dépôt :
+
+```sh
+mvn -f app/pom.xml -DskipTests package
+docker compose up -d --build
+```
+
+Liquibase applique les migrations manquantes sur la base configurée pour l'application. La configuration locale conserve cette activation avec `docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build`.
+
+## Connexion et CORS en production
+
+Compose transmet à l'application les origines autorisées `https://${DNS_NAME}` et `https://www.${DNS_NAME}`. `DNS_NAME` doit contenir uniquement le nom de domaine (par exemple `association.fr`, sans protocole ni chemin).
+
+Pour autoriser d'autres origines, définir `ADHESION_SECURITY_CORS_ALLOWED_ORIGINS` dans le fichier `.env` du serveur, avec une liste séparée par des virgules, par exemple :
+
+```dotenv
+ADHESION_SECURITY_CORS_ALLOWED_ORIGINS=https://association.fr,https://www.association.fr
+```
+
+Chaque origine comprend le protocole et, si nécessaire, le port, sans chemin `/adhesion/`. Cette variable remplace la liste par défaut. La surcharge `docker-compose.local.yml` conserve par défaut `http://localhost:4200` et `https://localhost:4200` pour le développement.
+
+Après mise à jour du Compose ou de cette variable, recréer le conteneur depuis le répertoire de déploiement :
+
+```sh
+docker compose up -d --no-deps --force-recreate app_adhesion
+```
+
+Un simple `docker compose restart` ne recharge pas les variables d'environnement. Une réponse `403 Invalid CORS request` à la connexion peut indiquer que l'origine du navigateur manque dans cette liste ; la vérification CORS intervient avant l'authentification.
+
 ## Contacts newsletter Brevo
 
 `NewsletterContactService` est un service serveur distinct d’`EmailService`, qui continue à envoyer les emails transactionnels avec le SDK Brevo existant. Son client API est indépendant du client global transactionnel. Il ne crée aucun compte, rôle ou adhérent, notamment pour les personnes extérieures. Aucun état d’abonnement n’est enregistré localement : Brevo reste la référence.

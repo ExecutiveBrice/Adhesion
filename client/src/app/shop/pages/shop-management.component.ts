@@ -322,6 +322,27 @@ export class ShopManagementComponent implements OnDestroy {
     });
   }
 
+  duplicateVariant(product: ShopAdminProductDto, variant: ShopAdminVariantDto): void {
+    if (this.saving || this.loading || this.editor || this.imageCrop) return;
+    const usedCodes = new Set(this.products.flatMap(item => item.variants.map(reference => reference.sku)));
+    let sku = this.incrementReferenceText(variant.sku.trim());
+    let label = this.incrementReferenceText(variant.label?.trim() ?? '');
+    while (usedCodes.has(sku)) {
+      sku = this.incrementReferenceText(sku);
+      label = this.incrementReferenceText(label);
+    }
+    this.run(this.api.createVariant(product.id, { ...this.cleanVariant(variant), sku, label }), () => {
+      this.message = 'Référence dupliquée.';
+      this.load();
+    });
+  }
+
+  private incrementReferenceText(value: string): string {
+    return /\d$/.test(value)
+      ? value.replace(/\d+$/, number => (BigInt(number) + 1n).toString().padStart(number.length, '0'))
+      : `${value}-1`;
+  }
+
   deleteVariant(variantId: number): void {
     if (!window.confirm('Retirer cette référence ?')) return;
     this.run(this.api.deleteVariant(variantId), () => {

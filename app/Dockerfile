@@ -1,4 +1,4 @@
-FROM alpine/java:22
+FROM eclipse-temurin:25-jre-alpine
 # copy the packaged jar file into our docker image
 COPY ./target/adhesion.jar /adhesion.jar
 COPY ./src/main/resources/application.yml /resources/application.yml

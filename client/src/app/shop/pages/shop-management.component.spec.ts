@@ -62,6 +62,84 @@ describe('ShopManagementComponent', () => {
     fixture.destroy();
   });
 
+  it('duplique une référence depuis sa ligne, conserve ses paramètres et recharge le catalogue après succès', () => {
+    const { fixture, component, api, product, variant } = catalogueFixture();
+    const original = { ...variant };
+    const copy = { ...variant, id: 12, sku: 'TS-M-1', label: 'Bleu M-1', stockOnHand: 0, stockReserved: 0, version: 0 };
+    const response = new Subject<typeof variant>();
+    api.createVariant.and.returnValue(response);
+    api.products.calls.reset();
+    const button = fixture.nativeElement.querySelector('[aria-label="Dupliquer la référence Bleu M"]') as HTMLButtonElement;
+    expect(fixture.nativeElement.querySelectorAll('.variant-actions button').length).toBe(3);
+    button.click();
+    fixture.detectChanges();
+    expect(api.createVariant).toHaveBeenCalledOnceWith(product.id, {
+      sku: 'TS-M-1', label: 'Bleu M-1', imageUrl: '/variante.jpg', priceAmountInCents: 1500,
+      currency: 'EUR', active: true, displayOrder: 0
+    });
+    expect(button.disabled).toBeTrue();
+    component.duplicateVariant(product, variant);
+    expect(api.createVariant).toHaveBeenCalledTimes(1);
+    expect(api.products).not.toHaveBeenCalled();
+    expect(variant).toEqual(original);
+    api.products.and.returnValue(of([{ ...product, variants: [variant, copy] }]));
+    response.next(copy);
+    response.complete();
+    TestBed.inject(ApiRenderService).notify();
+    fixture.detectChanges();
+    expect(api.products).toHaveBeenCalledTimes(1);
+    expect(component.products[0].variants).toEqual([variant, copy]);
+    expect(fixture.nativeElement.querySelectorAll('.variant-actions').length).toBe(2);
+    expect(component.message).toBe('Référence dupliquée.');
+    expect(component.saving).toBeFalse();
+    fixture.destroy();
+  });
+
+  for (const [sku, label, expectedSku, expectedLabel] of [
+    ['TS-9', 'Modèle 19', 'TS-10', 'Modèle 20'],
+    ['TS-009', 'Modèle 009', 'TS-010', 'Modèle 010'],
+    ['TS-2-M', 'Modèle 2 Bleu', 'TS-2-M-1', 'Modèle 2 Bleu-1'],
+    ['TS-M', null, 'TS-M-1', '-1'],
+    ['TS-99999999999999999999', 'Modèle', 'TS-100000000000000000000', 'Modèle-1']
+  ]) {
+    it(`incrémente le numéro final du code ${sku} et du libellé ${label}`, () => {
+      const { fixture, component, api, product, variant } = catalogueFixture();
+      component.duplicateVariant(product, { ...variant, sku: sku!, label });
+      expect(api.createVariant).toHaveBeenCalledWith(product.id, jasmine.objectContaining({ sku: expectedSku, label: expectedLabel }));
+      fixture.destroy();
+    });
+  }
+
+  it('cherche le prochain code disponible dans tous les produits, même masqués', () => {
+    const { fixture, component, api, product, variant } = catalogueFixture();
+    component.products[1].variants = [
+      { ...variant, id: 12, sku: 'TS-M-1', label: 'Autre' },
+      { ...variant, id: 13, sku: 'TS-M-2', label: 'Autre' }
+    ];
+    component.duplicateVariant(product, variant);
+    expect(api.createVariant).toHaveBeenCalledWith(product.id, jasmine.objectContaining({ sku: 'TS-M-3', label: 'Bleu M-3' }));
+    fixture.destroy();
+  });
+
+  it('affiche une erreur de duplication et permet de réessayer sans modifier la référence source', () => {
+    const { fixture, component, api, product, variant } = catalogueFixture();
+    const original = { ...variant };
+    const response = new Subject<typeof variant>();
+    api.createVariant.and.returnValue(response);
+    component.duplicateVariant(product, variant);
+    response.error({ error: { detail: 'Création impossible.' } });
+    TestBed.inject(ApiRenderService).notify();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Création impossible.');
+    expect(component.saving).toBeFalse();
+    expect(variant).toEqual(original);
+    expect(product.variants).toEqual([variant]);
+    api.createVariant.and.returnValue(of(variant));
+    component.duplicateVariant(product, variant);
+    expect(api.createVariant).toHaveBeenCalledTimes(2);
+    fixture.destroy();
+  });
+
   it('annule les changements du produit, des catégories et des images sans modifier le catalogue', () => {
     const { fixture, component, api, product, category } = catalogueFixture();
     component.openProductEditor(product);

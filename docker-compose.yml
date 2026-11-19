@@ -1,6 +1,6 @@
 services:
   client_adhesion:
-    image: nginx:latest
+    image: nginx:1.30.6
     container_name: client_adhesion
     depends_on:
       - app_adhesion
@@ -23,19 +23,22 @@ services:
     build:
       context: ./app
     depends_on:
-      - db_adhesion
+      db_adhesion:
+        condition: service_healthy
     volumes:
       - /home/ubuntu/adhesion/:/home/ubuntu/adhesion/
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db_adhesion:5432/${DB_NAME}
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      # Les changelogs sont embarqués dans adhesion.jar lors du packaging Maven.
+      - SPRING_LIQUIBASE_ENABLED=true
+      - SPRING_LIQUIBASE_CHANGE_LOG=classpath:db/changelog/db.changelog-shop.xml
       - DNS_NAME=${DNS_NAME}
+      # Origines publiques, y compris lorsque Traefik termine le HTTPS.
+      - ADHESION_SECURITY_CORS_ALLOWED_ORIGINS=${ADHESION_SECURITY_CORS_ALLOWED_ORIGINS:-https://${DNS_NAME},https://www.${DNS_NAME}}
       - JWT_SECRET=${JWT_SECRET}
       - SERVER_PORT=8000
-      - MJ_MAIL=${MJ_MAIL}
-      - MJ_APIKEY_PUBLIC=${MJ_APIKEY_PUBLIC}
-      - MJ_APIKEY_PRIVATE=${MJ_APIKEY_PRIVATE}
       - BREVO_APIKEY_PRIVATE=${BREVO_APIKEY_PRIVATE}
       - BREVO_NEWSLETTER_LIST_ID=${BREVO_NEWSLETTER_LIST_ID:-0}
       - SHOP_PAYMENT_PROVIDER=${SHOP_PAYMENT_PROVIDER:-manual}
@@ -69,6 +72,12 @@ services:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
     ports:          #supprimer en remote
       - "8105:5432" #supprimer en remote
     volumes:
