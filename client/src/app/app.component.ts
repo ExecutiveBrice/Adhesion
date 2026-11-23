@@ -1,13 +1,13 @@
-import { Component, computed, DestroyRef, ElementRef, inject, signal, ViewChild } from '@angular/core';
+import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TokenStorageService } from './_services/token-storage.service';
 import { ParamService } from './_services/param.service';
 import { ParamTransmissionService } from './_services/transmission.service';
 import { ToastService } from './_services/toast.service';
 import { registerApiViewRefresh } from './_services/api-render.service';
-import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap/collapse';
 import { NavigationEnd, Router, RouterLinkActive, RouterLink, RouterOutlet } from '@angular/router';
-import { NgbToast, NgbToastHeader } from '@ng-bootstrap/ng-bootstrap/toast';
+import { NgbToast } from '@ng-bootstrap/ng-bootstrap/toast';
+import { ToastCountdownDirective } from './_directives/toast-countdown.directive';
 import { PwaService } from './_services/pwa.service';
 import { AuthService } from './_services/auth.service';
 import { LoginPageService } from './_services/login-page.service';
@@ -15,14 +15,32 @@ import { catchError, EMPTY, filter, Subscription } from 'rxjs';
 import { ShopCartLinkComponent } from './shop/components/shop-cart-link.component';
 import { ShopApiService } from './shop/services/shop-api.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faRightToBracket, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import {
+  faBoxOpen,
+  faCalculator,
+  faCalendarCheck,
+  faCalendarDays,
+  faChartColumn,
+  faClipboardList,
+  faEnvelope,
+  faGear,
+  faIdCard,
+  faPeopleGroup,
+  faPersonRunning,
+  faReceipt,
+  faRightFromBracket,
+  faRightToBracket,
+  faStore,
+  faUserPlus,
+  faUsers
+} from '@fortawesome/free-solid-svg-icons';
 
 
 @Component({
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.css'],
-    imports: [FaIconComponent, ShopCartLinkComponent, NgbCollapse, RouterLinkActive, RouterLink, RouterOutlet, NgbToast, NgbToastHeader]
+    imports: [FaIconComponent, ShopCartLinkComponent, RouterLinkActive, RouterLink, RouterOutlet, NgbToast, ToastCountdownDirective]
 })
 export class AppComponent {
   private readonly apiViewRefresh = registerApiViewRefresh();
@@ -31,11 +49,24 @@ export class AppComponent {
   readonly loginPage = inject(LoginPageService);
   readonly loginIcon = faRightToBracket;
   readonly registerIcon = faUserPlus;
+  readonly logoutIcon = faRightFromBracket;
+  readonly adminIcon = faGear;
+  readonly activitiesIcon = faPersonRunning;
+  readonly membersIcon = faUsers;
+  readonly membershipsIcon = faIdCard;
+  readonly mailingIcon = faEnvelope;
+  readonly registrationListIcon = faClipboardList;
+  readonly reportingIcon = faChartColumn;
+  readonly equipmentIcon = faBoxOpen;
+  readonly ordersIcon = faReceipt;
+  readonly shopManagementIcon = faStore;
+  readonly groupsIcon = faPeopleGroup;
+  readonly sessionsIcon = faCalendarDays;
+  readonly secretariatSessionsIcon = faCalendarCheck;
+  readonly accountingIcon = faCalculator;
   private readonly router = inject(Router);
   private readonly currentUrl = signal(this.router.url);
   readonly isLoginPage = computed(() => ['/', '/login'].includes(this.currentUrl().split(/[?#]/)[0]));
-  readonly pageTitle = signal('ALOD');
-  @ViewChild('menuToggle') private menuToggle?: ElementRef<HTMLButtonElement>;
   transmissionService = inject(ParamTransmissionService);
   private paramService = inject(ParamService);
   readonly showBoutique = this.paramService.showBoutique;
@@ -46,7 +77,6 @@ export class AppComponent {
   private shopOrdersSubscription?: Subscription;
   readonly hasShopOrders = signal(false);
 
-  isCollapsed = true
   private roles: string[] = [];
   isLoggedIn = false;
   showAdmin = false;
@@ -67,9 +97,8 @@ export class AppComponent {
       filter(event => event instanceof NavigationEnd),
       takeUntilDestroyed()
     ).subscribe(() => {
-      this.updatePage();
+      this.currentUrl.set(this.router.url);
       this.updateSession();
-      this.closeMenu(false);
     });
     this.tokenStorageService.sessionChanges$
       .pipe(takeUntilDestroyed())
@@ -78,14 +107,13 @@ export class AppComponent {
         if (this.isLoggedIn) {
           window.location.reload();
         } else {
-          this.closeMenu(false);
           void this.router.navigate(['/login'], { replaceUrl: true });
         }
       });
   }
 
   ngOnInit(): void {
-    this.updatePage();
+    this.currentUrl.set(this.router.url);
     this.updateSession();
 
     this.paramService.getAllBoolean().pipe(catchError(() => EMPTY)).subscribe();
@@ -96,30 +124,11 @@ export class AppComponent {
     });
   }
 
-  closeMenu(restoreFocus = true): void {
-    const wasOpen = !this.isCollapsed;
-    this.isCollapsed = true;
-    if (wasOpen && restoreFocus) {
-      this.menuToggle?.nativeElement.focus();
-    }
-  }
-
   openLogin(view: 'connexion' | 'inscription'): void {
     this.loginPage.view.set(view);
     if (!this.isLoginPage()) {
       void this.router.navigate(['/login'], { queryParams: { view } });
     }
-  }
-
-  private updatePage(): void {
-    this.currentUrl.set(this.router.url);
-    let route = this.router.routerState.snapshot.root;
-    let title = route.title;
-    while (route.firstChild) {
-      route = route.firstChild;
-      title = route.title ?? title;
-    }
-    this.pageTitle.set(title || 'ALOD');
   }
 
   private updateSession(): void {
@@ -157,7 +166,6 @@ export class AppComponent {
   logout(): void {
     this.authService.logout().subscribe();
     this.updateSession();
-    this.closeMenu(false);
     void this.router.navigate(['/login'], { replaceUrl: true });
   }
 }

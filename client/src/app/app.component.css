@@ -1,5 +1,4 @@
 .app-header {
-  --header-height: 5rem;
   padding-top: env(safe-area-inset-top, 0px);
   background: #212529;
   box-shadow: 0 .125rem .5rem rgba(0, 0, 0, .15);
@@ -16,28 +15,6 @@
   flex-shrink: 0;
 }
 
-.navbar-page-title {
-  flex: 1;
-  min-width: 0;
-  line-height: 1.25;
-  overflow-wrap: anywhere;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-  text-align: center;
-}
-
-.navbar-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1010;
-  border: 0;
-  padding: 0;
-  background: rgba(0, 0, 0, .35);
-  touch-action: none;
-}
-
 .app-logo {
   display: block;
   width: 80px;
@@ -47,35 +24,40 @@
   background: #fff;
 }
 
-.navbar-toggler,
-.nav-link,
 .navbar-account .btn,
-.navbar-login-actions .btn {
-  min-height: 44px;
-}
-
 .navbar-login-actions .btn {
   align-items: center;
   display: inline-flex;
   gap: .45rem;
   justify-content: center;
+  min-height: 44px;
   min-width: 44px;
   padding-inline: .5rem;
   white-space: nowrap;
 }
 
-.navbar-toggler {
-  padding: .375rem .625rem;
-  flex-shrink: 0;
+.navbar-nav {
+  flex: 1;
+  flex-flow: row wrap;
+  min-width: 0;
 }
 
 .nav-link {
   display: flex;
   align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  min-width: 44px;
+  min-height: 44px;
   padding: .625rem .75rem;
   border-radius: .375rem;
   font-size: 1rem;
   font-weight: 500;
+}
+
+.nav-link fa-icon,
+.navbar-account .btn fa-icon {
+  font-size: 1.25rem;
 }
 
 .nav-link:hover,
@@ -90,20 +72,12 @@
   box-shadow: inset 3px 0 #5cbbaf;
 }
 
-.navbar-collapse,
-.navbar-nav {
-  min-width: 0;
+.nav-label {
+  white-space: nowrap;
 }
 
 .navbar-account {
   flex-shrink: 0;
-}
-
-.navbar-account .btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
 }
 
 .account-name {
@@ -111,6 +85,25 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+@media (max-width: 1399.98px) {
+  .app-header .navbar-with-navigation {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .navbar-nav {
+    justify-content: center;
+  }
+
+  .nav-label {
+    display: none;
+  }
+
+  .nav-link {
+    padding: .5rem;
+  }
 }
 
 @media (max-width: 575.98px) {
@@ -121,57 +114,82 @@
   .app-logo {
     width: 64px;
   }
-}
 
-@media (max-width: 1399.98px) {
-  .app-header .navbar-with-title {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
-    align-items: center;
+  .app-header .navbar-with-navigation {
+    grid-template-columns: 1fr auto;
   }
 
-  .navbar-with-title .navbar-brand {
-    justify-self: start;
+  .navbar-with-navigation .navbar-nav {
+    grid-area: 2 / 1 / auto / span 2;
   }
 
-  .navbar-with-title .navbar-toggler {
-    justify-self: end;
-  }
-
-  .navbar-collapse {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: #212529;
-    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .25);
-    padding-left: max(.75rem, env(safe-area-inset-left, 0px));
-    padding-right: max(.75rem, env(safe-area-inset-right, 0px));
-    max-height: calc(100vh - var(--header-height) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
-    max-height: calc(100dvh - var(--header-height) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-
-  .navbar-nav {
-    padding-top: .75rem;
-  }
-
-  .navbar-account {
-    border-top: 1px solid rgba(255, 255, 255, .2);
-    margin-top: .75rem;
-    padding: .75rem 0;
-  }
-
-  .account-name {
-    max-width: 100%;
+  .navbar-with-navigation .navbar-account {
+    grid-area: 1 / 2;
   }
 }
 
 .toast-container {
   z-index: 1100;
   width: min(420px, calc(100vw - 2rem));
+  overflow-x: clip;
+}
+
+.toast-container > ngb-toast {
+  --global--bs-toast-padding-x: 0;
+  --global--bs-toast-padding-y: 0;
+  cursor: pointer;
+}
+
+.toast-container .toast-header {
+  gap: .5rem;
+  padding: .25rem .75rem;
+}
+
+.toast-message {
+  padding: .5rem .75rem;
+}
+
+.toast-countdown {
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  color: inherit;
+  cursor: inherit;
+  display: grid;
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  height: 2rem;
+  padding: 0;
+  place-items: center;
+  position: relative;
+  width: 2rem;
+}
+
+.toast-countdown::before {
+  background: conic-gradient(currentColor var(--toast-progress), color-mix(in srgb, currentColor 20%, transparent) 0);
+  border-radius: inherit;
+  content: '';
+  inset: 0;
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 0);
+  position: absolute;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .toast-container > ngb-toast.show {
+    animation: toast-enter .3s ease-out;
+  }
+}
+
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .pwa-install-prompt {

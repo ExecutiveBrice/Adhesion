@@ -57,16 +57,22 @@ describe('Navigation du bandeau', () => {
     await fixture.whenStable();
   });
 
-  it('affiche le titre de la route et ferme le menu à la navigation', async () => {
-    expect(fixture.nativeElement.querySelector('.navbar-page-title').textContent).toBe('Reporting');
-    fixture.nativeElement.querySelector('.navbar-toggler').click();
-    fixture.detectChanges();
-    expect(fixture.componentInstance.isCollapsed).toBeFalse();
+  it('affiche directement les raccourcis avec leur picto et indique la page active', async () => {
+    const nav: HTMLElement = fixture.nativeElement.querySelector('nav');
+    const reporting: HTMLAnchorElement = nav.querySelector('a[href="/reporting"]')!;
+    const seances: HTMLAnchorElement = nav.querySelector('a[href="/seances"]')!;
+    expect(nav.querySelector('.navbar-toggler, .navbar-collapse, .navbar-backdrop')).toBeNull();
+    expect(reporting.querySelector('fa-icon svg')).not.toBeNull();
+    expect(reporting.getAttribute('aria-label')).toBe('Reporting');
+    expect(reporting.getAttribute('aria-current')).toBe('page');
+    expect(seances.querySelector('fa-icon svg')).not.toBeNull();
+    expect(seances.getAttribute('aria-label')).toBe('Séances');
+
     await router.navigateByUrl('/seances');
     fixture.detectChanges();
-    expect(fixture.componentInstance.isCollapsed).toBeTrue();
-    expect(fixture.nativeElement.querySelector('.navbar-page-title').textContent).toBe('Séances');
-    expect(fixture.nativeElement.querySelector('.navbar-backdrop')).toBeNull();
+    await fixture.whenStable();
+    expect(reporting.hasAttribute('aria-current')).toBeFalse();
+    expect(seances.getAttribute('aria-current')).toBe('page');
   });
 
   it('masque Mes commandes sans historique et l’affiche après la première commande', async () => {
@@ -75,7 +81,7 @@ describe('Navigation du bandeau', () => {
     shopApi.orders.and.returnValue(of([{ status: 'PENDING_PAYMENT' } as ShopOrderDto]));
     await router.navigateByUrl('/seances');
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('a[href="/boutique/commandes"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('a[href="/boutique/commandes"] fa-icon')).not.toBeNull();
 
     storage.getToken.and.returnValue(null);
     await router.navigateByUrl('/login');
@@ -83,33 +89,12 @@ describe('Navigation du bandeau', () => {
     expect(fixture.nativeElement.querySelector('a[href="/boutique/commandes"]')).toBeNull();
   });
 
-  it('ferme le menu avec Échap et rend le focus au bouton Menu', () => {
-    const toggle: HTMLButtonElement = fixture.nativeElement.querySelector('.navbar-toggler');
-    const focus = spyOn(toggle, 'focus');
-    toggle.click();
-    fixture.detectChanges();
-    fixture.nativeElement.querySelector('nav').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    fixture.detectChanges();
-    expect(fixture.componentInstance.isCollapsed).toBeTrue();
-    expect(toggle.getAttribute('aria-expanded')).toBe('false');
-    expect(focus).toHaveBeenCalled();
-  });
-
-  it('ferme le menu en cliquant sur le fond', () => {
-    fixture.nativeElement.querySelector('.navbar-toggler').click();
-    fixture.detectChanges();
-    fixture.nativeElement.querySelector('.navbar-backdrop').click();
-    fixture.detectChanges();
-    expect(fixture.componentInstance.isCollapsed).toBeTrue();
-    expect(fixture.nativeElement.querySelector('.navbar-backdrop')).toBeNull();
-  });
-
   it('partage les boutons connexion et inscription avec la page de connexion', async () => {
     await router.navigateByUrl('/login?sessionExpiree=1');
     fixture.detectChanges();
     const buttons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('.navbar-login-actions button');
     expect(buttons.length).toBe(2);
-    expect(fixture.nativeElement.querySelector('.navbar-toggler')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.navbar-nav')).toBeNull();
     buttons[1].click();
     fixture.detectChanges();
     expect(TestBed.inject(LoginPageService).view()).toBe('inscription');
@@ -192,8 +177,7 @@ describe('Déconnexion depuis une page protégée', () => {
     expect(component.showAdmin).toBeTrue();
   });
 
-  it('affiche la connexion sans attendre le serveur et efface le menu connecté', () => {
-    component.isCollapsed = false;
+  it('affiche la connexion sans attendre le serveur et efface les droits de la session', () => {
     component.logout();
     expect(logout).toHaveBeenCalledTimes(1);
     expect(navigate).toHaveBeenCalledWith(['/login'], { replaceUrl: true });
@@ -202,7 +186,6 @@ describe('Déconnexion depuis une page protégée', () => {
     expect(component.showProf).toBeFalse();
     expect(component.showSeances).toBeFalse();
     expect(component.username).toBeUndefined();
-    expect(component.isCollapsed).toBeTrue();
     revocation.next(null);
     revocation.complete();
     expect(navigate).toHaveBeenCalledTimes(1);

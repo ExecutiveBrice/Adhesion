@@ -26,7 +26,22 @@
               {
                 "glob": "**/*",
                 "input": "node_modules/ngx-extended-pdf-viewer/assets/",
-                "output": "/assets/"
+                "output": "/assets/",
+                "ignore": [
+                  "locale/**",
+                  "additional-locale/**",
+                  "{viewer,pdf.worker,pdf.sandbox}-!(*-es5|*.min).mjs"
+                ]
+              },
+              {
+                "glob": "viewer.ftl",
+                "input": "node_modules/ngx-extended-pdf-viewer/assets/locale/fr/",
+                "output": "/assets/locale/fr/"
+              },
+              {
+                "glob": "fr.ftl",
+                "input": "node_modules/ngx-extended-pdf-viewer/assets/additional-locale/",
+                "output": "/assets/additional-locale/"
               }
             ],
             "styles": ["src/styles.css"]
