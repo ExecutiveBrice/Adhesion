@@ -10,11 +10,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
 @Transactional
 public class PresenceServices {
+
+    private static final ZoneId PARIS = ZoneId.of("Europe/Paris");
 
     @Autowired
     PresenceRepository presenceRepository;
@@ -23,35 +27,55 @@ public class PresenceServices {
 
 
     public void fillPresences(Adhesion adhesion) {
-        if (!doitAvoirDesPresences(adhesion)) {
+        if (!doitAvoirDesPresences(adhesion.getStatutActuel())) {
             return;
         }
 
         adhesion.getActivite().getSeances().stream()
-                .filter(seance -> seance.getEtatSeance() == ESeance.PROGRAMMEE)
+                .filter(this::estACompleter)
                 .forEach(seance -> addPresence(adhesion, seance));
     }
 
     public void fillPresences(Seance seance) {
+        if (!estACompleter(seance)) {
+            return;
+        }
+
         seance.getActivite().getAdhesions().stream()
-                .filter(this::doitAvoirDesPresences)
+                .filter(adhesion -> doitAvoirDesPresences(adhesion.getStatutActuel()))
                 .forEach(adhesion -> addPresence(adhesion, seance));
     }
 
-    private boolean doitAvoirDesPresences(Adhesion adhesion) {
-        return !Status.LISTE_ATTENTE.label.equals(adhesion.getStatutActuel())
-                && !Status.ANNULEE.label.equals(adhesion.getStatutActuel());
+    public void supprimerPresencesAVenir(Adhesion adhesion, Long activiteConserveeId) {
+        LocalDateTime maintenant = LocalDateTime.now(PARIS);
+        adhesion.getPresences().removeIf(presence -> {
+            Seance seance = presence.getSeance();
+            if (seance == null || seance.getDebut() == null || !seance.getDebut().isAfter(maintenant)) {
+                return false;
+            }
+            if (activiteConserveeId != null && seance.getActivite() != null
+                    && activiteConserveeId.equals(seance.getActivite().getId())) {
+                return false;
+            }
+
+            seance.getPresences().remove(presence);
+            return true;
+        });
     }
 
-    private void addPresence(Adhesion adhesion, Seance seance) {
-        boolean alreadyExists = adhesion.getPresences().stream()
-                .anyMatch(presence -> presence.getSeance() == seance
-                        || (presence.getSeance() != null && presence.getSeance().equals(seance)))
-                || seance.getPresences().stream()
-                .anyMatch(presence -> presence.getAdhesion() == adhesion
-                        || (presence.getAdhesion() != null && presence.getAdhesion().equals(adhesion)));
-        if (alreadyExists) {
-            return;
+    private boolean estACompleter(Seance seance) {
+        return seance.getEtatSeance() == ESeance.PROGRAMMEE || seance.getEtatSeance() == ESeance.MODIFIEE;
+    }
+
+    static boolean doitAvoirDesPresences(String statut) {
+        return !Status.LISTE_ATTENTE.label.equals(statut) && !Status.ANNULEE.label.equals(statut);
+    }
+
+    private Presence addPresence(Adhesion adhesion, Seance seance) {
+        for (Presence presence : seance.getPresences()) {
+            if (presence.getAdhesion() == adhesion || (adhesion.getId() != null && adhesion.equals(presence.getAdhesion()))) {
+                return presence;
+            }
         }
 
         Presence presence = new Presence();
@@ -63,8 +87,10 @@ public class PresenceServices {
         // lien sera ensuite visible via la relation de l'adhésion.
         if (seance.getId() != null) {
             adhesion.getPresences().add(presence);
+            presenceRepository.save(presence);
         }
         seance.getPresences().add(presence);
+        return presence;
     }
 
     /**
@@ -73,12 +99,10 @@ public class PresenceServices {
      * completed.
      */
     public Presence addPresenceForSeance(Adhesion adhesion, Seance seance, boolean present) {
-        Presence presence = new Presence();
-        presence.setAdhesion(adhesion);
-        presence.setSeance(seance);
+        Presence presence = addPresence(adhesion, seance);
         presence.setPresence(present);
         presence.setDateModification(LocalDate.now());
-        return presenceRepository.save(presence);
+        return presence;
     }
 
     public List<PresenceSeanceResponse> getPresences(Long seanceId, String username) {

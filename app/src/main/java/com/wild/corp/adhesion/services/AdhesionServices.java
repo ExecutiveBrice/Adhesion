@@ -20,6 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
+import jakarta.transaction.Transactional;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -282,8 +283,9 @@ public class AdhesionServices {
         return dataAdhesion;
     }
 
+    @Transactional
     public Adhesion validation(List<Accord> accords, Long adhesionId) {
-        Adhesion dataAdhesion = adhesionRepository.findById(adhesionId).get();
+        Adhesion dataAdhesion = adhesionRepository.findByIdForUpdate(adhesionId).orElseThrow();
 
         accords.forEach(accord -> {
             Accord selectedAccord = dataAdhesion.getAccords().stream().filter(accordDB -> accordDB.getId().equals(accord.getId())).findFirst().get();
@@ -293,12 +295,12 @@ public class AdhesionServices {
             selectedAccord.setEtat(accord.getEtat());
         });
 
-        adhesionRepository.save(dataAdhesion);
-        return choisirStatut(dataAdhesion.getId(), Status.ATTENTE_SECRETARIAT.label);
+        return choisirStatut(dataAdhesion, Status.ATTENTE_SECRETARIAT.label);
     }
 
+    @Transactional
     public Adhesion update(Adhesion frontAdhesion) {
-        Adhesion dataAdhesion = adhesionRepository.findById(frontAdhesion.getId()).get();
+        Adhesion dataAdhesion = adhesionRepository.findByIdForUpdate(frontAdhesion.getId()).orElseThrow();
 
         Accord frontaccordImage = frontAdhesion.getAccords().stream().filter(accord -> "ReglementInterieur".equals(accord.getNom())).findFirst().get();
         Accord dataaccordImage = dataAdhesion.getAccords().stream().filter(accord -> "ReglementInterieur".equals(accord.getNom())).findFirst().get();
@@ -334,21 +336,21 @@ public class AdhesionServices {
         }
 
         dataAdhesion.setDejaLicencie(frontAdhesion.getDejaLicencie());
-        adhesionRepository.save(dataAdhesion);
-        return choisirStatut(dataAdhesion.getId(), Status.ATTENTE_SECRETARIAT.label);
+        return choisirStatut(dataAdhesion, Status.ATTENTE_SECRETARIAT.label);
     }
 
     public Adhesion saveUnique(Adhesion adhesion) {
         return adhesionRepository.save(adhesion);
     }
 
+    @Transactional
     public Adhesion save(Principal principal, Long adherentId, Long activiteId) {
         Adherent adherent = adherentServices.getById(adherentId);
         if (!adherentServices.hasValidatedAccords(adherent)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Enregistrez les accords de l'adhérent avant d'ajouter une activité");
         }
-        Activite activite = activiteServices.getById(activiteId);
+        Activite activite = activiteServices.getByIdForUpdate(activiteId);
 
         boolean dejaLicencie =  adherent.getActivitesNm1().stream().anyMatch(activiteNm1 -> "ALOD_B".equals(activiteNm1.getGroupe()) || activite.getGroupeFiltre().equals(activiteNm1.getGroupeFiltre()));
 
@@ -423,7 +425,7 @@ public class AdhesionServices {
         if (activite.isPriseEnCharge() && newAdhesion.getAdherent().getMineur()) {
             newAdhesion.getAccords().add(accordServices.createAccord(PRISE_EN_CHARGE, null, newAdhesion));
         }
-        return adhesionRepository.save(newAdhesion);
+        return newAdhesion;
     }
 
     public Adhesion updateDocumentsSecretariat(Long adhesionId, Boolean statut) {
@@ -451,25 +453,30 @@ public class AdhesionServices {
         return adhesionRepository.save(adhesion);
     }
 
+    @Transactional
     public Adhesion choisirStatut(Long adhesionId, String nouveauStatut) {
-        Adhesion adhesion = adhesionRepository.findById(adhesionId).get();
+        return choisirStatut(adhesionRepository.findByIdForUpdate(adhesionId).orElseThrow(), nouveauStatut);
+    }
+
+    private Adhesion choisirStatut(Adhesion adhesion, String nouveauStatut) {
+        activiteServices.getByIdForUpdate(adhesion.getActivite().getId());
+        boolean adhesionReactivee = !PresenceServices.doitAvoirDesPresences(adhesion.getStatutActuel())
+                && PresenceServices.doitAvoirDesPresences(nouveauStatut);
 
         if (Status.LICENCE_T.label.equals(nouveauStatut) && !Status.LICENCE_T.label.equals(adhesion.getStatutActuel())) {
             adhesion.setValidPaiementSecretariat(true);
             adhesion.setValidDocumentSecretariat(true);
-            adhesion.setAccords(null);
+            adhesion.getAccords().clear();
             adhesion.setInscrit(true);
         }
 
 
-        if ((Status.VALIDEE.label.equals(nouveauStatut) && !Status.VALIDEE.label.equals(adhesion.getStatutActuel()))
-                ||
-                (Status.LICENCE_GENEREE.label.equals(nouveauStatut) && !Status.LICENCE_GENEREE.label.equals(adhesion.getStatutActuel()))
-        ) {
+        boolean validationFinale = !Objects.equals(nouveauStatut, adhesion.getStatutActuel())
+                && (Status.VALIDEE.label.equals(nouveauStatut) || Status.LICENCE_GENEREE.label.equals(nouveauStatut));
+        if (validationFinale) {
             adhesion.setInscrit(true);
             adhesion.setStatutActuel(nouveauStatut);
             adhesion.setDateChangementStatut(now());
-            adhesionRepository.save(adhesion);
             presenceServices.fillPresences(adhesion);
 
             byte[] attestation = pdfService.generateSynthese(adhesion.getAdherent());
@@ -499,21 +506,40 @@ public class AdhesionServices {
             emailService.sendAutoMail(adhesion, "Sujet_Mail_Reactivation", "Corp_Mail_Reactivation", false);
         }
 
-        if (Status.ANNULEE.label.equals(nouveauStatut) && !Status.ANNULEE.label.equals(adhesion.getStatutActuel())) {
+        boolean adhesionAnnulee = Status.ANNULEE.label.equals(nouveauStatut);
+        if (adhesionAnnulee && !Status.ANNULEE.label.equals(adhesion.getStatutActuel())) {
             emailService.sendAutoMail(adhesion, "Sujet_Mail_Annulation_Manuelle", "Corp_Mail_Annulation_Manuelle", false);
         }
 
         adhesion.setStatutActuel(nouveauStatut);
         adhesion.setDateChangementStatut(now());
-        return adhesionRepository.save(adhesion);
+        if (adhesionAnnulee) {
+            presenceServices.supprimerPresencesAVenir(adhesion, null);
+        } else if (adhesionReactivee && !validationFinale) {
+            presenceServices.fillPresences(adhesion);
+        }
+        return adhesion;
     }
 
 
+    @Transactional
     public Activite changeActivite(Long adhesionId, Long activiteId) {
-        Adhesion inscription = adhesionRepository.findById(adhesionId).get();
-        Activite activite = activiteServices.getById(activiteId);
+        Adhesion inscription = adhesionRepository.findByIdForUpdate(adhesionId).orElseThrow();
+        Activite ancienneActivite = inscription.getActivite();
+        Long ancienneActiviteId = ancienneActivite == null ? null : ancienneActivite.getId();
+        // Toujours verrouiller les deux activités dans le même ordre.
+        if (ancienneActiviteId != null && ancienneActiviteId < activiteId) {
+            activiteServices.getByIdForUpdate(ancienneActiviteId);
+        }
+        Activite activite = activiteServices.getByIdForUpdate(activiteId);
+        if (ancienneActiviteId != null && ancienneActiviteId > activiteId) {
+            activiteServices.getByIdForUpdate(ancienneActiviteId);
+        }
+
         inscription.setActivite(activite);
-        return adhesionRepository.save(inscription).getActivite();
+        presenceServices.supprimerPresencesAVenir(inscription, activiteId);
+        presenceServices.fillPresences(inscription);
+        return activite;
     }
 
     public Adhesion addAccord(Long adhesionId, String nomAccord) {

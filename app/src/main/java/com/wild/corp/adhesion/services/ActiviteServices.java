@@ -60,7 +60,7 @@ public class ActiviteServices {
     }
 
     public List<SeanceResponse> addSeances(Long activiteId, int nombreSeances, LocalDate dateDebut) {
-        Activite activite = getById(activiteId);
+        Activite activite = getByIdForUpdate(activiteId);
         seanceServices.addSeances(activite, nombreSeances, dateDebut);
         activiteRepository.save(activite);
         return getSeances(activiteId);
@@ -68,7 +68,7 @@ public class ActiviteServices {
 
     public List<SeanceResponse> addSeances(Long activiteId, Long planificationId, int nombreSemaines,
                                             LocalDate dateDebut) {
-        Activite activite = getById(activiteId);
+        Activite activite = getByIdForUpdate(activiteId);
         PlanificationHebdomadaire planification = activite.getPlanificationsHebdomadaires().stream()
                 .filter(element -> planificationId.equals(element.getId()))
                 .findFirst()
@@ -77,6 +77,13 @@ public class ActiviteServices {
         activiteRepository.save(activite);
         return getSeances(activiteId);
     }
+
+    public Activite refillSeances(Long activiteId) {
+        Activite activite = getByIdForUpdate(activiteId);
+        seanceServices.fillSeances(activite, 29);
+        return activite;
+    }
+
     public List<ActiviteNm1> getAllNm1() {
         List<ActiviteNm1> activites = activiteNm1Repository.findAll();
 
@@ -430,6 +437,11 @@ public class ActiviteServices {
     public Activite getById(Long activiteId) {
         return activiteRepository.findById(activiteId).get();
     }
+
+    Activite getByIdForUpdate(Long activiteId) {
+        return activiteRepository.findByIdForUpdate(activiteId).orElseThrow();
+    }
+
     public List<ActiviteNm1> getNm1ById(Long activiteId) {
         return activiteNm1Repository.findByActiviteId(activiteId);
     }

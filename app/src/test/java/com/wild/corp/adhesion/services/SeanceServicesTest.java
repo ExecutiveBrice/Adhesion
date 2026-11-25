@@ -5,6 +5,7 @@ import com.wild.corp.adhesion.models.Adherent;
 import com.wild.corp.adhesion.models.Adhesion;
 import com.wild.corp.adhesion.models.ESeance;
 import com.wild.corp.adhesion.models.Presence;
+import com.wild.corp.adhesion.repository.ActiviteRepository;
 import com.wild.corp.adhesion.models.Salle;
 import com.wild.corp.adhesion.models.Seance;
 import com.wild.corp.adhesion.models.resources.SeanceResponse;
@@ -320,6 +321,8 @@ class SeanceServicesTest {
                 mock(DatasetApi.class), mock(DatasetApi.class), "C", "vacances", "feries");
         service.seanceRepository = repository;
         service.presenceServices = mock(PresenceServices.class);
+        service.activiteRepository = mock(ActiviteRepository.class);
+        when(service.activiteRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(activity()));
         return service;
     }
 

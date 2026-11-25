@@ -3,6 +3,7 @@ package com.wild.corp.adhesion.services;
 import com.wild.corp.adhesion.models.*;
 import com.wild.corp.adhesion.models.resources.SeanceCalendrierResponse;
 import com.wild.corp.adhesion.models.resources.SeanceResponse;
+import com.wild.corp.adhesion.repository.ActiviteRepository;
 import com.wild.corp.adhesion.repository.SeanceRepository;
 import com.wild.corp.adhesion.repository.SalleRepository;
 import jakarta.transaction.Transactional;
@@ -43,6 +44,9 @@ public class SeanceServices {
 
     @Autowired
     PresenceServices presenceServices;
+
+    @Autowired
+    ActiviteRepository activiteRepository;
 
     private final DatasetApi vacancesApi;
     private final DatasetApi joursFeriesApi;
@@ -360,6 +364,8 @@ public class SeanceServices {
         if (etatSeance == null && !commentairePresent && !horairePresent && !sallePresente) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Aucune modification demandée");
         }
+        activiteRepository.findByIdForUpdate(activiteId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Séance introuvable"));
         if (etatSeance != null) {
             ensureUpdated(seanceRepository.updateEtat(seanceId, activiteId, etatSeance));
         }
@@ -370,10 +376,12 @@ public class SeanceServices {
         if (horairePresent) {
             updateHoraire(activiteId, seanceId, date, heureDebut);
         }
+        Seance seance = getSeance(activiteId, seanceId);
         if (sallePresente) {
-            getSeance(activiteId, seanceId).setSalle(trouverSalle(salleId));
+            seance.setSalle(trouverSalle(salleId));
         }
-        return getSeance(activiteId, seanceId);
+        presenceServices.fillPresences(seance);
+        return seance;
     }
 
     private Salle trouverSalle(Long salleId) {
@@ -408,15 +416,15 @@ public class SeanceServices {
     public Seance updateCommentaireForManager(Long seanceId, String commentaire, String username) {
         Seance seance = seanceRepository.findByIdAndManagerUsername(seanceId, username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Séance introuvable"));
-        seance.setCommentaire(commentaire == null || commentaire.isBlank() ? null : commentaire.trim());
-        return seance;
+        return updateSeance(seance.getActivite().getId(), seanceId, null, commentaire, true,
+                null, null, false, null, false);
     }
 
     public Seance updateCommentaireForSecretary(Long seanceId, String commentaire) {
         Seance seance = seanceRepository.findById(seanceId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Séance introuvable"));
-        seance.setCommentaire(commentaire == null || commentaire.isBlank() ? null : commentaire.trim());
-        return seance;
+        return updateSeance(seance.getActivite().getId(), seanceId, null, commentaire, true,
+                null, null, false, null, false);
     }
 
     private Seance getSeance(Long activiteId, Long seanceId) {

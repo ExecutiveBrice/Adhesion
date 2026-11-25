@@ -7,16 +7,20 @@ import com.wild.corp.adhesion.models.Seance;
 import com.wild.corp.adhesion.models.Presence;
 import com.wild.corp.adhesion.repository.PresenceRepository;
 import com.wild.corp.adhesion.utils.Status;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 class PresenceServicesTest {
 
     private final PresenceServices presenceServices = new PresenceServices();
+
+    @BeforeEach
+    void setUp() {
+        presenceServices.presenceRepository = mock(PresenceRepository.class);
+    }
 
     @Test
     void createsAPresenceForEachExistingSessionWhenAnAdhesionIsValidated() {
@@ -53,19 +57,23 @@ class PresenceServicesTest {
     }
 
     @Test
-    void createsPresencesOnlyForScheduledSessionsWhenAnAdhesionIsValidated() {
+    void createsPresencesForScheduledAndRescheduledSessionsWhenAnAdhesionIsValidated() {
         Activite activite = new Activite();
         Seance scheduledSeance = session(activite, 1L);
+        Seance rescheduledSeance = session(activite, 4L);
+        rescheduledSeance.setEtatSeance(ESeance.MODIFIEE);
         Seance completedSeance = session(activite, 2L);
         completedSeance.setEtatSeance(ESeance.REALISEE);
         Seance cancelledSeance = session(activite, 3L);
         cancelledSeance.setEtatSeance(ESeance.ANNULEE);
-        activite.getSeances().addAll(java.util.List.of(scheduledSeance, completedSeance, cancelledSeance));
+        activite.getSeances().addAll(java.util.List.of(
+                scheduledSeance, rescheduledSeance, completedSeance, cancelledSeance));
         Adhesion adhesion = adhesion(activite, Status.VALIDEE.label);
 
         presenceServices.fillPresences(adhesion);
 
         assertThat(scheduledSeance.getPresences()).singleElement();
+        assertThat(rescheduledSeance.getPresences()).singleElement();
         assertThat(completedSeance.getPresences()).isEmpty();
         assertThat(cancelledSeance.getPresences()).isEmpty();
     }
@@ -120,18 +128,30 @@ class PresenceServicesTest {
 
     @Test
     void addsANewParticipantAsPresentForTheCurrentSession() {
-        PresenceRepository presenceRepository = mock(PresenceRepository.class);
-        presenceServices.presenceRepository = presenceRepository;
         Activite activite = new Activite();
         Adhesion adhesion = adhesion(activite, Status.ATTENTE_ADHERENT.label);
         Seance seance = session(activite, 1L);
-        when(presenceRepository.save(any(Presence.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Presence presence = presenceServices.addPresenceForSeance(adhesion, seance, true);
 
         assertThat(presence.getAdhesion()).isSameAs(adhesion);
         assertThat(presence.getSeance()).isSameAs(seance);
         assertThat(presence.getPresence()).isTrue();
+    }
+
+    @Test
+    void marksAnAutomaticallyCreatedPresenceAsPresentWithoutCreatingAnotherRecord() {
+        Activite activite = new Activite();
+        Seance seance = session(activite, 1L);
+        activite.getSeances().add(seance);
+        Adhesion adhesion = adhesion(activite, Status.ATTENTE_ADHERENT.label);
+        presenceServices.fillPresences(adhesion);
+        Presence existingPresence = seance.getPresences().getFirst();
+        existingPresence.setPresencePrevue(false);
+
+        assertThat(presenceServices.addPresenceForSeance(adhesion, seance, true)).isSameAs(existingPresence);
+        assertThat(existingPresence.getPresence()).isTrue();
+        assertThat(existingPresence.getPresencePrevue()).isFalse();
     }
 
     private Adhesion adhesion(Activite activite, String statut) {

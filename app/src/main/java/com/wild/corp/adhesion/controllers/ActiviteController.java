@@ -167,9 +167,7 @@ ActiviteServices activiteServices;
 	@GetMapping("/refillSeance")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<?> refillSeance(@RequestParam(value="activiteId") Long activiteId) {
-		Activite activiteInDB = activiteServices.getById(activiteId);
-		seanceServices.fillSeances(activiteInDB, 29);
-		return ResponseEntity.ok(activiteInDB);
+		return ResponseEntity.ok(activiteServices.refillSeances(activiteId));
 	}
 
 
